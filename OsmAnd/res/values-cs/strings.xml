@@ -5853,8 +5853,8 @@
     <string name="rendering_attr_hideNoLNAM_description">Skrýt námořní značky OSM (některé)</string>
     <string name="rendering_attr_hideSpots_name">Bodová měření hloubky</string>
     <string name="rendering_attr_hideSpots_description">Skrýt bodová měření hloubky</string>
-    <string name="rendering_attr_hideTidalFlats_name">Wattová pobřeží</string>
-    <string name="rendering_attr_hideTidalFlats_description">Skrýt watttová pobřeží</string>
+    <string name="rendering_attr_hideTidalFlats_name">Přílivové plochy</string>
+    <string name="rendering_attr_hideTidalFlats_description">Skrýt přílivové plochy</string>
     <string name="rendering_attr_depthColorScheme_name">Hloubkové barevné schéma</string>
     <string name="rendering_attr_depthColorScheme_description">Hloubkové barevné schéma</string>
     <string name="rendering_attr_depthContoursDashed_name">Přerušované hloubkové vrstevnice</string>
@@ -5871,8 +5871,8 @@
     <string name="rendering_attr_spotDistance_description">Vzdálenost bodového měření</string>
     <string name="rendering_attr_spotSize_name">Velikost bodového měření</string>
     <string name="rendering_attr_spotSize_description">Velikost bodového měření</string>
-    <string name="rendering_attr_tidalFlatStyle_name">Styl wattových pobřeží</string>
-    <string name="rendering_attr_tidalFlatStyle_description">Styl wattových pobřeží</string>
+    <string name="rendering_attr_tidalFlatStyle_name">Styl přílivové plochy</string>
+    <string name="rendering_attr_tidalFlatStyle_description">Styl přílivových ploch</string>
     <string name="rendering_attr_watercolor_name">Barva vody</string>
     <string name="rendering_attr_watercolor_description">Barva vody</string>
     <string name="show_local_names">Zobrazit místní názvy</string>
@@ -5913,4 +5913,7 @@
     <string name="visualizing_button_grid">Mřížka tlačítek na mapě</string>
     <string name="enable_3d_objects">Povolit 3D stavby</string>
     <string name="enable_3d_objects_description">Zobrazit 3D stavby na mapě</string>
+    <string name="deleted_maps_warning">Chystáte se odstranit %d položek\nChcete pokračovat?</string>
+    <string name="deleted_maps_prompt">Tyto mapy již nejsou podporovány a byly nahrazeny menšími regiony. Odstraňte je prosím a stáhněte si nové verze.</string>
+    <string name="unsupported_maps">Nepodporované mapy</string>
 </resources>

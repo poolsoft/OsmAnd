@@ -50,6 +50,7 @@ public class SearchResult {
 
 	public String localeName;
 	public String alternateName;
+	public String addressName;
 	public String cityName;
 	public Collection<String> otherNames;
 
@@ -93,7 +94,7 @@ public class SearchResult {
 			// don't overload with poi types
 		} else {
 			CheckWordsMatchCount completeMatchRes = new CheckWordsMatchCount();
-			boolean matched = allWordsMatched(localeName, exactResult, completeMatchRes);
+			boolean matched = localeName != null && allWordsMatched(localeName, exactResult, completeMatchRes);
 			// incorrect fix
 //			if (!matched && object instanceof Street s) { // parentSearchResult == null &&
 //				matched = allWordsMatched(localeName + " " + s.getCity().getName(requiredSearchPhrase.getSettings().getLang()), exactResult, completeMatchRes);
@@ -174,21 +175,11 @@ public class SearchResult {
 		}
 		return inc;
 	}
-	
-	public boolean hasObjectTypePresent(ObjectType type) {
-		if (objectType == type) {
-			return true;
-		}
-		if (parentSearchResult != null) {
-			return parentSearchResult.hasObjectTypePresent(type);
-		}
-		return false;
-	}
 
 	private boolean allWordsMatched(String name, SearchResult exactResult, CheckWordsMatchCount cnt) {
 		List<String> searchPhraseNames = getSearchPhraseNames();
 		List<String> localResultNames;
-		if (name.indexOf('(') != -1) {
+		if (!Algorithms.isEmpty(name) && name.indexOf('(') != -1) {
 			name = SearchPhrase.stripBraces(name);
 		}
 		if (!requiredSearchPhrase.getFullSearchPhrase().contains(HYPHEN)) {
