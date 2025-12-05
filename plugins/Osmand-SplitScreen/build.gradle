@@ -3,6 +3,7 @@ apply plugin: 'kotlin-android'
 apply from: rootProject.file("versions.gradle")
 
 android {
+    namespace 'net.osmand.splitscreen'
     compileSdk osmand_compileSdk
     buildToolsVersion = osmand_buildToolsVersion
 
@@ -31,6 +32,6 @@ android {
 }
 
 dependencies {
-    implementation project(':OsmAnd')
+    compileOnly project(':OsmAnd')
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
