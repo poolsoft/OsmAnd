@@ -1,0 +1,36 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply from: rootProject.file("versions.gradle")
+
+android {
+    compileSdk osmand_compileSdk
+    buildToolsVersion = osmand_buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion osmand_minSdk
+        targetSdkVersion osmand_targetSdk
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+    implementation project(':OsmAnd')
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}

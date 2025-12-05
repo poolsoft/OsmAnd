@@ -1,0 +1,80 @@
+name: Build Split Screen Plugin Debug APK
+
+on:
+  push:
+    branches: [ feature/split-screen-plugin ]
+  pull_request:
+    branches: [ feature/split-screen-plugin ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout OsmAnd
+      uses: actions/checkout@v6
+      with:
+        path: android
+    - name: checkout OsmAnd-resources
+      uses: actions/checkout@v6
+      with:
+        repository: osmandapp/OsmAnd-resources
+        path: resources
+    - name: checkout OsmAnd-core
+      uses: actions/checkout@v6
+      with:
+        repository: osmandapp/OsmAnd-core
+        path: core
+    - name: checkout OsmAnd-core-legacy
+      uses: actions/checkout@v6
+      with:
+        repository: osmandapp/OsmAnd-core-legacy
+        path: core-legacy
+    - name: checkout OsmAnd-build
+      uses: actions/checkout@v6
+      with:
+        repository: osmandapp/OsmAnd-build
+        path: build
+    - name: checkout OsmAnd-tools
+      uses: actions/checkout@v6
+      with:
+        repository: osmandapp/OsmAnd-tools
+        path: tools
+    - name: checkout OsmAnd-misc
+      uses: actions/checkout@v6
+      with:
+        repository: osmandapp/OsmAnd-misc
+        path: misc
+
+    - name: set up JDK 17
+      uses: actions/setup-java@v5
+      with:
+        java-version: '17'
+        distribution: 'adopt'
+
+    - name: Grant execute permission for gradlew
+      working-directory: ./android
+      run: chmod +x gradlew
+    - name: Patch memory requirements
+      working-directory: ./android
+      run: printf "\norg.gradle.jvmargs=-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8\n" >> gradle.properties
+    - name: Build Split Screen Plugin
+      working-directory: ./android
+      run: ./gradlew :plugins:Osmand-SplitScreen:assembleDebug
+    - name: Build Full APK with Split Screen Plugin
+      working-directory: ./android
+      run: ./gradlew assembleNightlyFreeLegacyFatDebug
+    - name: Rename APK with Split Screen
+      working-directory: ./android
+      run: mv OsmAnd/build/outputs/apk/nightlyFreeLegacyFat/debug/OsmAnd-nightlyFree-legacy-fat-debug.apk OsmAnd/build/outputs/apk/nightlyFreeLegacyFat/debug/OsmAnd-split-screen-nightlyFree-legacy-fat-debug-$(git log -n 1 --format='%h').apk
+    - name: Archive Split Screen APK
+      uses: actions/upload-artifact@v5
+      with:
+        name: split-screen-debug-apk
+        path: android/OsmAnd/build/outputs/apk/*/*/*.apk
+        retention-days: 90
