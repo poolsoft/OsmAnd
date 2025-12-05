@@ -2,9 +2,9 @@ name: Build Split Screen Plugin Debug APK
 
 on:
   push:
-    branches: [ feature/split-screen-plugin ]
+    branches: [ feature/split-screen-plugin, main, master ]
   pull_request:
-    branches: [ feature/split-screen-plugin ]
+    branches: [ feature/split-screen-plugin, main, master ]
   workflow_dispatch:
 
 permissions:
@@ -66,15 +66,9 @@ jobs:
     - name: Build Split Screen Plugin
       working-directory: ./android
       run: ./gradlew :plugins:Osmand-SplitScreen:assembleDebug
-    - name: Build Full APK with Split Screen Plugin
-      working-directory: ./android
-      run: ./gradlew assembleNightlyFreeLegacyFatDebug
-    - name: Rename APK with Split Screen
-      working-directory: ./android
-      run: mv OsmAnd/build/outputs/apk/nightlyFreeLegacyFat/debug/OsmAnd-nightlyFree-legacy-fat-debug.apk OsmAnd/build/outputs/apk/nightlyFreeLegacyFat/debug/OsmAnd-split-screen-nightlyFree-legacy-fat-debug-$(git log -n 1 --format='%h').apk
-    - name: Archive Split Screen APK
+    - name: Archive Plugin AAR
       uses: actions/upload-artifact@v5
       with:
-        name: split-screen-debug-apk
-        path: android/OsmAnd/build/outputs/apk/*/*/*.apk
+        name: split-screen-plugin-aar
+        path: android/plugins/Osmand-SplitScreen/build/outputs/aar/*.aar
         retention-days: 90
