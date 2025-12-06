@@ -49,7 +49,6 @@ import net.osmand.plus.plugins.mapillary.MapillaryPlugin;
 import net.osmand.plus.plugins.monitoring.OsmandMonitoringPlugin;
 import net.osmand.plus.plugins.odb.VehicleMetricsPlugin;
 import net.osmand.plus.plugins.online.OnlineOsmandPlugin;
-import net.osmand.plus.plugins.splitscreen.SplitScreenPlugin;
 import net.osmand.plus.plugins.openseamaps.NauticalMapsPlugin;
 import net.osmand.plus.plugins.osmedit.OsmEditingPlugin;
 import net.osmand.plus.plugins.parking.ParkingPositionPlugin;
@@ -122,7 +121,6 @@ public class PluginsHelper {
 		allPlugins.add(new MapillaryPlugin(app));
 		allPlugins.add(new ExternalSensorsPlugin(app));
 		allPlugins.add(new VehicleMetricsPlugin(app));
-		allPlugins.add(new SplitScreenPlugin(app));
 		allPlugins.add(new StarWatcherPlugin(app));
 		allPlugins.add(new AccessibilityPlugin(app));
 		allPlugins.add(new OsmandDevelopmentPlugin(app));
