@@ -1,7 +1,9 @@
 name: Build debug apk
 
 on:
-  [workflow_dispatch]
+  push:
+    branches: [ feature/split-screen-plugin, main, master ]
+  workflow_dispatch:
 
 permissions:
   contents: read
