@@ -42,6 +42,13 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
+    variantFilter { variant ->
+        // Only build for debug variants to avoid ambiguity
+        if (variant.buildType.name == 'release') {
+            setIgnore(true)
+        }
+    }
 }
 
 repositories {
@@ -55,8 +62,8 @@ repositories {
 }
 
 dependencies {
-    // OsmAnd classes will be available at compile time
-    api project(':OsmAnd')
+    // OsmAnd classes will be available at compile time only
+    compileOnly project(':OsmAnd')
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
