@@ -6,6 +6,6 @@ include ':OsmAnd-shared'
 include ':plugins:Osmand-Nautical'
 include ':plugins:Osmand-SRTMPlugin'
 include ':plugins:Osmand-Skimaps'
-include ':plugins:Osmand-SplitScreen'
+include ':plugins:Osmand-MusicControl'
 
 gradle.ext.java_shared_conf = ''

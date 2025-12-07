@@ -125,7 +125,6 @@ public class PluginsHelper {
 		allPlugins.add(new StarWatcherPlugin(app));
 		allPlugins.add(new AccessibilityPlugin(app));
 		allPlugins.add(new OsmandDevelopmentPlugin(app));
-		allPlugins.add(new SplitScreenPlugin(app));
 
 		loadCustomPlugins(app);
 		registerAppInitializingDependedProperties(app);
@@ -960,5 +959,5 @@ public class PluginsHelper {
 						}
 					});
 				});
-	}
+					}
 }
