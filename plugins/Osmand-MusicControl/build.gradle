@@ -55,8 +55,8 @@ repositories {
 }
 
 dependencies {
-    // OsmAnd classes will be available at runtime
-    // No compile-time dependency to avoid variant conflicts
+    // OsmAnd classes will be available at compile time
+    api project(':OsmAnd')
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
