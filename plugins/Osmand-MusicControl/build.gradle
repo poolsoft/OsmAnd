@@ -12,6 +12,11 @@ android {
         targetSdkVersion osmand_targetSdk
         versionCode 1
         versionName "1.0"
+
+        // Match OsmAnd flavor dimensions to avoid ambiguity
+        missingDimensionStrategy 'version', 'nightlyFree'
+        missingDimensionStrategy 'coreversion', 'opengl'
+        missingDimensionStrategy 'abi', 'fat'
     }
 
     lintOptions {
