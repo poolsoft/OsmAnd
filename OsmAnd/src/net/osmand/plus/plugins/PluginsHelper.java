@@ -58,6 +58,7 @@ import net.osmand.plus.plugins.astro.StarWatcherPlugin;
 import net.osmand.plus.plugins.srtm.SRTMPlugin;
 import net.osmand.plus.plugins.weather.WeatherPlugin;
 import net.osmand.plus.plugins.splitscreen.SplitScreenPlugin;
+import net.osmand.plus.plugins.rightpanel.RightPanelPlugin;
 import net.osmand.plus.poi.PoiUIFilter;
 import net.osmand.plus.quickaction.QuickActionType;
 import net.osmand.plus.render.RendererRegistry.RendererEventListener;
@@ -125,6 +126,7 @@ public class PluginsHelper {
 		allPlugins.add(new StarWatcherPlugin(app));
 		allPlugins.add(new AccessibilityPlugin(app));
 		allPlugins.add(new OsmandDevelopmentPlugin(app));
+		allPlugins.add(new RightPanelPlugin(app));
 
 		loadCustomPlugins(app);
 		registerAppInitializingDependedProperties(app);
