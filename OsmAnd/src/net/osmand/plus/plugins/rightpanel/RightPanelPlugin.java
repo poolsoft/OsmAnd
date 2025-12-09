@@ -32,8 +32,10 @@ public class RightPanelPlugin extends OsmandPlugin {
         return R.drawable.ic_action_settings;
     }
 
-    // Dummy method to fix CI compilation error
+    // Either remove this method if not needed, 
+    // or update the signature to match the interface
+    @Override 
     public boolean setNavDrawerLogo(String imageUri) throws android.os.RemoteException {
-        return false;
+        // Implementation
     }
 }
