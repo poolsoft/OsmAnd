@@ -103,7 +103,7 @@ android {
 		}
 		carlauncher {
 			java.srcDirs = ["src-carlauncher", "src-osmand"]
-			res.srcDirs = ["src-carlauncher/res"]
+			res.srcDirs = ["src-carlauncher/res", "res"]
 			manifest.srcFile "AndroidManifest-carlauncher.xml"
 		}
 
