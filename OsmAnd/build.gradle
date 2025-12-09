@@ -101,6 +101,11 @@ android {
 			java.srcDirs = ["src-huawei"]
 			manifest.srcFile "AndroidManifest-huawei.xml"
 		}
+		carlauncher {
+			java.srcDirs = ["src-carlauncher", "src-osmand"]
+			res.srcDirs = ["src-carlauncher/res"]
+			manifest.srcFile "AndroidManifest-carlauncher.xml"
+		}
 
 		legacy {
 			jniLibs.srcDirs = ["libc++"]
@@ -144,6 +149,13 @@ android {
 			applicationId "net.osmand.huawei"
 			resValue "string", "app_name", "OsmAnd"
 			resValue "string", "app_edition", ""
+		}
+		carlauncher {
+			dimension "version"
+			applicationId "net.osmand.carlauncher"
+			resValue "string", "app_name", "OsmAnd CarLauncher"
+			resValue "string", "app_edition", System.getenv("APP_EDITION") ? System.getenv("APP_EDITION") : ""
+			// resConfig "en"
 		}
 
         // Build that includes 3D OpenGL release
@@ -246,9 +258,6 @@ dependencies {
 	huaweiImplementation 'com.huawei.hms:appservice:6.8.0.300'
 
 	coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.3")
-
-	// Plugin dependencies
-	// implementation project(':plugins:Osmand-Internal')
 }
 
 afterEvaluate {

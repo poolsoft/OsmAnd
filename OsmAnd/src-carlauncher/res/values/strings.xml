@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="car_launcher_speed_label">Speed</string>
+    <string name="car_launcher_direction_label">Direction</string>
+    <string name="car_launcher_altitude_label">Altitude</string>
+</resources>
