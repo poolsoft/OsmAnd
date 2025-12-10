@@ -102,7 +102,7 @@ android {
 			manifest.srcFile "AndroidManifest-huawei.xml"
 		}
 		carlauncher {
-			java.srcDirs = ["src-google", "src-osmand"]
+			java.srcDirs = ["src-carlauncher", "src-google", "src-osmand"]
 			manifest.srcFile "AndroidManifest-carlauncher.xml"
 		}
 
