@@ -102,14 +102,8 @@ android {
 			manifest.srcFile "AndroidManifest-huawei.xml"
 		}
 		carlauncher {
-			
-		    java.srcDirs = ["src-carlauncher/java", "src-google", "src-osmand"]
-		    res.srcDirs = ["src-carlauncher/res", "res"]
-		    manifest.srcFile "AndroidManifest-carlauncher.xml"
-
-			// Burada tüm sihir gerçekleşiyor:
-			// sadece main aidl'ı kullan, carlauncher içindekini devre dışı bırak
-			// aidl.srcDirs = ["src/main/aidl"]
+			java.srcDirs = ["src-google", "src-osmand"]
+			manifest.srcFile "AndroidManifest-carlauncher.xml"
 		}
 
 		legacy {
