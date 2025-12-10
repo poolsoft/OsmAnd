@@ -24,12 +24,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
-        <!-- MapActivity tema degisikligi -->
-        <activity
-            android:name="net.osmand.plus.carlauncher.CarLauncherActivity"
-            android:theme="@style/FirstSplashScreenNightlyFree"
-            tools:replace="android:name,android:theme"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"
