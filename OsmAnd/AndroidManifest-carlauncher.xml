@@ -3,9 +3,8 @@
           xmlns:tools="http://schemas.android.com/tools">
 	
     <application
-        android:name="net.osmand.plus.CarLauncherOsmandApplication"
         android:icon="@mipmap/icon_nightly"
-        tools:replace="android:icon,android:name">
+        tools:replace="android:icon">
         
         <!-- Car Launcher Activity - Ana launcher ekrani -->
         <activity
