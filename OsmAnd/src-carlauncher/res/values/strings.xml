@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="car_launcher_speed_label">Speed</string>
-    <string name="car_launcher_direction_label">Direction</string>
-    <string name="car_launcher_altitude_label">Altitude</string>
+    <!-- Widget etiketleri -->
+    <string name="car_launcher_speed_label">Hiz</string>
+    <string name="car_launcher_direction_label">Yon</string>
+    <string name="car_launcher_altitude_label">Irtifa</string>
+    <string name="car_launcher_clock_label">Saat</string>
+    <string name="car_launcher_next_turn_label">Sonraki</string>
+    
+    <!-- Yon isimleri -->
+    <string name="direction_north">K</string>
+    <string name="direction_northeast">KD</string>
+    <string name="direction_east">D</string>
+    <string name="direction_southeast">GD</string>
+    <string name="direction_south">G</string>
+    <string name="direction_southwest">GB</string>
+    <string name="direction_west">B</string>
+    <string name="direction_northwest">KB</string>
 </resources>
+

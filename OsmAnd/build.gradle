@@ -102,13 +102,19 @@ android {
 			manifest.srcFile "AndroidManifest-huawei.xml"
 		}
 		carlauncher {
-		    java.srcDirs = ["src-carlauncher", "src-google", "src-osmand"]
+			java.srcDirs = [
+				"src-carlauncher/java",   // override burada
+				"src-google/java",
+				"src-osmand/java",
+				"src/main/java"           // en altta olsun, en düşük öncelik
+			]
+		    //java.srcDirs = ["src-carlauncher/java", "src-google", "src-osmand"]
 		    res.srcDirs = ["src-carlauncher/res"]
 		    manifest.srcFile "AndroidManifest-carlauncher.xml"
-		
-		    java {
-		        exclude 'net/osmand/plus/plugins/PluginsHelper.java'
-		    }
+
+			// Burada tüm sihir gerçekleşiyor:
+			// sadece main aidl'ı kullan, carlauncher içindekini devre dışı bırak
+			aidl.srcDirs = ["src/main/aidl"]
 		}
 
 		legacy {

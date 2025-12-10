@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#CC000000"
+    android:padding="16dp">
+
+    <!-- Saat Widget - En ustte, buyuk -->
+    <TextView
+        android:id="@+id/widget_clock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/white"
+        android:textSize="48sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:text="--:--"
+        android:layout_marginBottom="24dp"/>
+
+    <!-- Ayirici cizgi -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#44FFFFFF"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Hiz Widget -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#88FFFFFF"
+            android:textSize="12sp"
+            android:text="HIZ"/>
+
+        <TextView
+            android:id="@+id/widget_speed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:textSize="36sp"
+            android:textStyle="bold"
+            android:text="--"/>
+    </LinearLayout>
+
+    <!-- Yon Widget -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#88FFFFFF"
+            android:textSize="12sp"
+            android:text="YON"/>
+
+        <TextView
+            android:id="@+id/widget_direction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:textSize="24sp"
+            android:text="--"/>
+    </LinearLayout>
+
+    <!-- Irtifa Widget -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#88FFFFFF"
+            android:textSize="12sp"
+            android:text="IRTIFA"/>
+
+        <TextView
+            android:id="@+id/widget_altitude"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:textSize="24sp"
+            android:text="--"/>
+    </LinearLayout>
+
+    <!-- Ayirici cizgi -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#44FFFFFF"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Sonraki Donus Widget (Navigasyon icin) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#88FFFFFF"
+            android:textSize="12sp"
+            android:text="SONRAKI"/>
+
+        <TextView
+            android:id="@+id/widget_next_turn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#4CAF50"
+            android:textSize="18sp"
+            android:text=""/>
+    </LinearLayout>
+
+    <!-- Bosluk doldur -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <!-- Alt kisimda hizli erisim butonlari icin alan -->
+    <LinearLayout
+        android:id="@+id/quick_launch_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="16dp">
+
+        <!-- Ileride hizli erisim butonlari eklenecek -->
+
+    </LinearLayout>
+
+</LinearLayout>
