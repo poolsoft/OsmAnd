@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- CarLauncher spesifik stringler -->
+    <string name="car_launcher_welcome">CarLauncher hos geldiniz</string>
+    <string name="car_launcher_settings">Ayarlar</string>
+</resources>
