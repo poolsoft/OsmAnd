@@ -102,12 +102,9 @@ android {
 			manifest.srcFile "AndroidManifest-huawei.xml"
 		}
 		carlauncher {
-			java.srcDirs = ["src-carlauncher/java","src-google/java","src-osmand/java"]
-				//"src/main/java"           // en altta olsun, en düşük öncelik
-			//]
 			
 		    java.srcDirs = ["src-carlauncher/java", "src-google", "src-osmand"]
-		    res.srcDirs = ["src-carlauncher/res"]
+		    res.srcDirs = ["src-carlauncher/res", "res"]
 		    manifest.srcFile "AndroidManifest-carlauncher.xml"
 
 			// Burada tüm sihir gerçekleşiyor:
