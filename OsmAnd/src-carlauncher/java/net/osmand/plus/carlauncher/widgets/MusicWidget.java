@@ -34,7 +34,7 @@ public class MusicWidget extends BaseWidget {
 
     private ImageView appIconView;
     private TextView titleText;
-    private TextView artist Text;
+    private TextView artistText;
     private ImageButton btnPrevious;
     private ImageButton btnPlayPause;
     private ImageButton btnNext;
@@ -44,9 +44,17 @@ public class MusicWidget extends BaseWidget {
     private final OsmandApplication app;
     private String currentPackageName;
 
-    private final MediaController.Callback mediaCallback=new MediaController.Callback(){@Override public void onPlaybackStateChanged(PlaybackState state){updatePlayPauseButton(state);}
+    private final MediaController.Callback mediaCallback = new MediaController.Callback() {
+        @Override
+        public void onPlaybackStateChanged(PlaybackState state) {
+            updatePlayPauseButton(state);
+        }
 
-    @Override public void onMetadataChanged(android.media.MediaMetadata metadata){updateTrackInfo(metadata);}};
+        @Override
+        public void onMetadataChanged(android.media.MediaMetadata metadata) {
+            updateTrackInfo(metadata);
+        }
+    };
 
     public MusicWidget(@NonNull Context context, @NonNull OsmandApplication app) {
         super(context, "music", "Muzik");
@@ -273,21 +281,29 @@ public class MusicWidget extends BaseWidget {
         }
     }
 
+    // Muzik uygulamasini baslatan fonksiyon
     private void launchMusicApp() {
         if (currentPackageName != null) {
             try {
-                Intent intent = context.getPackageManager().getLaunchIntentFor Package(currentPackageName);
+                // Paket adina gore uygulamayi baslatacak intenti al
+                Intent intent = context.getPackageManager().getLaunchIntentForPackage(currentPackageName);
+
                 if (intent != null) {
+                    // Yeni task olarak ac
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(intent);
+                } else {
+                    // Intent null ise paket bulunamamis olabilir
+                    Log.e("Launcher", "Uygulama bulunamadi: " + currentPackageName);
                 }
-            }catch(
 
-    Exception e)
-    {
-        e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            Log.e("Launcher", "currentPackageName bos!");
+        }
     }
-    }}
 
     private void showMusicAppSelector() {
         List<MusicApp> musicApps = findMusicApps();

@@ -132,6 +132,24 @@ public class CarLauncherActivity extends MapActivity {
 
             Log.d(TAG, "Widget panel embedded successfully");
         }
+
+        // App dock'u ekle
+        embedAppDock();
+    }
+
+    /**
+     * App dock'u app_dock container'a ekle.
+     */
+    private void embedAppDock() {
+        if (appDock != null) {
+            net.osmand.plus.carlauncher.ui.AppDockFragment appDockFragment = new net.osmand.plus.carlauncher.ui.AppDockFragment();
+
+            getSupportFragmentManager().beginTransaction()
+                    .replace(appDock.getId(), appDockFragment, "app_dock")
+                    .commitAllowingStateLoss();
+
+            Log.d(TAG, "App dock embedded successfully");
+        }
     }
 
     /**

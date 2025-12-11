@@ -18,7 +18,7 @@
         app:layout_constraintEnd_toStartOf="@+id/widget_panel"
         app:layout_constraintHorizontal_weight="7" />
 
-    <!-- WIDGET PANEL (%30 width, sag taraf) -->
+    <!-- WIDGET PANEL (%30 width, sag taraf, her zaman dikey) -->
     <FrameLayout
         android:id="@+id/widget_panel"
         android:layout_width="0dp"
@@ -30,29 +30,19 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="3" />
 
-    <!-- APP DOCK (altta, tum genislik) -->
-    <LinearLayout
+    <!-- APP DOCK (varsayilan: altta, yatay) -->
+    <FrameLayout
         android:id="@+id/app_dock"
         android:layout_width="0dp"
         android:layout_height="80dp"
-        android:orientation="horizontal"
-        android:gravity="center"
         android:background="#DD000000"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- App shortcuts buraya eklenecek -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="App Shortcuts"
-            android:textColor="#88FFFFFF"
-            android:textSize="14sp" />
+        <!-- Fragment buraya eklenecek -->
 
-    </LinearLayout>
+    </FrameLayout>
 
     <!-- TOGGLE UI BUTTON (sag ust kose) -->
     <ImageButton
