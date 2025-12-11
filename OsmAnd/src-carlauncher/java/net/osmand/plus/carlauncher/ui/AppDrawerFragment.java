@@ -46,13 +46,6 @@ public class AppDrawerFragment extends Fragment {
     private List<AppItem> cachedApps; // Cache
     private PackageReceiver packageReceiver;
 
-    @Nullable
-    @Override
-    public View createView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
-        return onCreateView(inflater, container, savedInstanceState);
-    }
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

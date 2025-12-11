@@ -71,7 +71,7 @@ public class MusicWidget extends BaseWidget {
         container.setOrientation(LinearLayout.VERTICAL);
         container.setGravity(Gravity.CENTER);
         container.setPadding(16, 16, 16, 16);
-        container.setBackgroundColor(Color.TRANSPARENT);
+        container.setBackgroundColor(android.graphics.Color.TRANSPARENT);
 
         // App icon (tiklanabilir)
         appIconView = new ImageView(context);
