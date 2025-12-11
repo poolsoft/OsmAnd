@@ -251,11 +251,6 @@ public class NavigationWidget extends BaseWidget {
                 return "Sola devam et";
             case TurnType.KR:
                 return "Saga devam et";
-            case TurnType.RNDB1:
-            case TurnType.RNDB2:
-            case TurnType.RNDB3:
-            case TurnType.RNDB4:
-                return "Doneleden cik";
             default:
                 return "Devam et";
         }

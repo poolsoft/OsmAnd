@@ -76,7 +76,7 @@ public class MusicWidget extends BaseWidget {
         appIconView = new ImageView(context);
         appIconView.setLayoutParams(new LinearLayout.LayoutParams(64, 64));
         appIconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        appIconView.setImageResource(android.R.drawable.ic_menu_music);
+        appIconView.setImageResource(android.R.drawable.ic_media_play);
         appIconView.setPadding(0, 0, 0, 12);
 
         // Click -> Uygulamayi ac
@@ -232,7 +232,7 @@ public class MusicWidget extends BaseWidget {
             Drawable icon = pm.getApplicationIcon(packageName);
             appIconView.post(() -> appIconView.setImageDrawable(icon));
         } catch (Exception e) {
-            appIconView.post(() -> appIconView.setImageResource(android.R.drawable.ic_menu_music));
+            appIconView.post(() -> appIconView.setImageResource(android.R.drawable.ic_media_play));
         }
     }
 
@@ -278,7 +278,7 @@ public class MusicWidget extends BaseWidget {
             btnPlayPause.post(() -> btnPlayPause.setImageResource(android.R.drawable.ic_media_play));
         }
         if (appIconView != null) {
-            appIconView.post(() -> appIconView.setImageResource(android.R.drawable.ic_menu_music));
+            appIconView.post(() -> appIconView.setImageResource(android.R.drawable.ic_media_play));
         }
     }
 
