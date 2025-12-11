@@ -102,13 +102,22 @@ android {
 			manifest.srcFile "AndroidManifest-huawei.xml"
 		}
 		carlauncher {
-			//java.srcDirs = ["src-carlauncher", "src-google"]
-			//java.srcDir(fileTree(dir: "src-osmand", excludes: ["**/OsmAndAppCustomization.java", "**/PluginsHelper.java"]))
+			// CarLauncher source set - kendi MapActivity ve PluginsHelper override eder
+			// Sira onemli: once src-carlauncher, sonra src-google, son olarak src-osmand
 			java.srcDirs = ["src-carlauncher", "src-google", "src-osmand"]
-			res.srcDirs = ["src-carlauncher/res"]
+			
+			// Resource'lar: once carlauncher, sonra ana res (default)
+			res.srcDirs = ["src-carlauncher/res", "res"]
+			
+			// Manifest: tools:node="replace" ile ana manifest'i override eder
 			manifest.srcFile "AndroidManifest-carlauncher.xml"
-			java.excludes = ["**/activities/MapActivity.java", "**/PluginsHelper.java"]
-			//java.excludes = ["**/PluginsHelper.java", "**/activities/MapActivity.java", "**/OsmAndAppCustomization.java"]
+			
+			// Ana src/ klasorunden exclude edilecekler (src-carlauncher'da override ediliyor)
+			// Not: Default src/ source set'e dahildir, bu yuzden exclude gerekli
+			java.excludes = [
+				"**/activities/MapActivity.java",  // src-carlauncher'da override
+				"**/PluginsHelper.java"            // src-carlauncher'da override
+			]
 		}
 			
 
