@@ -39,22 +39,21 @@ public class ClockWidget extends BaseWidget {
         container.setGravity(Gravity.CENTER);
         container.setPadding(24, 48, 24, 48);
 
-        // Arka plan (yarı saydam, köseler yuvarlak)
-        container.setBackgroundColor(Color.parseColor("#33000000"));
-        container.setClipToOutline(true);
-        container.setElevation(8f);
+        // Arka plan seffaf (panel background kullan)
+        container.setBackgroundColor(Color.TRANSPARENT);
+        // container.setElevation(8f); // Golgeyi kaldir (flat design)
 
         // Saat
         clockText = new TextView(context);
-        clockText.setTextColor(Color.WHITE);
+        clockText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_primary));
         clockText.setTextSize(64); // Buyuk modern font
         clockText.setGravity(Gravity.CENTER);
-        clockText.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
-        clockText.setShadowLayer(6, 0, 0, Color.BLACK);
+        clockText.setTypeface(Typeface.create("sans-serif-thin", Typeface.NORMAL)); // Thin font
+        // clockText.setShadowLayer(6, 0, 0, Color.BLACK); // Golge kaldir
 
         // Tarih
         dateText = new TextView(context);
-        dateText.setTextColor(Color.parseColor("#DDFFFFFF"));
+        dateText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_secondary));
         dateText.setTextSize(18);
         dateText.setGravity(Gravity.CENTER);
         dateText.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));

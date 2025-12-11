@@ -51,8 +51,8 @@ public class WidgetPanelFragment extends Fragment {
         widgetContainer.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
-        widgetContainer.setPadding(16, 16, 16, 16);
-        widgetContainer.setBackgroundColor(0xCC1A1A1A);
+        widgetContainer.setPadding(24, 24, 24, 24);
+        widgetContainer.setBackgroundResource(net.osmand.plus.R.drawable.bg_glass_panel);
 
         return widgetContainer;
     }

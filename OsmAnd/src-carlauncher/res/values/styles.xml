@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Base Application Theme -->
+    <style name="Theme.CarLauncher" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/cyber_bg_end</item>
+        <item name="colorPrimary">@color/cyber_neon_blue</item>
+        <item name="colorPrimaryDark">@color/cyber_bg_end</item>
+        <item name="colorAccent">@color/cyber_neon_blue</item>
+        <item name="android:textColor">@color/cyber_text_primary</item>
+    </style>
+
+    <!-- Widget Text Styles -->
+    <style name="WidgetTitleText">
+        <item name="android:textColor">@color/cyber_text_secondary</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.1</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="WidgetValueText">
+        <item name="android:textColor">@color/cyber_text_primary</item>
+        <item name="android:textSize">32sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontFamily">sans-serif-thin</item> <!-- Modern ince font -->
+        <item name="android:gravity">center</item>
+    </style>
+    
+    <style name="WidgetValueText.Huge">
+        <item name="android:textSize">72sp</item>
+    </style>
+
+    <style name="WidgetInfoText">
+        <item name="android:textColor">@color/cyber_text_tertiary</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+</resources>

@@ -71,13 +71,15 @@ public class MusicWidget extends BaseWidget {
         container.setOrientation(LinearLayout.VERTICAL);
         container.setGravity(Gravity.CENTER);
         container.setPadding(16, 16, 16, 16);
-        container.setBackgroundColor(0x22FFFFFF);
+        container.setBackgroundColor(Color.TRANSPARENT);
 
         // App icon (tiklanabilir)
         appIconView = new ImageView(context);
         appIconView.setLayoutParams(new LinearLayout.LayoutParams(64, 64));
         appIconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
         appIconView.setImageResource(android.R.drawable.ic_media_play);
+        appIconView.setColorFilter(context.getResources().getColor(net.osmand.plus.R.color.cyber_neon_blue)); // Neon
+                                                                                                              // Mavi
         appIconView.setPadding(0, 0, 0, 12);
 
         // Click -> Uygulamayi ac
@@ -93,7 +95,7 @@ public class MusicWidget extends BaseWidget {
 
         // Track title
         titleText = new TextView(context);
-        titleText.setTextColor(0xFFFFFFFF);
+        titleText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_primary));
         titleText.setTextSize(16);
         titleText.setGravity(Gravity.CENTER);
         titleText.setText("Muzik calmiyor");
@@ -103,7 +105,7 @@ public class MusicWidget extends BaseWidget {
 
         // Artist
         artistText = new TextView(context);
-        artistText.setTextColor(0xAAFFFFFF);
+        artistText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_tertiary));
         artistText.setTextSize(12);
         artistText.setGravity(Gravity.CENTER);
         artistText.setText("");

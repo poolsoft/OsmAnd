@@ -46,12 +46,12 @@ public class NavigationWidget extends BaseWidget {
         container.setOrientation(LinearLayout.VERTICAL);
         container.setGravity(Gravity.CENTER);
         container.setPadding(16, 16, 16, 16);
-        container.setBackgroundColor(0x22FFFFFF);
+        container.setBackgroundColor(Color.TRANSPARENT);
 
         // Label
         TextView label = new TextView(context);
         label.setText("🎯 NAVIGASYON");
-        label.setTextColor(0x88FFFFFF);
+        label.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_secondary));
         label.setTextSize(12);
         label.setGravity(Gravity.CENTER);
         label.setPadding(0, 0, 0, 8);
@@ -59,7 +59,7 @@ public class NavigationWidget extends BaseWidget {
 
         // Sonraki donus mesafesi
         distanceText = new TextView(context);
-        distanceText.setTextColor(0xFFFFFFFF);
+        distanceText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_primary));
         distanceText.setTextSize(32);
         distanceText.setGravity(Gravity.CENTER);
         distanceText.setText("--");
@@ -69,13 +69,15 @@ public class NavigationWidget extends BaseWidget {
         turnIconView = new ImageView(context);
         turnIconView.setLayoutParams(new LinearLayout.LayoutParams(96, 96));
         turnIconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        turnIconView.setColorFilter(0xFFFFFFFF);
+        turnIconView.setColorFilter(context.getResources().getColor(net.osmand.plus.R.color.cyber_neon_blue)); // Neon
+                                                                                                               // mavi
+                                                                                                               // ikon
         turnIconView.setPadding(0, 8, 0, 8);
         container.addView(turnIconView);
 
         // Donus talimati
         instructionText = new TextView(context);
-        instructionText.setTextColor(0xFFFFFFFF);
+        instructionText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_primary));
         instructionText.setTextSize(16);
         instructionText.setGravity(Gravity.CENTER);
         instructionText.setText("");
@@ -85,7 +87,7 @@ public class NavigationWidget extends BaseWidget {
 
         // Kalan sure ve mesafe
         etaText = new TextView(context);
-        etaText.setTextColor(0xAAFFFFFF);
+        etaText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_tertiary));
         etaText.setTextSize(12);
         etaText.setGravity(Gravity.CENTER);
         etaText.setText("");

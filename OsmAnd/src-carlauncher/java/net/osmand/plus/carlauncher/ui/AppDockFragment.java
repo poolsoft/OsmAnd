@@ -75,8 +75,8 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         rootLayout.setGravity(android.view.Gravity.CENTER);
-        rootLayout.setBackgroundColor(0x00000000);
-        rootLayout.setPadding(8, 8, 8, 8);
+        rootLayout.setBackgroundResource(net.osmand.plus.R.drawable.bg_app_dock);
+        rootLayout.setPadding(16, 16, 16, 16);
 
         // RecyclerView
         recyclerView = new RecyclerView(getContext());

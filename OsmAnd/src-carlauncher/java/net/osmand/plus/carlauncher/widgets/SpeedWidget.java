@@ -38,13 +38,14 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
 
         labelText = new TextView(context);
         labelText.setText("HIZ");
-        labelText.setTextColor(0x88FFFFFF);
-        labelText.setTextSize(12);
+        labelText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_secondary));
+        labelText.setTextSize(14); // Biraz daha buyuk
         labelText.setGravity(Gravity.CENTER);
 
         speedText = new TextView(context);
-        speedText.setTextColor(0xFFFFFFFF);
-        speedText.setTextSize(36);
+        speedText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_neon_blue)); // Hiz neon
+                                                                                                          // mavi
+        speedText.setTextSize(72); // Cok daha buyuk
         speedText.setGravity(Gravity.CENTER);
         speedText.setText("--");
 
