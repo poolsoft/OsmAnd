@@ -108,7 +108,20 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
         orientationButton.setVisibility(View.GONE); // Sadece edit mode'da gorunur
         buttonsLayout.addView(orientationButton);
 
-        // Add button
+        // Drawer Button (Grid Icon)
+        ImageButton drawerButton = new ImageButton(getContext());
+        drawerButton.setImageResource(android.R.drawable.ic_menu_sort_by_size); // Grid icon benzeri
+        drawerButton.setBackgroundColor(0x00000000);
+        drawerButton.setColorFilter(0xFFFFFFFF);
+        drawerButton.setLayoutParams(new LinearLayout.LayoutParams(64, 64));
+        drawerButton.setOnClickListener(v -> openAppDrawer());
+        buttonsLayout.addView(drawerButton);
+
+        // Add button (Spacer added for separation)
+        View spacer = new View(getContext());
+        spacer.setLayoutParams(new LinearLayout.LayoutParams(16, 16));
+        buttonsLayout.addView(spacer);
+
         addButton = new ImageButton(getContext());
         addButton.setImageResource(android.R.drawable.ic_input_add);
         addButton.setBackgroundColor(0x00000000);
@@ -317,6 +330,12 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
                         .setPositiveButton("Tamam", null)
                         .show();
             }
+        }
+    }
+
+    private void openAppDrawer() {
+        if (getActivity() instanceof net.osmand.plus.carlauncher.CarLauncherActivity) {
+            ((net.osmand.plus.carlauncher.CarLauncherActivity) getActivity()).openAppDrawer();
         }
     }
 }

@@ -33,6 +33,7 @@ public class CarLauncherActivity extends MapActivity {
     private LinearLayout appDock;
     private ImageButton btnToggleUi;
     private ImageButton btnToggleDock;
+    private FrameLayout appDrawerContainer;
 
     // Durum
     private boolean isUiVisible = true;
@@ -85,6 +86,7 @@ public class CarLauncherActivity extends MapActivity {
         appDock = findViewById(R.id.app_dock);
         btnToggleUi = findViewById(R.id.btn_toggle_ui);
         btnToggleDock = findViewById(R.id.btn_toggle_dock);
+        appDrawerContainer = findViewById(R.id.app_drawer_container);
 
         // MapActivity'nin harita view'ını map_container'a taşı
         embedMapView();
@@ -276,8 +278,40 @@ public class CarLauncherActivity extends MapActivity {
         cs.setHorizontalWeight(R.id.widget_panel, 0.0f);
     }
 
+    /**
+     * App Drawer'i ac.
+     */
+    public void openAppDrawer() {
+        if (appDrawerContainer != null) {
+            appDrawerContainer.setVisibility(View.VISIBLE);
+
+            // Fragment ekli degilse ekle
+            if (getSupportFragmentManager()
+                    .findFragmentByTag(net.osmand.plus.carlauncher.ui.AppDrawerFragment.TAG) == null) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.app_drawer_container, new net.osmand.plus.carlauncher.ui.AppDrawerFragment(),
+                                net.osmand.plus.carlauncher.ui.AppDrawerFragment.TAG)
+                        .commitAllowingStateLoss();
+            }
+        }
+    }
+
+    /**
+     * App Drawer'i kapat.
+     */
+    public void closeAppDrawer() {
+        if (appDrawerContainer != null) {
+            appDrawerContainer.setVisibility(View.GONE);
+        }
+    }
+
     @Override
     public void onBackPressed() {
+        if (appDrawerContainer != null && appDrawerContainer.getVisibility() == View.VISIBLE) {
+            closeAppDrawer();
+            return;
+        }
+
         // Full map mode'daysa launcher mode'a don
         if (currentMode == LayoutMode.FULL_MAP) {
             setLayoutMode(LayoutMode.LAUNCHER);
