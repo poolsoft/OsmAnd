@@ -106,12 +106,14 @@ public class WidgetPanelFragment extends Fragment {
         // Yon widget
         widgetManager.addWidget(new DirectionWidget(getContext(), app));
 
+        // Navigasyon widget
+        widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.NavigationWidget(getContext(), app));
+
         // Muzik widget
         widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.MusicWidget(getContext(), app));
 
         // Gelecekte: Daha fazla widget eklenecek
         // widgetManager.addWidget(new AltitudeWidget(getContext(), app));
-        // widgetManager.addWidget(new NavigationWidget(getContext(), app));
     }
 
     /**
