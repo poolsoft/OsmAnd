@@ -66,13 +66,22 @@ public class AppDockManager {
                 JSONObject obj = array.getJSONObject(i);
                 String packageName = obj.getString("package");
                 int order = obj.getInt("order");
+                LaunchMode launchMode = LaunchMode.FULL_SCREEN;
+
+                if (obj.has("launchMode")) {
+                    try {
+                        launchMode = LaunchMode.valueOf(obj.getString("launchMode"));
+                    } catch (IllegalArgumentException e) {
+                        launchMode = LaunchMode.FULL_SCREEN;
+                    }
+                }
 
                 try {
                     ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
                     String appName = appInfo.loadLabel(pm).toString();
                     Drawable icon = appInfo.loadIcon(pm);
 
-                    shortcuts.add(new AppShortcut(packageName, appName, icon, order));
+                    shortcuts.add(new AppShortcut(packageName, appName, icon, order, launchMode));
                 } catch (PackageManager.NameNotFoundException e) {
                     // Uygulama yuklu degil
                 }
@@ -107,7 +116,7 @@ public class AppDockManager {
                 String appName = appInfo.loadLabel(pm).toString();
                 Drawable icon = appInfo.loadIcon(pm);
 
-                shortcuts.add(new AppShortcut(packageName, appName, icon, order++));
+                shortcuts.add(new AppShortcut(packageName, appName, icon, order++, LaunchMode.FULL_SCREEN));
             } catch (PackageManager.NameNotFoundException e) {
                 // Uygulama yuklu degil
             }
@@ -125,6 +134,7 @@ public class AppDockManager {
                 JSONObject obj = new JSONObject();
                 obj.put("package", shortcut.getPackageName());
                 obj.put("order", shortcut.getOrder());
+                obj.put("launchMode", shortcut.getLaunchMode().name());
                 array.put(obj);
             }
 

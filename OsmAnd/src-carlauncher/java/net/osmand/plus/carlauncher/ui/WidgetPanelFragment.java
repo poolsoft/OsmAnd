@@ -16,6 +16,8 @@ import net.osmand.plus.carlauncher.widgets.ClockWidget;
 import net.osmand.plus.carlauncher.widgets.DirectionWidget;
 import net.osmand.plus.carlauncher.widgets.SpeedWidget;
 import net.osmand.plus.carlauncher.widgets.WidgetManager;
+import net.osmand.plus.carlauncher.widgets.NavigationWidget;
+import net.osmand.plus.carlauncher.widgets.MusicWidget;
 
 /**
  * Widget paneli fragment.
@@ -107,10 +109,10 @@ public class WidgetPanelFragment extends Fragment {
         widgetManager.addWidget(new DirectionWidget(getContext(), app));
 
         // Navigasyon widget
-        widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.NavigationWidget(getContext(), app));
+        widgetManager.addWidget(new NavigationWidget(getContext(), app));
 
         // Muzik widget
-        widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.MusicWidget(getContext(), app));
+        widgetManager.addWidget(new MusicWidget(getContext(), app));
 
         // Gelecekte: Daha fazla widget eklenecek
         // widgetManager.addWidget(new AltitudeWidget(getContext(), app));

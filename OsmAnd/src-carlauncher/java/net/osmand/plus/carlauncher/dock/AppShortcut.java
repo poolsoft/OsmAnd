@@ -12,12 +12,14 @@ public class AppShortcut {
     private String appName;
     private Drawable icon;
     private int order;
+    private LaunchMode launchMode;
 
     public AppShortcut(String packageName, String appName, Drawable icon, int order) {
         this.packageName = packageName;
         this.appName = appName;
         this.icon = icon;
         this.order = order;
+        this.launchMode = LaunchMode.FULL_SCREEN; // Varsayilan
     }
 
     public String getPackageName() {
@@ -50,5 +52,13 @@ public class AppShortcut {
 
     public void setOrder(int order) {
         this.order = order;
+    }
+
+    public LaunchMode getLaunchMode() {
+        return launchMode;
+    }
+
+    public void setLaunchMode(LaunchMode launchMode) {
+        this.launchMode = launchMode;
     }
 }
