@@ -1,6 +1,4 @@
-package net.osmand.plus.carl
-
-auncher.ui;
+package net.osmand.plus.carlauncher.ui;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -27,7 +25,7 @@ public class WidgetPanelFragment extends Fragment {
 
     public static final String TAG = "WidgetPanelFragment";
 
-    private Linear Layout widgetContainer;
+    private LinearLayout widgetContainer;
     private WidgetManager widgetManager;
     private OsmandApplication app;
 
@@ -87,7 +85,7 @@ public class WidgetPanelFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (widget Manager != null) {
+        if (widgetManager != null) {
             widgetManager.saveWidgetConfig();
         }
     }
@@ -108,10 +106,12 @@ public class WidgetPanelFragment extends Fragment {
         // Yon widget
         widgetManager.addWidget(new DirectionWidget(getContext(), app));
 
+        // Muzik widget
+        widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.MusicWidget(getContext(), app));
+
         // Gelecekte: Daha fazla widget eklenecek
         // widgetManager.addWidget(new AltitudeWidget(getContext(), app));
         // widgetManager.addWidget(new NavigationWidget(getContext(), app));
-        // widgetManager.addWidget(new MusicWidget(getContext(), app));
     }
 
     /**
