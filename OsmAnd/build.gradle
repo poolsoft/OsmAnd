@@ -105,6 +105,7 @@ android {
 			java.srcDirs = ["src-carlauncher", "src-google", "src-osmand"]
 			res.srcDirs = ["src-carlauncher/res"]
 			manifest.srcFile "AndroidManifest-carlauncher.xml"
+			java.excludes = ["**/PluginsHelper.java"]
 		}
 
 		legacy {
