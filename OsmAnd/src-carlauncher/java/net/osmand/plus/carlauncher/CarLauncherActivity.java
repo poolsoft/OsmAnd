@@ -30,7 +30,7 @@ public class CarLauncherActivity extends MapActivity {
     private ConstraintLayout rootLayout;
     private FrameLayout mapContainer;
     private FrameLayout widgetPanel;
-    private LinearLayout appDock;
+    private FrameLayout appDock;
     private ImageButton btnToggleUi;
     private ImageButton btnToggleDock;
     private FrameLayout appDrawerContainer;
@@ -303,6 +303,53 @@ public class CarLauncherActivity extends MapActivity {
         if (appDrawerContainer != null) {
             appDrawerContainer.setVisibility(View.GONE);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // UI'nin kaybolmasini engelle (MapActivity layout'u resetlerse)
+        ensureLauncherLayout();
+    }
+
+    private void ensureLauncherLayout() {
+        if (findViewById(R.id.root_layout) == null) {
+            Log.w(TAG, "Launcher layout missing, reinflating...");
+            inflateCarLauncherLayout();
+            // Layout state restoration could be added here if needed
+        }
+    }
+
+    @Override
+    public void startActivity(android.content.Intent intent) {
+        intent = interceptMapActivityIntent(intent);
+        super.startActivity(intent);
+    }
+
+    @Override
+    public void startActivityForResult(android.content.Intent intent, int requestCode) {
+        intent = interceptMapActivityIntent(intent);
+        super.startActivityForResult(intent, requestCode);
+    }
+
+    @Override
+    public void startActivityForResult(android.content.Intent intent, int requestCode, Bundle options) {
+        intent = interceptMapActivityIntent(intent);
+        super.startActivityForResult(intent, requestCode, options);
+    }
+
+    private android.content.Intent interceptMapActivityIntent(android.content.Intent intent) {
+        if (intent == null || intent.getComponent() == null)
+            return intent;
+
+        String className = intent.getComponent().getClassName();
+        if (MapActivity.class.getName().equals(className) ||
+                "net.osmand.plus.activities.MapActivity".equals(className)) {
+
+            Log.i(TAG, "Intercepting MapActivity intent, redirecting to CarLauncherActivity");
+            intent.setClass(this, CarLauncherActivity.class);
+        }
+        return intent;
     }
 
     @Override

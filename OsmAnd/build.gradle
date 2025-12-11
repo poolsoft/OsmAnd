@@ -102,10 +102,10 @@ android {
 			manifest.srcFile "AndroidManifest-huawei.xml"
 		}
 		carlauncher {
-			java.srcDirs = ["src-carlauncher", "src-google", "src-osmand"]
+			java.srcDirs = ["src-carlauncher", "src-google"]
+			java.srcDir(fileTree(dir: "src-osmand", excludes: ["**/OsmAndAppCustomization.java", "**/PluginsHelper.java"]))
 			res.srcDirs = ["src-carlauncher/res"]
 			manifest.srcFile "AndroidManifest-carlauncher.xml"
-			java.excludes = ["**/PluginsHelper.java"]
 		}
 
 		legacy {
