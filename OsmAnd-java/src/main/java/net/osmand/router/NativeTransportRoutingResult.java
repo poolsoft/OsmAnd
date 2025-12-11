@@ -6,7 +6,6 @@ public class NativeTransportRoutingResult {
 	public double finishWalkDist;
 	public double routeTime;
 	// JNI EXPECTED FIELD
-	public NativeTransportRoutingResult[] alternativeRoutes;
-
+	// public NativeTransportRoutingResult[] alternativeRoutes;
 
 }
