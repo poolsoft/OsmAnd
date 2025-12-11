@@ -17,7 +17,7 @@
             android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|keyboardHidden|uiMode"
             android:exported="true"
-            tools:replace="android:screenOrientation">
+            tools:replace="android:screenOrientation,android:theme,android:configChanges">
             
             <!-- Launcher olarak calisabilmesi icin -->
             <intent-filter>
