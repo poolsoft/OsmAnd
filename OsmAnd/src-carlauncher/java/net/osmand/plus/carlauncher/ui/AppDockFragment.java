@@ -334,8 +334,8 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
     }
 
     private void openAppDrawer() {
-        if (getActivity() instanceof net.osmand.plus.carlauncher.CarLauncherActivity) {
-            ((net.osmand.plus.carlauncher.CarLauncherActivity) getActivity()).openAppDrawer();
+        if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+            ((net.osmand.plus.activities.MapActivity) getActivity()).openAppDrawer();
         }
     }
 }
