@@ -68,6 +68,9 @@
         android:tint="#FFFFFF"
         android:contentDescription="Toggle Dock"
         app:layout_constraintBottom_toTopOf="@+id/app_dock"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <!-- APP DRAWER OVERLAY (En ust katman, varsayilan GONE) -->
     <FrameLayout
         android:id="@+id/app_drawer_container"
