@@ -2,6 +2,7 @@ package net.osmand.plus.carlauncher.ui;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,6 +23,8 @@ import net.osmand.plus.carlauncher.dock.AppDockAdapter;
 import net.osmand.plus.carlauncher.dock.AppDockManager;
 import net.osmand.plus.carlauncher.dock.AppPickerDialog;
 import net.osmand.plus.carlauncher.dock.AppShortcut;
+import net.osmand.plus.carlauncher.dock.LaunchMode;
+import net.osmand.plus.carlauncher.overlay.OverlayWindowManager;
 
 /**
  * App Dock fragment.
@@ -40,6 +44,7 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
     private ImageButton orientationButton;
     private AppDockAdapter adapter;
     private AppDockManager dockManager;
+    private OverlayWindowManager overlayManager;
     private SharedPreferences prefs;
     private boolean isEditMode = false;
     private int currentOrientation = ORIENTATION_HORIZONTAL; // Varsayilan yatay
@@ -50,6 +55,8 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
         if (getContext() != null) {
             dockManager = new AppDockManager(getContext());
             dockManager.loadShortcuts();
+
+            overlayManager = new OverlayWindowManager(getContext());
 
             prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
             currentOrientation = prefs.getInt(KEY_ORIENTATION, ORIENTATION_HORIZONTAL);
@@ -132,18 +139,76 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
 
     @Override
     public void onShortcutClick(AppShortcut shortcut) {
-        // Adapter icinde launchApp ile handle ediliyor
+        if (getContext() == null)
+            return;
+
+        LaunchMode mode = shortcut.getLaunchMode();
+        String packageName = shortcut.getPackageName();
+
+        try {
+            switch (mode) {
+                case FULL_SCREEN:
+                    launchAppStandard(packageName);
+                    break;
+
+                case OVERLAY:
+                    if (overlayManager != null) {
+                        try {
+                            overlayManager.showOverlay(packageName);
+                        } catch (Exception e) {
+                            // Fallback to standard
+                            launchAppStandard(packageName);
+                        }
+                    }
+                    break;
+
+                case SPLIT_SCREEN:
+                    launchAppSplitScreen(packageName);
+                    break;
+
+                case WIDGET_ONLY:
+                    // Sadece widget, uygulama acilmaz
+                    break;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error launching app: " + packageName, e);
+        }
+    }
+
+    private void launchAppStandard(String packageName) {
+        try {
+            Intent intent = getContext().getPackageManager().getLaunchIntentForPackage(packageName);
+            if (intent != null) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getContext().startActivity(intent);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Launch failed", e);
+        }
+    }
+
+    private void launchAppSplitScreen(String packageName) {
+        try {
+            Intent intent = getContext().getPackageManager().getLaunchIntentForPackage(packageName);
+            if (intent != null) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    intent.addFlags(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT); // Split screen flag
+                }
+                getContext().startActivity(intent);
+            }
+        } catch (Exception e) {
+            launchAppStandard(packageName); // Fallback
+        }
     }
 
     @Override
     public void onShortcutLongClick(AppShortcut shortcut) {
-        // Uzun basma -> Edit mode
         toggleEditMode();
     }
 
     @Override
     public void onRemoveClick(AppShortcut shortcut) {
-        // Kaldirma onay dialogu
         new AlertDialog.Builder(getContext())
                 .setTitle("Kisayol Kaldir")
                 .setMessage(shortcut.getAppName() + " kisayolunu kaldirmak istiyor musunuz?")
@@ -157,9 +222,6 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
                 .show();
     }
 
-    /**
-     * Edit mode toggle.
-     */
     private void toggleEditMode() {
         isEditMode = !isEditMode;
 
@@ -167,7 +229,6 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
             adapter.setEditMode(isEditMode);
         }
 
-        // Button visibility
         if (addButton != null) {
             addButton.setVisibility(isEditMode ? View.VISIBLE : View.GONE);
         }
@@ -175,7 +236,6 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
             orientationButton.setVisibility(isEditMode ? View.VISIBLE : View.GONE);
         }
 
-        // Otomatik kapat (10 saniye sonra)
         if (isEditMode && getView() != null) {
             getView().postDelayed(() -> {
                 if (isEditMode) {
@@ -185,19 +245,14 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
         }
     }
 
-    /**
-     * Orientation toggle (yatay <-> dikey).
-     */
     private void toggleOrientation() {
         currentOrientation = (currentOrientation == ORIENTATION_HORIZONTAL) ? ORIENTATION_VERTICAL
                 : ORIENTATION_HORIZONTAL;
 
-        // Kaydet
         if (prefs != null) {
             prefs.edit().putInt(KEY_ORIENTATION, currentOrientation).apply();
         }
 
-        // Fragment'i yeniden olustur
         if (getFragmentManager() != null) {
             getFragmentManager().beginTransaction()
                     .detach(this)
@@ -206,14 +261,10 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
         }
     }
 
-    /**
-     * Uygulama secici goster.
-     */
     private void showAppPicker() {
         if (getContext() == null || dockManager == null)
             return;
 
-        // Limit kontrolu
         if (!dockManager.canAddMore()) {
             new AlertDialog.Builder(getContext())
                     .setTitle("Limit")
@@ -226,26 +277,39 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
         AppPickerDialog dialog = new AppPickerDialog(
                 getContext(),
                 (packageName, appName, icon) -> {
-                    // Uygulama secildi
-                    addShortcut(packageName, appName, icon);
+                    showLaunchModeSelector(packageName, appName, icon);
                 });
         dialog.show();
     }
 
-    /**
-     * Kisayol ekle.
-     */
-    private void addShortcut(String packageName, String appName, Drawable icon) {
+    private void showLaunchModeSelector(String packageName, String appName, Drawable icon) {
+        LaunchMode[] modes = LaunchMode.values();
+        String[] modeNames = new String[modes.length];
+
+        for (int i = 0; i < modes.length; i++) {
+            modeNames[i] = modes[i].getDisplayName();
+        }
+
+        new AlertDialog.Builder(getContext())
+                .setTitle("Acilis Modu Sec: " + appName)
+                .setItems(modeNames, (dialog, which) -> {
+                    LaunchMode selectedMode = modes[which];
+                    addShortcut(packageName, appName, icon, selectedMode);
+                })
+                .setNegativeButton("Iptal", null)
+                .show();
+    }
+
+    private void addShortcut(String packageName, String appName, Drawable icon, LaunchMode launchMode) {
         if (dockManager == null)
             return;
 
         int order = dockManager.getShortcuts().size();
-        AppShortcut shortcut = new AppShortcut(packageName, appName, icon, order);
+        AppShortcut shortcut = new AppShortcut(packageName, appName, icon, order, launchMode);
 
         if (dockManager.addShortcut(shortcut)) {
             adapter.setShortcuts(dockManager.getShortcuts());
         } else {
-            // Eklenemedi
             if (getContext() != null) {
                 new AlertDialog.Builder(getContext())
                         .setTitle("Hata")

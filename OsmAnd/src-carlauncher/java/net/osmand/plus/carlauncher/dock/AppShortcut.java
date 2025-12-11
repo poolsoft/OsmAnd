@@ -15,11 +15,15 @@ public class AppShortcut {
     private LaunchMode launchMode;
 
     public AppShortcut(String packageName, String appName, Drawable icon, int order) {
+        this(packageName, appName, icon, order, LaunchMode.FULL_SCREEN);
+    }
+
+    public AppShortcut(String packageName, String appName, Drawable icon, int order, LaunchMode launchMode) {
         this.packageName = packageName;
         this.appName = appName;
         this.icon = icon;
         this.order = order;
-        this.launchMode = LaunchMode.FULL_SCREEN; // Varsayilan
+        this.launchMode = launchMode;
     }
 
     public String getPackageName() {

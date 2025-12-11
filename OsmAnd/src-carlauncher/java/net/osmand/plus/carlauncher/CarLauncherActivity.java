@@ -95,8 +95,10 @@ public class CarLauncherActivity extends MapActivity {
      */
     private void embedMapView() {
         try {
-            // MapActivity'nin harita view'ını bul
-            OsmandMapTileView mapView = getMapView();
+            // Find MapActivity's real map view by ID
+            // OsmandMapTileView returned by getMapView() is not a View object!
+            View mapView = findViewById(R.id.map_view_with_layers);
+
             if (mapView != null && mapContainer != null) {
                 // Eski parent'tan ayır
                 if (mapView.getParent() != null) {
@@ -110,6 +112,8 @@ public class CarLauncherActivity extends MapActivity {
                                 FrameLayout.LayoutParams.MATCH_PARENT));
 
                 Log.d(TAG, "Map view embedded successfully");
+            } else {
+                Log.e(TAG, "Map view not found by ID: R.id.map_view_with_layers");
             }
         } catch (Exception e) {
             Log.e(TAG, "Error embedding map view", e);

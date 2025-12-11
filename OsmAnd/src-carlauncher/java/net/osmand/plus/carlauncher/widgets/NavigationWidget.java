@@ -191,13 +191,11 @@ public class NavigationWidget extends BaseWidget {
         switch (turnType.getValue()) {
             case TurnType.C: // Duz git
                 return android.R.drawable.arrow_up_float;
-            case TurnType.TL: // Hafif sola
-            case TurnType.TSLL: // Keskin sola
             case TurnType.TL: // Sola don
+            case TurnType.TSLL: // Keskin sola
                 return android.R.drawable.ic_menu_revert;
-            case TurnType.TR: // Hafif saga
-            case TurnType.TSLR: // Keskin saga
             case TurnType.TR: // Saga don
+            case TurnType.TSLR: // Keskin saga
                 return android.R.drawable.ic_menu_always_landscape_portrait;
             case TurnType.TU: // U donus
                 return android.R.drawable.ic_menu_rotate;
