@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import net.osmand.plus.carlauncher.dock.AppDockAdapter;
 import net.osmand.plus.carlauncher.dock.AppDockManager;
 import net.osmand.plus.carlauncher.dock.AppPickerDialog;
+import net.osmand.plus.carlauncher.CarLauncherInterface;
 import net.osmand.plus.carlauncher.dock.AppShortcut;
 import net.osmand.plus.carlauncher.dock.LaunchMode;
 import net.osmand.plus.carlauncher.overlay.OverlayWindowManager;
@@ -334,8 +335,8 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
     }
 
     private void openAppDrawer() {
-        if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
-            ((net.osmand.plus.activities.MapActivity) getActivity()).openAppDrawer();
+        if (getActivity() instanceof CarLauncherInterface) {
+            ((CarLauncherInterface) getActivity()).openAppDrawer();
         }
     }
 }

@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import net.osmand.plus.activities.MapActivity;
+import net.osmand.plus.carlauncher.CarLauncherInterface;
 import net.osmand.plus.carlauncher.dock.AppDockManager;
 import net.osmand.plus.carlauncher.dock.AppShortcut;
 import net.osmand.plus.carlauncher.dock.LaunchMode;
@@ -127,8 +128,8 @@ public class AppDrawerFragment extends Fragment {
     }
 
     private void closeDrawer() {
-        if (getActivity() instanceof MapActivity) {
-            ((MapActivity) getActivity()).closeAppDrawer();
+        if (getActivity() instanceof CarLauncherInterface) {
+            ((CarLauncherInterface) getActivity()).closeAppDrawer();
         }
     }
 

@@ -152,7 +152,7 @@ import java.util.TimerTask;
 public class MapActivity extends OsmandActionBarActivity implements DownloadEvents,
 		IRouteInformationListener, AMapPointUpdateListener, MapMarkerChangedListener,
 		OnDrawMapListener, OsmAndAppCustomizationListener, LockUIAdapter,
-		OnPreferenceStartFragmentCallback {
+		OnPreferenceStartFragmentCallback, net.osmand.plus.carlauncher.CarLauncherInterface {
 
 	public static final String INTENT_KEY_PARENT_MAP_ACTIVITY = "intent_parent_map_activity_key";
 	public static final String INTENT_PARAMS = "intent_prarams";
