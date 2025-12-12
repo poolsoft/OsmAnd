@@ -6,5 +6,4 @@ public class NativeTransportRoutingResult {
 	public double finishWalkDist;
 	public double routeTime;
 
-
 }
