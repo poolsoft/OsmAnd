@@ -107,7 +107,7 @@ android {
 			java.srcDirs = ["src-carlauncher", "src-google", "src-osmand"]
 			
 			// Resource'lar: once carlauncher, sonra ana res (default)
-			res.srcDirs = ["src-carlauncher/res", "res"]
+			res.srcDirs = ["src-carlauncher/res"]
 			
 			// Manifest: tools:node="replace" ile ana manifest'i override eder
 			manifest.srcFile "AndroidManifest-carlauncher.xml"

@@ -7,6 +7,8 @@ public class NativeTransportRouteResultSegment {
 	public double travelTime;
 	public int start;
 	public int end;
-	public double walkDist ;
+	public double walkDist;
 	public int depTime;
+	// JNI EXPECTED FIELD
+	public NativeTransportRouteResultSegment[] alternatives;
 }
