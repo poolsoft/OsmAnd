@@ -65,30 +65,6 @@ jobs:
       working-directory: ./android
       run: printf "\norg.gradle.jvmargs=-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8\n" >> gradle.properties
     
-    - name: Remove conflicting Java files for CarLauncher build
-      working-directory: ./android/OsmAnd
-      run: |
-        echo "🗑️  Removing original Java files that conflict with CarLauncher..."
-        echo "⚠️  NOTE: This ONLY runs in CI/CD, not in local builds!"
-        echo ""
-        
-        # Sadece Java dosyalarini sil - XML/layout dosyalarina DOKUNMA
-        if [ -f "src/net/osmand/plus/activities/MapActivity.java" ]; then
-          rm -f src/net/osmand/plus/activities/MapActivity.java
-          echo "✅ Removed: src/net/osmand/plus/activities/MapActivity.java"
-        fi
-        
-        if [ -f "src/net/osmand/plus/plugins/PluginsHelper.java" ]; then
-          rm -f src/net/osmand/plus/plugins/PluginsHelper.java
-          echo "✅ Removed: src/net/osmand/plus/plugins/PluginsHelper.java"
-        fi
-        
-        echo ""
-        echo "🎯 CarLauncher-specific Java files will be used!"
-        echo "📂 Remaining MapActivity.java files:"
-        find . -name "MapActivity.java" -type f 2>/dev/null || echo "  (none in src/)"
-    
-    
     - name: Build with Gradle
       working-directory: ./android
       run: ./gradlew assemblecarlauncherLegacyFatDebug -x test --console=plain --no-daemon 2>&1 | grep -iE 'error|exception|fail'
