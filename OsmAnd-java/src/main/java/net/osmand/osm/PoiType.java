@@ -35,7 +35,6 @@ public class PoiType extends AbstractPoiType {
 	private boolean hidden = false;
 	private int maxPerMap;
 	private int minCount;
-	private boolean defaultForCategory = false;
 
 
 	public PoiType(MapPoiTypes poiTypes, PoiCategory category, PoiFilter filter, String keyName, String iconName) {
@@ -329,12 +328,4 @@ public class PoiType extends AbstractPoiType {
 		}
 		return tags;
 	}
-
-    public boolean isDefaultForCategory() {
-        return defaultForCategory;
-    }
-
-    public void setDefaultForCategory(boolean defaultForCategory) {
-        this.defaultForCategory = defaultForCategory;
-    }
 }

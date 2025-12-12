@@ -43,7 +43,6 @@ public class MapPoiTypes {
 	private PoiTranslator poiTranslator = null;
 	private boolean init;
 	Map<String, PoiType> poiTypesByTag = new LinkedHashMap<String, PoiType>();
-	Map<String, PoiType> defaultPoiTypesByTag = new HashMap<String, PoiType>();
 	Map<String, String> deprecatedTags = new LinkedHashMap<String, String>();
 	Map<String, String> poiAdditionalCategoryIconNames = new LinkedHashMap<String, String>();
 	List<PoiType> textPoiAdditionals = new ArrayList<PoiType>();
@@ -762,7 +761,6 @@ public class MapPoiTypes {
 		tp.setRelation("true".equals(parser.getAttributeValue("", "relation")));
 		tp.setNotEditableOsm("true".equals(parser.getAttributeValue("", "no_edit")));
 		tp.setTopVisible(Boolean.parseBoolean(parser.getAttributeValue("", "top")));
-		tp.setDefaultForCategory(Boolean.parseBoolean(parser.getAttributeValue("", "defaultForCategory")));
 		if (lastFilter != null) {
 			lastFilter.addPoiType(tp);
 		}
@@ -965,9 +963,6 @@ public class MapPoiTypes {
 
 	private void initPoiType(PoiType p) {
 		if (!p.isReference() && !Algorithms.isEmpty(p.getRawOsmTag())) {
-			if (p.isDefaultForCategory()) {
-				initDefaultPoiType(p);
-			}
 			String key = null;
 			if (p.isAdditional()) {
 				key = p.isText() ? p.getRawOsmTag() :
@@ -981,20 +976,6 @@ public class MapPoiTypes {
 			poiTypesByTag.put(key, p);
 		}
 	}
-	
-	private void initDefaultPoiType(PoiType p) {
-		if (!p.isReference() && !Algorithms.isEmpty(p.getRawOsmTag()) && p.isDefaultForCategory()) {
-			PoiCategory pc = p.getCategory();
-			String tag = pc.getDefaultTag();
-			if (Algorithms.isEmpty(tag)) {
-				throw new UnsupportedOperationException("!! Default tag is not set for category " + pc.getKeyName());
-			}
-			if (defaultPoiTypesByTag.containsKey(tag)) {
-				throw new UnsupportedOperationException("!! Duplicate default poi type " + tag + " for category " + pc.getKeyName());
-			}
-			defaultPoiTypesByTag.put(tag, p);
-		}
-	}
 
 	public String replaceDeprecatedSubtype(PoiCategory type, String subtype) {
 		if(deprecatedTags.containsKey(subtype)) {
@@ -1005,13 +986,6 @@ public class MapPoiTypes {
 
 	public Amenity parseAmenity(String tag, String val, boolean relation, Map<String, String> otherTags) {
 		PoiType pt = getPoiTypeByTagValue(tag, val);
-		boolean isDefaultForCategory = false;
-		if (pt == null) {
-			pt = getDefaultPoiTypeByTag(tag);
-			if (pt != null) {
-				isDefaultForCategory = true;
-			}
-		}
 		if (pt == null || pt.isAdditional()) {
 			return null;
 		}
@@ -1066,9 +1040,6 @@ public class MapPoiTypes {
 				}
 			}
 		}
-		if (isDefaultForCategory) {
-			a.setAdditionalInfo(tag, val);
-		}
 
 		return a;
 	}
@@ -1084,11 +1055,6 @@ public class MapPoiTypes {
 //			pt = poitypesbytag.get(tag + "/" + "null"); // required when no type="text" specified
 //		}
 		return pt;
-	}
-
-	public PoiType getDefaultPoiTypeByTag(String tag) {
-		initPoiTypesByTag();
-        return defaultPoiTypesByTag.get(tag);
 	}
 
 	public boolean isTextAdditionalInfo(String key, String value) {
