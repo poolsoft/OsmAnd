@@ -1,4 +1,4 @@
-name: Build carlauncher apk
+name: Build CarLauncher.apk
 
 on:
   workflow_dispatch:
@@ -98,6 +98,6 @@ jobs:
     - name: Archive APK
       uses: actions/upload-artifact@v5
       with:
-        name: debug-apk
+        name: CarLauncher-apk
         path: android/OsmAnd/build/outputs/apk/*/*/*.apk
         retention-days: 90

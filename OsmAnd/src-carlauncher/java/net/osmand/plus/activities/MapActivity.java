@@ -260,8 +260,12 @@ public class MapActivity extends OsmandActionBarActivity implements DownloadEven
 		mapRouteInfoMenu.setMapActivity(this);
 		trackDetailsMenu.setMapActivity(this);
 
-		setContentView(R.layout.main);
+		// CarLauncher: Direkt activity_car_launcher layout'unu set et
 		setupCarLauncherUI();
+		
+		// DEBUG: Verify CarLauncher Activity
+		android.widget.Toast.makeText(this, "CarLauncher MapActivity Active!", android.widget.Toast.LENGTH_LONG).show();
+		
 		enterToFullScreen();
 		// Navigation Drawer
 		AndroidUtils.addStatusBarPadding21v(this, findViewById(R.id.menuItems));
@@ -358,21 +362,10 @@ public class MapActivity extends OsmandActionBarActivity implements DownloadEven
 	}
 
 	private void setupCarLauncherUI() {
-		// Inflate CarLauncher layout
-		View carLauncherView = getLayoutInflater().inflate(R.layout.activity_car_launcher, null);
+		// 1. Önce CarLauncher layout'unu set et (tek setContentView)
+		setContentView(R.layout.activity_car_launcher);
 
-		// Find relevant views from standard MapActivity layout (R.layout.main) which is
-		// currently set
-		View originalRoot = findViewById(R.id.drawer_layout); // Root of main.xml
-		ViewGroup parent = (ViewGroup) originalRoot.getParent();
-		if (parent != null) {
-			parent.removeView(originalRoot);
-		}
-
-		// Set CarLauncher layout as content
-		setContentView(carLauncherView);
-
-		// Init fields
+		// 2. CarLauncher view'larını bul
 		rootLayout = findViewById(R.id.root_layout);
 		mapContainer = findViewById(R.id.map_container);
 		widgetPanel = findViewById(R.id.widget_panel);
@@ -381,10 +374,13 @@ public class MapActivity extends OsmandActionBarActivity implements DownloadEven
 		btnToggleDock = findViewById(R.id.btn_toggle_dock);
 		appDrawerContainer = findViewById(R.id.app_drawer_container);
 
-		// Add original root (map + HUD) to map_container
-		mapContainer.addView(originalRoot);
+		// 3. Orijinal main.xml layout'unu inflate et
+		View mainLayout = getLayoutInflater().inflate(R.layout.main, mapContainer, false);
+		
+		// 4. main.xml'i map_container'a ekle
+		mapContainer.addView(mainLayout);
 
-		// Initialize CarLauncher components
+		// 5. CarLauncher bileşenlerini başlat
 		setupToggleButtons();
 		embedWidgetPanel();
 		embedAppDock();
