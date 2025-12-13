@@ -102,18 +102,14 @@ android {
 			manifest.srcFile "AndroidManifest-huawei.xml"
 		}
 		carlauncher {
-			// Source directory sıralaması: ÖNCELİK sırasına göre
-			java {
-				srcDir "src-carlauncher/java"  // ÖNCELİK 1: CarLauncher MapActivity
-				srcDir "src-google"            // ÖNCELİK 2: Google servisleri
-				srcDir "src-osmand"            // ÖNCELİK 3: OsmAnd özel kodlar
-				srcDir "src"                   // ÖNCELİK 4: Ana OsmAnd kodları
-				
-				// src/ altındaki bu dosyaları EXCLUDE et (src-carlauncher'da var)
-				exclude 'net/osmand/plus/activities/MapActivity.java'
-				exclude 'net/osmand/plus/plugins/PluginsHelper.java'
-			}
-			
+			java.srcDirs = [
+				"src-carlauncher/java",
+				"src-google",
+				"src-osmand"
+			]
+			// 'src' is inherited from 'main' source set (in build-common.gradle)
+			// We will filter out the conflicting MapActivity using applicationVariants block below.
+
 			res.srcDirs = ["src-carlauncher/res"]
 			manifest.srcFile "AndroidManifest-carlauncher.xml"
 		}
@@ -292,3 +288,27 @@ afterEvaluate {
 		dependencies.add("opengldebugImplementation", "net.osmand:OsmAndCore_android:${remoteAarSnapshot}@aar")
 	}
 }
+
+// Variant Filter to exclude base MapActivity for CarLauncher
+android.applicationVariants.all { variant ->
+    // Debug print
+    println "Configuring variant: ${variant.name}"
+    
+    if (variant.name.toLowerCase().contains("carlauncher")) {
+        println "-> Applying filter to ${variant.name}"
+        variant.javaCompileProvider.configure { task ->
+            task.source = task.source.filter { file ->
+                boolean isBaseMapActivity = file.absolutePath.contains("/OsmAnd/src/net/osmand/plus/activities/MapActivity.java")
+                boolean isBasePluginsHelper = file.absolutePath.contains("/OsmAnd/src/net/osmand/plus/plugins/PluginsHelper.java")
+                
+                if (isBaseMapActivity || isBasePluginsHelper) {
+                    println "   [EXCLUDED] ${file.name} from src/"
+                    return false
+                }
+                return true
+            }
+        }
+    }
+}
+
+
