@@ -12,6 +12,7 @@ import net.osmand.Location;
 import net.osmand.plus.OsmAndLocationProvider;
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.utils.OsmAndFormatter;
+import android.graphics.Typeface;
 
 /**
  * Hiz widget - GPS hizini gosterir.
@@ -48,6 +49,14 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         speedText.setTextSize(48); // Kucultuldu (72 -> 48)
         speedText.setGravity(Gravity.CENTER);
         speedText.setText("--");
+
+        try {
+            Typeface tf = Typeface.createFromAsset(context.getAssets(), "fonts/orbitron_bold.ttf");
+            speedText.setTypeface(tf);
+            labelText.setTypeface(tf);
+        } catch (Exception e) {
+            // ignore
+        }
 
         container.addView(labelText);
         container.addView(speedText);

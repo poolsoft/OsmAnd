@@ -48,7 +48,15 @@ public class ClockWidget extends BaseWidget {
         clockText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_primary));
         clockText.setTextSize(64); // Buyuk modern font
         clockText.setGravity(Gravity.CENTER);
-        clockText.setTypeface(Typeface.create("sans-serif-thin", Typeface.NORMAL)); // Thin font
+        // Tasarim Degisikligi: Custom Font (Orbitron)
+        try {
+            Typeface tf = Typeface.createFromAsset(context.getAssets(), "fonts/orbitron_bold.ttf");
+            clockText.setTypeface(tf);
+            // dateText.setTypeface(tf); // Tarih icin de opsiyonel, simdilik sadece saat
+        } catch (Exception e) {
+            // Font yuklenemezse default kalsin
+            clockText.setTypeface(Typeface.create("sans-serif-thin", Typeface.NORMAL));
+        }
         // clockText.setShadowLayer(6, 0, 0, Color.BLACK); // Golge kaldir
 
         // Tarih
