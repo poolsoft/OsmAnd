@@ -76,18 +76,21 @@ public class WidgetManager {
      * Widget siralamasini degistir.
      */
     public void moveWidget(int fromIndex, int toIndex) {
-        if (fromIndex < 0 || fromIndex >= visibleWidgets.size() ||
-                toIndex < 0 || toIndex >= visibleWidgets.size()) {
+        if (fromIndex < 0 || fromIndex >= allWidgets.size() ||
+                toIndex < 0 || toIndex >= allWidgets.size()) {
             return;
         }
 
-        BaseWidget widget = visibleWidgets.remove(fromIndex);
-        visibleWidgets.add(toIndex, widget);
+        BaseWidget widget = allWidgets.remove(fromIndex);
+        allWidgets.add(toIndex, widget);
 
-        // Order'lari guncelle
-        for (int i = 0; i < visibleWidgets.size(); i++) {
-            visibleWidgets.get(i).setOrder(i);
+        // Update order fields
+        for (int i = 0; i < allWidgets.size(); i++) {
+            allWidgets.get(i).setOrder(i);
         }
+        
+        updateVisibleWidgets();
+        saveWidgetConfig();
     }
 
     /**
@@ -160,60 +163,85 @@ public class WidgetManager {
     /**
      * Widget config'i kaydet.
      */
+    /**
+     * Widget config'i kaydet.
+     */
     public void saveWidgetConfig() {
-        try {
-            JSONObject config = new JSONObject();
-            JSONArray widgetsArray = new JSONArray();
-
-            for (BaseWidget widget : allWidgets) {
-                JSONObject widgetObj = new JSONObject();
-                widgetObj.put("id", widget.getId());
-                widgetObj.put("visible", widget.isVisible());
-                widgetObj.put("order", widget.getOrder());
-                widgetsArray.put(widgetObj);
-            }
-
-            config.put("widgets", widgetsArray);
-
-            prefs.edit()
-                    .putString(KEY_WIDGET_CONFIG, config.toString())
-                    .apply();
-
-        } catch (JSONException e) {
-            e.printStackTrace();
+        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(context);
+        
+        List<String> order = new ArrayList<>();
+        for (BaseWidget widget : allWidgets) {
+            settings.setWidgetVisible(widget.getId(), widget.isVisible());
+            // Order is effectively the index in allWidgets dependent on how we manage it, 
+            // but for simple list order saving:
+            order.add(widget.getId()); 
         }
+        
+        // Actually, we should save the order of *visible* widgets or just the sorted order of all widgets via a specific list?
+        // Let's save the order of 'visibleWidgets' first, then invisible ones appended? 
+        // Or better: Let CarLauncherSettings store the 'Sort Order' of IDs.
+        
+        // Current 'allWidgets' list might be sorted by insertion or by previous load.
+        // Let's create a list of IDs representing the current desired order.
+        // Since 'moveWidget' modifies 'visibleWidgets' only, we need to reflect that in 'allWidgets' or just save 'visibleWidgets' order?
+        
+        // Strategy: Save all IDs in the order they should appear.
+        // visibleWidgets are at the top (sorted). Invisible ones don't have an order per se, but let's keep them stable.
+        
+        List<String> sortedIds = new ArrayList<>();
+        for (BaseWidget w : visibleWidgets) {
+            sortedIds.add(w.getId());
+        }
+        // Add remaining invisible widgets
+        for (BaseWidget w : allWidgets) {
+            if (!visibleWidgets.contains(w)) {
+                sortedIds.add(w.getId());
+            }
+        }
+        
+        settings.setWidgetOrder(sortedIds);
     }
 
     /**
      * Widget config'i yukle.
      */
     public void loadWidgetConfig() {
-        String configStr = prefs.getString(KEY_WIDGET_CONFIG, null);
-        if (configStr == null)
-            return;
-
-        try {
-            JSONObject config = new JSONObject(configStr);
-            JSONArray widgetsArray = config.getJSONArray("widgets");
-
-            for (int i = 0; i < widgetsArray.length(); i++) {
-                JSONObject widgetObj = widgetsArray.getJSONObject(i);
-                String id = widgetObj.getString("id");
-                boolean visible = widgetObj.getBoolean("visible");
-                int order = widgetObj.getInt("order");
-
-                BaseWidget widget = findWidgetById(id);
-                if (widget != null) {
-                    widget.setVisible(visible);
-                    widget.setOrder(order);
+        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(context);
+        
+        // Default order... if simple we rely on initialization order.
+        List<String> savedOrder = settings.getWidgetOrder(null);
+        
+        if (savedOrder != null) {
+            // Reorder 'allWidgets' based on savedOrder
+            List<BaseWidget> reordered = new ArrayList<>();
+            for (String id : savedOrder) {
+                BaseWidget w = findWidgetById(id);
+                if (w != null) {
+                    reordered.add(w);
                 }
             }
-
-            updateVisibleWidgets();
-
-        } catch (JSONException e) {
-            e.printStackTrace();
+            // Add any new/unknown widgets that were not in saved settings
+            for (BaseWidget w : allWidgets) {
+                if (!reordered.contains(w)) {
+                    reordered.add(w);
+                }
+            }
+            
+            allWidgets.clear();
+            allWidgets.addAll(reordered);
         }
+        
+        // Restore visibility
+        for (BaseWidget widget : allWidgets) {
+            // Default visibility true? Or based on some default list? Assuming true for now.
+            boolean visible = settings.isWidgetVisible(widget.getId(), true);
+            widget.setVisible(visible);
+            
+            // Set internal order field based on list index
+            widget.setOrder(allWidgets.indexOf(widget));
+        }
+
+        updateVisibleWidgets();
     }
 
     /**
