@@ -140,6 +140,7 @@ import net.osmand.plus.views.mapwidgets.TopToolbarController.TopToolbarControlle
 import net.osmand.plus.views.mapwidgets.WidgetsVisibilityHelper;
 import net.osmand.shared.gpx.GpxFile;
 import net.osmand.util.Algorithms;
+import net.osmand.plus.carlauncher.ui.AppDockFragment;
 
 import org.apache.commons.logging.Log;
 
