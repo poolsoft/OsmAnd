@@ -64,6 +64,33 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
         }
     }
 
+    private OnAppDockListener listener;
+    private ImageButton menuButton;
+    private ImageButton layoutButton;
+    private ImageButton appListButton;
+
+    public interface OnAppDockListener {
+        void onLayoutToggle();
+        void onAppDrawerOpen();
+    }
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        if (context instanceof OnAppDockListener) {
+            listener = (OnAppDockListener) context;
+        } else {
+            // Log warning but don't crash, helpful for testing
+            android.util.Log.w(TAG, "Host activity does not implement OnAppDockListener");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        listener = null;
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -77,9 +104,35 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
                 ViewGroup.LayoutParams.MATCH_PARENT));
         rootLayout.setGravity(android.view.Gravity.CENTER);
         rootLayout.setBackgroundResource(net.osmand.plus.R.drawable.bg_app_dock);
-        rootLayout.setPadding(16, 16, 16, 16);
+        rootLayout.setPadding(8, 8, 8, 8);
 
-        // RecyclerView
+        // 1. Menu Button (Leftmost/Topmost)
+        menuButton = createDockButton(android.R.drawable.ic_menu_preferences, v -> {
+             // Open Settings or Menu
+             if (listener != null) listener.onAppDrawerOpen(); // For now map to drawer/menu
+        });
+        rootLayout.addView(menuButton);
+
+        // 2. Layout Toggle Button
+        layoutButton = createDockButton(android.R.drawable.ic_menu_view, v -> {
+            if (listener != null) listener.onLayoutToggle();
+        });
+        rootLayout.addView(layoutButton);
+
+        // 3. App List Button
+        appListButton = createDockButton(android.R.drawable.ic_menu_sort_by_size, v -> { // sort_by_size looks like a list/grid
+            if (listener != null) listener.onAppDrawerOpen();
+        });
+        rootLayout.addView(appListButton);
+
+        // Separator / Spacer
+        View spacer = new View(getContext());
+        spacer.setLayoutParams(new LinearLayout.LayoutParams(
+            currentOrientation == ORIENTATION_HORIZONTAL ? 16 : ViewGroup.LayoutParams.MATCH_PARENT, 
+            currentOrientation == ORIENTATION_HORIZONTAL ? ViewGroup.LayoutParams.MATCH_PARENT : 16));
+        rootLayout.addView(spacer);
+
+        // RecyclerView (Shortcuts)
         recyclerView = new RecyclerView(getContext());
         recyclerView.setLayoutManager(
                 new LinearLayoutManager(getContext(), currentOrientation, false));
@@ -90,52 +143,25 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
                 1.0f);
         rootLayout.addView(recyclerView, recyclerParams);
 
-        // Buttons container
-        LinearLayout buttonsLayout = new LinearLayout(getContext());
-        buttonsLayout.setOrientation(
-                currentOrientation == ORIENTATION_HORIZONTAL ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
-        buttonsLayout.setGravity(android.view.Gravity.CENTER);
-
-        // Orientation toggle button
-        orientationButton = new ImageButton(getContext());
-        orientationButton.setImageResource(
-                currentOrientation == ORIENTATION_HORIZONTAL ? android.R.drawable.ic_menu_sort_alphabetically : // Dikey
-                                                                                                                // icon
-                        android.R.drawable.ic_menu_more); // Yatay icon
-        orientationButton.setBackgroundColor(0x00000000);
-        orientationButton.setColorFilter(0xFF88FFFF);
-        orientationButton.setLayoutParams(new LinearLayout.LayoutParams(48, 48));
-        orientationButton.setOnClickListener(v -> toggleOrientation());
-        orientationButton.setVisibility(View.GONE); // Sadece edit mode'da gorunur
-        buttonsLayout.addView(orientationButton);
-
-        // Drawer Button (Grid Icon)
-        ImageButton drawerButton = new ImageButton(getContext());
-        drawerButton.setImageResource(android.R.drawable.ic_menu_sort_by_size); // Grid icon benzeri
-        drawerButton.setBackgroundColor(0x00000000);
-        drawerButton.setColorFilter(0xFFFFFFFF);
-        drawerButton.setLayoutParams(new LinearLayout.LayoutParams(64, 64));
-        drawerButton.setOnClickListener(v -> openAppDrawer());
-        buttonsLayout.addView(drawerButton);
-
-        // Add button (Spacer added for separation)
-        View spacer = new View(getContext());
-        spacer.setLayoutParams(new LinearLayout.LayoutParams(16, 16));
-        buttonsLayout.addView(spacer);
-
-        addButton = new ImageButton(getContext());
-        addButton.setImageResource(android.R.drawable.ic_input_add);
-        addButton.setBackgroundColor(0x00000000);
-        addButton.setColorFilter(0xFFFFFFFF);
-        addButton.setLayoutParams(new LinearLayout.LayoutParams(64, 64));
-        addButton.setOnClickListener(v -> showAppPicker());
-        addButton.setVisibility(View.GONE); // Sadece edit mode'da gorunur
-        buttonsLayout.addView(addButton);
-
-        rootLayout.addView(buttonsLayout);
-
+        // Remove old button logic
         return rootLayout;
     }
+
+    private ImageButton createDockButton(int iconResId, View.OnClickListener onClick) {
+        ImageButton btn = new ImageButton(getContext());
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                80, 80); // Fixed size for touch targets
+        params.setMargins(8, 8, 8, 8);
+        btn.setLayoutParams(params);
+        btn.setImageResource(iconResId);
+        btn.setBackgroundResource(android.R.color.transparent);
+        btn.setScaleType(ImageButton.ScaleType.FIT_CENTER);
+        btn.setColorFilter(0xFFFFFFFF); // White icon
+        btn.setPadding(16, 16, 16, 16);
+        btn.setOnClickListener(onClick);
+        return btn;
+    }
+
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {

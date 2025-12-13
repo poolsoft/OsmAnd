@@ -149,7 +149,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MapActivity extends OsmandActionBarActivity implements DownloadEvents,
+	public class MapActivity extends OsmandActionBarActivity implements AppDockFragment.OnAppDockListener, DownloadEvents,
 		IRouteInformationListener, AMapPointUpdateListener, MapMarkerChangedListener,
 		OnDrawMapListener, OsmAndAppCustomizationListener, LockUIAdapter,
 		OnPreferenceStartFragmentCallback, net.osmand.plus.carlauncher.CarLauncherInterface {
@@ -202,18 +202,8 @@ public class MapActivity extends OsmandActionBarActivity implements DownloadEven
 	private android.widget.FrameLayout mapContainer;
 	private android.widget.FrameLayout widgetPanel;
 	private android.widget.FrameLayout appDock;
-	private android.widget.ImageButton btnToggleUi;
-	private android.widget.ImageButton btnToggleDock;
 	private android.widget.FrameLayout appDrawerContainer;
 	private View mainLayoutRoot;  // main.xml root reference
-	private boolean isUiVisible = true;
-	private boolean isDockVisible = true;
-
-	private enum LayoutMode {
-		LAUNCHER, NAVIGATION, FULL_MAP
-	}
-
-	private LayoutMode currentMode = LayoutMode.LAUNCHER;
 
 	private final StateChangedListener<Integer> mapScreenOrientationSettingListener = new StateChangedListener<Integer>() {
 		@Override
@@ -399,7 +389,6 @@ public class MapActivity extends OsmandActionBarActivity implements DownloadEven
 		mapContainer.addView(mainLayoutRoot);
 
 		// 5. CarLauncher bileşenlerini başlat
-		setupToggleButtons();
 		embedWidgetPanel();
 		embedAppDock();
 	}
@@ -422,54 +411,18 @@ public class MapActivity extends OsmandActionBarActivity implements DownloadEven
 		}
 	}
 
-	private void setupToggleButtons() {
-		if (btnToggleUi != null)
-			btnToggleUi.setOnClickListener(v -> toggleUiVisibility());
-		if (btnToggleDock != null)
-			btnToggleDock.setOnClickListener(v -> toggleDockVisibility());
-	}
+    @Override
+    public void onLayoutToggle() {
+        if (widgetPanel != null) {
+            boolean isVisible = widgetPanel.getVisibility() == View.VISIBLE;
+            widgetPanel.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+        }
+    }
 
-	private void toggleUiVisibility() {
-		isUiVisible = !isUiVisible;
-		setLayoutMode(isUiVisible ? LayoutMode.LAUNCHER : LayoutMode.FULL_MAP);
-	}
-
-	private void toggleDockVisibility() {
-		isDockVisible = !isDockVisible;
-		setLayoutMode(isDockVisible ? LayoutMode.LAUNCHER : LayoutMode.NAVIGATION);
-	}
-
-	private void setLayoutMode(LayoutMode mode) {
-		if (rootLayout == null)
-			return;
-		currentMode = mode;
-		androidx.transition.TransitionManager.beginDelayedTransition(rootLayout,
-				new androidx.transition.AutoTransition().setDuration(300));
-		androidx.constraintlayout.widget.ConstraintSet constraintSet = new androidx.constraintlayout.widget.ConstraintSet();
-		constraintSet.clone(rootLayout);
-
-		switch (mode) {
-			case LAUNCHER:
-				widgetPanel.setVisibility(View.VISIBLE);
-				appDock.setVisibility(View.VISIBLE);
-				constraintSet.setHorizontalWeight(R.id.map_container, 0.7f);
-				constraintSet.setHorizontalWeight(R.id.widget_panel, 0.3f);
-				break;
-			case NAVIGATION:
-				widgetPanel.setVisibility(View.VISIBLE);
-				appDock.setVisibility(View.GONE);
-				constraintSet.setHorizontalWeight(R.id.map_container, 0.7f);
-				constraintSet.setHorizontalWeight(R.id.widget_panel, 0.3f);
-				break;
-			case FULL_MAP:
-				widgetPanel.setVisibility(View.GONE);
-				appDock.setVisibility(View.GONE);
-				constraintSet.setHorizontalWeight(R.id.map_container, 1.0f);
-				constraintSet.setHorizontalWeight(R.id.widget_panel, 0.0f);
-				break;
-		}
-		constraintSet.applyTo(rootLayout);
-	}
+    @Override
+    public void onAppDrawerOpen() {
+        openAppDrawer();
+    }
 
 	public void openAppDrawer() {
 		if (appDrawerContainer != null) {

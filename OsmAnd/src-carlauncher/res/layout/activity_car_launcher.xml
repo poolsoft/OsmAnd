@@ -45,41 +45,21 @@
     </FrameLayout>
 
     <!-- TOGGLE UI BUTTON (sag ust kose) -->
-    <ImageButton
-        android:id="@+id/btn_toggle_ui"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_margin="16dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@android:drawable/ic_menu_view"
-        android:tint="#FFFFFF"
-        android:contentDescription="Toggle UI"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- TOGGLE DOCK BUTTON (alt orta) -->
-    <ImageButton
-        android:id="@+id/btn_toggle_dock"
-        android:layout_width="48dp"
-        android:layout_height="24dp"
-        android:layout_marginBottom="4dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@android:drawable/arrow_down_float"
-        android:tint="#FFFFFF"
-        android:contentDescription="Toggle Dock"
-        app:layout_constraintBottom_toTopOf="@+id/app_dock"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- APP DRAWER OVERLAY (En ust katman, varsayilan GONE) -->
     <FrameLayout
         android:id="@+id/app_drawer_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:background="#DD000000"
         android:visibility="gone"
         android:elevation="20dp"
         android:clickable="true"
-        android:focusable="true"/>
+        android:focusable="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
