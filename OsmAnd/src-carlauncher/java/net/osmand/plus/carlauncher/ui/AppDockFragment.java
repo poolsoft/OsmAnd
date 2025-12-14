@@ -115,7 +115,7 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
 
         // Setup RecyclerView
         recyclerView.setLayoutManager(
-                new LinearLayoutManager(getContext(), currentOrientation, false));
+                new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         
         // Long Press on Root & Recycler to add apps
         View.OnLongClickListener longClickListener = v -> {

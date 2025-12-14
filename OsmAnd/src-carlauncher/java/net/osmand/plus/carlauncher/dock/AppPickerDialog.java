@@ -55,10 +55,18 @@ public class AppPickerDialog {
 
         // Scroll view
         ScrollView scrollView = new ScrollView(context);
+        scrollView.setFillViewport(true);
+        int topPadding = (int) (50 * context.getResources().getDisplayMetrics().density);
+        scrollView.setPadding(0, topPadding, 0, 0); // Status bar padding
 
         LinearLayout listLayout = new LinearLayout(context);
         listLayout.setOrientation(LinearLayout.VERTICAL);
         listLayout.setPadding(16, 16, 16, 16);
+        
+        // Ensure list takes full width
+        listLayout.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
 
         for (AppInfo app : apps) {
             View itemView = createAppItem(app);
