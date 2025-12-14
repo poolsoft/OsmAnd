@@ -291,12 +291,32 @@ public class MusicWidget extends BaseWidget {
     }
 
     private void resetUI() {
-        if (titleText != null) {
-            titleText.post(() -> titleText.setText("Muzik calmiyor"));
+        if (!isNotificationServiceEnabled()) {
+             if (titleText != null) {
+                 titleText.post(() -> {
+                     titleText.setText("Izin Gerekli (Tikla)");
+                     titleText.setOnClickListener(v -> {
+                         Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                         try {
+                             context.startActivity(intent);
+                         } catch (Exception e) {
+                             // ignore
+                         }
+                     });
+                 });
+             }
+             if (artistText != null) artistText.post(() -> artistText.setText("Bildirim Erisimi"));
+        } else {
+             if (titleText != null) {
+                 titleText.post(() -> {
+                     titleText.setText("Muzik calmiyor");
+                     titleText.setOnClickListener(null); // Clear click listener
+                 });
+             }
+             if (artistText != null) artistText.post(() -> artistText.setText("--"));
         }
-        if (artistText != null) {
-            artistText.post(() -> artistText.setText(""));
-        }
+
         if (btnPlayPause != null) {
             btnPlayPause.post(() -> btnPlayPause.setImageResource(android.R.drawable.ic_media_play));
         }

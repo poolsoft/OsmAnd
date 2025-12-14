@@ -106,37 +106,17 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
         rootLayout.setBackgroundResource(net.osmand.plus.R.drawable.bg_app_dock);
         rootLayout.setPadding(8, 8, 8, 8);
 
-        // 1. Menu Button (Leftmost/Topmost)
-        menuButton = createDockButton(android.R.drawable.ic_menu_preferences, v -> {
-             // Open Settings or Menu
-             if (listener != null) listener.onAppDrawerOpen(); // For now map to drawer/menu
-        });
-        rootLayout.addView(menuButton);
-
-        // 2. Layout Toggle Button
-        layoutButton = createDockButton(net.osmand.plus.R.drawable.dashboard_grid, v -> {
-            if (listener != null) listener.onLayoutToggle();
-        });
-        rootLayout.addView(layoutButton);
-
-        // 3. App List Button
-        appListButton = createDockButton(android.R.drawable.ic_menu_sort_by_size, v -> { // sort_by_size looks like a list/grid
+        // 1. App List Button (Left/Top)
+        appListButton = createDockButton(android.R.drawable.ic_menu_sort_by_size, v -> {
             if (listener != null) listener.onAppDrawerOpen();
         });
         rootLayout.addView(appListButton);
 
-        // Separator / Spacer
-        View spacer = new View(getContext());
-        spacer.setLayoutParams(new LinearLayout.LayoutParams(
-            currentOrientation == ORIENTATION_HORIZONTAL ? 16 : ViewGroup.LayoutParams.MATCH_PARENT, 
-            currentOrientation == ORIENTATION_HORIZONTAL ? ViewGroup.LayoutParams.MATCH_PARENT : 16));
-        rootLayout.addView(spacer);
-
-        // RecyclerView (Shortcuts)
+        // 2. RecyclerView (Shortcuts) - Takes remaining space
         recyclerView = new RecyclerView(getContext());
         recyclerView.setLayoutManager(
                 new LinearLayoutManager(getContext(), currentOrientation, false));
-
+        
         rootLayout.setOnLongClickListener(v -> {
              showAppPickerDialog();
              return true;
@@ -148,8 +128,14 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
                 1.0f);
         rootLayout.addView(recyclerView, recyclerParams);
 
-        // Remove old button logic
-        return rootLayout;
+        // 3. Layout Toggle Button (Right/Bottom)
+        layoutButton = createDockButton(net.osmand.plus.R.drawable.dashboard_grid, v -> {
+            if (listener != null) listener.onLayoutToggle();
+        });
+        rootLayout.addView(layoutButton);
+
+        // Remove unused buttons/spacers
+        // return rootLayout;
     }
 
     private ImageButton createDockButton(int iconResId, View.OnClickListener onClick) {
@@ -274,12 +260,17 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
         AppPickerDialog dialog = new AppPickerDialog(getContext(), (packageName, appName, icon) -> {
             // App secildiginde dock'a ekle
             AppShortcut newShortcut = new AppShortcut(packageName, appName, icon, dockManager.getShortcuts().size(), LaunchMode.FULL_SCREEN);
-            dockManager.addShortcut(newShortcut);
+            boolean added = dockManager.addShortcut(newShortcut);
             
-            // Adapteri guncelle
-            if (adapter != null) {
-                adapter.setShortcuts(dockManager.getShortcuts());
-                adapter.notifyDataSetChanged();
+            if (added) {
+                // Adapteri guncelle
+                if (adapter != null) {
+                    adapter.setShortcuts(dockManager.getShortcuts());
+                    adapter.notifyDataSetChanged();
+                }
+                android.widget.Toast.makeText(getContext(), appName + " eklendi", android.widget.Toast.LENGTH_SHORT).show();
+            } else {
+                 android.widget.Toast.makeText(getContext(), "Eklenebilecek maksimum sayiya ulasildi veya zaten var", android.widget.Toast.LENGTH_SHORT).show();
             }
         });
         dialog.show();
