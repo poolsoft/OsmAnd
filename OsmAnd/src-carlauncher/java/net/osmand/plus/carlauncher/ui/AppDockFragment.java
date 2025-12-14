@@ -97,7 +97,11 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
     public View onCreateView(@NonNull LayoutInflater inflater,
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
-        View root = inflater.inflate(net.osmand.plus.R.layout.fragment_app_dock, container, false);
+        int layoutResId = (currentOrientation == ORIENTATION_VERTICAL) 
+                ? net.osmand.plus.R.layout.fragment_app_dock_vertical 
+                : net.osmand.plus.R.layout.fragment_app_dock;
+                
+        View root = inflater.inflate(layoutResId, container, false);
         
         // Find Views
         appListButton = root.findViewById(net.osmand.plus.R.id.btn_app_list);
@@ -115,7 +119,7 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
 
         // Setup RecyclerView
         recyclerView.setLayoutManager(
-                new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+                new LinearLayoutManager(getContext(), currentOrientation, false));
         
         // Long Press on Root & Recycler to add apps
         View.OnLongClickListener longClickListener = v -> {
