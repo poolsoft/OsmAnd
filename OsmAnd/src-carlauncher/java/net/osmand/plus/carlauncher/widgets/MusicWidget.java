@@ -214,7 +214,27 @@ public class MusicWidget extends BaseWidget {
                     currentController = null;
                 }
                 currentPackageName = null;
-                resetUI();
+                // Permission check
+                if (!isNotificationServiceEnabled()) {
+                    titleText.setText("Izin Gerekli (Tikla)");
+                    artistText.setText("Bildirim Erisimi");
+                    titleText.setOnClickListener(v -> {
+                        Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        try {
+                            context.startActivity(intent);
+                        } catch (Exception e) {
+                            // ignore
+                        }
+                    });
+                    return;
+                } else {
+                    titleText.setOnClickListener(null); // Remove listener if permission granted
+                }
+
+                titleText.setText("Muzik Calinmiyor");
+                artistText.setText("--");
+                return;
             }
         } catch (SecurityException e) {
             resetUI();

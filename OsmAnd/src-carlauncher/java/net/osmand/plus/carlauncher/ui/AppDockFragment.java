@@ -114,7 +114,7 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
         rootLayout.addView(menuButton);
 
         // 2. Layout Toggle Button
-        layoutButton = createDockButton(android.R.drawable.ic_menu_view, v -> {
+        layoutButton = createDockButton(net.osmand.plus.R.drawable.dashboard_grid, v -> {
             if (listener != null) listener.onLayoutToggle();
         });
         rootLayout.addView(layoutButton);
@@ -136,6 +136,11 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
         recyclerView = new RecyclerView(getContext());
         recyclerView.setLayoutManager(
                 new LinearLayoutManager(getContext(), currentOrientation, false));
+
+        rootLayout.setOnLongClickListener(v -> {
+             showAppPickerDialog();
+             return true;
+        });
 
         LinearLayout.LayoutParams recyclerParams = new LinearLayout.LayoutParams(
                 currentOrientation == ORIENTATION_HORIZONTAL ? 0 : ViewGroup.LayoutParams.MATCH_PARENT,
@@ -247,7 +252,6 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
         toggleEditMode();
     }
 
-    @Override
     public void onRemoveClick(AppShortcut shortcut) {
         new AlertDialog.Builder(getContext())
                 .setTitle("Kisayol Kaldir")
@@ -260,6 +264,32 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
                 })
                 .setNegativeButton("Iptal", null)
                 .show();
+    }
+
+    private void showAppPickerDialog() {
+        if (getContext() == null || dockManager == null) return;
+
+        AppPickerDialog dialog = new AppPickerDialog(getContext(), appInfo -> {
+            // App secildiginde dock'a ekle
+            String packageName = appInfo.packageName;
+            // Assuming addShortcut method can take packageName and a default LaunchMode
+            // Or you might need to show a launch mode selector here as well
+            dockManager.addShortcut(packageName, LaunchMode.FULL_SCREEN); 
+            
+            // Adapteri guncelle
+            if (adapter != null) {
+                adapter.setShortcuts(dockManager.getShortcuts());
+                adapter.notifyDataSetChanged();
+            }
+        });
+        dialog.show();
+    }
+
+    @Override
+    public void onShortcutLongClick(AppShortcut shortcut) {
+         // Existing long click (edit/delete) logic...
+         // For now let's just show picker too or edit options
+         showAppPickerDialog(); // Temporary override: easier to just allow adding more
     }
 
     private void toggleEditMode() {

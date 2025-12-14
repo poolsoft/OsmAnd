@@ -143,6 +143,11 @@ public class WidgetPanelFragment extends Fragment {
                 android.widget.ImageButton upBtn = new android.widget.ImageButton(getContext());
                 upBtn.setImageResource(android.R.drawable.arrow_up_float);
                 upBtn.setBackgroundColor(0x00000000);
+                upBtn.setPadding(24, 24, 24, 24); // Increase touch area
+                LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(96, 96); // Bigger button
+                btnParams.setMargins(8, 0, 8, 0);
+                upBtn.setLayoutParams(btnParams);
+                
                 upBtn.setOnClickListener(v -> {
                     widgetManager.moveWidget(index, index - 1);
                     updateDialogList(listLayout, dialog);
@@ -151,7 +156,7 @@ public class WidgetPanelFragment extends Fragment {
             } else {
                  // Empty placeholder to align
                  android.view.View spacer = new android.view.View(getContext());
-                 spacer.setLayoutParams(new LinearLayout.LayoutParams(48, 48));
+                 spacer.setLayoutParams(new LinearLayout.LayoutParams(96, 96));
                  row.addView(spacer);
             }
 
@@ -160,6 +165,11 @@ public class WidgetPanelFragment extends Fragment {
                 android.widget.ImageButton downBtn = new android.widget.ImageButton(getContext());
                 downBtn.setImageResource(android.R.drawable.arrow_down_float);
                 downBtn.setBackgroundColor(0x00000000);
+                downBtn.setPadding(24, 24, 24, 24); // Increase touch area
+                LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(96, 96); // Bigger button
+                btnParams.setMargins(8, 0, 8, 0);
+                downBtn.setLayoutParams(btnParams);
+
                 downBtn.setOnClickListener(v -> {
                     widgetManager.moveWidget(index, index + 1);
                     updateDialogList(listLayout, dialog);
