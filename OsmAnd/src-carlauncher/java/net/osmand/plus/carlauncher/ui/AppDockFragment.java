@@ -91,8 +91,7 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
         listener = null;
     }
 
-    @Nullable
-    @Override
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
