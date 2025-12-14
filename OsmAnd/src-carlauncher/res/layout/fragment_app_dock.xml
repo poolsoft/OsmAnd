@@ -7,7 +7,7 @@
     android:background="@drawable/bg_app_dock"
     android:padding="4dp">
 
-    <!-- App List Button (Left/Start) - Now uses dashboard_grid (Apps) -->
+    <!-- App List Button (Left/Start) - Swapped back to List Icon -->
     <ImageButton
         android:id="@+id/btn_app_list"
         android:layout_width="48dp"
@@ -16,14 +16,14 @@
         android:contentDescription="App List"
         android:padding="12dp"
         android:scaleType="fitCenter"
-        android:src="@drawable/dashboard_grid"
+        android:src="@android:drawable/ic_menu_sort_by_size"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.5"
         app:tint="#FFFFFF" />
 
-    <!-- Layout Toggle Button (Right/End) - Now uses sort_by_size (Layout/Grid) -->
+    <!-- Layout Toggle Button (Right/End) - Swapped back to Grid Icon -->
     <ImageButton
         android:id="@+id/btn_layout_toggle"
         android:layout_width="48dp"
@@ -32,7 +32,7 @@
         android:contentDescription="Toggle Layout"
         android:padding="12dp"
         android:scaleType="fitCenter"
-        android:src="@android:drawable/ic_menu_sort_by_size"
+        android:src="@drawable/dashboard_grid"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"

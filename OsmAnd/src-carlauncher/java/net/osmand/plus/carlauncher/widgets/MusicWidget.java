@@ -297,15 +297,17 @@ public class MusicWidget extends BaseWidget {
              }
              if (artistText != null) artistText.post(() -> artistText.setText("Bildirim Erisimi"));
         } else {
-             // Clear click listener
+             // Clear click listener - EXPLICITLY
              if (rootView != null) {
                  rootView.setOnClickListener(null);
+                 rootView.setClickable(false); // Ensure it's not clickable
              }
              
              if (titleText != null) {
                  titleText.post(() -> {
                      titleText.setText("Muzik calmiyor");
                      titleText.setOnClickListener(null); // Clear click listener
+                     titleText.setClickable(false);
                  });
              }
              if (artistText != null) artistText.post(() -> artistText.setText("--"));
