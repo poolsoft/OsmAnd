@@ -379,8 +379,6 @@ import java.util.TimerTask;
 		mapContainer = findViewById(R.id.map_container);
 		widgetPanel = findViewById(R.id.widget_panel);
 		appDock = findViewById(R.id.app_dock);
-		btnToggleUi = findViewById(R.id.btn_toggle_ui);
-		btnToggleDock = findViewById(R.id.btn_toggle_dock);
 		appDrawerContainer = findViewById(R.id.app_drawer_container);
 
 		// 3. Orijinal main.xml layout'unu inflate et ve referansını sakla
