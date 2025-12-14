@@ -64,8 +64,6 @@ public class MusicWidget extends BaseWidget {
         this.order = 10;
     }
 
-    @NonNull
-    @Override
     private LinearLayout rootView;
 
     @NonNull
