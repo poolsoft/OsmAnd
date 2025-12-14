@@ -49,15 +49,29 @@ public class WidgetPanelFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
-        ScrollView scrollView = new ScrollView(getContext());
-        scrollView.setLayoutParams(new ViewGroup.LayoutParams(
+        
+        boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        
+        ViewGroup rootScroll;
+        ViewGroup.LayoutParams scrollParams = new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
-        scrollView.setFillViewport(true);
-        scrollView.setBackgroundResource(net.osmand.plus.R.drawable.bg_glass_panel);
+                ViewGroup.LayoutParams.MATCH_PARENT);
+
+        if (isPortrait) {
+            android.widget.HorizontalScrollView hScroll = new android.widget.HorizontalScrollView(getContext());
+            hScroll.setFillViewport(true);
+            rootScroll = hScroll;
+        } else {
+            ScrollView vScroll = new ScrollView(getContext());
+            vScroll.setFillViewport(true);
+            rootScroll = vScroll;
+        }
+        
+        rootScroll.setLayoutParams(scrollParams);
+        rootScroll.setBackgroundResource(net.osmand.plus.R.drawable.bg_glass_panel);
 
         widgetContainer = new LinearLayout(getContext());
-        widgetContainer.setOrientation(LinearLayout.VERTICAL);
+        widgetContainer.setOrientation(isPortrait ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
         widgetContainer.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -69,13 +83,13 @@ public class WidgetPanelFragment extends Fragment {
             return true;
         });
         // Also allow clicking on empty space
-        scrollView.setOnLongClickListener(v -> {
+        rootScroll.setOnLongClickListener(v -> {
             showWidgetManagementDialog();
             return true;
         });
 
-        scrollView.addView(widgetContainer);
-        return scrollView;
+        rootScroll.addView(widgetContainer);
+        return rootScroll;
     }
 
     private void showWidgetManagementDialog() {
