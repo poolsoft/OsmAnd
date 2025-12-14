@@ -66,12 +66,18 @@ public class MusicWidget extends BaseWidget {
 
     @NonNull
     @Override
+    private LinearLayout rootView;
+
+    @NonNull
+    @Override
     public View createView() {
-        LinearLayout container = new LinearLayout(context);
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setGravity(Gravity.CENTER);
-        container.setPadding(16, 16, 16, 16);
-        container.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+        rootView = new LinearLayout(context);
+        rootView.setOrientation(LinearLayout.VERTICAL);
+        rootView.setGravity(Gravity.CENTER);
+        rootView.setPadding(16, 16, 16, 16);
+        rootView.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+
+        LinearLayout container = rootView; // alias to minimize diff
 
         // App icon (tiklanabilir)
         appIconView = new ImageView(context);
@@ -292,22 +298,29 @@ public class MusicWidget extends BaseWidget {
 
     private void resetUI() {
         if (!isNotificationServiceEnabled()) {
-             if (titleText != null) {
-                 titleText.post(() -> {
-                     titleText.setText("Izin Gerekli (Tikla)");
-                     titleText.setOnClickListener(v -> {
-                         Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
-                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                         try {
-                             context.startActivity(intent);
-                         } catch (Exception e) {
-                             // ignore
-                         }
-                     });
+             // Make whole widget clickable
+             if (rootView != null) {
+                 rootView.setOnClickListener(v -> {
+                     Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                     try {
+                         context.startActivity(intent);
+                     } catch (Exception e) {
+                         // ignore
+                     }
                  });
+             }
+             
+             if (titleText != null) {
+                 titleText.post(() -> titleText.setText("Izin Gerekli (Tikla)"));
              }
              if (artistText != null) artistText.post(() -> artistText.setText("Bildirim Erisimi"));
         } else {
+             // Clear click listener
+             if (rootView != null) {
+                 rootView.setOnClickListener(null);
+             }
+             
              if (titleText != null) {
                  titleText.post(() -> {
                      titleText.setText("Muzik calmiyor");

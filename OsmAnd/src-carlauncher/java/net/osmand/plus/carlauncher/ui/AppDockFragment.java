@@ -93,65 +93,43 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
 
     @Nullable
     @Override
+    @Nullable
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
-        LinearLayout rootLayout = new LinearLayout(getContext());
-        rootLayout.setOrientation(
-                currentOrientation == ORIENTATION_HORIZONTAL ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
-        rootLayout.setLayoutParams(new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
-        rootLayout.setGravity(android.view.Gravity.CENTER);
-        rootLayout.setBackgroundResource(net.osmand.plus.R.drawable.bg_app_dock);
-        rootLayout.setPadding(8, 8, 8, 8);
+        View root = inflater.inflate(net.osmand.plus.R.layout.fragment_app_dock, container, false);
+        
+        // Find Views
+        appListButton = root.findViewById(net.osmand.plus.R.id.btn_app_list);
+        layoutButton = root.findViewById(net.osmand.plus.R.id.btn_layout_toggle);
+        recyclerView = root.findViewById(net.osmand.plus.R.id.dock_recycler);
 
-        // 1. App List Button (Left/Top)
-        appListButton = createDockButton(android.R.drawable.ic_menu_sort_by_size, v -> {
+        // Setup Buttons
+        appListButton.setOnClickListener(v -> {
             if (listener != null) listener.onAppDrawerOpen();
         });
-        rootLayout.addView(appListButton);
 
-        // 2. RecyclerView (Shortcuts) - Takes remaining space
-        recyclerView = new RecyclerView(getContext());
+        layoutButton.setOnClickListener(v -> {
+            if (listener != null) listener.onLayoutToggle();
+        });
+
+        // Setup RecyclerView
         recyclerView.setLayoutManager(
                 new LinearLayoutManager(getContext(), currentOrientation, false));
         
-        rootLayout.setOnLongClickListener(v -> {
+        // Long Press on Root & Recycler to add apps
+        View.OnLongClickListener longClickListener = v -> {
              showAppPickerDialog();
              return true;
-        });
+        };
+        root.setOnLongClickListener(longClickListener);
+        recyclerView.setOnLongClickListener(longClickListener); // Ensures empty space in recycler triggers it too
 
-        LinearLayout.LayoutParams recyclerParams = new LinearLayout.LayoutParams(
-                currentOrientation == ORIENTATION_HORIZONTAL ? 0 : ViewGroup.LayoutParams.MATCH_PARENT,
-                currentOrientation == ORIENTATION_HORIZONTAL ? ViewGroup.LayoutParams.MATCH_PARENT : 0,
-                1.0f);
-        rootLayout.addView(recyclerView, recyclerParams);
-
-        // 3. Layout Toggle Button (Right/Bottom)
-        layoutButton = createDockButton(net.osmand.plus.R.drawable.dashboard_grid, v -> {
-            if (listener != null) listener.onLayoutToggle();
-        });
-        rootLayout.addView(layoutButton);
-
-        // Remove unused buttons/spacers
-        // return rootLayout;
+        return root;
     }
 
-    private ImageButton createDockButton(int iconResId, View.OnClickListener onClick) {
-        ImageButton btn = new ImageButton(getContext());
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                80, 80); // Fixed size for touch targets
-        params.setMargins(8, 8, 8, 8);
-        btn.setLayoutParams(params);
-        btn.setImageResource(iconResId);
-        btn.setBackgroundResource(android.R.color.transparent);
-        btn.setScaleType(ImageButton.ScaleType.FIT_CENTER);
-        btn.setColorFilter(0xFFFFFFFF); // White icon
-        btn.setPadding(16, 16, 16, 16);
-        btn.setOnClickListener(onClick);
-        return btn;
-    }
+
 
 
     @Override
