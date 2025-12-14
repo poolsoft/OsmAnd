@@ -434,6 +434,23 @@ public class MusicWidget extends BaseWidget {
         return musicApps;
     }
 
+    private boolean isNotificationServiceEnabled() {
+        String pkgName = context.getPackageName();
+        final String flat = android.provider.Settings.Secure.getString(context.getContentResolver(), "enabled_notification_listeners");
+        if (flat != null && !flat.isEmpty()) {
+            final String[] names = flat.split(":");
+            for (int i = 0; i < names.length; i++) {
+                final ComponentName cn = ComponentName.unflattenFromString(names[i]);
+                if (cn != null) {
+                    if (pkgName.equals(cn.getPackageName())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     private static class MusicApp {
         String name;
         String packageName;

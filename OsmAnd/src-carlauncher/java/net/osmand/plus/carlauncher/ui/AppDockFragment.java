@@ -247,10 +247,7 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
         }
     }
 
-    @Override
-    public void onShortcutLongClick(AppShortcut shortcut) {
-        toggleEditMode();
-    }
+
 
     public void onRemoveClick(AppShortcut shortcut) {
         new AlertDialog.Builder(getContext())
@@ -269,12 +266,10 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
     private void showAppPickerDialog() {
         if (getContext() == null || dockManager == null) return;
 
-        AppPickerDialog dialog = new AppPickerDialog(getContext(), appInfo -> {
+        AppPickerDialog dialog = new AppPickerDialog(getContext(), (packageName, appName, icon) -> {
             // App secildiginde dock'a ekle
-            String packageName = appInfo.packageName;
-            // Assuming addShortcut method can take packageName and a default LaunchMode
-            // Or you might need to show a launch mode selector here as well
-            dockManager.addShortcut(packageName, LaunchMode.FULL_SCREEN); 
+            AppShortcut newShortcut = new AppShortcut(packageName, appName, icon, dockManager.getShortcuts().size(), LaunchMode.FULL_SCREEN);
+            dockManager.addShortcut(newShortcut);
             
             // Adapteri guncelle
             if (adapter != null) {
@@ -283,13 +278,6 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
             }
         });
         dialog.show();
-    }
-
-    @Override
-    public void onShortcutLongClick(AppShortcut shortcut) {
-         // Existing long click (edit/delete) logic...
-         // For now let's just show picker too or edit options
-         showAppPickerDialog(); // Temporary override: easier to just allow adding more
     }
 
     private void toggleEditMode() {
