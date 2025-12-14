@@ -249,6 +249,11 @@ public class AppDockFragment extends Fragment implements AppDockAdapter.OnShortc
 
 
 
+    @Override
+    public void onShortcutLongClick(AppShortcut shortcut) {
+        onRemoveClick(shortcut);
+    }
+
     public void onRemoveClick(AppShortcut shortcut) {
         new AlertDialog.Builder(getContext())
                 .setTitle("Kisayol Kaldir")
