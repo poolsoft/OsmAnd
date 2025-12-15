@@ -181,7 +181,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                     albumArtView.setImageBitmap(albumArt);
                     albumArtView.setColorFilter(Color.parseColor("#44000000")); // Karartma
                 } else {
-                    albumArtView.setImageResource(net.osmand.plus.R.drawable.img_osm_logo); // Varsayilan bir resim
+                    albumArtView.setImageResource(android.R.drawable.ic_menu_gallery); // Varsayilan bir resim
                     albumArtView.setColorFilter(Color.parseColor("#AA000000")); // Cok Siyah
                 }
             });
