@@ -36,12 +36,8 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         android.widget.FrameLayout rootFrame = new android.widget.FrameLayout(context);
         rootFrame.setPadding(16, 16, 16, 16);
 
-        // Arka Plan (Yari seffaf siyah kart)
-        android.graphics.drawable.GradientDrawable activeBg = new android.graphics.drawable.GradientDrawable();
-        activeBg.setColor(android.graphics.Color.parseColor("#CC111111")); // %80 Siyah
-        activeBg.setCornerRadius(24f);
-        activeBg.setStroke(2, android.graphics.Color.parseColor("#33FFFFFF"));
-        rootFrame.setBackground(activeBg);
+        // Arka Plan (XML Kaynagi)
+        rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
 
         LinearLayout contentLayout = new LinearLayout(context);
         contentLayout.setOrientation(LinearLayout.VERTICAL);

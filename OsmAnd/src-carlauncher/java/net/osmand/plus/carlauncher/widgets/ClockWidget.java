@@ -40,14 +40,8 @@ public class ClockWidget extends BaseWidget {
         // Genislik ve yukseklik parent tarafindan belirlenecek ama padding verelim
         rootFrame.setPadding(16, 16, 16, 16);
 
-        // Arka Plan (Yari seffaf siyah kart)
-        // Shape Drawable'i kodla olusturabiliriz veya xml kullanabiliriz.
-        // Basitlik adina kodla yapalim.
-        android.graphics.drawable.GradientDrawable activeBg = new android.graphics.drawable.GradientDrawable();
-        activeBg.setColor(Color.parseColor("#CC111111")); // %80 Siyah
-        activeBg.setCornerRadius(24f); // Yuvarlak koseler
-        activeBg.setStroke(2, Color.parseColor("#33FFFFFF")); // Ince beyaz cerceve
-        rootFrame.setBackground(activeBg);
+        // Arka Plan (XML Kaynagi)
+        rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
 
         // Icerik Konteyneri (Dikey)
         LinearLayout contentLayout = new LinearLayout(context);

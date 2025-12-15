@@ -41,17 +41,27 @@ public class NavigationWidget extends BaseWidget {
 
     @NonNull
     @Override
+    @NonNull
+    @Override
     public View createView() {
+        // Modern Kart Yapisi
+        android.widget.FrameLayout rootFrame = new android.widget.FrameLayout(context);
+        rootFrame.setPadding(16, 16, 16, 16);
+        rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
+
         LinearLayout container = new LinearLayout(context);
         container.setOrientation(LinearLayout.VERTICAL);
         container.setGravity(Gravity.CENTER);
-        container.setPadding(16, 16, 16, 16);
-        container.setBackgroundColor(Color.TRANSPARENT);
+        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT);
+        params.setMargins(16, 16, 16, 16);
+        container.setLayoutParams(params);
 
         // Label
         TextView label = new TextView(context);
-        label.setText("🎯 NAVIGASYON");
-        label.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_secondary));
+        label.setText("NAVIGASYON");
+        label.setTextColor(Color.LTGRAY);
         label.setTextSize(12);
         label.setGravity(Gravity.CENTER);
         label.setPadding(0, 0, 0, 8);
@@ -59,8 +69,9 @@ public class NavigationWidget extends BaseWidget {
 
         // Sonraki donus mesafesi
         distanceText = new TextView(context);
-        distanceText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_primary));
+        distanceText.setTextColor(Color.WHITE);
         distanceText.setTextSize(32);
+        distanceText.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         distanceText.setGravity(Gravity.CENTER);
         distanceText.setText("--");
         container.addView(distanceText);
@@ -69,33 +80,33 @@ public class NavigationWidget extends BaseWidget {
         turnIconView = new ImageView(context);
         turnIconView.setLayoutParams(new LinearLayout.LayoutParams(96, 96));
         turnIconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        turnIconView.setColorFilter(context.getResources().getColor(net.osmand.plus.R.color.cyber_neon_blue)); // Neon
-                                                                                                               // mavi
-                                                                                                               // ikon
+        turnIconView.setColorFilter(Color.CYAN); // Neon mavi
         turnIconView.setPadding(0, 8, 0, 8);
         container.addView(turnIconView);
 
         // Donus talimati
         instructionText = new TextView(context);
-        instructionText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_primary));
+        instructionText.setTextColor(Color.WHITE);
         instructionText.setTextSize(16);
         instructionText.setGravity(Gravity.CENTER);
         instructionText.setText("");
         instructionText.setMaxLines(2);
+        instructionText.setEllipsize(android.text.TextUtils.TruncateAt.END);
         instructionText.setPadding(0, 0, 0, 12);
         container.addView(instructionText);
 
         // Kalan sure ve mesafe
         etaText = new TextView(context);
-        etaText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_tertiary));
+        etaText.setTextColor(Color.parseColor("#AAAAAA"));
         etaText.setTextSize(12);
         etaText.setGravity(Gravity.CENTER);
         etaText.setText("");
         container.addView(etaText);
 
-        rootView = container;
-        update();
+        rootFrame.addView(container);
+        rootView = rootFrame;
 
+        update();
         return rootView;
     }
 

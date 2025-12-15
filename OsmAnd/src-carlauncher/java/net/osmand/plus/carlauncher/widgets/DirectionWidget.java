@@ -29,28 +29,51 @@ public class DirectionWidget extends BaseWidget implements OsmAndLocationProvide
 
     @NonNull
     @Override
+    @NonNull
+    @Override
     public View createView() {
+        // Modern Kart Yapisi
+        android.widget.FrameLayout rootFrame = new android.widget.FrameLayout(context);
+        rootFrame.setPadding(16, 16, 16, 16);
+        rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
+
         LinearLayout container = new LinearLayout(context);
         container.setOrientation(LinearLayout.VERTICAL);
         container.setGravity(Gravity.CENTER);
-        container.setPadding(16, 16, 16, 16);
+        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT);
+        params.setMargins(16, 16, 16, 16);
+        container.setLayoutParams(params);
 
+        // Ikon (Pusula)
+        android.widget.ImageView iconView = new android.widget.ImageView(context);
+        iconView.setImageResource(android.R.drawable.ic_menu_compass);
+        iconView.setColorFilter(android.graphics.Color.RED); // Pusula kirmizi
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(64, 64);
+        iconParams.gravity = Gravity.CENTER_HORIZONTAL;
+        iconParams.bottomMargin = 8;
+        container.addView(iconView, iconParams);
+
+        // Label
         labelText = new TextView(context);
         labelText.setText("YON");
-        labelText.setTextColor(0x88FFFFFF);
+        labelText.setTextColor(android.graphics.Color.LTGRAY);
         labelText.setTextSize(12);
         labelText.setGravity(Gravity.CENTER);
+        container.addView(labelText);
 
+        // Yon Metni
         directionText = new TextView(context);
-        directionText.setTextColor(0xFFFFFFFF);
+        directionText.setTextColor(android.graphics.Color.WHITE);
         directionText.setTextSize(24);
+        directionText.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         directionText.setGravity(Gravity.CENTER);
         directionText.setText("--");
-
-        container.addView(labelText);
         container.addView(directionText);
 
-        rootView = container;
+        rootFrame.addView(container);
+        rootView = rootFrame;
         return rootView;
     }
 
