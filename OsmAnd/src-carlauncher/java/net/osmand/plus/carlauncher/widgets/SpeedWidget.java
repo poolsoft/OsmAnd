@@ -25,6 +25,7 @@ import net.osmand.plus.routing.RoutingHelper;
 public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.OsmAndLocationListener {
 
     private TextView speedText;
+    private TextView unitText; // Birim (km/h)
     private TextView limitText; // Hız Limiti
     private LinearLayout limitContainer; // Limiti gizleyip asmak icin
     private final OsmandApplication app;
@@ -40,7 +41,7 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
     public View createView() {
         // Modern Kart Yapisi (FrameLayout)
         android.widget.FrameLayout rootFrame = new android.widget.FrameLayout(context);
-        rootFrame.setPadding(16, 16, 16, 16);
+        rootFrame.setPadding(12, 12, 12, 12);
 
         // Arka Plan (XML Kaynagi)
         rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
@@ -59,35 +60,51 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         limitContainer.setOrientation(LinearLayout.VERTICAL);
         limitContainer.setGravity(Gravity.CENTER);
         limitContainer.setVisibility(View.GONE); // Baslangicta gizli
-        limitContainer.setPadding(0, 0, 24, 0); // Sagdan bosluk
+        limitContainer.setPadding(0, 0, dpToPx(16), 0); // Sagdan bosluk
 
         limitText = new TextView(context);
         limitText.setBackgroundResource(net.osmand.plus.R.drawable.bg_speed_limit);
         limitText.setTextColor(Color.BLACK); // Beyaz uzerine siyah
-        limitText.setTextSize(20);
+        limitText.setTextSize(22);
         limitText.setTypeface(Typeface.DEFAULT_BOLD);
         limitText.setGravity(Gravity.CENTER);
         limitText.setText("50");
+        limitText.setIncludeFontPadding(false);
 
         // Daire boyutu icin layout params
-        int size = dpToPx(56);
+        int size = dpToPx(52);
         LinearLayout.LayoutParams limitParams = new LinearLayout.LayoutParams(size, size);
         limitContainer.addView(limitText, limitParams);
 
         contentLayout.addView(limitContainer);
 
-        // --- SAG: Mevcut Hız ---
+        // --- SAG: Mevcut Hız ve Birim (Vertical) ---
+        LinearLayout speedContainer = new LinearLayout(context);
+        speedContainer.setOrientation(LinearLayout.VERTICAL);
+        speedContainer.setGravity(Gravity.CENTER);
+
+        // Hız Değeri
         speedText = new TextView(context);
-        speedText.setTextColor(Color.parseColor("#00FFFF")); // Neon Mavi
-        speedText.setTextSize(64); // Dev boyut
+        speedText.setTextColor(Color.parseColor("#FFFFFF")); // Beyaz (Daha net)
+        speedText.setTextSize(48); // Buyuk
         speedText.setGravity(Gravity.CENTER);
         speedText.setText("--");
-        // Monospace, dijital saat gorunumu verir
-        speedText.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
-        // Golge efekti (Glow/Neon etkisi)
-        speedText.setShadowLayer(10, 0, 0, Color.parseColor("#008888"));
+        speedText.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        speedText.setIncludeFontPadding(false);
 
-        contentLayout.addView(speedText);
+        speedContainer.addView(speedText);
+
+        // Birim (km/h)
+        unitText = new TextView(context);
+        unitText.setTextColor(Color.LTGRAY);
+        unitText.setTextSize(14);
+        unitText.setGravity(Gravity.CENTER);
+        unitText.setText("km/h");
+        unitText.setTranslationY(-dpToPx(4)); // Sayiya yaklastir
+
+        speedContainer.addView(unitText);
+
+        contentLayout.addView(speedContainer);
 
         rootFrame.addView(contentLayout);
         rootView = rootFrame;
@@ -109,22 +126,25 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         if (location == null)
             return;
 
-        // 1. Mevcut Hız
+        // 1. Mevcut Hız ve Birim
         if (speedText != null) {
             String speedStr = "--";
+            String unitStr = "";
+
             if (location.hasSpeed()) {
-                speedStr = OsmAndFormatter.getFormattedSpeed(location.getSpeed(), app);
-                // "80 km/h" -> "80"
-                try {
-                    String[] parts = speedStr.trim().split(" ");
-                    if (parts.length > 0) {
-                        speedStr = parts[0];
-                    }
-                } catch (Exception e) {
-                }
+                FormattedValue formatted = OsmAndFormatter.getFormattedSpeedValue(location.getSpeed(), app);
+                speedStr = formatted.value;
+                unitStr = formatted.unit;
             }
+
             final String finalSpeed = speedStr;
-            speedText.post(() -> speedText.setText(finalSpeed));
+            final String finalUnit = unitStr;
+
+            speedText.post(() -> {
+                speedText.setText(finalSpeed);
+                if (unitText != null)
+                    unitText.setText(finalUnit);
+            });
         }
 
         // 2. Hız Limiti
@@ -142,7 +162,6 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
                 FormattedValue formatted = OsmAndFormatter.getFormattedSpeedValue(maxSpeed, app);
                 // Sadece sayiyi al (km/h olmadan)
                 String limitStr = formatted.value;
-                // Eger formatted value "50 km/h" donerse split et
                 try {
                     String[] parts = limitStr.trim().split(" ");
                     if (parts.length > 0)
