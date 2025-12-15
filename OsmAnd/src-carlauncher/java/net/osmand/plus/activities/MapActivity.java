@@ -150,7 +150,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-	public class MapActivity extends OsmandActionBarActivity implements AppDockFragment.OnAppDockListener, DownloadEvents,
+public class MapActivity extends OsmandActionBarActivity implements AppDockFragment.OnAppDockListener, DownloadEvents,
 		IRouteInformationListener, AMapPointUpdateListener, MapMarkerChangedListener,
 		OnDrawMapListener, OsmAndAppCustomizationListener, LockUIAdapter,
 		OnPreferenceStartFragmentCallback, net.osmand.plus.carlauncher.CarLauncherInterface {
@@ -204,7 +204,14 @@ import java.util.TimerTask;
 	private android.widget.FrameLayout widgetPanel;
 	private android.widget.FrameLayout appDock;
 	private android.widget.FrameLayout appDrawerContainer;
-	private View mainLayoutRoot;  // main.xml root reference
+	private View mainLayoutRoot; // main.xml root reference
+
+	private android.content.BroadcastReceiver musicDrawerReceiver = new android.content.BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			openMusicPlayer();
+		}
+	};
 
 	private final StateChangedListener<Integer> mapScreenOrientationSettingListener = new StateChangedListener<Integer>() {
 		@Override
@@ -252,14 +259,21 @@ import java.util.TimerTask;
 		mapRouteInfoMenu.setMapActivity(this);
 		trackDetailsMenu.setMapActivity(this);
 
+		// Register Music Drawer Receiver
+		androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this)
+				.registerReceiver(musicDrawerReceiver,
+						new android.content.IntentFilter("net.osmand.carlauncher.OPEN_MUSIC_DRAWER"));
+		registerReceiver(musicDrawerReceiver,
+				new android.content.IntentFilter("net.osmand.carlauncher.OPEN_MUSIC_DRAWER"));
+
 		// CarLauncher: Direkt activity_car_launcher layout'unu set et
 		setupCarLauncherUI();
-		
+
 		// DEBUG: Verify CarLauncher Activity
 		android.widget.Toast.makeText(this, "CarLauncher MapActivity Active!", android.widget.Toast.LENGTH_LONG).show();
-		
+
 		enterToFullScreen();
-		// Navigation Drawer  
+		// Navigation Drawer
 		AndroidUtils.addStatusBarPadding21v(this, findViewById(R.id.menuItems));
 
 		View mapHudLayout = findViewById(R.id.map_hud_container);
@@ -361,12 +375,12 @@ import java.util.TimerTask;
 		if (view != null) {
 			return view;
 		}
-		
+
 		// Bulunamadıysa main.xml içinde ara (nested)
 		if (mainLayoutRoot != null) {
 			return mainLayoutRoot.findViewById(id);
 		}
-		
+
 		return null;
 	}
 
@@ -383,7 +397,7 @@ import java.util.TimerTask;
 
 		// 3. Orijinal main.xml layout'unu inflate et ve referansını sakla
 		mainLayoutRoot = getLayoutInflater().inflate(R.layout.main, mapContainer, false);
-		
+
 		// 4. main.xml'i map_container'a ekle
 		mapContainer.addView(mainLayoutRoot);
 
@@ -410,18 +424,18 @@ import java.util.TimerTask;
 		}
 	}
 
-    @Override
-    public void onLayoutToggle() {
-        if (widgetPanel != null) {
-            boolean isVisible = widgetPanel.getVisibility() == View.VISIBLE;
-            widgetPanel.setVisibility(isVisible ? View.GONE : View.VISIBLE);
-        }
-    }
+	@Override
+	public void onLayoutToggle() {
+		if (widgetPanel != null) {
+			boolean isVisible = widgetPanel.getVisibility() == View.VISIBLE;
+			widgetPanel.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+		}
+	}
 
-    @Override
-    public void onAppDrawerOpen() {
-        openAppDrawer();
-    }
+	@Override
+	public void onAppDrawerOpen() {
+		openAppDrawer();
+	}
 
 	public void openAppDrawer() {
 		if (appDrawerContainer != null) {
@@ -438,6 +452,21 @@ import java.util.TimerTask;
 	public void closeAppDrawer() {
 		if (appDrawerContainer != null) {
 			appDrawerContainer.setVisibility(View.GONE);
+		}
+	}
+
+	public void openMusicPlayer() {
+		if (appDrawerContainer != null) {
+			android.util.Log.d("MapActivity", "Opening Music Drawer");
+			appDrawerContainer.setVisibility(View.VISIBLE);
+			// Müzik player için özel bir container veya layout kullanılabilir
+			if (getSupportFragmentManager().findFragmentByTag("MusicPlayerFragment") == null) {
+				net.osmand.plus.carlauncher.ui.MusicPlayerFragment fragment = new net.osmand.plus.carlauncher.ui.MusicPlayerFragment();
+				getSupportFragmentManager().beginTransaction()
+						.replace(R.id.app_drawer_container, fragment, "MusicPlayerFragment")
+						.addToBackStack(null)
+						.commitAllowingStateLoss();
+			}
 		}
 	}
 
