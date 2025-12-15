@@ -62,7 +62,7 @@ public class AppPickerDialog {
         LinearLayout listLayout = new LinearLayout(context);
         listLayout.setOrientation(LinearLayout.VERTICAL);
         listLayout.setPadding(16, 16, 16, 16);
-        
+
         // Ensure list takes full width
         listLayout.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -119,10 +119,16 @@ public class AppPickerDialog {
         return itemLayout;
     }
 
+    private static List<AppInfo> cachedApps = null;
+
     /**
      * Yuklu uygulamalari al.
      */
     private List<AppInfo> getInstalledApps() {
+        if (cachedApps != null && !cachedApps.isEmpty()) {
+            return cachedApps;
+        }
+
         List<AppInfo> apps = new ArrayList<>();
         PackageManager pm = context.getPackageManager();
 
@@ -158,7 +164,15 @@ public class AppPickerDialog {
             }
         });
 
+        cachedApps = apps;
         return apps;
+    }
+
+    /**
+     * Cache'i temizle (Ornegin yeni uyulama yuklendiginde).
+     */
+    public static void clearCache() {
+        cachedApps = null;
     }
 
     /**

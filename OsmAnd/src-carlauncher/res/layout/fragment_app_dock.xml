@@ -67,16 +67,14 @@
     <LinearLayout
         android:id="@+id/mini_music_container"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@drawable/bg_widget_card" 
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
+        android:background="#DD111111" 
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
         android:layout_marginEnd="8dp"
-        android:minWidth="120dp"
+        android:minWidth="140dp"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/dock_clock"
@@ -84,8 +82,8 @@
 
         <ImageView
             android:id="@+id/mini_music_icon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:src="@android:drawable/ic_media_play"
             app:tint="#FFFFFF"/>
 
@@ -95,23 +93,34 @@
             android:layout_height="wrap_content"
             android:text="Muzik Secin"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:maxLines="1"
             android:ellipsize="marquee"
             android:singleLine="true"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
-            android:maxWidth="100dp"/>
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:maxWidth="120dp"/>
 
         <ImageButton
             android:id="@+id/mini_btn_play"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:src="@android:drawable/ic_media_play"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="6dp"
             android:scaleType="fitCenter"
             app:tint="#00FFFF"/>
+
+        <ImageButton
+            android:id="@+id/mini_btn_next"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@android:drawable/ic_media_next"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="6dp"
+            android:scaleType="fitCenter"
+            android:layout_marginStart="4dp"
+            app:tint="#FFFFFF"/>
 
     </LinearLayout>
 

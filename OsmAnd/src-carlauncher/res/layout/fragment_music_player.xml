@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#DD000000"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Header / Now Playing Area (Collapsible or Fixed) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#222222"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            
+            <!-- Album Art -->
+            <ImageView
+                android:id="@+id/now_playing_art"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:background="#444444"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_media_play"/> <!-- Placeholder -->
+
+            <!-- Info & Controls -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingStart="16dp">
+
+                <TextView
+                    android:id="@+id/now_playing_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Muzik Secin"
+                    android:textColor="#FFFFFF"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:singleLine="true"
+                    android:ellipsize="marquee"
+                    android:selected="true"/>
+
+                <TextView
+                    android:id="@+id/now_playing_artist"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="---"
+                    android:textColor="#CCCCCC"
+                    android:textSize="16sp"
+                    android:singleLine="true"/>
+                    
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="8dp">
+
+                    <ImageButton
+                        android:id="@+id/btn_prev"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@android:drawable/ic_media_previous"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:tint="#FFFFFF"/>
+
+                    <ImageButton
+                        android:id="@+id/btn_play"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:src="@android:drawable/ic_media_play"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:tint="#00FFFF"/>
+
+                    <ImageButton
+                        android:id="@+id/btn_next"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@android:drawable/ic_media_next"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:tint="#FFFFFF"/>
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Close Button -->
+             <ImageButton
+                android:id="@+id/btn_close"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:tint="#FFFFFF"
+                android:layout_gravity="top|end"/>
+
+        </LinearLayout>
+    </FrameLayout>
+    
+    <!-- Tab Layout (Folders / Playlists / Favorites) - Simulated with Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:background="#333333">
+        
+        <TextView
+            android:id="@+id/tab_folders"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="KLASORLER"
+            android:gravity="center"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:background="?android:attr/selectableItemBackground"/>
+            
+        <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#555555"/>
+            
+        <TextView
+            android:id="@+id/tab_favorites"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="FAVORILER"
+            android:gravity="center"
+            android:textColor="#AAAAAA"
+            android:background="?android:attr/selectableItemBackground"/>
+            
+    </LinearLayout>
+
+    <!-- Content List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/music_recycler"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="8dp"
+        android:clipToPadding="false"/>
+
+</LinearLayout>
