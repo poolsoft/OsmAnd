@@ -33,43 +33,64 @@ public class ClockWidget extends BaseWidget {
     @NonNull
     @Override
     public View createView() {
+        // Modern Kart Yapisi (FrameLayout)
+        FrameLayout rootFrame = new FrameLayout(context);
 
-        LinearLayout container = new LinearLayout(context);
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setGravity(Gravity.CENTER);
-        container.setPadding(24, 48, 24, 48);
+        // Kart Boyutlandirmasi (Android Auto benzeri)
+        // Genislik ve yukseklik parent tarafindan belirlenecek ama padding verelim
+        rootFrame.setPadding(16, 16, 16, 16);
 
-        // Arka plan seffaf (panel background kullan)
-        container.setBackgroundColor(Color.TRANSPARENT);
-        // container.setElevation(8f); // Golgeyi kaldir (flat design)
+        // Arka Plan (Yari seffaf siyah kart)
+        // Shape Drawable'i kodla olusturabiliriz veya xml kullanabiliriz.
+        // Basitlik adina kodla yapalim.
+        android.graphics.drawable.GradientDrawable activeBg = new android.graphics.drawable.GradientDrawable();
+        activeBg.setColor(Color.parseColor("#CC111111")); // %80 Siyah
+        activeBg.setCornerRadius(24f); // Yuvarlak koseler
+        activeBg.setStroke(2, Color.parseColor("#33FFFFFF")); // Ince beyaz cerceve
+        rootFrame.setBackground(activeBg);
 
-        // Saat
+        // Icerik Konteyneri (Dikey)
+        LinearLayout contentLayout = new LinearLayout(context);
+        contentLayout.setOrientation(LinearLayout.VERTICAL);
+        contentLayout.setGravity(Gravity.CENTER);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT);
+        params.setMargins(16, 16, 16, 16); // Icerik kenar boslugu
+        contentLayout.setLayoutParams(params);
+
+        // --- IKON ---
+        // Android sistem ikonlarindan bir saat ikonu veya benzeri bulalim.
+        // Eger yoksa metin tabanli ikon yapabiliriz.
+        android.widget.ImageView iconView = new android.widget.ImageView(context);
+        iconView.setImageResource(android.R.drawable.ic_menu_recent_history); // Saat ikonu alternatifi
+        iconView.setColorFilter(Color.LTGRAY);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(64, 64);
+        iconParams.gravity = Gravity.CENTER_HORIZONTAL;
+        iconParams.bottomMargin = 8;
+        contentLayout.addView(iconView, iconParams);
+
+        // --- SAAT ---
         clockText = new TextView(context);
-        clockText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_primary));
-        clockText.setTextSize(64); // Buyuk modern font
+        clockText.setTextColor(Color.WHITE);
+        clockText.setTextSize(48); // Buyuk, okunakli
+        clockText.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD)); // Modern font
         clockText.setGravity(Gravity.CENTER);
-        // Tasarim Degisikligi: Custom Font (Orbitron)
-        try {
-            Typeface tf = Typeface.createFromAsset(context.getAssets(), "fonts/orbitron_bold.ttf");
-            clockText.setTypeface(tf);
-            // dateText.setTypeface(tf); // Tarih icin de opsiyonel, simdilik sadece saat
-        } catch (Exception e) {
-            // Font yuklenemezse default kalsin
-            clockText.setTypeface(Typeface.create("sans-serif-thin", Typeface.NORMAL));
-        }
-        // clockText.setShadowLayer(6, 0, 0, Color.BLACK); // Golge kaldir
+        clockText.setIncludeFontPadding(false);
+        contentLayout.addView(clockText);
 
-        // Tarih
+        // --- TARIH ---
         dateText = new TextView(context);
-        dateText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_secondary));
-        dateText.setTextSize(18);
+        dateText.setTextColor(Color.parseColor("#AAAAAA")); // Gri
+        dateText.setTextSize(16);
         dateText.setGravity(Gravity.CENTER);
         dateText.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
+        // textCaps = true yapilabilir ama Java'da gerek yok, formatter halleder.
+        contentLayout.addView(dateText);
 
-        container.addView(clockText);
-        container.addView(dateText);
+        rootFrame.addView(contentLayout);
 
-        rootView = container;
+        rootView = rootFrame;
         update();
 
         return rootView;

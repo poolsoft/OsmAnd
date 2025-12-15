@@ -32,36 +32,62 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
     @NonNull
     @Override
     public View createView() {
-        LinearLayout container = new LinearLayout(context);
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setGravity(Gravity.CENTER);
-        container.setPadding(16, 16, 16, 16);
+        // Modern Kart Yapisi (FrameLayout)
+        android.widget.FrameLayout rootFrame = new android.widget.FrameLayout(context);
+        rootFrame.setPadding(16, 16, 16, 16);
 
+        // Arka Plan (Yari seffaf siyah kart)
+        android.graphics.drawable.GradientDrawable activeBg = new android.graphics.drawable.GradientDrawable();
+        activeBg.setColor(android.graphics.Color.parseColor("#CC111111")); // %80 Siyah
+        activeBg.setCornerRadius(24f);
+        activeBg.setStroke(2, android.graphics.Color.parseColor("#33FFFFFF"));
+        rootFrame.setBackground(activeBg);
+
+        LinearLayout contentLayout = new LinearLayout(context);
+        contentLayout.setOrientation(LinearLayout.VERTICAL);
+        contentLayout.setGravity(Gravity.CENTER);
+        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT);
+        params.setMargins(16, 16, 16, 16);
+        contentLayout.setLayoutParams(params);
+
+        // --- IKON (Hiz Gostergesi) ---
+        android.widget.ImageView iconView = new android.widget.ImageView(context);
+        // Sistem ikonu olarak pusula veya benzeri bir sey bulalim, yoksa
+        // 'ic_menu_mylocation'
+        iconView.setImageResource(android.R.drawable.ic_menu_compass);
+        iconView.setColorFilter(android.graphics.Color.parseColor("#00FF00")); // Neon Yesil Ikon
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(56, 56);
+        iconParams.gravity = Gravity.CENTER_HORIZONTAL;
+        iconParams.bottomMargin = 0;
+        contentLayout.addView(iconView, iconParams);
+
+        // --- BASLIK (HIZ) ---
         labelText = new TextView(context);
-        labelText.setText("HIZ");
-        labelText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_text_secondary));
-        labelText.setTextSize(12); // Kucultuldu
+        labelText.setText("KM/H"); // Birim olarak degistirdik
+        labelText.setTextColor(android.graphics.Color.LTGRAY);
+        labelText.setTextSize(14);
+        labelText.setTypeface(Typeface.DEFAULT_BOLD);
         labelText.setGravity(Gravity.CENTER);
 
+        // --- HIZ DEGERI (7-Segment Stili) ---
         speedText = new TextView(context);
-        speedText.setTextColor(context.getResources().getColor(net.osmand.plus.R.color.cyber_neon_blue)); // Hiz neon
-                                                                                                          // mavi
-        speedText.setTextSize(48); // Kucultuldu (72 -> 48)
+        // Neon Yesil / Cyan rengi
+        speedText.setTextColor(android.graphics.Color.parseColor("#00FFFF")); // Cyan
+        speedText.setTextSize(64); // Dev boyut
         speedText.setGravity(Gravity.CENTER);
         speedText.setText("--");
+        // Monospace, dijital saat gorunumu verir
+        speedText.setTypeface(Typeface.MONOSPACE, Typeface.BOLD);
+        // Golge efekti (Glow/Neon etkisi)
+        speedText.setShadowLayer(10, 0, 0, android.graphics.Color.parseColor("#008888"));
 
-        try {
-            Typeface tf = Typeface.createFromAsset(context.getAssets(), "fonts/orbitron_bold.ttf");
-            speedText.setTypeface(tf);
-            labelText.setTypeface(tf);
-        } catch (Exception e) {
-            // ignore
-        }
+        contentLayout.addView(speedText);
+        contentLayout.addView(labelText); // Birimi alta aldik
 
-        container.addView(labelText);
-        container.addView(speedText);
-
-        rootView = container;
+        rootFrame.addView(contentLayout);
+        rootView = rootFrame;
         return rootView;
     }
 
