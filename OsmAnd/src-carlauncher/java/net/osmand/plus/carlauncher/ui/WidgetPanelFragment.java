@@ -49,9 +49,10 @@ public class WidgetPanelFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
-        
-        boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-        
+
+        boolean isPortrait = getResources()
+                .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+
         ViewGroup rootScroll;
         ViewGroup.LayoutParams scrollParams = new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -66,17 +67,18 @@ public class WidgetPanelFragment extends Fragment {
             vScroll.setFillViewport(true);
             rootScroll = vScroll;
         }
-        
+
         rootScroll.setLayoutParams(scrollParams);
-        rootScroll.setBackgroundResource(net.osmand.plus.R.drawable.bg_glass_panel);
+        // rootScroll.setBackgroundResource(net.osmand.plus.R.drawable.bg_glass_panel);
+        // // Android Auto style uses transparent/card bg defined in XML
 
         widgetContainer = new LinearLayout(getContext());
         widgetContainer.setOrientation(isPortrait ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
         widgetContainer.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
-        widgetContainer.setPadding(24, 24, 24, 24);
-        
+        widgetContainer.setPadding(16, 16, 16, 16); // Card spacing
+
         // Long click to manage widgets
         widgetContainer.setOnLongClickListener(v -> {
             showWidgetManagementDialog();
@@ -93,7 +95,8 @@ public class WidgetPanelFragment extends Fragment {
     }
 
     private void showWidgetManagementDialog() {
-        if (getContext() == null || widgetManager == null) return;
+        if (getContext() == null || widgetManager == null)
+            return;
 
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
         builder.setTitle("Widget Yonetimi");
@@ -104,24 +107,24 @@ public class WidgetPanelFragment extends Fragment {
 
         ScrollView scrollView = new ScrollView(getContext());
         scrollView.addView(listLayout);
-        
+
         builder.setView(scrollView);
         builder.setPositiveButton("Kapat", (dialog, which) -> {
             widgetManager.attachWidgetsToContainer(widgetContainer);
             widgetManager.startAllWidgets();
         });
-        
+
         final android.app.AlertDialog dialog = builder.create();
-        
+
         updateDialogList(listLayout, dialog);
-        
+
         dialog.show();
     }
-    
+
     private void updateDialogList(final LinearLayout listLayout, final android.app.AlertDialog dialog) {
         listLayout.removeAllViews();
         java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> widgets = widgetManager.getAllWidgets();
-        
+
         for (int i = 0; i < widgets.size(); i++) {
             final net.osmand.plus.carlauncher.widgets.BaseWidget w = widgets.get(i);
             final int index = i;
@@ -147,7 +150,7 @@ public class WidgetPanelFragment extends Fragment {
             nameView.setTextSize(16);
             nameView.setTextColor(0xFFFFFFFF);
             nameView.setPadding(16, 0, 16, 0);
-            
+
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
             row.addView(nameView, params);
@@ -161,17 +164,17 @@ public class WidgetPanelFragment extends Fragment {
                 LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(96, 96); // Bigger button
                 btnParams.setMargins(8, 0, 8, 0);
                 upBtn.setLayoutParams(btnParams);
-                
+
                 upBtn.setOnClickListener(v -> {
                     widgetManager.moveWidget(index, index - 1);
                     updateDialogList(listLayout, dialog);
                 });
                 row.addView(upBtn);
             } else {
-                 // Empty placeholder to align
-                 android.view.View spacer = new android.view.View(getContext());
-                 spacer.setLayoutParams(new LinearLayout.LayoutParams(96, 96));
-                 row.addView(spacer);
+                // Empty placeholder to align
+                android.view.View spacer = new android.view.View(getContext());
+                spacer.setLayoutParams(new LinearLayout.LayoutParams(96, 96));
+                row.addView(spacer);
             }
 
             // Down Button
@@ -190,7 +193,7 @@ public class WidgetPanelFragment extends Fragment {
                 });
                 row.addView(downBtn);
             }
-            
+
             listLayout.addView(row);
         }
     }

@@ -1,55 +1,54 @@
-<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/dock_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_app_dock"
-    android:padding="4dp">
+    android:background="@android:color/transparent"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp">
 
-    <!-- App List Button (Left/Start) - Swapped back to List Icon -->
+    <!-- App Drawer / Home Button (Left) -->
     <ImageButton
         android:id="@+id/btn_app_list"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
-        android:contentDescription="App List"
-        android:padding="12dp"
-        android:scaleType="fitCenter"
-        android:src="@android:drawable/ic_menu_sort_by_size"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.5"
-        app:tint="#FFFFFF" />
-
-    <!-- Layout Toggle Button (Right/End) - Swapped back to Grid Icon -->
-    <ImageButton
-        android:id="@+id/btn_layout_toggle"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Toggle Layout"
-        android:padding="12dp"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_circle_button" 
+        android:contentDescription="Apps"
+        android:padding="14dp"
         android:scaleType="fitCenter"
         android:src="@drawable/dashboard_grid"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.5"
         app:tint="#FFFFFF" />
 
-    <!-- Shortcuts RecyclerView (Center, fills space) -->
+    <!-- Shortcuts RecyclerView (Center - Horizontal List) -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dock_recycler"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
         android:orientation="horizontal"
+        android:gravity="center_vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/btn_layout_toggle"
         app:layout_constraintStart_toEndOf="@id/btn_app_list"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Secondary Action Button (Right - e.g. Notifications or Settings) -->
+    <ImageButton
+        android:id="@+id/btn_layout_toggle"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_circle_button"
+        android:contentDescription="Settings / Layout"
+        android:padding="14dp"
+        android:scaleType="fitCenter"
+        android:src="@android:drawable/ic_menu_preferences"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="#FFFFFF" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
