@@ -55,15 +55,7 @@ public class ClockWidget extends BaseWidget {
         contentLayout.setLayoutParams(params);
 
         // --- IKON ---
-        // Android sistem ikonlarindan bir saat ikonu veya benzeri bulalim.
-        // Eger yoksa metin tabanli ikon yapabiliriz.
-        android.widget.ImageView iconView = new android.widget.ImageView(context);
-        iconView.setImageResource(android.R.drawable.ic_menu_recent_history); // Saat ikonu alternatifi
-        iconView.setColorFilter(Color.LTGRAY);
-        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(64, 64);
-        iconParams.gravity = Gravity.CENTER_HORIZONTAL;
-        iconParams.bottomMargin = 8;
-        contentLayout.addView(iconView, iconParams);
+        // Kaldirildi
 
         // --- SAAT ---
         clockText = new TextView(context);

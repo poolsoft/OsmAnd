@@ -93,16 +93,20 @@ public class MusicWidget extends BaseWidget {
         albumArtView.setLayoutParams(new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
-        albumArtView.setAlpha(0.6f); // Hafif seffaflik
+        albumArtView.setAlpha(0.8f); // Biraz daha gorunur
         rootView.addView(albumArtView);
 
-        // 2. Katman: Karartma Overlay (Yazi okunurlugu icin)
-        albumArtOverlay = new View(context);
-        albumArtOverlay.setBackgroundColor(Color.parseColor("#99000000")); // %60 Siyah
-        albumArtOverlay.setLayoutParams(new FrameLayout.LayoutParams(
+        // 2. Katman: Kart Stili Overlay (Karanlik Fon + Cerceve + Koseler)
+        View styleOverlay = new View(context);
+        styleOverlay.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
+        styleOverlay.setLayoutParams(new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
-        rootView.addView(albumArtOverlay);
+        rootView.addView(styleOverlay);
+
+        // Yuvarlak koseler icin kirpma
+        rootView.setClipToOutline(true);
+        rootView.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card); // Outline provider icin
 
         // 3. Katman: Icerik (LinearLayout)
         LinearLayout contentLayout = new LinearLayout(context);
@@ -328,11 +332,9 @@ public class MusicWidget extends BaseWidget {
             albumArtView.post(() -> {
                 if (finalAlbumArt != null) {
                     albumArtView.setImageBitmap(finalAlbumArt);
-                    albumArtOverlay.setVisibility(View.VISIBLE);
                 } else {
                     // Album kapagi yoksa varsayilan bir gradient/renk veya temizle
                     albumArtView.setImageDrawable(new ColorDrawable(Color.DKGRAY)); // Düz renk
-                    albumArtOverlay.setVisibility(View.GONE);
                 }
             });
         }

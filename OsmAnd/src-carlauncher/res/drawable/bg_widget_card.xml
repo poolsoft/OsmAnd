@@ -5,8 +5,8 @@
     <!-- Yari seffaf siyah arka plan (%85) -->
     <solid android:color="#D9111111" />
     
-    <!-- Yuvarlak koseler (24dp) -->
-    <corners android:radius="24dp" />
+    <!-- Yuvarlak koseler (12dp) -->
+    <corners android:radius="12dp" />
     
     <!-- Belirgin cerceve (2dp, %30 Beyaz) -->
     <stroke
