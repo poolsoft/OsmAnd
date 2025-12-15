@@ -492,6 +492,7 @@ public class MusicWidget extends BaseWidget {
 
         String[] knownMusicApps = {
                 RADIO_PACKAGE, // Loglardan bulunan Radyo
+                "com.hcn.AutoMediaPlayer", // Loglardan bulunan Müzik Player
                 "com.spotify.music",
                 "com.google.android.youtube",
                 "com.google.android.apps.youtube.music",
