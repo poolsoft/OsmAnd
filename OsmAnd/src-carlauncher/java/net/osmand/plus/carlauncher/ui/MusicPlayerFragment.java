@@ -59,6 +59,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         View root = inflater.inflate(net.osmand.plus.R.layout.fragment_music_player, container, false);
 
         nowPlayingTitle = root.findViewById(net.osmand.plus.R.id.now_playing_title);
+        if (nowPlayingTitle != null)
+            nowPlayingTitle.setSelected(true); // Marquee effect
         nowPlayingArtist = root.findViewById(net.osmand.plus.R.id.now_playing_artist);
         nowPlayingArt = root.findViewById(net.osmand.plus.R.id.now_playing_art);
 

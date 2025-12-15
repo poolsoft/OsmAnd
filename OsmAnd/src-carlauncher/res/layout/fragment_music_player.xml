@@ -47,8 +47,7 @@
                     android:textSize="20sp"
                     android:textStyle="bold"
                     android:singleLine="true"
-                    android:ellipsize="marquee"
-                    android:selected="true"/>
+                    android:ellipsize="marquee"/>
 
                 <TextView
                     android:id="@+id/now_playing_artist"
