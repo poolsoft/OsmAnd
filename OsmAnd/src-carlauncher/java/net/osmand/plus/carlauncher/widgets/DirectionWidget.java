@@ -29,8 +29,6 @@ public class DirectionWidget extends BaseWidget implements OsmAndLocationProvide
 
     @NonNull
     @Override
-    @NonNull
-    @Override
     public View createView() {
         // Modern Kart Yapisi
         android.widget.FrameLayout rootFrame = new android.widget.FrameLayout(context);

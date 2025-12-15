@@ -41,8 +41,6 @@ public class NavigationWidget extends BaseWidget {
 
     @NonNull
     @Override
-    @NonNull
-    @Override
     public View createView() {
         // Modern Kart Yapisi
         android.widget.FrameLayout rootFrame = new android.widget.FrameLayout(context);
