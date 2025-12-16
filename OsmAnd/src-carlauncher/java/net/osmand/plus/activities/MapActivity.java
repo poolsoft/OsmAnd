@@ -263,8 +263,14 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this)
 				.registerReceiver(musicDrawerReceiver,
 						new android.content.IntentFilter("net.osmand.carlauncher.OPEN_MUSIC_DRAWER"));
-		registerReceiver(musicDrawerReceiver,
-				new android.content.IntentFilter("net.osmand.carlauncher.OPEN_MUSIC_DRAWER"));
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+			registerReceiver(musicDrawerReceiver,
+					new android.content.IntentFilter("net.osmand.carlauncher.OPEN_MUSIC_DRAWER"),
+					Context.RECEIVER_NOT_EXPORTED);
+		} else {
+			registerReceiver(musicDrawerReceiver,
+					new android.content.IntentFilter("net.osmand.carlauncher.OPEN_MUSIC_DRAWER"));
+		}
 
 		// CarLauncher: Direkt activity_car_launcher layout'unu set et
 		setupCarLauncherUI();
