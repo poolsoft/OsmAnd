@@ -476,6 +476,19 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 	}
 
+	public void openCarLauncherSettings() {
+		if (appDrawerContainer != null) {
+			appDrawerContainer.setVisibility(View.VISIBLE);
+			if (getSupportFragmentManager().findFragmentByTag("CarLauncherSettingsFragment") == null) {
+				net.osmand.plus.carlauncher.ui.CarLauncherSettingsFragment fragment = new net.osmand.plus.carlauncher.ui.CarLauncherSettingsFragment();
+				getSupportFragmentManager().beginTransaction()
+						.replace(R.id.app_drawer_container, fragment, "CarLauncherSettingsFragment")
+						.addToBackStack(null)
+						.commitAllowingStateLoss();
+			}
+		}
+	}
+
 	@Override
 	public InsetTargetsCollection getInsetTargets() {
 		InsetTargetsCollection collection = new InsetTargetsCollection();

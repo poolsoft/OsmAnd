@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="car_launcher_modes">
+        <item>Launcher</item>
+        <item>Navigasyon</item>
+    </string-array>
+    <string-array name="car_launcher_mode_values">
+        <item>launcher</item>
+        <item>navigation</item>
+    </string-array>
+</resources>

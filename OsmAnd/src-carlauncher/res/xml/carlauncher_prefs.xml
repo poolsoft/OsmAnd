@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.preference.PreferenceCategory
+        android:title="Görünüm Ayarları">
+
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="car_launcher_status_bar"
+            android:title="Status Bar Göster"
+            android:summary="Sistem çubuğunu açıp kapatır"
+            android:defaultValue="true" />
+            
+        <androidx.preference.ListPreference
+            android:key="car_launcher_default_view"
+            android:title="Başlangıç Modu"
+            android:summary="Uygulama açılışında gösterilecek ekran"
+            android:defaultValue="launcher"
+            android:entries="@array/car_launcher_modes"
+            android:entryValues="@array/car_launcher_mode_values"/>
+
+    </androidx.preference.PreferenceCategory>
+    
+    <androidx.preference.PreferenceCategory
+        android:title="Medya Ayarları">
+        
+        <androidx.preference.ListPreference
+            android:key="car_launcher_music_app"
+            android:title="Varsayılan Müzik Uygulaması"
+            android:summary="Müzik widget'ı için varsayılan uygulama"
+            android:defaultValue="internal" />
+            
+    </androidx.preference.PreferenceCategory>
+
+</androidx.preference.PreferenceScreen>
