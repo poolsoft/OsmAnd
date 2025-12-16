@@ -498,11 +498,13 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		collection.add(InsetTarget.createLeftSideContainer(true, true, R.id.menuItems));
 
 		View dashboardView = findViewById(R.id.dashboard);
-		ObservableScrollView scrollView = dashboardView.findViewById(R.id.main_scroll);
-		collection.add(InsetTarget.createLeftSideContainer(false, true, dashboardView));
-		collection.add(InsetTarget.createLeftSideContainer(true, true, scrollView));
-		collection.add(InsetTarget.createLeftSideContainer(true, false, R.id.dashboard_content_container));
-		collection.add(InsetTarget.createScrollable(scrollView).landscapeSides().build());
+		if (dashboardView != null) {
+			ObservableScrollView scrollView = dashboardView.findViewById(R.id.main_scroll);
+			collection.add(InsetTarget.createLeftSideContainer(false, true, dashboardView));
+			collection.add(InsetTarget.createLeftSideContainer(true, true, scrollView));
+			collection.add(InsetTarget.createLeftSideContainer(true, false, R.id.dashboard_content_container));
+			collection.add(InsetTarget.createScrollable(scrollView).landscapeSides().build());
+		}
 
 		return collection;
 	}
