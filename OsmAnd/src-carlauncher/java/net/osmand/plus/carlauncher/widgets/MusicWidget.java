@@ -1,6 +1,7 @@
 package net.osmand.plus.carlauncher.widgets;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
