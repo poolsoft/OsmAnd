@@ -141,6 +141,13 @@ public class AppDockFragment extends Fragment
             miniBtnNext.setOnClickListener(v -> musicManager.next());
         }
 
+        if (miniMusicContainer != null) {
+            miniMusicContainer.setOnClickListener(v -> {
+                Intent intent = new Intent("net.osmand.carlauncher.OPEN_MUSIC_DRAWER");
+                getContext().sendBroadcast(intent);
+            });
+        }
+
         // Start Clock
         startClock();
 

@@ -77,7 +77,7 @@ public class WidgetPanelFragment extends Fragment {
         widgetContainer.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
-        widgetContainer.setPadding(16, 16, 16, 16); // Card spacing
+        widgetContainer.setPadding(4, 16, 4, 16); // Reduced padding
 
         // Long click to manage widgets
         widgetContainer.setOnLongClickListener(v -> {

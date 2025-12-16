@@ -31,6 +31,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     private ImageButton btnPlay;
     private ImageView albumArtView;
     private View albumArtOverlay;
+    private ImageView appIconView;
 
     private final MusicManager musicManager;
 
@@ -124,13 +125,44 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                 FrameLayout.LayoutParams.WRAP_CONTENT,
                 Gravity.CENTER));
 
-        // Root click -> Open Drawer? Or just play
+        // 4. App Icon (Sol Ust Kose)
+        appIconView = new ImageView(context);
+        int iconSize = dpToPx(32);
+        FrameLayout.LayoutParams iconParams = new FrameLayout.LayoutParams(iconSize, iconSize);
+        iconParams.gravity = Gravity.TOP | Gravity.START;
+        iconParams.setMargins(24, 24, 0, 0);
+        appIconView.setLayoutParams(iconParams);
+        appIconView.setImageResource(android.R.drawable.ic_media_play); // Default
+
+        // Tıklayınca drawer acilsin
+        appIconView.setOnClickListener(v -> openMusicDrawer());
+
+        rootFrame.addView(appIconView);
+
         rootFrame.setOnClickListener(v -> {
-            // Opsiyonel: Music Drawer acilabilir
+            // Tum widgeta tiklaninca drawer acilsin
+            openMusicDrawer();
         });
 
         rootView = rootFrame;
         return rootView;
+    }
+
+    private void openMusicDrawer() {
+        Intent intent = new Intent("net.osmand.carlauncher.OPEN_MUSIC_DRAWER");
+        context.sendBroadcast(intent);
+    }
+
+    // Geriye donuk uyumluluk veya internal update icin gerekli olabilir
+    private void updateAppIcon(String packageName) {
+        if (appIconView == null || packageName == null)
+            return;
+        try {
+            android.graphics.drawable.Drawable icon = context.getPackageManager().getApplicationIcon(packageName);
+            appIconView.setImageDrawable(icon);
+        } catch (Exception e) {
+            appIconView.setImageResource(android.R.drawable.ic_media_play);
+        }
     }
 
     private ImageButton createControlButton(int iconRes, int sizeDp) {
