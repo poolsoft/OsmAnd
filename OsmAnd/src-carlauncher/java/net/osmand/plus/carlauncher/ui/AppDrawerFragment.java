@@ -146,9 +146,12 @@ public class AppDrawerFragment extends Fragment {
         }
 
         // Cache yoksa yukle
+        // Cache yoksa yukle
         if (loadingView != null)
             loadingView.setVisibility(View.VISIBLE);
-        new LoadAppsTask().execute();
+        if (getContext() != null) {
+            new LoadAppsTask(getContext()).execute();
+        }
     }
 
     // Broadcast Receiver for App Updates
@@ -162,10 +165,18 @@ public class AppDrawerFragment extends Fragment {
     }
 
     private class LoadAppsTask extends AsyncTask<Void, Void, List<AppItem>> {
+        private final Context context;
+
+        public LoadAppsTask(Context context) {
+            this.context = context.getApplicationContext(); // Use application context
+        }
+
         @Override
         protected List<AppItem> doInBackground(Void... voids) {
             List<AppItem> apps = new ArrayList<>();
-            PackageManager pm = getContext().getPackageManager();
+            if (context == null)
+                return apps;
+            PackageManager pm = context.getPackageManager();
 
             Intent intent = new Intent(Intent.ACTION_MAIN, null);
             intent.addCategory(Intent.CATEGORY_LAUNCHER);
