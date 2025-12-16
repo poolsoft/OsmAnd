@@ -46,29 +46,17 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     @Override
     public View createView() {
         // --- Root Container (Card) ---
-        FrameLayout rootFrame = new FrameLayout(context);
+        android.widget.RelativeLayout rootFrame = new android.widget.RelativeLayout(context);
         rootFrame.setPadding(0, 0, 0, 0);
         rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
         rootFrame.setClipToOutline(true);
 
-        // --- Album Art Background ---
-        albumArtView = new ImageView(context);
-        albumArtView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        albumArtView.setImageResource(android.R.drawable.ic_media_play); // Placeholder
-        albumArtView.setAlpha(0.6f); // Hafif seffaflik
-        rootFrame.addView(albumArtView, new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT));
+        // ID for content to anchor images
+        int contentId = View.generateViewId();
 
-        // --- Overlay (Dark Gradient) ---
-        albumArtOverlay = new View(context);
-        albumArtOverlay.setBackgroundColor(Color.parseColor("#88000000")); // Dark overlay
-        rootFrame.addView(albumArtOverlay, new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT));
-
-        // --- Content Layout (Vertical) ---
+        // --- Content Layout (Vertical) -> Source of Truth for Size ---
         LinearLayout contentLayout = new LinearLayout(context);
+        contentLayout.setId(contentId);
         contentLayout.setOrientation(LinearLayout.VERTICAL);
         contentLayout.setGravity(Gravity.CENTER);
         contentLayout.setPadding(4, 4, 4, 4);
@@ -100,50 +88,68 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         controlsLayout.setOrientation(LinearLayout.HORIZONTAL);
         controlsLayout.setGravity(Gravity.CENTER);
 
-        // Prev Button
+        // Prev
         ImageButton btnPrev = createControlButton(android.R.drawable.ic_media_previous, 48);
         btnPrev.setOnClickListener(v -> musicManager.prev());
         controlsLayout.addView(btnPrev);
 
-        // Play/Pause Button (Buyuk ve Yuvarlak)
+        // Play
         btnPlay = createControlButton(android.R.drawable.ic_media_play, 64);
         btnPlay.setOnClickListener(v -> musicManager.playPause());
-        // Biraz margin verelim
         LinearLayout.LayoutParams playParams = (LinearLayout.LayoutParams) btnPlay.getLayoutParams();
         playParams.setMargins(24, 0, 24, 0);
         btnPlay.setLayoutParams(playParams);
         controlsLayout.addView(btnPlay);
 
-        // Next Button
+        // Next
         ImageButton btnNext = createControlButton(android.R.drawable.ic_media_next, 48);
         btnNext.setOnClickListener(v -> musicManager.next());
         controlsLayout.addView(btnNext);
 
         contentLayout.addView(controlsLayout);
 
-        rootFrame.addView(contentLayout, new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT,
-                Gravity.CENTER));
+        // --- Album Art Background (Anchored to Content) ---
+        albumArtView = new ImageView(context);
+        albumArtView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        albumArtView.setImageResource(android.R.drawable.ic_media_play);
+        albumArtView.setAlpha(0.6f);
 
-        // 4. App Icon (Sol Ust Kose)
+        android.widget.RelativeLayout.LayoutParams artParams = new android.widget.RelativeLayout.LayoutParams(0, 0);
+        artParams.addRule(android.widget.RelativeLayout.ALIGN_LEFT, contentId);
+        artParams.addRule(android.widget.RelativeLayout.ALIGN_RIGHT, contentId);
+        artParams.addRule(android.widget.RelativeLayout.ALIGN_TOP, contentId);
+        artParams.addRule(android.widget.RelativeLayout.ALIGN_BOTTOM, contentId);
+        rootFrame.addView(albumArtView, artParams);
+
+        // --- Overlay (Dark Gradient) (Anchored to Content) ---
+        albumArtOverlay = new View(context);
+        albumArtOverlay.setBackgroundColor(Color.parseColor("#88000000"));
+        rootFrame.addView(albumArtOverlay, artParams); // Same params
+
+        // Add Content Last (to sit on top, but Z-order in RelativeLayout usually
+        // depends on add order.
+        // Wait, if Art is added first, it is behind. Correct.)
+        android.widget.RelativeLayout.LayoutParams contentParams = new android.widget.RelativeLayout.LayoutParams(
+                android.widget.RelativeLayout.LayoutParams.MATCH_PARENT,
+                android.widget.RelativeLayout.LayoutParams.WRAP_CONTENT);
+        contentParams.addRule(android.widget.RelativeLayout.CENTER_IN_PARENT);
+        rootFrame.addView(contentLayout, contentParams);
+
+        // 4. App Icon (Top Start of Parent)
         appIconView = new ImageView(context);
         int iconSize = dpToPx(32);
-        FrameLayout.LayoutParams iconParams = new FrameLayout.LayoutParams(iconSize, iconSize);
-        iconParams.gravity = Gravity.TOP | Gravity.START;
+        android.widget.RelativeLayout.LayoutParams iconParams = new android.widget.RelativeLayout.LayoutParams(iconSize,
+                iconSize);
+        iconParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_TOP);
+        iconParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_START);
         iconParams.setMargins(24, 24, 0, 0);
         appIconView.setLayoutParams(iconParams);
-        appIconView.setImageResource(android.R.drawable.ic_media_play); // Default
-
-        // Tıklayınca drawer acilsin
+        appIconView.setImageResource(android.R.drawable.ic_media_play);
         appIconView.setOnClickListener(v -> openMusicDrawer());
 
         rootFrame.addView(appIconView);
 
-        rootFrame.setOnClickListener(v -> {
-            // Tum widgeta tiklaninca drawer acilsin
-            openMusicDrawer();
-        });
+        rootFrame.setOnClickListener(v -> openMusicDrawer());
 
         rootView = rootFrame;
         return rootView;
