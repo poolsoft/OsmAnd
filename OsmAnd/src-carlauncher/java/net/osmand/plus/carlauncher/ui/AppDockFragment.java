@@ -157,38 +157,32 @@ public class AppDockFragment extends Fragment
                 listener.onAppDrawerOpen();
         });
 
+        layoutButton.setOnClickListener(v -> {
+            if (listener != null)
+                listener.onLayoutToggle();
         });
 
-    layoutButton.setOnClickListener(v->
-
-    {
-        if (listener != null)
-            listener.onLayoutToggle();
-    });
-
-    layoutButton.setOnLongClickListener(v->
-    {
-        if (listener instanceof CarLauncherSettingsListener) {
-            ((CarLauncherSettingsListener) listener).onOpenSettings();
-        } else {
-            // Fallback via Broadcast or context cast
+        layoutButton.setOnLongClickListener(v -> {
+            // Fallback via context cast
             if (getContext() instanceof net.osmand.plus.activities.MapActivity) {
                 ((net.osmand.plus.activities.MapActivity) getContext()).openCarLauncherSettings();
             }
-        }
-        return true;
-    });
+            return true;
+        });
 
-    // Setup RecyclerView (Force Horizontal)
-    recyclerView.setLayoutManager(recyclerView.setLayoutManager(new LinearLayoutManager(getContext(),LinearLayoutManager.HORIZONTAL,false));
+        // Setup RecyclerView (Force Horizontal)
+        recyclerView.setLayoutManager(
+                new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
 
-    // Long Press on Root & Recycler to add apps
-    View.OnLongClickListener longClickListener = v -> {
-        showAppPickerDialog();
-        return true;
-    };root.setOnLongClickListener(longClickListener);recyclerView.setOnLongClickListener(longClickListener);
+        // Long Press on Root & Recycler to add apps
+        View.OnLongClickListener longClickListener = v -> {
+            showAppPickerDialog();
+            return true;
+        };
+        root.setOnLongClickListener(longClickListener);
+        recyclerView.setOnLongClickListener(longClickListener);
 
-    return root;
+        return root;
     }
 
     @Override
