@@ -39,7 +39,7 @@ public class ClockWidget extends BaseWidget {
 
         // Kart Boyutlandirmasi (Android Auto benzeri)
         // Genislik ve yukseklik parent tarafindan belirlenecek ama padding verelim
-        rootFrame.setPadding(16, 16, 16, 16);
+        rootFrame.setPadding(4, 4, 4, 4);
 
         // Arka Plan (XML Kaynagi)
         rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
@@ -51,7 +51,7 @@ public class ClockWidget extends BaseWidget {
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT);
-        params.setMargins(16, 16, 16, 16); // Icerik kenar boslugu
+        params.setMargins(4, 4, 4, 4); // Icerik kenar boslugu
         contentLayout.setLayoutParams(params);
 
         // --- IKON ---

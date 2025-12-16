@@ -71,7 +71,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         LinearLayout contentLayout = new LinearLayout(context);
         contentLayout.setOrientation(LinearLayout.VERTICAL);
         contentLayout.setGravity(Gravity.CENTER);
-        contentLayout.setPadding(16, 16, 16, 16);
+        contentLayout.setPadding(4, 4, 4, 4);
 
         // 1. Title (Song Name)
         statusText = new TextView(context);
@@ -151,7 +151,12 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
 
     private void openMusicDrawer() {
         Intent intent = new Intent("net.osmand.carlauncher.OPEN_MUSIC_DRAWER");
+        intent.setPackage(context.getPackageName()); // Explicit for Android 14
         context.sendBroadcast(intent);
+
+        // Also send LocalBroadcast for safety
+        androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(context)
+                .sendBroadcast(new Intent("net.osmand.carlauncher.OPEN_MUSIC_DRAWER"));
     }
 
     // Geriye donuk uyumluluk veya internal update icin gerekli olabilir
@@ -202,7 +207,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     // --- MusicUIListener ---
 
     @Override
-    public void onTrackChanged(String title, String artist, Bitmap albumArt) {
+    public void onTrackChanged(String title, String artist, Bitmap albumArt, String packageName) {
         if (rootView != null) {
             rootView.post(() -> {
                 if (statusText != null)
@@ -217,6 +222,8 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                     albumArtView.setImageResource(android.R.drawable.ic_menu_gallery); // Varsayilan bir resim
                     albumArtView.setColorFilter(Color.parseColor("#AA000000")); // Cok Siyah
                 }
+
+                updateAppIcon(packageName);
             });
         }
     }

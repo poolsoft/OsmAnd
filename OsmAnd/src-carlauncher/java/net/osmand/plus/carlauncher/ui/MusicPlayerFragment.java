@@ -169,7 +169,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     }
 
     @Override
-    public void onTrackChanged(String title, String artist, Bitmap albumArt) {
+    public void onTrackChanged(String title, String artist, Bitmap albumArt, String packageName) {
         if (nowPlayingTitle != null)
             nowPlayingTitle.setText(title);
         if (nowPlayingArtist != null)

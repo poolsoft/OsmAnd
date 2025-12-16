@@ -39,7 +39,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     private final List<MusicUIListener> listeners = new CopyOnWriteArrayList<>();
 
     public interface MusicUIListener {
-        void onTrackChanged(String title, String artist, android.graphics.Bitmap albumArt);
+        void onTrackChanged(String title, String artist, android.graphics.Bitmap albumArt, String packageName);
 
         void onPlaybackStateChanged(boolean isPlaying);
 
@@ -259,7 +259,8 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 String title = metadata.getString(MediaMetadata.METADATA_KEY_TITLE);
                 String artist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST);
                 android.graphics.Bitmap art = metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
-                l.onTrackChanged(title, artist, art);
+                String pkg = activeExternalController.getPackageName();
+                l.onTrackChanged(title, artist, art, pkg);
                 l.onSourceChanged(false);
             }
         } else {
@@ -267,11 +268,17 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             if (track != null) {
                 // Load art uri to bitmap separately if needed, passing null for now or decoding
                 // in UI
-                l.onTrackChanged(track.getTitle(), track.getArtist(), null); // Bitmap decoding is heavy, handle in UI
-                                                                             // using Uri
+                // Load art uri to bitmap separately if needed, passing null for now or decoding
+                // in UI
+                l.onTrackChanged(track.getTitle(), track.getArtist(), null, context.getPackageName()); // Bitmap
+                                                                                                       // decoding is
+                                                                                                       // heavy, handle
+                                                                                                       // in UI
+                // using Uri
+                // using Uri
                 l.onSourceChanged(true);
             } else {
-                l.onTrackChanged("Muzik Yok", "", null);
+                l.onTrackChanged("Muzik Yok", "", null, context.getPackageName());
                 l.onSourceChanged(true);
             }
         }

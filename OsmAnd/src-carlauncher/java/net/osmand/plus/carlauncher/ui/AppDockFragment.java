@@ -204,7 +204,7 @@ public class AppDockFragment extends Fragment
     // --- MusicUIListener ---
 
     @Override
-    public void onTrackChanged(String title, String artist, Bitmap albumArt) {
+    public void onTrackChanged(String title, String artist, Bitmap albumArt, String packageName) {
         if (miniMusicTitle != null) {
             miniMusicTitle.post(() -> miniMusicTitle.setText(title != null ? title : "Muzik"));
         }
