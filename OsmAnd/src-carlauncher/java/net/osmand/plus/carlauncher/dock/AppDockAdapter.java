@@ -178,13 +178,13 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
                     return;
                 }
 
-                // Normal & Freeform
+                // Normal & Split-Screen
                 Intent intent = context.getPackageManager()
                         .getLaunchIntentForPackage(shortcut.getPackageName());
                 if (intent != null) {
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-                    if (shortcut.getLaunchMode() == LaunchMode.FREEFORM) {
+                    if (shortcut.getLaunchMode() == LaunchMode.SPLIT_SCREEN) {
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
                             intent.addFlags(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT);
                             intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
