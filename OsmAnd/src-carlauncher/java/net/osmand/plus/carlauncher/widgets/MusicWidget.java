@@ -5,19 +5,21 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.graphics.drawable.RoundedBitmapDrawable;
-import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.carlauncher.music.MusicManager;
@@ -46,140 +48,150 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     @NonNull
     @Override
     public View createView() {
-
-        android.widget.RelativeLayout rootFrame = new android.widget.RelativeLayout(context);
+        // Root Frame (Card)
+        RelativeLayout rootFrame = new RelativeLayout(context);
         rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
         rootFrame.setClipToOutline(true);
 
-        int contentId = View.generateViewId();
-
-        // --- Album Art ---
+        // --- Album Art Background ---
         albumArtView = new ImageView(context);
         albumArtView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        albumArtView.setAlpha(1.0f);
-
-        android.widget.RelativeLayout.LayoutParams artParams = new android.widget.RelativeLayout.LayoutParams(
-                android.widget.RelativeLayout.LayoutParams.MATCH_PARENT,
-                android.widget.RelativeLayout.LayoutParams.MATCH_PARENT);
-
+        albumArtView.setAlpha(0.6f); // Dimmed background
+        RelativeLayout.LayoutParams artParams = new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         rootFrame.addView(albumArtView, artParams);
 
-        // --- Gradient Overlay ---
+        // --- Gradient Overlay (Better readability) ---
         albumArtOverlay = new View(context);
         GradientDrawable gradient = new GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[] {
-                        Color.parseColor("#55000000"),
-                        Color.parseColor("#AA000000")
-                });
+                new int[] { Color.parseColor("#88000000"), Color.parseColor("#DD000000") });
         albumArtOverlay.setBackground(gradient);
         rootFrame.addView(albumArtOverlay, artParams);
 
-        // --- Content ---
-        LinearLayout contentLayout = new LinearLayout(context);
-        contentLayout.setId(contentId);
-        contentLayout.setOrientation(LinearLayout.VERTICAL);
-        contentLayout.setGravity(Gravity.CENTER);
-        contentLayout.setPadding(24, 24, 24, 24);
+        // --- Header Container (Icon + Title) ---
+        int headerId = View.generateViewId();
+        LinearLayout headerLayout = new LinearLayout(context);
+        headerLayout.setId(headerId);
+        headerLayout.setOrientation(LinearLayout.HORIZONTAL);
+        headerLayout.setGravity(Gravity.CENTER_VERTICAL);
+        headerLayout.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), 0);
 
-        android.widget.RelativeLayout.LayoutParams contentParams = new android.widget.RelativeLayout.LayoutParams(
-                android.widget.RelativeLayout.LayoutParams.MATCH_PARENT,
-                android.widget.RelativeLayout.LayoutParams.WRAP_CONTENT);
-        contentParams.addRule(android.widget.RelativeLayout.CENTER_IN_PARENT);
+        RelativeLayout.LayoutParams headerParams = new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        headerParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        rootFrame.addView(headerLayout, headerParams);
 
-        // --- App Icon ---
-        // --- App Icon ---
+        // App Icon
         appIconView = new ImageView(context);
-        int iconSize = dpToPx(24); // Reduced from 28
-
-        android.widget.RelativeLayout.LayoutParams iconParams = new android.widget.RelativeLayout.LayoutParams(iconSize,
-                iconSize);
-        iconParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_START);
-        iconParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_TOP);
-        iconParams.setMargins(20, 20, 0, 0);
-
-        appIconView.setLayoutParams(iconParams); // Explicitly set params
-        appIconView.setScaleType(ImageView.ScaleType.FIT_CENTER); // Ensure fit
+        int iconSize = dpToPx(24);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(iconSize, iconSize);
+        iconParams.setMargins(0, 0, dpToPx(12), 0);
+        appIconView.setLayoutParams(iconParams);
         appIconView.setImageResource(android.R.drawable.ic_media_play);
-        appIconView.setAlpha(0.9f);
-        appIconView.setOnClickListener(v -> showMusicAppPicker());
+        appIconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        appIconView.setOnClickListener(v -> showMusicAppPicker()); // Dedicated click listener
+        headerLayout.addView(appIconView);
 
-        // --- Title ---
+        // Track Title (Marquee)
         statusText = new TextView(context);
         statusText.setText("Muzik Secin");
         statusText.setTextColor(Color.WHITE);
-        statusText.setTextSize(20);
-        statusText.setTypeface(Typeface.DEFAULT_BOLD);
-        statusText.setLetterSpacing(0.03f);
-        statusText.setGravity(Gravity.CENTER);
+        statusText.setTextSize(18);
+        statusText.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
         statusText.setSingleLine(true);
-        statusText.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
+        statusText.setEllipsize(TextUtils.TruncateAt.MARQUEE);
         statusText.setSelected(true);
+        headerLayout.addView(statusText);
 
-        // --- Artist ---
+        // --- Artist Text ---
+        int artistId = View.generateViewId();
         artistText = new TextView(context);
+        artistText.setId(artistId);
+        artistText.setText("Sanatci Yok");
         artistText.setTextColor(Color.LTGRAY);
         artistText.setTextSize(14);
-        artistText.setAlpha(0.75f);
+        artistText.setSingleLine(true);
         artistText.setGravity(Gravity.CENTER);
-        artistText.setPadding(0, 8, 0, 24);
 
-        // --- Controls ---
+        RelativeLayout.LayoutParams artistParams = new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        artistParams.addRule(RelativeLayout.BELOW, headerId);
+        artistParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        artistParams.setMargins(0, dpToPx(4), 0, dpToPx(8));
+        rootFrame.addView(artistText, artistParams);
+
+        // --- Controls Container ---
         LinearLayout controlsLayout = new LinearLayout(context);
         controlsLayout.setOrientation(LinearLayout.HORIZONTAL);
         controlsLayout.setGravity(Gravity.CENTER);
 
-        ImageButton btnPrev = createControlButton(android.R.drawable.ic_media_previous, 56);
-        ImageButton btnPlay = createControlButton(android.R.drawable.ic_media_play, 72);
-        ImageButton btnNext = createControlButton(android.R.drawable.ic_media_next, 56);
+        RelativeLayout.LayoutParams controlsParams = new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        controlsParams.addRule(RelativeLayout.BELOW, artistId);
+        controlsParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        // Ensure controls are pushed towards bottom/center
+        controlsParams.setMargins(0, dpToPx(8), 0, dpToPx(12));
+        rootFrame.addView(controlsLayout, controlsParams);
 
-        LinearLayout.LayoutParams playParams = (LinearLayout.LayoutParams) btnPlay.getLayoutParams();
-        playParams.setMargins(32, 0, 32, 0);
-        btnPlay.setLayoutParams(playParams);
+        ImageButton btnPrev = createControlButton(android.R.drawable.ic_media_previous, 48);
+        btnPlay = createControlButton(android.R.drawable.ic_media_play, 64);
+        ImageButton btnNext = createControlButton(android.R.drawable.ic_media_next, 48);
+
+        // Add Listeners to Buttons
+        btnPrev.setOnClickListener(v -> musicManager.prev());
+        btnPlay.setOnClickListener(v -> musicManager.playPause());
+        btnNext.setOnClickListener(v -> musicManager.next());
 
         controlsLayout.addView(btnPrev);
+
+        // Play Button Margin
+        LinearLayout.LayoutParams playBtnParams = (LinearLayout.LayoutParams) btnPlay.getLayoutParams();
+        playBtnParams.setMargins(dpToPx(24), 0, dpToPx(24), 0);
+        btnPlay.setLayoutParams(playBtnParams);
+
         controlsLayout.addView(btnPlay);
         controlsLayout.addView(btnNext);
 
-        // --- Build hierarchy ---
-        contentLayout.addView(statusText);
-        contentLayout.addView(artistText);
-        contentLayout.addView(controlsLayout);
-
-        rootFrame.addView(contentLayout, contentParams);
-        rootFrame.addView(appIconView);
-
+        // --- Main Click Listener (For Drawer) ---
+        // We set it on a background view to avoid conflict, or handle touches.
+        // But framing setOnClickListener works if children don't consume it.
+        // Buttons consume it. AppIcon consumes it.
+        // Remaining area opens drawer.
         rootFrame.setOnClickListener(v -> openMusicDrawer());
 
         rootView = rootFrame;
         return rootView;
     }
 
+    // --- Helper Methods ---
+
     private void showMusicAppPicker() {
         new net.osmand.plus.carlauncher.dock.AppPickerDialog(context, (packageName, appName, icon) -> {
             Intent intent = context.getPackageManager().getLaunchIntentForPackage(packageName);
             if (intent != null) {
                 context.startActivity(intent);
+                // Also update the icon immediately to reflect selection
+                updateAppIcon(packageName);
             }
         }).show();
     }
 
     private void openMusicDrawer() {
+        // Send Broadcast to MapActivity
         Intent intent = new Intent("net.osmand.carlauncher.OPEN_MUSIC_DRAWER");
-        intent.setPackage(context.getPackageName()); // Explicit for Android 14
+        intent.setPackage(context.getPackageName());
         context.sendBroadcast(intent);
 
-        // Also send LocalBroadcast for safety
         androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(context)
                 .sendBroadcast(new Intent("net.osmand.carlauncher.OPEN_MUSIC_DRAWER"));
     }
 
-    // Geriye donuk uyumluluk veya internal update icin gerekli olabilir
     private void updateAppIcon(String packageName) {
         if (appIconView == null || packageName == null)
             return;
         try {
-            android.graphics.drawable.Drawable icon = context.getPackageManager().getApplicationIcon(packageName);
+            Drawable icon = context.getPackageManager().getApplicationIcon(packageName);
             appIconView.setImageDrawable(icon);
         } catch (Exception e) {
             appIconView.setImageResource(android.R.drawable.ic_media_play);
@@ -189,18 +201,21 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     private ImageButton createControlButton(int iconRes, int sizeDp) {
         ImageButton btn = new ImageButton(context);
         btn.setImageResource(iconRes);
-        btn.setBackgroundColor(Color.TRANSPARENT); // Arka plan yok veya shape olabilir
+        btn.setBackgroundColor(Color.TRANSPARENT);
         btn.setScaleType(ImageView.ScaleType.FIT_CENTER);
         btn.setColorFilter(Color.WHITE);
+        // Important: Make clickable but focusable false for TV/Car nav if needed,
+        // but here we want touch.
         int sizePx = dpToPx(sizeDp);
         btn.setLayoutParams(new LinearLayout.LayoutParams(sizePx, sizePx));
         return btn;
     }
 
     private int dpToPx(int dp) {
-        float density = context.getResources().getDisplayMetrics().density;
-        return Math.round(dp * density);
+        return (int) (dp * context.getResources().getDisplayMetrics().density);
     }
+
+    // --- Lifecycle & Updates ---
 
     @Override
     public void onStart() {
@@ -216,26 +231,23 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
 
     @Override
     public void update() {
-        // Listener uzerinden guncelleniyor
     }
-
-    // --- MusicUIListener ---
 
     @Override
     public void onTrackChanged(String title, String artist, Bitmap albumArt, String packageName) {
         if (rootView != null) {
             rootView.post(() -> {
                 if (statusText != null)
-                    statusText.setText(title != null ? title : "Bilinmiyor");
+                    statusText.setText(title != null ? title : "Muzik Secin");
                 if (artistText != null)
                     artistText.setText(artist != null ? artist : "");
 
                 if (albumArt != null) {
                     albumArtView.setImageBitmap(albumArt);
-                    albumArtView.setColorFilter(Color.parseColor("#44000000")); // Karartma
+                    albumArtView.setColorFilter(Color.parseColor("#44000000"));
                 } else {
-                    albumArtView.setImageResource(android.R.drawable.ic_menu_gallery); // Varsayilan bir resim
-                    albumArtView.setColorFilter(Color.parseColor("#AA000000")); // Cok Siyah
+                    albumArtView.setImageResource(0); // Clear or placeholder
+                    albumArtView.setColorFilter(Color.BLACK);
                 }
 
                 updateAppIcon(packageName);
@@ -255,6 +267,5 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
 
     @Override
     public void onSourceChanged(boolean isInternal) {
-        // Kaynak degistiginde UI'da bir sey gostermek istersek
     }
 }

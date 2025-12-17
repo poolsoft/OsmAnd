@@ -458,6 +458,27 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	public void closeAppDrawer() {
 		if (appDrawerContainer != null) {
 			appDrawerContainer.setVisibility(View.GONE);
+
+			// Clean up fragments to ensure fresh state on next open
+			try {
+				FragmentManager fm = getSupportFragmentManager();
+				// Remove MusicPlayerFragment if exists
+				Fragment musicFragment = fm.findFragmentByTag("MusicPlayerFragment");
+				if (musicFragment != null) {
+					fm.beginTransaction().remove(musicFragment).commitAllowingStateLoss();
+				}
+				// Remove AppDrawerFragment if exists
+				Fragment drawerFragment = fm.findFragmentByTag("AppDrawerFragment");
+				if (drawerFragment != null) {
+					fm.beginTransaction().remove(drawerFragment).commitAllowingStateLoss();
+				}
+				// Clear back stack
+				if (fm.getBackStackEntryCount() > 0) {
+					fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+				}
+			} catch (Exception e) {
+				LOG.error("Error closing app drawer", e);
+			}
 		}
 	}
 
