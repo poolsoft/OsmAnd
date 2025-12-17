@@ -105,7 +105,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         btnPrev.setOnClickListener(v -> musicManager.prev());
 
         btnClose.setOnClickListener(v -> {
-            if (getParentFragmentManager() != null) {
+            if (getActivity() instanceof MapActivity) {
+                ((MapActivity) getActivity()).closeAppDrawer();
+            } else if (getParentFragmentManager() != null) {
                 getParentFragmentManager().beginTransaction().remove(this).commit();
             }
         });

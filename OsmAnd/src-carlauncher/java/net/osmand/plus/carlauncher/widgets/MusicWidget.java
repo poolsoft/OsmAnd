@@ -88,8 +88,9 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         contentParams.addRule(android.widget.RelativeLayout.CENTER_IN_PARENT);
 
         // --- App Icon ---
+        // --- App Icon ---
         appIconView = new ImageView(context);
-        int iconSize = dpToPx(28);
+        int iconSize = dpToPx(24); // Reduced from 28
 
         android.widget.RelativeLayout.LayoutParams iconParams = new android.widget.RelativeLayout.LayoutParams(iconSize,
                 iconSize);
@@ -97,9 +98,11 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         iconParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_TOP);
         iconParams.setMargins(20, 20, 0, 0);
 
+        appIconView.setLayoutParams(iconParams); // Explicitly set params
+        appIconView.setScaleType(ImageView.ScaleType.FIT_CENTER); // Ensure fit
         appIconView.setImageResource(android.R.drawable.ic_media_play);
         appIconView.setAlpha(0.9f);
-        appIconView.setOnClickListener(v -> openMusicDrawer());
+        appIconView.setOnClickListener(v -> showMusicAppPicker());
 
         // --- Title ---
         statusText = new TextView(context);
@@ -150,6 +153,15 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
 
         rootView = rootFrame;
         return rootView;
+    }
+
+    private void showMusicAppPicker() {
+        new net.osmand.plus.carlauncher.dock.AppPickerDialog(context, (packageName, appName, icon) -> {
+            Intent intent = context.getPackageManager().getLaunchIntentForPackage(packageName);
+            if (intent != null) {
+                context.startActivity(intent);
+            }
+        }).show();
     }
 
     private void openMusicDrawer() {
