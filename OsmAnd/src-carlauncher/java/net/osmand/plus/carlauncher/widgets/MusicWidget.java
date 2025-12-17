@@ -45,109 +45,105 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     @NonNull
     @Override
     public View createView() {
-        // --- Root Container (Card) ---
+
         android.widget.RelativeLayout rootFrame = new android.widget.RelativeLayout(context);
-        rootFrame.setPadding(0, 0, 0, 0);
         rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
         rootFrame.setClipToOutline(true);
 
-        // ID for content to anchor images
         int contentId = View.generateViewId();
 
-        // --- Content Layout (Vertical) -> Source of Truth for Size ---
+        // --- Album Art ---
+        albumArtView = new ImageView(context);
+        albumArtView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        albumArtView.setAlpha(1.0f);
+
+        android.widget.RelativeLayout.LayoutParams artParams = new android.widget.RelativeLayout.LayoutParams(
+                android.widget.RelativeLayout.LayoutParams.MATCH_PARENT,
+                android.widget.RelativeLayout.LayoutParams.MATCH_PARENT);
+
+        rootFrame.addView(albumArtView, artParams);
+
+        // --- Gradient Overlay ---
+        albumArtOverlay = new View(context);
+        GradientDrawable gradient = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {
+                        Color.parseColor("#55000000"),
+                        Color.parseColor("#AA000000")
+                });
+        albumArtOverlay.setBackground(gradient);
+        rootFrame.addView(albumArtOverlay, artParams);
+
+        // --- Content ---
         LinearLayout contentLayout = new LinearLayout(context);
         contentLayout.setId(contentId);
         contentLayout.setOrientation(LinearLayout.VERTICAL);
         contentLayout.setGravity(Gravity.CENTER);
-        contentLayout.setPadding(4, 4, 4, 4);
+        contentLayout.setPadding(24, 24, 24, 24);
 
-        // 1. Title (Song Name)
-        statusText = new TextView(context);
-        statusText.setText("Muzik Secin");
-        statusText.setTextColor(Color.WHITE);
-        statusText.setTextSize(18);
-        statusText.setTypeface(Typeface.DEFAULT_BOLD);
-        statusText.setGravity(Gravity.CENTER);
-        statusText.setSingleLine(true);
-        statusText.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
-        statusText.setSelected(true); // Marquee icin
-        contentLayout.addView(statusText);
-
-        // 2. Artist Name
-        artistText = new TextView(context);
-        artistText.setText("");
-        artistText.setTextColor(Color.LTGRAY);
-        artistText.setTextSize(14);
-        artistText.setGravity(Gravity.CENTER);
-        artistText.setSingleLine(true);
-        artistText.setPadding(0, 4, 0, 16);
-        contentLayout.addView(artistText);
-
-        // 3. Controls (Prev - Play - Next)
-        LinearLayout controlsLayout = new LinearLayout(context);
-        controlsLayout.setOrientation(LinearLayout.HORIZONTAL);
-        controlsLayout.setGravity(Gravity.CENTER);
-
-        // 4. App Icon (Top Start of Parent)
-        appIconView = new ImageView(context);
-        int iconSize = dpToPx(32);
-        android.widget.RelativeLayout.LayoutParams iconParams = new android.widget.RelativeLayout.LayoutParams(iconSize,
-                iconSize);
-        iconParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_TOP);
-        iconParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_START);
-        iconParams.setMargins(24, 24, 0, 0);
-        appIconView.setLayoutParams(iconParams);
-        appIconView.setImageResource(android.R.drawable.ic_media_play);
-        appIconView.setOnClickListener(v -> openMusicDrawer());
-
-        controlsLayout.addView(appIconView);
-
-        // Prev
-        ImageButton btnPrev = createControlButton(android.R.drawable.ic_media_previous, 48);
-        btnPrev.setOnClickListener(v -> musicManager.prev());
-        controlsLayout.addView(btnPrev);
-
-        // Play
-        btnPlay = createControlButton(android.R.drawable.ic_media_play, 64);
-        btnPlay.setOnClickListener(v -> musicManager.playPause());
-        LinearLayout.LayoutParams playParams = (LinearLayout.LayoutParams) btnPlay.getLayoutParams();
-        playParams.setMargins(24, 0, 24, 0);
-        btnPlay.setLayoutParams(playParams);
-        controlsLayout.addView(btnPlay);
-
-        // Next
-        ImageButton btnNext = createControlButton(android.R.drawable.ic_media_next, 48);
-        btnNext.setOnClickListener(v -> musicManager.next());
-        controlsLayout.addView(btnNext);
-
-        contentLayout.addView(controlsLayout);
-
-        // --- Album Art Background (Anchored to Content) ---
-        albumArtView = new ImageView(context);
-        albumArtView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        albumArtView.setImageResource(android.R.drawable.ic_media_play);
-        albumArtView.setAlpha(0.6f);
-
-        android.widget.RelativeLayout.LayoutParams artParams = new android.widget.RelativeLayout.LayoutParams(0, 0);
-        artParams.addRule(android.widget.RelativeLayout.ALIGN_LEFT, contentId);
-        artParams.addRule(android.widget.RelativeLayout.ALIGN_RIGHT, contentId);
-        artParams.addRule(android.widget.RelativeLayout.ALIGN_TOP, contentId);
-        artParams.addRule(android.widget.RelativeLayout.ALIGN_BOTTOM, contentId);
-        rootFrame.addView(albumArtView, artParams);
-
-        // --- Overlay (Dark Gradient) (Anchored to Content) ---
-        albumArtOverlay = new View(context);
-        albumArtOverlay.setBackgroundColor(Color.parseColor("#88000000"));
-        rootFrame.addView(albumArtOverlay, artParams); // Same params
-
-        // Add Content Last (to sit on top, but Z-order in RelativeLayout usually
-        // depends on add order.
-        // Wait, if Art is added first, it is behind. Correct.)
         android.widget.RelativeLayout.LayoutParams contentParams = new android.widget.RelativeLayout.LayoutParams(
                 android.widget.RelativeLayout.LayoutParams.MATCH_PARENT,
                 android.widget.RelativeLayout.LayoutParams.WRAP_CONTENT);
         contentParams.addRule(android.widget.RelativeLayout.CENTER_IN_PARENT);
+
+        // --- App Icon ---
+        appIconView = new ImageView(context);
+        int iconSize = dpToPx(28);
+
+        android.widget.RelativeLayout.LayoutParams iconParams = new android.widget.RelativeLayout.LayoutParams(iconSize,
+                iconSize);
+        iconParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_START);
+        iconParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_TOP);
+        iconParams.setMargins(20, 20, 0, 0);
+
+        appIconView.setImageResource(android.R.drawable.ic_media_play);
+        appIconView.setAlpha(0.9f);
+        appIconView.setOnClickListener(v -> openMusicDrawer());
+
+        // --- Title ---
+        statusText = new TextView(context);
+        statusText.setText("Muzik Secin");
+        statusText.setTextColor(Color.WHITE);
+        statusText.setTextSize(20);
+        statusText.setTypeface(Typeface.DEFAULT_BOLD);
+        statusText.setLetterSpacing(0.03f);
+        statusText.setGravity(Gravity.CENTER);
+        statusText.setSingleLine(true);
+        statusText.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
+        statusText.setSelected(true);
+
+        // --- Artist ---
+        artistText = new TextView(context);
+        artistText.setTextColor(Color.LTGRAY);
+        artistText.setTextSize(14);
+        artistText.setAlpha(0.75f);
+        artistText.setGravity(Gravity.CENTER);
+        artistText.setPadding(0, 8, 0, 24);
+
+        // --- Controls ---
+        LinearLayout controlsLayout = new LinearLayout(context);
+        controlsLayout.setOrientation(LinearLayout.HORIZONTAL);
+        controlsLayout.setGravity(Gravity.CENTER);
+
+        ImageButton btnPrev = createControlButton(android.R.drawable.ic_media_previous, 56);
+        ImageButton btnPlay = createControlButton(android.R.drawable.ic_media_play, 72);
+        ImageButton btnNext = createControlButton(android.R.drawable.ic_media_next, 56);
+
+        LinearLayout.LayoutParams playParams = (LinearLayout.LayoutParams) btnPlay.getLayoutParams();
+        playParams.setMargins(32, 0, 32, 0);
+        btnPlay.setLayoutParams(playParams);
+
+        controlsLayout.addView(btnPrev);
+        controlsLayout.addView(btnPlay);
+        controlsLayout.addView(btnNext);
+
+        // --- Build hierarchy ---
+        contentLayout.addView(statusText);
+        contentLayout.addView(artistText);
+        contentLayout.addView(controlsLayout);
+
         rootFrame.addView(contentLayout, contentParams);
+        rootFrame.addView(appIconView);
 
         rootFrame.setOnClickListener(v -> openMusicDrawer());
 
