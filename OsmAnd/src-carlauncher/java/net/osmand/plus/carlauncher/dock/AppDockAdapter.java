@@ -104,18 +104,13 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
             // Icon
             iconView = new ImageView(context);
             iconView.setLayoutParams(new LinearLayout.LayoutParams(
-                    dpToPx(36), dpToPx(36))); // Reduced from 48 to 36
+                    dpToPx(44), dpToPx(44))); // Enlarge icon
             iconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             container.addView(iconView);
 
             // Name
             nameView = new TextView(context);
-            nameView.setTextColor(0xFFFFFFFF);
-            nameView.setTextSize(10);
-            nameView.setGravity(android.view.Gravity.CENTER);
-            nameView.setMaxLines(1);
-            nameView.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            nameView.setPadding(0, dpToPx(0), 0, 0); // Reduced padding
+            nameView.setVisibility(View.GONE); // Hide text
             container.addView(nameView);
         }
 

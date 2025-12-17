@@ -88,6 +88,20 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         controlsLayout.setOrientation(LinearLayout.HORIZONTAL);
         controlsLayout.setGravity(Gravity.CENTER);
 
+        // 4. App Icon (Top Start of Parent)
+        appIconView = new ImageView(context);
+        int iconSize = dpToPx(32);
+        android.widget.RelativeLayout.LayoutParams iconParams = new android.widget.RelativeLayout.LayoutParams(iconSize,
+                iconSize);
+        iconParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_TOP);
+        iconParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_START);
+        iconParams.setMargins(24, 24, 0, 0);
+        appIconView.setLayoutParams(iconParams);
+        appIconView.setImageResource(android.R.drawable.ic_media_play);
+        appIconView.setOnClickListener(v -> openMusicDrawer());
+
+        controlsLayout.addView(appIconView);
+
         // Prev
         ImageButton btnPrev = createControlButton(android.R.drawable.ic_media_previous, 48);
         btnPrev.setOnClickListener(v -> musicManager.prev());
@@ -134,20 +148,6 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                 android.widget.RelativeLayout.LayoutParams.WRAP_CONTENT);
         contentParams.addRule(android.widget.RelativeLayout.CENTER_IN_PARENT);
         rootFrame.addView(contentLayout, contentParams);
-
-        // 4. App Icon (Top Start of Parent)
-        appIconView = new ImageView(context);
-        int iconSize = dpToPx(32);
-        android.widget.RelativeLayout.LayoutParams iconParams = new android.widget.RelativeLayout.LayoutParams(iconSize,
-                iconSize);
-        iconParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_TOP);
-        iconParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_START);
-        iconParams.setMargins(24, 24, 0, 0);
-        appIconView.setLayoutParams(iconParams);
-        appIconView.setImageResource(android.R.drawable.ic_media_play);
-        appIconView.setOnClickListener(v -> openMusicDrawer());
-
-        rootFrame.addView(appIconView);
 
         rootFrame.setOnClickListener(v -> openMusicDrawer());
 

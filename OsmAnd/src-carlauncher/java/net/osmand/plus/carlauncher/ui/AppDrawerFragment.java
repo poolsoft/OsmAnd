@@ -90,15 +90,36 @@ public class AppDrawerFragment extends Fragment {
         closeButton.setColorFilter(0xFFFFFFFF);
         closeButton.setOnClickListener(v -> closeDrawer());
 
-        FrameLayout.LayoutParams closeParams = new FrameLayout.LayoutParams(64, 64);
+        FrameLayout.LayoutParams closeParams = new FrameLayout.LayoutParams(96, 96); // Bigger touch target
         closeParams.gravity = Gravity.TOP | Gravity.END;
-        closeParams.setMargins(32, 32, 32, 32);
+        closeParams.setMargins(0, 32, 32, 0); // 32dp margin top/right
+
+        // Ensure close button handles insets too
+        closeButton.setOnApplyWindowInsetsListener((v, insets) -> {
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) v.getLayoutParams();
+            params.topMargin = insets.getSystemWindowInsetTop() + 16;
+            v.setLayoutParams(params);
+            return insets;
+        });
+
+        closeButton.setElevation(100f); // High elevation
+        closeButton.setFocusable(true);
+        closeButton.setClickable(true);
         rootLayout.addView(closeButton, closeParams);
 
         // RecyclerView
         recyclerView = new RecyclerView(getContext());
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 5)); // 5 Columns
-        recyclerView.setPadding(32, 100, 32, 32); // Top padding for close button space
+
+        // Dynamic Status Bar Padding
+        recyclerView.setOnApplyWindowInsetsListener((v, insets) -> {
+            int topPadding = insets.getSystemWindowInsetTop();
+            // Add extra space for close button (e.g. 64dp)
+            v.setPadding(32, topPadding + 150, 32, 32);
+            return insets;
+        });
+        // Initial fallback
+        recyclerView.setPadding(32, 100, 32, 32);
         recyclerView.setClipToPadding(false);
 
         rootLayout.addView(recyclerView, new FrameLayout.LayoutParams(
