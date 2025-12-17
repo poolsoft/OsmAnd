@@ -59,7 +59,7 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
                 dpToPx(80),
                 ViewGroup.LayoutParams.MATCH_PARENT));
         itemView.setGravity(android.view.Gravity.CENTER);
-        itemView.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
+        itemView.setPadding(dpToPx(4), dpToPx(2), dpToPx(4), dpToPx(2));
 
         return new ViewHolder(itemView);
     }
@@ -95,7 +95,7 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
             removeButton = new ImageView(context);
             removeButton.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
             removeButton.setLayoutParams(new LinearLayout.LayoutParams(
-                    dpToPx(24), dpToPx(24)));
+                    dpToPx(20), dpToPx(20))); // Reduced size
             removeButton.setScaleType(ImageView.ScaleType.FIT_CENTER);
             removeButton.setColorFilter(0xFFFF0000);
             removeButton.setVisibility(View.GONE);
@@ -104,7 +104,7 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
             // Icon
             iconView = new ImageView(context);
             iconView.setLayoutParams(new LinearLayout.LayoutParams(
-                    dpToPx(48), dpToPx(48)));
+                    dpToPx(36), dpToPx(36))); // Reduced from 48 to 36
             iconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             container.addView(iconView);
 
@@ -115,7 +115,7 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
             nameView.setGravity(android.view.Gravity.CENTER);
             nameView.setMaxLines(1);
             nameView.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            nameView.setPadding(0, dpToPx(4), 0, 0);
+            nameView.setPadding(0, dpToPx(0), 0, 0); // Reduced padding
             container.addView(nameView);
         }
 
