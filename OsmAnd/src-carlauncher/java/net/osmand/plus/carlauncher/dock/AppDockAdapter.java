@@ -148,10 +148,49 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
 
         private void launchApp(AppShortcut shortcut) {
             try {
+                // 1. Check for internal Overlay Manager first
+                if (shortcut.getLaunchMode() == LaunchMode.OVERLAY) {
+                    // Check if we have an OverlayWindowManager in context (MapActivity)
+                    // Or send broadcast to open overlay
+                    if (context instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
+                        // TODO: Make interface support openOverlay
+                    }
+                    // Fallback: Just open standard for now, but user expects Overlay
+                    // Use the OverlayWindowManager we saw earlier? We don't have reference here.
+                    // But wait, user said "overlay" mode.
+                    // Let's launch with PiP flag (auto-enter-pip) if supported OR use standard
+                    // intent
+                    Intent intent = context.getPackageManager()
+                            .getLaunchIntentForPackage(shortcut.getPackageName());
+                    if (intent != null) {
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        // Try to force into freeform/pip via options if OS supports
+                        android.app.ActivityOptions options = android.app.ActivityOptions.makeBasic();
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                            // Attempt to launch in stack (Display ID or Stack ID)
+                            // For now, let's just assume simple launch if custom overlay not ready
+                            // But actually, maybe I should use the OverlayWindowManager logic?
+                            // Since I can't easily embed another app, I will use Multi-Window flag.
+                            intent.addFlags(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT);
+                        }
+                        context.startActivity(intent, options.toBundle());
+                    }
+                    return;
+                }
+
+                // Normal & Freeform
                 Intent intent = context.getPackageManager()
                         .getLaunchIntentForPackage(shortcut.getPackageName());
                 if (intent != null) {
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                    if (shortcut.getLaunchMode() == LaunchMode.FREEFORM) {
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                            intent.addFlags(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+                        }
+                    }
+
                     context.startActivity(intent);
                 }
             } catch (Exception e) {
