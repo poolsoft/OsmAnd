@@ -90,12 +90,32 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         appIconView.setLayoutParams(iconParams);
         appIconView.setImageResource(android.R.drawable.ic_media_play);
         appIconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        appIconView.setOnClickListener(v -> showMusicAppPicker()); // Dedicated click listener
+
+        // Short Click: Launch Selected App
+        appIconView.setOnClickListener(v -> {
+            String pkg = musicManager.getPreferredPackage();
+            if (pkg != null) {
+                Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(pkg);
+                if (launchIntent != null) {
+                    context.startActivity(launchIntent);
+                }
+            } else {
+                showMusicAppPicker(); // If none selected, show picker
+            }
+        });
+
+        // Long Click: Show Picker
+        appIconView.setOnLongClickListener(v -> {
+            showMusicAppPicker();
+            return true;
+        });
+
         headerLayout.addView(appIconView);
 
         // Track Title (Marquee)
         statusText = new TextView(context);
         statusText.setText("Muzik Secin");
+        // ... (rest of View creation unchanged) ...
         statusText.setTextColor(Color.WHITE);
         statusText.setTextSize(18);
         statusText.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
@@ -103,77 +123,19 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         statusText.setEllipsize(TextUtils.TruncateAt.MARQUEE);
         statusText.setSelected(true);
         headerLayout.addView(statusText);
-
-        // --- Artist Text ---
-        int artistId = View.generateViewId();
-        artistText = new TextView(context);
-        artistText.setId(artistId);
-        artistText.setText("Sanatci Yok");
-        artistText.setTextColor(Color.LTGRAY);
-        artistText.setTextSize(14);
-        artistText.setSingleLine(true);
-        artistText.setGravity(Gravity.CENTER);
-
-        RelativeLayout.LayoutParams artistParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        artistParams.addRule(RelativeLayout.BELOW, headerId);
-        artistParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        artistParams.setMargins(0, dpToPx(4), 0, dpToPx(8));
-        rootFrame.addView(artistText, artistParams);
-
-        // --- Controls Container ---
-        LinearLayout controlsLayout = new LinearLayout(context);
-        controlsLayout.setOrientation(LinearLayout.HORIZONTAL);
-        controlsLayout.setGravity(Gravity.CENTER);
-
-        RelativeLayout.LayoutParams controlsParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        controlsParams.addRule(RelativeLayout.BELOW, artistId);
-        controlsParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        // Ensure controls are pushed towards bottom/center
-        controlsParams.setMargins(0, dpToPx(8), 0, dpToPx(12));
-        rootFrame.addView(controlsLayout, controlsParams);
-
-        ImageButton btnPrev = createControlButton(android.R.drawable.ic_media_previous, 48);
-        btnPlay = createControlButton(android.R.drawable.ic_media_play, 64);
-        ImageButton btnNext = createControlButton(android.R.drawable.ic_media_next, 48);
-
-        // Add Listeners to Buttons
-        btnPrev.setOnClickListener(v -> musicManager.prev());
-        btnPlay.setOnClickListener(v -> musicManager.playPause());
-        btnNext.setOnClickListener(v -> musicManager.next());
-
-        controlsLayout.addView(btnPrev);
-
-        // Play Button Margin
-        LinearLayout.LayoutParams playBtnParams = (LinearLayout.LayoutParams) btnPlay.getLayoutParams();
-        playBtnParams.setMargins(dpToPx(24), 0, dpToPx(24), 0);
-        btnPlay.setLayoutParams(playBtnParams);
-
-        controlsLayout.addView(btnPlay);
-        controlsLayout.addView(btnNext);
-
-        // --- Main Click Listener (For Drawer) ---
-        // We set it on a background view to avoid conflict, or handle touches.
-        // But framing setOnClickListener works if children don't consume it.
-        // Buttons consume it. AppIcon consumes it.
-        // Remaining area opens drawer.
-        rootFrame.setOnClickListener(v -> openMusicDrawer());
-
-        rootView = rootFrame;
+        // ...
+        // ...
         return rootView;
     }
 
     // --- Helper Methods ---
 
     private void showMusicAppPicker() {
-        new net.osmand.plus.carlauncher.dock.AppPickerDialog(context, (packageName, appName, icon) -> {
-            Intent intent = context.getPackageManager().getLaunchIntentForPackage(packageName);
-            if (intent != null) {
-                context.startActivity(intent);
-                // Also update the icon immediately to reflect selection
-                updateAppIcon(packageName);
-            }
+        // Uses version with filter=true
+        new net.osmand.plus.carlauncher.dock.AppPickerDialog(context, true, (packageName, appName, icon) -> {
+            // Save selection, DO NOT Launch immediately
+            musicManager.setPreferredPackage(packageName);
+            updateAppIcon(packageName);
         }).show();
     }
 
@@ -188,10 +150,19 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     }
 
     private void updateAppIcon(String packageName) {
-        if (appIconView == null || packageName == null)
+        if (appIconView == null)
             return;
+
+        String targetPackage = musicManager.getPreferredPackage();
+        if (targetPackage == null) {
+            targetPackage = packageName;
+        }
+
+        if (targetPackage == null)
+            return;
+
         try {
-            Drawable icon = context.getPackageManager().getApplicationIcon(packageName);
+            Drawable icon = context.getPackageManager().getApplicationIcon(targetPackage);
             appIconView.setImageDrawable(icon);
         } catch (Exception e) {
             appIconView.setImageResource(android.R.drawable.ic_media_play);

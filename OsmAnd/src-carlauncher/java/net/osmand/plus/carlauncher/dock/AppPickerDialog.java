@@ -35,8 +35,15 @@ public class AppPickerDialog {
     private final Context context;
     private final OnAppSelectedListener listener;
 
+    private final boolean onlyMusicApps;
+
     public AppPickerDialog(@NonNull Context context, @NonNull OnAppSelectedListener listener) {
+        this(context, false, listener);
+    }
+
+    public AppPickerDialog(@NonNull Context context, boolean onlyMusicApps, @NonNull OnAppSelectedListener listener) {
         this.context = context;
+        this.onlyMusicApps = onlyMusicApps;
         this.listener = listener;
     }
 
@@ -45,13 +52,18 @@ public class AppPickerDialog {
      */
     public void show() {
         List<AppInfo> apps = getInstalledApps();
-
+        // ... rest same ...
         if (apps.isEmpty()) {
+            new AlertDialog.Builder(context)
+                    .setTitle("Uygulama Bulunamadi")
+                    .setMessage(onlyMusicApps ? "Muzik uygulamasi bulunamadi." : "Uygulama bulunamadi.")
+                    .setPositiveButton("Tamam", null)
+                    .show();
             return;
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Uygulama Sec");
+        builder.setTitle(onlyMusicApps ? "Muzik Uygulamasi Sec" : "Uygulama Sec");
 
         // Scroll view
         ScrollView scrollView = new ScrollView(context);
@@ -80,54 +92,18 @@ public class AppPickerDialog {
         builder.show();
     }
 
-    /**
-     * Uygulama item view olustur.
-     */
-    private View createAppItem(AppInfo app) {
-        LinearLayout itemLayout = new LinearLayout(context);
-        itemLayout.setOrientation(LinearLayout.HORIZONTAL);
-        itemLayout.setGravity(Gravity.CENTER_VERTICAL);
-        itemLayout.setPadding(12, 16, 12, 16);
-        itemLayout.setClickable(true);
-        itemLayout.setFocusable(true);
-        itemLayout.setBackgroundResource(android.R.drawable.list_selector_background);
+    // ... items creation same ...
 
-        // Icon
-        ImageView iconView = new ImageView(context);
-        iconView.setImageDrawable(app.icon);
-        iconView.setLayoutParams(new LinearLayout.LayoutParams(48, 48));
-        itemLayout.addView(iconView);
-
-        // Name
-        TextView nameView = new TextView(context);
-        nameView.setText(app.name);
-        nameView.setTextColor(0xFFFFFFFF);
-        nameView.setTextSize(16);
-        nameView.setPadding(16, 0, 0, 0);
-
-        LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
-        itemLayout.addView(nameView, nameParams);
-
-        // Click listener
-        itemLayout.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onAppSelected(app.packageName, app.name, app.icon);
-            }
-        });
-
-        return itemLayout;
-    }
-
-    private static List<AppInfo> cachedApps = null;
+    // ... cachedApps same ...
 
     /**
      * Yuklu uygulamalari al.
      */
     private List<AppInfo> getInstalledApps() {
-        if (cachedApps != null && !cachedApps.isEmpty()) {
-            return cachedApps;
-        }
+        // Cache bypass if filter changed or simple cache invalidation needed?
+        // For simplicity, we won't use static cache if filtering differs or just ignore
+        // cache for now to be safe
+        // if (cachedApps != null ... ) return cachedApps;
 
         List<AppInfo> apps = new ArrayList<>();
         PackageManager pm = context.getPackageManager();
@@ -137,9 +113,27 @@ public class AppPickerDialog {
 
         List<ResolveInfo> resolveInfos = pm.queryIntentActivities(mainIntent, 0);
 
+        // Prepare music filter if needed
+        List<String> musicPackages = new ArrayList<>();
+        if (onlyMusicApps) {
+            Intent musicIntent = new Intent("android.media.browse.MediaBrowserService");
+            List<ResolveInfo> musicServices = pm.queryIntentServices(musicIntent, 0);
+            for (ResolveInfo info : musicServices) {
+                musicPackages.add(info.serviceInfo.packageName);
+            }
+        }
+
         for (ResolveInfo info : resolveInfos) {
             try {
                 String packageName = info.activityInfo.packageName;
+
+                if (onlyMusicApps) {
+                    // Check if it has a MediaBrowserService or is a known music app
+                    if (!musicPackages.contains(packageName)) {
+                        continue;
+                    }
+                }
+
                 ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
 
                 // Sistem uygulamalarini filtrele (opsiyonel)

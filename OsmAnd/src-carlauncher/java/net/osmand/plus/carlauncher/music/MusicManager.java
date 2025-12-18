@@ -149,6 +149,25 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         }
     };
 
+    private String preferredPackage;
+
+    public void setPreferredPackage(String packageName) {
+        this.preferredPackage = packageName;
+        // Try to find controller for this package instantly
+        if (mediaSessionManager != null) {
+            try {
+                updateActiveController(mediaSessionManager.getActiveSessions(
+                        new ComponentName(context, "net.osmand.plus.carlauncher.MediaNotificationListener")));
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+    }
+
+    public String getPreferredPackage() {
+        return preferredPackage;
+    }
+
     // --- Controls ---
 
     public void playPause() {
@@ -160,8 +179,23 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             } else {
                 controls.play();
             }
+        } else if (preferredPackage != null) {
+            // Try to launch preferred if no active session
+            startPreferredApplication(preferredPackage);
         } else {
             internalPlayer.playPause();
+        }
+    }
+
+    private void startPreferredApplication(String pkg) {
+        try {
+            Intent intent = context.getPackageManager().getLaunchIntentForPackage(pkg);
+            if (intent != null) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to launch " + pkg, e);
         }
     }
 
@@ -185,6 +219,11 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
     private boolean useExternal() {
         if (activeExternalController != null) {
+            // If we have a preferred package, prioritize its controller if available
+            if (preferredPackage != null && activeExternalController.getPackageName().equals(preferredPackage)) {
+                return true;
+            }
+
             PlaybackState state = activeExternalController.getPlaybackState();
             if (state != null) {
                 // Eger external caliyorsa veya internal calmiyorsa external kullan
@@ -200,6 +239,17 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 return true;
             }
         }
+        // If no active controller but we have a preferred package we want to trigger it
+        // (returns true to enter playPause logic)
+        if (preferredPackage != null)
+            return false; // Let playPause handle launch, or return false to fallback?
+        // Actually playPause logic above handles preferredPackage explicitly if
+        // useExternal is false.
+        // But wait, if useExternal returns false, it falls back to internalPlayer.
+        // We need playPause to handle preferredPackage even if useExternal is false.
+        // My Logic in playPause: if (useExternal) ... else if (preferredPackage) ...
+        // else internal.
+        // So useExternal should strictly mean "We have a connected session to control".
         return false;
     }
 
