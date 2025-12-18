@@ -105,9 +105,16 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         if (mediaSessionManager == null)
             return;
 
-        mediaSessionManager.addOnActiveSessionsChangedListener(
-                controllers -> updateActiveController(controllers),
-                new ComponentName(context, "net.osmand.plus.carlauncher.MediaNotificationListener"));
+        try {
+            mediaSessionManager.addOnActiveSessionsChangedListener(
+                    controllers -> updateActiveController(controllers),
+                    new ComponentName(context, "net.osmand.plus.carlauncher.MediaNotificationListener"));
+        } catch (SecurityException e) {
+            Log.e(TAG, "Missing permission to control media", e);
+            // Will be handled by permission check in MapActivity
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to setup media session listener", e);
+        }
 
         // Initial check
         try {

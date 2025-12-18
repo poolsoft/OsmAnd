@@ -504,6 +504,37 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 						})
 						.setNegativeButton("Iptal", null)
 						.show();
+			} else {
+				// If overlay is granted, check notification access
+				checkNotificationPermission();
+			}
+		}
+	}
+
+	public void checkNotificationPermission() {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+			String enabledListeners = android.provider.Settings.Secure.getString(getContentResolver(),
+					"enabled_notification_listeners");
+			ComponentName myListener = new ComponentName(this,
+					net.osmand.plus.carlauncher.MediaNotificationListener.class);
+			boolean isEnabled = enabledListeners != null && enabledListeners.contains(myListener.flattenToString());
+
+			if (!isEnabled) {
+				new android.app.AlertDialog.Builder(this)
+						.setTitle("Medya Kontrol Izni")
+						.setMessage(
+								"Muzik kontrolunun calismasi icin 'Bildirim Erisim' izni gereklidir. OsmAnd Media Control secenegini aktif edin.")
+						.setPositiveButton("Ayarlar", (dialog, which) -> {
+							try {
+								Intent intent = new Intent(
+										android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
+								startActivity(intent);
+							} catch (Exception e) {
+								LOG.error("Failed to open notification settings", e);
+							}
+						})
+						.setNegativeButton("Iptal", null)
+						.show();
 			}
 		}
 	}
