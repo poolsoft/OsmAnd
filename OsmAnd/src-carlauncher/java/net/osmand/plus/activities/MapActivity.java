@@ -1390,18 +1390,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		return mapScrollHelper;
 	}
 
-	@Override
-	public void onBackPressed() {
-		if (appDrawerContainer != null && appDrawerContainer.getVisibility() == View.VISIBLE) {
-			closeAppDrawer();
-			return;
-		}
-		if (mapContextMenu.isVisible()) {
-			mapContextMenu.close();
-			return;
-		}
-		super.onBackPressed();
-	}
+	// onBackPressed already defined in super or elsewhere, ensuring we don't
+	// duplicate.
+	// We will merge logic if needed, but currently removing duplicate.
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {

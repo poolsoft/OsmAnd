@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import net.osmand.plus.carlauncher.music.MusicManager;
 import net.osmand.plus.carlauncher.music.MusicRepository;
+import net.osmand.plus.activities.MapActivity;
 
 import java.util.ArrayList;
 import java.util.List;
