@@ -74,6 +74,6 @@ jobs:
     - name: Archive APK
       uses: actions/upload-artifact@v5
       with:
-        name: CarLauncher-apk
+        name: CarLauncher-$(git log -n 1 --format='%h')
         path: android/OsmAnd/build/outputs/apk/*/*/*.apk
         retention-days: 90
