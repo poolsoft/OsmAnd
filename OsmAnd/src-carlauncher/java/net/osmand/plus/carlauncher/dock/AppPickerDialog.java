@@ -52,7 +52,7 @@ public class AppPickerDialog {
      */
     public void show() {
         List<AppInfo> apps = getInstalledApps();
-        // ... rest same ...
+
         if (apps.isEmpty()) {
             new AlertDialog.Builder(context)
                     .setTitle("Uygulama Bulunamadi")
@@ -92,9 +92,46 @@ public class AppPickerDialog {
         builder.show();
     }
 
-    // ... items creation same ...
+    /**
+     * Uygulama item view olustur.
+     */
+    private View createAppItem(AppInfo app) {
+        LinearLayout itemLayout = new LinearLayout(context);
+        itemLayout.setOrientation(LinearLayout.HORIZONTAL);
+        itemLayout.setGravity(Gravity.CENTER_VERTICAL);
+        itemLayout.setPadding(12, 16, 12, 16);
+        itemLayout.setClickable(true);
+        itemLayout.setFocusable(true);
+        itemLayout.setBackgroundResource(android.R.drawable.list_selector_background);
 
-    // ... cachedApps same ...
+        // Icon
+        ImageView iconView = new ImageView(context);
+        iconView.setImageDrawable(app.icon);
+        iconView.setLayoutParams(new LinearLayout.LayoutParams(48, 48));
+        itemLayout.addView(iconView);
+
+        // Name
+        TextView nameView = new TextView(context);
+        nameView.setText(app.name);
+        nameView.setTextColor(0xFFFFFFFF);
+        nameView.setTextSize(16);
+        nameView.setPadding(16, 0, 0, 0);
+
+        LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
+        itemLayout.addView(nameView, nameParams);
+
+        // Click listener
+        itemLayout.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onAppSelected(app.packageName, app.name, app.icon);
+            }
+        });
+
+        return itemLayout;
+    }
+
+    private static List<AppInfo> cachedApps = null;
 
     /**
      * Yuklu uygulamalari al.

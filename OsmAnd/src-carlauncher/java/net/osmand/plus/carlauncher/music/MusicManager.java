@@ -2,6 +2,7 @@ package net.osmand.plus.carlauncher.music;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
 import android.media.session.MediaSessionManager;
@@ -34,6 +35,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     private MediaController activeExternalController;
 
     private boolean isInternalPlaying = false;
+    private String preferredPackage;
 
     // UI Listeners
     private final List<MusicUIListener> listeners = new CopyOnWriteArrayList<>();
@@ -77,6 +79,23 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
     public InternalMusicPlayer getInternalPlayer() {
         return internalPlayer;
+    }
+
+    public void setPreferredPackage(String packageName) {
+        this.preferredPackage = packageName;
+        // Try to find controller for this package instantly
+        if (mediaSessionManager != null) {
+            try {
+                updateActiveController(mediaSessionManager.getActiveSessions(
+                        new ComponentName(context, "net.osmand.plus.carlauncher.MediaNotificationListener")));
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+    }
+
+    public String getPreferredPackage() {
+        return preferredPackage;
     }
 
     // --- Media Session (External) Setup ---
@@ -149,25 +168,6 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         }
     };
 
-    private String preferredPackage;
-
-    public void setPreferredPackage(String packageName) {
-        this.preferredPackage = packageName;
-        // Try to find controller for this package instantly
-        if (mediaSessionManager != null) {
-            try {
-                updateActiveController(mediaSessionManager.getActiveSessions(
-                        new ComponentName(context, "net.osmand.plus.carlauncher.MediaNotificationListener")));
-            } catch (Exception e) {
-                // Ignore
-            }
-        }
-    }
-
-    public String getPreferredPackage() {
-        return preferredPackage;
-    }
-
     // --- Controls ---
 
     public void playPause() {
@@ -239,17 +239,6 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 return true;
             }
         }
-        // If no active controller but we have a preferred package we want to trigger it
-        // (returns true to enter playPause logic)
-        if (preferredPackage != null)
-            return false; // Let playPause handle launch, or return false to fallback?
-        // Actually playPause logic above handles preferredPackage explicitly if
-        // useExternal is false.
-        // But wait, if useExternal returns false, it falls back to internalPlayer.
-        // We need playPause to handle preferredPackage even if useExternal is false.
-        // My Logic in playPause: if (useExternal) ... else if (preferredPackage) ...
-        // else internal.
-        // So useExternal should strictly mean "We have a connected session to control".
         return false;
     }
 
@@ -320,12 +309,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 // in UI
                 // Load art uri to bitmap separately if needed, passing null for now or decoding
                 // in UI
-                l.onTrackChanged(track.getTitle(), track.getArtist(), null, context.getPackageName()); // Bitmap
-                                                                                                       // decoding is
-                                                                                                       // heavy, handle
-                                                                                                       // in UI
-                // using Uri
-                // using Uri
+                l.onTrackChanged(track.getTitle(), track.getArtist(), null, context.getPackageName());
                 l.onSourceChanged(true);
             } else {
                 l.onTrackChanged("Muzik Yok", "", null, context.getPackageName());

@@ -410,6 +410,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		// 5. CarLauncher bileşenlerini başlat
 		embedWidgetPanel();
 		embedAppDock();
+
+		// 6. Check for permissions
+		checkOverlayPermission();
 	}
 
 	private void embedWidgetPanel() {
@@ -478,6 +481,29 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				}
 			} catch (Exception e) {
 				LOG.error("Error closing app drawer", e);
+			}
+		}
+	}
+
+	// Permission Check for Overlay (Widget updates in background etc)
+	public void checkOverlayPermission() {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			if (!android.provider.Settings.canDrawOverlays(this)) {
+				new android.app.AlertDialog.Builder(this)
+						.setTitle("Izin Gerekli")
+						.setMessage(
+								"Widgetlerin duzgun calismasi icin 'Diger uygulamalarin uzerinde goster' iznine ihtiyac var.")
+						.setPositiveButton("Ayarlar", (dialog, which) -> {
+							try {
+								Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+										Uri.parse("package:" + getPackageName()));
+								startActivity(intent);
+							} catch (Exception e) {
+								LOG.error("Failed to open overlay settings", e);
+							}
+						})
+						.setNegativeButton("Iptal", null)
+						.show();
 			}
 		}
 	}
