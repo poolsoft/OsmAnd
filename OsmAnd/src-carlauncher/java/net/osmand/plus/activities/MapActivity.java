@@ -515,8 +515,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
 			String enabledListeners = android.provider.Settings.Secure.getString(getContentResolver(),
 					"enabled_notification_listeners");
-			ComponentName myListener = new ComponentName(this,
-					net.osmand.plus.carlauncher.MediaNotificationListener.class);
+			ComponentName myListener = new ComponentName(getPackageName(),
+					"net.osmand.plus.carlauncher.MediaNotificationListener");
 			boolean isEnabled = enabledListeners != null && enabledListeners.contains(myListener.flattenToString());
 
 			if (!isEnabled) {
