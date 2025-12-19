@@ -146,6 +146,16 @@
                 android:tint="#FFFFFF"
                 android:contentDescription="Playlist" />
 
+            <!-- Equalizer Button -->
+            <ImageButton
+                android:id="@+id/btn_equalizer"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_menu_preferences"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:tint="#FFFFFF"
+                android:contentDescription="Equalizer" />
+
             <!-- Close Button -->
             <ImageButton
                 android:id="@+id/btn_close"

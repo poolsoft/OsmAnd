@@ -51,7 +51,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private View playerPanel;
     private ImageView appIcon;
     private View appSelector;
-    private ImageButton btnPlaylist, btnClose;
+    private ImageButton btnPlaylist, btnClose, btnEqualizer;
     private ImageView nowPlayingArt;
     private TextView nowPlayingTitle, nowPlayingArtist;
     private SeekBar seekbar;
@@ -94,6 +94,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         appIcon = root.findViewById(net.osmand.plus.R.id.app_icon);
         appSelector = root.findViewById(net.osmand.plus.R.id.app_selector);
         btnPlaylist = root.findViewById(net.osmand.plus.R.id.btn_playlist);
+        btnEqualizer = root.findViewById(net.osmand.plus.R.id.btn_equalizer);
         btnClose = root.findViewById(net.osmand.plus.R.id.btn_close);
         nowPlayingArt = root.findViewById(net.osmand.plus.R.id.now_playing_art);
         nowPlayingTitle = root.findViewById(net.osmand.plus.R.id.now_playing_title);
@@ -151,6 +152,11 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             isExternalMode = !isExternalMode;
             updateModeUI();
         });
+
+        // Equalizer
+        if (btnEqualizer != null) {
+            btnEqualizer.setOnClickListener(v -> openEqualizer());
+        }
 
         // Seekbar
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -289,7 +295,231 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             tabPlaylists.setTextColor(0xFF00FFFF);
         if (tabRecent != null)
             tabRecent.setTextColor(0xFF888888);
-        // TODO: Show playlists
+
+        // Show playlists dialog
+        showPlaylistDialog();
+    }
+
+    private void showPlaylistDialog() {
+        if (getContext() == null)
+            return;
+
+        List<PlaylistManager.Playlist> playlists = playlistManager.getAllPlaylists();
+
+        String[] options;
+        if (playlists.isEmpty()) {
+            options = new String[] { "+ Yeni Playlist Olustur" };
+        } else {
+            options = new String[playlists.size() + 1];
+            options[0] = "+ Yeni Playlist Olustur";
+            for (int i = 0; i < playlists.size(); i++) {
+                PlaylistManager.Playlist p = playlists.get(i);
+                options[i + 1] = p.name + " (" + p.tracks.size() + " sarki)";
+            }
+        }
+
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle("Playlistler")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        showCreatePlaylistDialog();
+                    } else {
+                        PlaylistManager.Playlist selected = playlists.get(which - 1);
+                        showPlaylistOptionsDialog(selected);
+                    }
+                })
+                .setNegativeButton("Kapat", null)
+                .show();
+    }
+
+    private void showCreatePlaylistDialog() {
+        if (getContext() == null)
+            return;
+
+        android.widget.EditText input = new android.widget.EditText(getContext());
+        input.setHint("Playlist adi");
+        input.setTextColor(0xFFFFFFFF);
+        input.setHintTextColor(0xFF888888);
+        input.setPadding(48, 32, 48, 32);
+
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle("Yeni Playlist")
+                .setView(input)
+                .setPositiveButton("Olustur", (dialog, which) -> {
+                    String name = input.getText().toString().trim();
+                    if (!name.isEmpty()) {
+                        PlaylistManager.Playlist newPlaylist = new PlaylistManager.Playlist(name);
+                        playlistManager.savePlaylist(newPlaylist);
+                        showPlaylistDialog(); // Refresh
+                    }
+                })
+                .setNegativeButton("Iptal", null)
+                .show();
+    }
+
+    private void showPlaylistOptionsDialog(PlaylistManager.Playlist playlist) {
+        if (getContext() == null)
+            return;
+
+        String[] options = { "Cal", "Parcalari Gor/Duzenle", "Sil" };
+
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle(playlist.name)
+                .setItems(options, (dialog, which) -> {
+                    switch (which) {
+                        case 0: // Play
+                            playPlaylist(playlist);
+                            break;
+                        case 1: // Edit
+                            showPlaylistTracksDialog(playlist);
+                            break;
+                        case 2: // Delete
+                            confirmDeletePlaylist(playlist);
+                            break;
+                    }
+                })
+                .setNegativeButton("Kapat", null)
+                .show();
+    }
+
+    private void playPlaylist(PlaylistManager.Playlist playlist) {
+        if (playlist.tracks.isEmpty()) {
+            android.widget.Toast.makeText(getContext(), "Playlist bos!", android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Find tracks by path
+        List<MusicRepository.AudioTrack> queue = new ArrayList<>();
+        for (String path : playlist.tracks) {
+            for (MusicRepository.AudioTrack t : allTracks) {
+                if (t.getPath().equals(path)) {
+                    queue.add(t);
+                    break;
+                }
+            }
+        }
+
+        if (!queue.isEmpty()) {
+            if (isShuffleOn) {
+                java.util.Collections.shuffle(queue);
+            }
+            musicManager.getInternalPlayer().setPlaylist(queue, 0);
+        }
+    }
+
+    private void showPlaylistTracksDialog(PlaylistManager.Playlist playlist) {
+        if (getContext() == null)
+            return;
+
+        // Show current tracks and option to add more
+        String[] options = new String[playlist.tracks.size() + 1];
+        options[0] = "+ Parcha Ekle";
+        for (int i = 0; i < playlist.tracks.size(); i++) {
+            // Find track name
+            String path = playlist.tracks.get(i);
+            String name = path; // Default to path
+            for (MusicRepository.AudioTrack t : allTracks) {
+                if (t.getPath().equals(path)) {
+                    name = t.getTitle();
+                    break;
+                }
+            }
+            options[i + 1] = name;
+        }
+
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle(playlist.name + " - Parcalar")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        showAddTrackToPlaylistDialog(playlist);
+                    } else {
+                        // Long press to remove? For now, show option
+                        int trackIndex = which - 1;
+                        showRemoveTrackDialog(playlist, trackIndex);
+                    }
+                })
+                .setNegativeButton("Kapat", null)
+                .show();
+    }
+
+    private void showAddTrackToPlaylistDialog(PlaylistManager.Playlist playlist) {
+        if (getContext() == null || allTracks.isEmpty())
+            return;
+
+        String[] trackNames = new String[allTracks.size()];
+        for (int i = 0; i < allTracks.size(); i++) {
+            trackNames[i] = allTracks.get(i).getTitle();
+        }
+
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle("Parcha Ekle")
+                .setItems(trackNames, (dialog, which) -> {
+                    String path = allTracks.get(which).getPath();
+                    if (!playlist.tracks.contains(path)) {
+                        playlist.tracks.add(path);
+                        playlistManager.savePlaylist(playlist);
+                        android.widget.Toast.makeText(getContext(), "Eklendi!", android.widget.Toast.LENGTH_SHORT)
+                                .show();
+                    } else {
+                        android.widget.Toast.makeText(getContext(), "Zaten eklenmis", android.widget.Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                })
+                .setNegativeButton("Iptal", null)
+                .show();
+    }
+
+    private void showRemoveTrackDialog(PlaylistManager.Playlist playlist, int trackIndex) {
+        if (getContext() == null)
+            return;
+
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle("Parcayi Kaldir?")
+                .setMessage("Bu parcayi playlistten kaldirmak istiyor musunuz?")
+                .setPositiveButton("Kaldir", (dialog, which) -> {
+                    playlist.tracks.remove(trackIndex);
+                    playlistManager.savePlaylist(playlist);
+                    showPlaylistTracksDialog(playlist); // Refresh
+                })
+                .setNegativeButton("Iptal", null)
+                .show();
+    }
+
+    private void confirmDeletePlaylist(PlaylistManager.Playlist playlist) {
+        if (getContext() == null)
+            return;
+
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle("Playlisti Sil?")
+                .setMessage(playlist.name + " playlistini silmek istiyor musunuz?")
+                .setPositiveButton("Sil", (dialog, which) -> {
+                    playlistManager.deletePlaylist(playlist.id);
+                    android.widget.Toast.makeText(getContext(), "Silindi!", android.widget.Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Iptal", null)
+                .show();
+    }
+
+    private void openEqualizer() {
+        if (getContext() == null)
+            return;
+
+        try {
+            android.content.Intent intent = new android.content.Intent(
+                    android.media.audiofx.AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL);
+            int sessionId = 0;
+            if (musicManager != null && musicManager.getInternalPlayer() != null) {
+                // Cannot get session ID from InternalMusicPlayer currently
+                // Using 0 opens system default
+            }
+            intent.putExtra(android.media.audiofx.AudioEffect.EXTRA_AUDIO_SESSION, sessionId);
+            intent.putExtra(android.media.audiofx.AudioEffect.EXTRA_CONTENT_TYPE,
+                    android.media.audiofx.AudioEffect.CONTENT_TYPE_MUSIC);
+            startActivity(intent);
+        } catch (Exception e) {
+            android.widget.Toast.makeText(getContext(), "Equalizer bulunamadi", android.widget.Toast.LENGTH_SHORT)
+                    .show();
+        }
     }
 
     private void loadRecentlyPlayed() {
