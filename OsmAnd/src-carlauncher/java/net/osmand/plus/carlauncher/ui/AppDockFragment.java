@@ -106,7 +106,11 @@ public class AppDockFragment extends Fragment
             };
             android.content.IntentFilter filter = new android.content.IntentFilter(
                     "net.osmand.carlauncher.DOCK_UPDATED");
-            getContext().registerReceiver(dockUpdateReceiver, filter);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                getContext().registerReceiver(dockUpdateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                getContext().registerReceiver(dockUpdateReceiver, filter);
+            }
         }
     }
 
