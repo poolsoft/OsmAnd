@@ -43,14 +43,6 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         android.widget.FrameLayout rootFrame = new android.widget.FrameLayout(context);
         rootFrame.setPadding(12, 12, 12, 12);
 
-        // Add margins for spacing between widgets
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        int margin = dpToPx(8);
-        layoutParams.setMargins(margin, margin, margin, margin);
-        rootFrame.setLayoutParams(layoutParams);
-
         // Arka Plan (XML Kaynagi)
         rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
 

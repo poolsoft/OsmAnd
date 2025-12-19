@@ -88,7 +88,7 @@ public class WidgetManager {
         for (int i = 0; i < allWidgets.size(); i++) {
             allWidgets.get(i).setOrder(i);
         }
-        
+
         updateVisibleWidgets();
         saveWidgetConfig();
     }
@@ -119,6 +119,8 @@ public class WidgetManager {
     public void attachWidgetsToContainer(@NonNull ViewGroup container) {
         container.removeAllViews();
 
+        int margin = dpToPx(8);
+
         for (BaseWidget widget : visibleWidgets) {
             View widgetView = widget.getRootView();
             if (widgetView == null) {
@@ -126,9 +128,28 @@ public class WidgetManager {
             }
 
             if (widgetView != null) {
+                // Apply margins consistently to all widgets
+                LinearLayout.LayoutParams params;
+                if (widgetView.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+                    params = (LinearLayout.LayoutParams) widgetView.getLayoutParams();
+                } else {
+                    // Default to WRAP_CONTENT if no params set
+                    params = new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT);
+                }
+
+                params.setMargins(margin, margin, margin, margin);
+                widgetView.setLayoutParams(params);
+
                 container.addView(widgetView);
             }
         }
+    }
+
+    private int dpToPx(int dp) {
+        float density = context.getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 
     /**
@@ -167,27 +188,31 @@ public class WidgetManager {
      * Widget config'i kaydet.
      */
     public void saveWidgetConfig() {
-        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(context);
-        
+        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(
+                context);
+
         List<String> order = new ArrayList<>();
         for (BaseWidget widget : allWidgets) {
             settings.setWidgetVisible(widget.getId(), widget.isVisible());
-            // Order is effectively the index in allWidgets dependent on how we manage it, 
+            // Order is effectively the index in allWidgets dependent on how we manage it,
             // but for simple list order saving:
-            order.add(widget.getId()); 
+            order.add(widget.getId());
         }
-        
-        // Actually, we should save the order of *visible* widgets or just the sorted order of all widgets via a specific list?
-        // Let's save the order of 'visibleWidgets' first, then invisible ones appended? 
+
+        // Actually, we should save the order of *visible* widgets or just the sorted
+        // order of all widgets via a specific list?
+        // Let's save the order of 'visibleWidgets' first, then invisible ones appended?
         // Or better: Let CarLauncherSettings store the 'Sort Order' of IDs.
-        
+
         // Current 'allWidgets' list might be sorted by insertion or by previous load.
         // Let's create a list of IDs representing the current desired order.
-        // Since 'moveWidget' modifies 'visibleWidgets' only, we need to reflect that in 'allWidgets' or just save 'visibleWidgets' order?
-        
+        // Since 'moveWidget' modifies 'visibleWidgets' only, we need to reflect that in
+        // 'allWidgets' or just save 'visibleWidgets' order?
+
         // Strategy: Save all IDs in the order they should appear.
-        // visibleWidgets are at the top (sorted). Invisible ones don't have an order per se, but let's keep them stable.
-        
+        // visibleWidgets are at the top (sorted). Invisible ones don't have an order
+        // per se, but let's keep them stable.
+
         List<String> sortedIds = new ArrayList<>();
         for (BaseWidget w : visibleWidgets) {
             sortedIds.add(w.getId());
@@ -198,7 +223,7 @@ public class WidgetManager {
                 sortedIds.add(w.getId());
             }
         }
-        
+
         settings.setWidgetOrder(sortedIds);
     }
 
@@ -206,11 +231,12 @@ public class WidgetManager {
      * Widget config'i yukle.
      */
     public void loadWidgetConfig() {
-        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(context);
-        
+        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(
+                context);
+
         // Default order... if simple we rely on initialization order.
         List<String> savedOrder = settings.getWidgetOrder(null);
-        
+
         if (savedOrder != null) {
             // Reorder 'allWidgets' based on savedOrder
             List<BaseWidget> reordered = new ArrayList<>();
@@ -226,17 +252,18 @@ public class WidgetManager {
                     reordered.add(w);
                 }
             }
-            
+
             allWidgets.clear();
             allWidgets.addAll(reordered);
         }
-        
+
         // Restore visibility
         for (BaseWidget widget : allWidgets) {
-            // Default visibility true? Or based on some default list? Assuming true for now.
+            // Default visibility true? Or based on some default list? Assuming true for
+            // now.
             boolean visible = settings.isWidgetVisible(widget.getId(), true);
             widget.setVisible(visible);
-            
+
             // Set internal order field based on list index
             widget.setOrder(allWidgets.indexOf(widget));
         }
