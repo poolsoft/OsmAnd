@@ -35,6 +35,14 @@ public class DirectionWidget extends BaseWidget implements OsmAndLocationProvide
         rootFrame.setPadding(16, 16, 16, 16);
         rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
 
+        // Add margins for spacing
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        int margin = dpToPx(8);
+        layoutParams.setMargins(margin, margin, margin, margin);
+        rootFrame.setLayoutParams(layoutParams);
+
         LinearLayout container = new LinearLayout(context);
         container.setOrientation(LinearLayout.VERTICAL);
         container.setGravity(Gravity.CENTER);

@@ -58,8 +58,8 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         // 220dp width, WRAP_CONTENT height (or fixed if needed)
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dpToPx(220),
                 ViewGroup.LayoutParams.WRAP_CONTENT);
-        // Add margin to look like other widgets
-        params.setMargins(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
+        // Add margin to look like other widgets (Increased to 8dp for better spacing)
+        params.setMargins(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
         rootFrame.setLayoutParams(params);
 
         // Initial setup for empty state (height might still be issue if empty)

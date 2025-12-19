@@ -44,6 +44,20 @@ public class ClockWidget extends BaseWidget {
         // Arka Plan (XML Kaynagi)
         rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
 
+        // Add margins for spacing
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        int margin = dpToPx(8); // Using helper method not yet in ClockWidget? Wait, BaseWidget?
+        // ClockWidget doesn't have dpToPx helper method shown in snippet. BaseWidget
+        // has it?
+        // BaseWidget snippet: lines 1-50 didn't show dpToPx.
+        // I'll use explicit calc: (int) (8 *
+        // context.getResources().getDisplayMetrics().density)
+        int marginPx = (int) (8 * context.getResources().getDisplayMetrics().density);
+        layoutParams.setMargins(marginPx, marginPx, marginPx, marginPx);
+        rootFrame.setLayoutParams(layoutParams);
+
         // Icerik Konteyneri (Dikey)
         LinearLayout contentLayout = new LinearLayout(context);
         contentLayout.setOrientation(LinearLayout.VERTICAL);
