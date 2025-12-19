@@ -53,12 +53,25 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
         rootFrame.setClipToOutline(true);
 
+        // Fix visibility: Set fixed width because parent is WRAP_CONTENT
+        // and we used MATCH_PARENT inside.
+        // 220dp width, WRAP_CONTENT height (or fixed if needed)
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dpToPx(220),
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        // Add margin to look like other widgets
+        params.setMargins(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
+        rootFrame.setLayoutParams(params);
+
+        // Initial setup for empty state (height might still be issue if empty)
+        rootFrame.setMinimumHeight(dpToPx(100)); // Ensure min height similar to SpeedWidget
+
         // --- Album Art Background ---
         albumArtView = new ImageView(context);
         albumArtView.setScaleType(ImageView.ScaleType.CENTER_CROP);
         albumArtView.setAlpha(0.6f); // Dimmed background
         RelativeLayout.LayoutParams artParams = new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        // artParams.addRule(RelativeLayout.ALIGN_TOP, headerId); // No IDs yet
         rootFrame.addView(albumArtView, artParams);
 
         // --- Gradient Overlay (Better readability) ---
