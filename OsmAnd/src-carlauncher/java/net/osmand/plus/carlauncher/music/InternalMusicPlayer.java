@@ -172,4 +172,30 @@ public class InternalMusicPlayer {
             mediaPlayer = null;
         }
     }
+
+    // --- Seekbar Support ---
+
+    public int getCurrentPosition() {
+        if (isPrepared && mediaPlayer != null) {
+            return mediaPlayer.getCurrentPosition();
+        }
+        return 0;
+    }
+
+    public int getDuration() {
+        if (isPrepared && mediaPlayer != null) {
+            return mediaPlayer.getDuration();
+        }
+        return 0;
+    }
+
+    public void seekTo(int position) {
+        if (isPrepared && mediaPlayer != null) {
+            mediaPlayer.seekTo(position);
+        }
+    }
+
+    public boolean isPrepared() {
+        return isPrepared;
+    }
 }
