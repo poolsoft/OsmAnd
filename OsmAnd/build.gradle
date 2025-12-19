@@ -111,6 +111,7 @@ android {
 			// We will filter out the conflicting MapActivity using applicationVariants block below.
 
 			res.srcDirs = ["src-carlauncher/res"]
+			assets.srcDirs = ["src-carlauncher/assets"]
 			manifest.srcFile "AndroidManifest-carlauncher.xml"
 		}
 			
