@@ -60,10 +60,18 @@ public class ClockWidget extends BaseWidget {
         // --- SAAT ---
         clockText = new TextView(context);
         clockText.setTextColor(Color.WHITE);
-        clockText.setTextSize(48); // Buyuk, okunakli
-        clockText.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD)); // Modern font
+        clockText.setTextSize(60); // Increase size for 7-segment readability
         clockText.setGravity(Gravity.CENTER);
         clockText.setIncludeFontPadding(false);
+
+        try {
+            Typeface digitalFont = Typeface.createFromAsset(context.getAssets(), "fonts/curved-seven-segment.ttf");
+            clockText.setTypeface(digitalFont);
+        } catch (Exception e) {
+            // Fallback
+            clockText.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+        }
+
         contentLayout.addView(clockText);
 
         // --- TARIH ---

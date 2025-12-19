@@ -86,11 +86,17 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         // Hız Değeri
         speedText = new TextView(context);
         speedText.setTextColor(Color.parseColor("#FFFFFF")); // Beyaz (Daha net)
-        speedText.setTextSize(48); // Buyuk
+        speedText.setTextSize(64); // Larger for 7-segment
         speedText.setGravity(Gravity.CENTER);
         speedText.setText("--");
-        speedText.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         speedText.setIncludeFontPadding(false);
+
+        try {
+            Typeface digitalFont = Typeface.createFromAsset(context.getAssets(), "fonts/curved-seven-segment.ttf");
+            speedText.setTypeface(digitalFont);
+        } catch (Exception e) {
+            speedText.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        }
 
         speedContainer.addView(speedText);
 
