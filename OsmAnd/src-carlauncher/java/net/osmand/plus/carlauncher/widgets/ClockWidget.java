@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -49,8 +50,8 @@ public class ClockWidget extends BaseWidget {
         contentLayout.setOrientation(LinearLayout.VERTICAL);
         contentLayout.setGravity(Gravity.CENTER);
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT);
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
         params.setMargins(4, 4, 4, 4); // Icerik kenar boslugu
         contentLayout.setLayoutParams(params);
 

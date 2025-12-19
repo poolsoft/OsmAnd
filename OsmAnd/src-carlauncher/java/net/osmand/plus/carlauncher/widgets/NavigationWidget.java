@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Color;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -43,16 +45,16 @@ public class NavigationWidget extends BaseWidget {
     @Override
     public View createView() {
         // Modern Kart Yapisi
-        android.widget.FrameLayout rootFrame = new android.widget.FrameLayout(context);
+        FrameLayout rootFrame = new FrameLayout(context);
         rootFrame.setPadding(16, 16, 16, 16);
         rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
 
         LinearLayout container = new LinearLayout(context);
         container.setOrientation(LinearLayout.VERTICAL);
         container.setGravity(Gravity.CENTER);
-        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
         params.setMargins(16, 16, 16, 16);
         container.setLayoutParams(params);
 
