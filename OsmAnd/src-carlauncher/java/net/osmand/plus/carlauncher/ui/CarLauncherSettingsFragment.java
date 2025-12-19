@@ -55,6 +55,50 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         view.setBackgroundColor(0xFF111111); // Dark background
+
+        // Add close button overlay
+        addCloseButton(view);
+    }
+
+    private void addCloseButton(View rootView) {
+        if (getContext() == null || !(rootView instanceof android.view.ViewGroup))
+            return;
+
+        android.view.ViewGroup parent = (android.view.ViewGroup) rootView;
+
+        // Create close button
+        android.widget.ImageButton closeBtn = new android.widget.ImageButton(getContext());
+        closeBtn.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+        closeBtn.setBackgroundColor(0x00000000); // Transparent
+        closeBtn.setColorFilter(0xFFFFFFFF); // White tint
+        closeBtn.setPadding(24, 24, 24, 24);
+        closeBtn.setOnClickListener(v -> {
+            if (getActivity() != null) {
+                // Close settings by going back or hiding drawer
+                if (getActivity() instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
+                    ((net.osmand.plus.carlauncher.CarLauncherInterface) getActivity()).closeAppDrawer();
+                } else {
+                    getActivity().onBackPressed();
+                }
+            }
+        });
+
+        // Layout params for top-right position
+        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
+        params.topMargin = 48;
+        params.rightMargin = 24;
+
+        // Wrap in FrameLayout if needed
+        android.widget.FrameLayout container = new android.widget.FrameLayout(getContext());
+        container.setLayoutParams(new android.widget.FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+        container.addView(closeBtn, params);
+
+        parent.addView(container);
     }
 
     // ═══════════════════════════════════════════════════════════════

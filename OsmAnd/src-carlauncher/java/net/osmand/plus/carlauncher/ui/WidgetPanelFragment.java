@@ -74,8 +74,10 @@ public class WidgetPanelFragment extends Fragment {
 
         widgetContainer = new LinearLayout(getContext());
         widgetContainer.setOrientation(isPortrait ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
+        // In portrait, use WRAP_CONTENT for horizontal scroll to work with fixed-width
+        // widgets
         widgetContainer.setLayoutParams(new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
+                isPortrait ? ViewGroup.LayoutParams.WRAP_CONTENT : ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
         widgetContainer.setPadding(4, 16, 4, 16); // Reduced padding
 
