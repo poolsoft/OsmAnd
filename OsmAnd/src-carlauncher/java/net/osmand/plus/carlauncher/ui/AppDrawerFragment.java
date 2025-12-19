@@ -400,7 +400,7 @@ public class AppDrawerFragment extends Fragment {
             return;
 
         MapActivity activity = (MapActivity) getActivity();
-        closeDrawer();
+        // Note: Don't call closeDrawer() - internal fragments open in same container
 
         switch (internalUri) {
             case "internal://settings":

@@ -176,8 +176,13 @@ public class AppDockFragment extends Fragment
 
         if (miniMusicContainer != null) {
             miniMusicContainer.setOnClickListener(v -> {
+                // Use both global and local broadcast for compatibility
                 Intent intent = new Intent("net.osmand.carlauncher.OPEN_MUSIC_DRAWER");
+                intent.setPackage(getContext().getPackageName());
                 getContext().sendBroadcast(intent);
+
+                androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(getContext())
+                        .sendBroadcast(new Intent("net.osmand.carlauncher.OPEN_MUSIC_DRAWER"));
             });
         }
 
