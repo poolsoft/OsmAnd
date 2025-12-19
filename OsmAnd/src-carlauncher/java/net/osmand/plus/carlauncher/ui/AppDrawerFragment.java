@@ -213,7 +213,32 @@ public class AppDrawerFragment extends Fragment {
             }
 
             Collections.sort(apps, (a, b) -> a.label.compareToIgnoreCase(b.label));
+
+            // Add internal apps at the beginning
+            List<AppItem> internalApps = getInternalApps();
+            apps.addAll(0, internalApps);
+
             return apps;
+        }
+
+        private List<AppItem> getInternalApps() {
+            List<AppItem> internal = new ArrayList<>();
+
+            // Settings
+            AppItem settings = new AppItem();
+            settings.label = "⚙️ Car Launcher Ayarlar";
+            settings.packageName = "internal://settings";
+            settings.icon = context.getResources().getDrawable(android.R.drawable.ic_menu_preferences, null);
+            internal.add(settings);
+
+            // Music Player
+            AppItem music = new AppItem();
+            music.label = "🎵 Muzik Calici";
+            music.packageName = "internal://music";
+            music.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
+            internal.add(music);
+
+            return internal;
         }
 
         @Override
@@ -353,6 +378,12 @@ public class AppDrawerFragment extends Fragment {
     }
 
     private void launchApp(String packageName) {
+        // Handle internal apps
+        if (packageName != null && packageName.startsWith("internal://")) {
+            handleInternalApp(packageName);
+            return;
+        }
+
         try {
             Intent intent = getContext().getPackageManager().getLaunchIntentForPackage(packageName);
             if (intent != null) {
@@ -361,6 +392,23 @@ public class AppDrawerFragment extends Fragment {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void handleInternalApp(String internalUri) {
+        if (getActivity() == null || !(getActivity() instanceof MapActivity))
+            return;
+
+        MapActivity activity = (MapActivity) getActivity();
+        closeDrawer();
+
+        switch (internalUri) {
+            case "internal://settings":
+                activity.openCarLauncherSettings();
+                break;
+            case "internal://music":
+                activity.openMusicPlayer();
+                break;
         }
     }
 

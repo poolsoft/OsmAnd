@@ -76,6 +76,7 @@ public class AppDockFragment extends Fragment
     private ImageView miniMusicIcon;
 
     private MusicManager musicManager;
+    private ImageButton btnSettings;
 
     public interface OnAppDockListener {
         void onLayoutToggle();
@@ -192,11 +193,21 @@ public class AppDockFragment extends Fragment
 
         layoutButton.setOnLongClickListener(v -> {
             // Fallback via context cast
-            if (getContext() instanceof net.osmand.plus.activities.MapActivity) {
-                ((net.osmand.plus.activities.MapActivity) getContext()).openCarLauncherSettings();
-            }
+            openSettings();
             return true;
         });
+
+        // Settings Button
+        btnSettings = root.findViewById(net.osmand.plus.R.id.btn_settings);
+        if (btnSettings != null) {
+            btnSettings.setOnClickListener(v -> openSettings());
+        }
+
+        // Clock container also opens settings
+        View clockContainer = root.findViewById(net.osmand.plus.R.id.clock_settings_container);
+        if (clockContainer != null) {
+            clockContainer.setOnClickListener(v -> openSettings());
+        }
 
         // Setup RecyclerView (Force Horizontal)
         recyclerView.setLayoutManager(
@@ -360,6 +371,12 @@ public class AppDockFragment extends Fragment
             }
         });
         dialog.show();
+    }
+
+    private void openSettings() {
+        if (getContext() instanceof net.osmand.plus.activities.MapActivity) {
+            ((net.osmand.plus.activities.MapActivity) getContext()).openCarLauncherSettings();
+        }
     }
 
     // --- Clock Logic ---

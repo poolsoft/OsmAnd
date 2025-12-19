@@ -77,7 +77,7 @@
         android:minWidth="140dp"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/dock_clock"
+        app:layout_constraintEnd_toStartOf="@id/clock_settings_container"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
@@ -124,19 +124,42 @@
 
     </LinearLayout>
 
-    <!-- 5. Clock (Far Right) -->
-    <TextView
-        android:id="@+id/dock_clock"
+    <!-- 5. Clock + Settings Container (Far Right) -->
+    <LinearLayout
+        android:id="@+id/clock_settings_container"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="12:00"
-        android:textColor="#FFFFFF"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:includeFontPadding="false"
-        android:layout_marginEnd="16dp"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="?attr/selectableItemBackground"
+        android:paddingStart="12dp"
+        android:paddingEnd="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/dock_clock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="12:00"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:includeFontPadding="false" />
+
+        <ImageButton
+            android:id="@+id/btn_settings"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="8dp"
+            android:src="@android:drawable/ic_menu_preferences"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="4dp"
+            android:scaleType="fitCenter"
+            app:tint="#AAAAAA"
+            android:contentDescription="Ayarlar" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
