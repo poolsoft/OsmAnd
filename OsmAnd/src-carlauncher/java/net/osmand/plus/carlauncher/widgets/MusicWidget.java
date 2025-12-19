@@ -137,6 +137,9 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         headerLayout.addView(statusText);
         // ...
         // ...
+        // ...
+
+        rootView = rootFrame;
         return rootView;
     }
 
