@@ -93,6 +93,32 @@ public class AppDockFragment extends Fragment
 
             // Music Manager
             musicManager = MusicManager.getInstance(getContext());
+
+            // Register Dock Update Receiver
+            dockUpdateReceiver = new android.content.BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    refreshDock();
+                }
+            };
+            android.content.IntentFilter filter = new android.content.IntentFilter(
+                    "net.osmand.carlauncher.DOCK_UPDATED");
+            getContext().registerReceiver(dockUpdateReceiver, filter);
+        }
+    }
+
+    private android.content.BroadcastReceiver dockUpdateReceiver;
+
+    /**
+     * Dock'u yeniden yukle ve UI'i guncelle.
+     */
+    public void refreshDock() {
+        if (dockManager != null && adapter != null && getActivity() != null) {
+            dockManager.loadShortcuts();
+            getActivity().runOnUiThread(() -> {
+                adapter.setShortcuts(dockManager.getShortcuts());
+                adapter.notifyDataSetChanged();
+            });
         }
     }
 
@@ -355,5 +381,14 @@ public class AppDockFragment extends Fragment
         super.onDestroy();
         if (clockRunnable != null)
             clockHandler.removeCallbacks(clockRunnable);
+
+        // Unregister dock update receiver
+        if (dockUpdateReceiver != null && getContext() != null) {
+            try {
+                getContext().unregisterReceiver(dockUpdateReceiver);
+            } catch (Exception e) {
+                // Ignore if already unregistered
+            }
+        }
     }
 }

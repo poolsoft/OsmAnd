@@ -344,14 +344,10 @@ public class AppDrawerFragment extends Fragment {
 
         if (dockManager.addShortcut(shortcut)) {
             Toast.makeText(getContext(), item.label + " dock'a eklendi.", Toast.LENGTH_SHORT).show();
-            // Dock fragmentini yenilemek icin activity'yi uyar veya broadcast yolla
-            // En basiti: AppDockFragment resume olunca yukler diye umalim ancak
-            // Drawer, ayni Activity icinde oldugu icin AppDockFragment refresh olmayabilir.
-            // Simdilik broadcast gonderelim.
-            // Ama broadcast receiver yok AppDockFragment'ta (henuz).
-            // O yuzden sadece Toast gosterelim (Context null degilse). Eklendi diye.
-            // User dock'u acip kapatabilir veya restart edebilir.
-            // GELISTIRME: Bir dahaki update'te AppDockFragment broadcast dinleyebilir.
+
+            // Send broadcast to refresh Dock
+            Intent updateIntent = new Intent("net.osmand.carlauncher.DOCK_UPDATED");
+            getContext().sendBroadcast(updateIntent);
         }
         closeDrawer();
     }
