@@ -234,4 +234,12 @@ public class AppDockManager {
     public boolean canAddMore() {
         return shortcuts.size() < MAX_SHORTCUTS;
     }
+
+    /**
+     * Tum kisayollari temizle (sifirla).
+     */
+    public void clearAllShortcuts() {
+        shortcuts.clear();
+        prefs.edit().remove(KEY_SHORTCUTS).apply();
+    }
 }

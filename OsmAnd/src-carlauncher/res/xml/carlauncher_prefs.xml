@@ -3,34 +3,104 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- GÖRÜNÜM AYARLARI -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <androidx.preference.PreferenceCategory
-        android:title="Görünüm Ayarları">
+        android:key="category_appearance"
+        android:title="📺 Görünüm"
+        android:iconSpaceReserved="false">
 
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_status_bar"
             android:title="Status Bar Göster"
             android:summary="Sistem çubuğunu açıp kapatır"
-            android:defaultValue="true" />
-            
-        <androidx.preference.ListPreference
-            android:key="car_launcher_default_view"
-            android:title="Başlangıç Modu"
-            android:summary="Uygulama açılışında gösterilecek ekran"
-            android:defaultValue="launcher"
-            android:entries="@array/car_launcher_modes"
-            android:entryValues="@array/car_launcher_mode_values"/>
+            android:defaultValue="true"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="car_launcher_dark_theme"
+            android:title="Koyu Tema"
+            android:summary="Karanlık arka plan kullan"
+            android:defaultValue="true"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.Preference
+            android:key="car_launcher_widget_manager"
+            android:title="Widget Yönetimi"
+            android:summary="Widget sıralaması ve görünürlüğü"
+            android:iconSpaceReserved="false" />
 
     </androidx.preference.PreferenceCategory>
-    
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- MÜZİK AYARLARI -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <androidx.preference.PreferenceCategory
-        android:title="Medya Ayarları">
-        
-        <androidx.preference.ListPreference
+        android:key="category_music"
+        android:title="🎵 Müzik"
+        android:iconSpaceReserved="false">
+
+        <androidx.preference.Preference
             android:key="car_launcher_music_app"
             android:title="Varsayılan Müzik Uygulaması"
-            android:summary="Müzik widget'ı için varsayılan uygulama"
-            android:defaultValue="internal" />
-            
+            android:summary="Tıklayarak seçin"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.Preference
+            android:key="car_launcher_equalizer"
+            android:title="Equalizer"
+            android:summary="Sistem ses ayarlarını aç"
+            android:iconSpaceReserved="false" />
+
+    </androidx.preference.PreferenceCategory>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- DOCK AYARLARI -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <androidx.preference.PreferenceCategory
+        android:key="category_dock"
+        android:title="🚗 Uygulama Dock"
+        android:iconSpaceReserved="false">
+
+        <androidx.preference.SeekBarPreference
+            android:key="car_launcher_max_shortcuts"
+            android:title="Maksimum Kısayol Sayısı"
+            android:defaultValue="6"
+            android:max="10"
+            app:min="3"
+            app:showSeekBarValue="true"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.Preference
+            android:key="car_launcher_reset_dock"
+            android:title="Dock'u Sıfırla"
+            android:summary="Tüm kısayolları kaldır"
+            android:iconSpaceReserved="false" />
+
+    </androidx.preference.PreferenceCategory>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- HAKKINDA -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <androidx.preference.PreferenceCategory
+        android:key="category_about"
+        android:title="ℹ️ Hakkında"
+        android:iconSpaceReserved="false">
+
+        <androidx.preference.Preference
+            android:key="car_launcher_version"
+            android:title="Versiyon"
+            android:summary="1.0.0"
+            android:selectable="false"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.Preference
+            android:key="car_launcher_github"
+            android:title="GitHub"
+            android:summary="Kaynak kodunu görüntüle"
+            android:iconSpaceReserved="false" />
+
     </androidx.preference.PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

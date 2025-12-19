@@ -7,16 +7,34 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Car Launcher ayarlarini yoneten sinif.
+ * SharedPreferences wrapper.
+ */
 public class CarLauncherSettings {
     private static final String PREF_NAME = "car_launcher_prefs";
+
+    // Widget Keys
     private static final String KEY_WIDGET_ORDER = "widget_order";
     private static final String KEY_WIDGET_VISIBILITY_PREFIX = "widget_visible_";
+
+    // Appearance Keys
+    public static final String KEY_STATUS_BAR = "car_launcher_status_bar";
+    public static final String KEY_DARK_THEME = "car_launcher_dark_theme";
+
+    // Music Keys
+    public static final String KEY_MUSIC_APP = "car_launcher_music_app";
+
+    // Dock Keys
+    public static final String KEY_MAX_SHORTCUTS = "car_launcher_max_shortcuts";
 
     private final SharedPreferences prefs;
 
     public CarLauncherSettings(Context context) {
         this.prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
+
+    // --- Widget Settings ---
 
     public List<String> getWidgetOrder(List<String> defaultOrder) {
         String savedOrder = prefs.getString(KEY_WIDGET_ORDER, null);
@@ -36,5 +54,56 @@ public class CarLauncherSettings {
 
     public void setWidgetVisible(String widgetKey, boolean visible) {
         prefs.edit().putBoolean(KEY_WIDGET_VISIBILITY_PREFIX + widgetKey, visible).apply();
+    }
+
+    // --- Appearance Settings ---
+
+    public boolean isStatusBarVisible() {
+        return prefs.getBoolean(KEY_STATUS_BAR, true);
+    }
+
+    public void setStatusBarVisible(boolean visible) {
+        prefs.edit().putBoolean(KEY_STATUS_BAR, visible).apply();
+    }
+
+    public boolean isDarkTheme() {
+        return prefs.getBoolean(KEY_DARK_THEME, true);
+    }
+
+    public void setDarkTheme(boolean dark) {
+        prefs.edit().putBoolean(KEY_DARK_THEME, dark).apply();
+    }
+
+    // --- Music Settings ---
+
+    public String getMusicApp() {
+        return prefs.getString(KEY_MUSIC_APP, "internal");
+    }
+
+    public void setMusicApp(String packageName) {
+        prefs.edit().putString(KEY_MUSIC_APP, packageName).apply();
+    }
+
+    // --- Dock Settings ---
+
+    public int getMaxShortcuts() {
+        return prefs.getInt(KEY_MAX_SHORTCUTS, 6);
+    }
+
+    public void setMaxShortcuts(int max) {
+        prefs.edit().putInt(KEY_MAX_SHORTCUTS, max).apply();
+    }
+
+    public void resetDock() {
+        // Remove all dock-related preferences
+        SharedPreferences dockPrefs = prefs.getContext() != null ? prefs : null;
+        // Note: Actual dock reset should be done via AppDockManager
+        // This is just a signal
+    }
+
+    // --- Utility ---
+
+    public SharedPreferences getPrefs() {
+        return prefs;
     }
 }
