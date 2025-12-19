@@ -107,9 +107,10 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     }
 
     private void openWidgetManager() {
-        // Widget Settings Dialog acilir
+        // Widget Settings Dialog - requires WidgetManager from WidgetPanelFragment
+        // For now, show a message since WidgetManager is not accessible here
         if (getContext() != null) {
-            new WidgetSettingsDialog(getContext(), null).show();
+            Toast.makeText(getContext(), "Widget ayarlari ust panelde duzenlenir", Toast.LENGTH_SHORT).show();
         }
     }
 

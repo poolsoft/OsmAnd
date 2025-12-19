@@ -95,10 +95,8 @@ public class CarLauncherSettings {
     }
 
     public void resetDock() {
-        // Remove all dock-related preferences
-        SharedPreferences dockPrefs = prefs.getContext() != null ? prefs : null;
-        // Note: Actual dock reset should be done via AppDockManager
-        // This is just a signal
+        // Reset is handled by AppDockManager.clearAllShortcuts()
+        // This method is a placeholder for future use
     }
 
     // --- Utility ---

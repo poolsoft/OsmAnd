@@ -569,19 +569,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 	}
 
-	public void openMusicPlayer() {
-		if (appDrawerContainer != null) {
-			appDrawerContainer.setVisibility(View.VISIBLE);
-			if (getSupportFragmentManager().findFragmentByTag("MusicPlayerFragment") == null) {
-				net.osmand.plus.carlauncher.ui.MusicPlayerFragment fragment = new net.osmand.plus.carlauncher.ui.MusicPlayerFragment();
-				getSupportFragmentManager().beginTransaction()
-						.replace(R.id.app_drawer_container, fragment, "MusicPlayerFragment")
-						.addToBackStack(null)
-						.commitAllowingStateLoss();
-			}
-		}
-	}
-
 	@Override
 	public InsetTargetsCollection getInsetTargets() {
 		InsetTargetsCollection collection = new InsetTargetsCollection();
