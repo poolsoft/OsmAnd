@@ -12,11 +12,14 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -59,7 +62,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private SeekBar seekbar;
     private TextView timeCurrent, timeTotal;
     private ImageButton btnShuffle, btnPrev, btnPlay, btnNext, btnRepeat;
-    private TextView tabPlaylists, tabRecent;
+    private Spinner playlistSpinner;
     private EditText searchInput;
 
     // State
@@ -109,8 +112,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         btnPlay = root.findViewById(net.osmand.plus.R.id.btn_play);
         btnNext = root.findViewById(net.osmand.plus.R.id.btn_next);
         btnRepeat = root.findViewById(net.osmand.plus.R.id.btn_repeat);
-        tabPlaylists = root.findViewById(net.osmand.plus.R.id.tab_playlists);
-        tabRecent = root.findViewById(net.osmand.plus.R.id.tab_recent);
+        playlistSpinner = root.findViewById(net.osmand.plus.R.id.playlist_spinner);
         searchInput = root.findViewById(net.osmand.plus.R.id.search_input);
         recyclerView = root.findViewById(net.osmand.plus.R.id.music_recycler);
 
@@ -208,17 +210,56 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             });
         }
 
-        // Tabs
-        if (tabPlaylists != null)
-            tabPlaylists.setOnClickListener(v -> loadPlaylists());
-        if (tabRecent != null)
-            tabRecent.setOnClickListener(v -> loadRecentlyPlayed());
+        // Playlist Spinner
+        setupPlaylistSpinner();
     }
 
     private void setupRecyclerView() {
         if (recyclerView != null) {
             recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         }
+    }
+
+    private void setupPlaylistSpinner() {
+        if (playlistSpinner == null || getContext() == null)
+            return;
+
+        List<String> options = new ArrayList<>();
+        options.add("Tum Sarkilar");
+        options.add("Son Calinanlar");
+
+        List<PlaylistManager.Playlist> playlists = playlistManager.getAllPlaylists();
+        for (PlaylistManager.Playlist p : playlists) {
+            options.add(p.name);
+        }
+
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getContext(),
+                android.R.layout.simple_spinner_item, options);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        playlistSpinner.setAdapter(spinnerAdapter);
+
+        playlistSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position == 0) {
+                    // Tum Sarkilar
+                    checkPermissionsAndLoadTracks();
+                } else if (position == 1) {
+                    // Son Calinanlar
+                    loadRecentlyPlayed();
+                } else {
+                    // Playlist
+                    int playlistIndex = position - 2;
+                    if (playlistIndex >= 0 && playlistIndex < playlists.size()) {
+                        playPlaylist(playlists.get(playlistIndex));
+                    }
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
     }
 
     private void updateModeUI() {
@@ -303,17 +344,25 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
     private void showTracks(List<MusicRepository.AudioTrack> tracks) {
         filteredTracks = new ArrayList<>(tracks);
-        adapter = new MusicAdapter(filteredTracks, track -> {
-            // Internal Player'a çalma listesi gönder
-            if (musicManager.getInternalPlayer() == null)
-                return;
+        adapter = new MusicAdapter(filteredTracks, new MusicAdapter.OnTrackClickListener() {
+            @Override
+            public void onClick(MusicRepository.AudioTrack track) {
+                // Internal Player'a çalma listesi gönder
+                if (musicManager.getInternalPlayer() == null)
+                    return;
 
-            int index = allTracks.indexOf(track);
-            List<MusicRepository.AudioTrack> queue = isShuffleOn ? shuffleWithFirst(allTracks, track) : allTracks;
-            musicManager.getInternalPlayer().setPlaylist(queue, isShuffleOn ? 0 : index);
+                int index = allTracks.indexOf(track);
+                List<MusicRepository.AudioTrack> queue = isShuffleOn ? shuffleWithFirst(allTracks, track) : allTracks;
+                musicManager.getInternalPlayer().setPlaylist(queue, isShuffleOn ? 0 : index);
 
-            // Son çalınanlara ekle
-            playlistManager.addToRecentlyPlayed(track.getPath());
+                // Son çalınanlara ekle
+                playlistManager.addToRecentlyPlayed(track.getPath());
+            }
+
+            @Override
+            public void onAddClick(MusicRepository.AudioTrack track) {
+                showAddTrackToPlaylistDialog(track);
+            }
         });
         if (recyclerView != null) {
             recyclerView.setAdapter(adapter);
@@ -382,20 +431,53 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 .show();
     }
 
-    private void showCreatePlaylistDialog() {
+    private void showAddTrackToPlaylistDialog(MusicRepository.AudioTrack track) {
+        if (getContext() == null)
+            return;
+        List<PlaylistManager.Playlist> playlists = playlistManager.getAllPlaylists();
+        String[] options = new String[playlists.size() + 1];
+        options[0] = "+ Yeni Playlist Olustur";
+        for (int i = 0; i < playlists.size(); i++) {
+            options[i + 1] = playlists.get(i).name;
+        }
+
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle("Playliste Ekle: " + track.getTitle())
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        showCreatePlaylistAndAddTrackDialog(track);
+                    } else {
+                        PlaylistManager.Playlist p = playlists.get(which - 1);
+                        p.tracks.add(track.getPath());
+                        playlistManager.savePlaylist(p);
+                        Toast.makeText(getContext(), "Eklendi: " + p.name, Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Iptal", null)
+                .show();
+    }
+
+    private void showCreatePlaylistAndAddTrackDialog(MusicRepository.AudioTrack track) {
         if (getContext() == null)
             return;
         EditText input = new EditText(getContext());
         input.setHint("Playlist adi");
         input.setTextColor(0xFFFFFFFF);
         new android.app.AlertDialog.Builder(getContext())
-                .setTitle("Yeni Playlist")
+                .setTitle("Yeni Playlist ve Ekle")
                 .setView(input)
                 .setPositiveButton("Olustur", (dialog, which) -> {
                     String name = input.getText().toString().trim();
                     if (!name.isEmpty()) {
-                        playlistManager.savePlaylist(new PlaylistManager.Playlist(name));
-                        showPlaylistDialog();
+                        PlaylistManager.Playlist p = new PlaylistManager.Playlist(name);
+                        p.tracks.add(track.getPath());
+                        playlistManager.savePlaylist(p);
+                        Toast.makeText(getContext(), "Playlist olusturuldu ve sarki eklendi", Toast.LENGTH_SHORT)
+                                .show();
+                        // Spinner'i guncellemek gerekir ama su an basit tutalim,
+                        // kullanici spinner'i kapatip acinca gorecek veya setupPlaylistSpinner()
+                        // cagirabiliriz.
+                        setupPlaylistSpinner();
                     }
                 })
                 .setNegativeButton("Iptal", null).show();
@@ -720,6 +802,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         public interface OnTrackClickListener {
             void onClick(MusicRepository.AudioTrack track);
+
+            void onAddClick(MusicRepository.AudioTrack track);
         }
 
         public MusicAdapter(List<MusicRepository.AudioTrack> tracks, OnTrackClickListener listener) {
@@ -741,6 +825,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             holder.title.setText(track.getTitle());
             holder.artist.setText(track.getArtist());
             holder.itemView.setOnClickListener(v -> listener.onClick(track));
+            if (holder.btnAdd != null) {
+                holder.btnAdd.setOnClickListener(v -> listener.onAddClick(track));
+            }
         }
 
         @Override
@@ -750,11 +837,13 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         static class Holder extends RecyclerView.ViewHolder {
             TextView title, artist;
+            ImageButton btnAdd;
 
             public Holder(@NonNull View itemView) {
                 super(itemView);
                 title = itemView.findViewById(net.osmand.plus.R.id.music_title);
                 artist = itemView.findViewById(net.osmand.plus.R.id.music_artist);
+                btnAdd = itemView.findViewById(net.osmand.plus.R.id.btn_add_to_playlist);
             }
         }
     }

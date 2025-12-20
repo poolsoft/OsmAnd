@@ -47,6 +47,17 @@
 
     </LinearLayout>
 
+    <ImageButton
+        android:id="@+id/btn_add_to_playlist"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_input_add"
+        android:tint="#888888"
+        android:padding="12dp"
+        android:scaleType="centerInside"
+        android:contentDescription="Playliste Ekle" />
+
     <TextView
         android:id="@+id/music_duration"
         android:layout_width="wrap_content"
