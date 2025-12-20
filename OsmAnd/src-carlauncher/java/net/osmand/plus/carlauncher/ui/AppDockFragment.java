@@ -43,6 +43,7 @@ public class AppDockFragment extends Fragment
         implements AppDockAdapter.OnShortcutListener, MusicManager.MusicUIListener {
 
     public static final String TAG = "AppDockFragment";
+    // Sync Fix: Ensure remote matches local
     private static final String PREFS_NAME = "app_dock_settings";
     private static final String KEY_ORIENTATION = "orientation";
     private static final int ORIENTATION_HORIZONTAL = LinearLayoutManager.HORIZONTAL;
