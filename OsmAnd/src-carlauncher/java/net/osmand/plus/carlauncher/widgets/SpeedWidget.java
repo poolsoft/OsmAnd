@@ -72,7 +72,7 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         limitText.setIncludeFontPadding(false);
 
         // Daire boyutu icin layout params
-        int size = dpToPx(52);
+        int size = dpToPx(48);
         LinearLayout.LayoutParams limitParams = new LinearLayout.LayoutParams(size, size);
         limitContainer.addView(limitText, limitParams);
 
@@ -110,7 +110,13 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
 
         speedContainer.addView(unitText);
 
-        contentLayout.addView(speedContainer);
+        contentLayout.addView(speedContainer); // Add speed container to content layout
+
+        // Alignments - Make it compact
+        limitContainer.setPadding(0, 0, dpToPx(8), 0);
+        speedText.setTextSize(68);
+        unitText.setTextSize(12);
+        unitText.setTranslationY(-dpToPx(6));
 
         rootFrame.addView(contentLayout);
         rootView = rootFrame;

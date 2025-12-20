@@ -59,6 +59,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             Log.d(TAG, "Scan complete: " + tracks.size() + " tracks");
             if (!tracks.isEmpty()) {
                 internalPlayer.setPlaylist(tracks, 0);
+                internalPlayer.resumeLastSession();
             }
         });
     }

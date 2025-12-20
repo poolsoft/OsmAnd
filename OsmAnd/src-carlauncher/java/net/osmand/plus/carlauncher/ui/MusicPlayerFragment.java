@@ -65,6 +65,10 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private Spinner playlistSpinner;
     private EditText searchInput;
 
+    // New Tab Views
+    private TextView tabAllTracks, tabRecent, tabPlaylistLabel, appName;
+    private View tabPlaylistsContainer;
+
     // State
     private boolean isExternalMode = true; // Default: external app control
     private boolean isShuffleOn = false;
@@ -116,6 +120,12 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         searchInput = root.findViewById(net.osmand.plus.R.id.search_input);
         recyclerView = root.findViewById(net.osmand.plus.R.id.music_recycler);
 
+        tabAllTracks = root.findViewById(net.osmand.plus.R.id.tab_all_tracks);
+        tabRecent = root.findViewById(net.osmand.plus.R.id.tab_recent);
+        tabPlaylistsContainer = root.findViewById(net.osmand.plus.R.id.tab_playlists_container);
+        tabPlaylistLabel = root.findViewById(net.osmand.plus.R.id.tab_playlist_label);
+        appName = root.findViewById(net.osmand.plus.R.id.app_name);
+
         // Marquee
         if (nowPlayingTitle != null)
             nowPlayingTitle.setSelected(true);
@@ -133,8 +143,18 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             btnClose.setOnClickListener(v -> closeFragment());
 
         // Playback Controls (MusicManager metod isimleri düzeltildi)
-        if (btnPlay != null)
-            btnPlay.setOnClickListener(v -> musicManager.togglePlayPause());
+        // Playback Controls
+        if (btnPlay != null) {
+            btnPlay.setOnClickListener(v -> {
+                if (isExternalMode) {
+                    musicManager.togglePlayPause();
+                } else {
+                    if (musicManager.getInternalPlayer() != null) {
+                        musicManager.getInternalPlayer().playPause();
+                    }
+                }
+            });
+        }
         if (btnNext != null)
             btnNext.setOnClickListener(v -> musicManager.skipToNext());
         if (btnPrev != null)
@@ -212,6 +232,42 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         // Playlist Spinner
         setupPlaylistSpinner();
+
+        // Tab Listeners
+        if (tabAllTracks != null)
+            tabAllTracks.setOnClickListener(v -> {
+                selectTab(0);
+                checkPermissionsAndLoadTracks();
+            });
+
+        if (tabRecent != null)
+            tabRecent.setOnClickListener(v -> {
+                selectTab(1);
+                loadRecentlyPlayed();
+            });
+
+        if (tabPlaylistsContainer != null)
+            tabPlaylistsContainer.setOnClickListener(v -> {
+                selectTab(2);
+                if (playlistSpinner != null)
+                    playlistSpinner.performClick();
+            });
+    }
+
+    private void selectTab(int index) {
+        // 0: All, 1: Recent, 2: Playlist
+        int selectedColor = 0xFFFFFFFF;
+        int unselectedColor = 0xFF888888;
+
+        if (tabAllTracks != null)
+            tabAllTracks.setTextColor(index == 0 ? selectedColor : unselectedColor);
+        if (tabRecent != null)
+            tabRecent.setTextColor(index == 1 ? selectedColor : unselectedColor);
+        if (tabPlaylistLabel != null)
+            tabPlaylistLabel.setTextColor(index == 2 ? selectedColor : unselectedColor);
+
+        // Ensure Spinner is visible/hidden if needed, but it is inside Tab 3 container
+        // so it's always there.
     }
 
     private void setupRecyclerView() {
@@ -225,8 +281,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             return;
 
         List<String> options = new ArrayList<>();
-        options.add("Tum Sarkilar");
-        options.add("Son Calinanlar");
+        options.add("Seciniz..."); // Placeholder for index 0
 
         List<PlaylistManager.Playlist> playlists = playlistManager.getAllPlaylists();
         for (PlaylistManager.Playlist p : playlists) {
@@ -241,17 +296,15 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         playlistSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position == 0) {
-                    // Tum Sarkilar
-                    checkPermissionsAndLoadTracks();
-                } else if (position == 1) {
-                    // Son Calinanlar
-                    loadRecentlyPlayed();
-                } else {
-                    // Playlist
-                    int playlistIndex = position - 2;
-                    if (playlistIndex >= 0 && playlistIndex < playlists.size()) {
-                        playPlaylist(playlists.get(playlistIndex));
+                if (position > 0) {
+                    selectTab(2);
+                    int playlistIndex = position - 1;
+                    if (playlistIndex < playlists.size()) {
+                        // Sadece listeyi goster, otomatik calmaya baslama (User istegi: "tıklayınca
+                        // playlist gelsin")
+                        List<MusicRepository.AudioTrack> playlistTracks = getPlaylistTracks(
+                                playlists.get(playlistIndex));
+                        showTracks(playlistTracks);
                     }
                 }
             }
@@ -346,7 +399,12 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         filteredTracks = new ArrayList<>(tracks);
         adapter = new MusicAdapter(filteredTracks, new MusicAdapter.OnTrackClickListener() {
             @Override
-            public void onClick(MusicRepository.AudioTrack track) {
+            public void onTrackClick(MusicRepository.AudioTrack track) {
+                // Dahili Moda gec
+                if (isExternalMode) {
+                    isExternalMode = false;
+                    updateModeUI();
+                }
                 // Internal Player'a çalma listesi gönder
                 if (musicManager.getInternalPlayer() == null)
                     return;
@@ -599,18 +657,40 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         }).show();
     }
 
+    private List<MusicRepository.AudioTrack> getPlaylistTracks(PlaylistManager.Playlist playlist) {
+        List<MusicRepository.AudioTrack> result = new ArrayList<>();
+        for (String path : playlist.tracks) {
+            for (MusicRepository.AudioTrack t : allTracks) {
+                if (t.getPath().equals(path)) {
+                    result.add(t);
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
     private void updateAppIcon() {
         if (appIcon == null || getContext() == null)
             return;
         String pkg = musicManager.getPreferredPackage();
         try {
-            Drawable icon = (pkg != null) ? getContext().getPackageManager().getApplicationIcon(pkg) : null;
+            PackageManager pm = getContext().getPackageManager();
+            Drawable icon = (pkg != null) ? pm.getApplicationIcon(pkg) : null;
+            CharSequence label = (pkg != null) ? pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)) : "Dahili Muzik";
+
             if (icon != null)
                 appIcon.setImageDrawable(icon);
             else
                 appIcon.setImageResource(android.R.drawable.ic_media_play);
+
+            if (appName != null) {
+                appName.setText(label);
+            }
         } catch (Exception e) {
             appIcon.setImageResource(android.R.drawable.ic_media_play);
+            if (appName != null)
+                appName.setText("Muzik");
         }
     }
 

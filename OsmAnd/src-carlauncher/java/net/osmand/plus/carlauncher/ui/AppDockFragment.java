@@ -166,6 +166,12 @@ public class AppDockFragment extends Fragment
         miniBtnNext = root.findViewById(net.osmand.plus.R.id.mini_btn_next);
         miniMusicIcon = root.findViewById(net.osmand.plus.R.id.mini_music_icon);
 
+        // Hide Mini Player in Portrait Mode
+        if (getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT) {
+            if (miniMusicContainer != null)
+                miniMusicContainer.setVisibility(View.GONE);
+        }
+
         if (miniBtnPlay != null) {
             miniBtnPlay.setOnClickListener(v -> musicManager.togglePlayPause());
         }
@@ -206,10 +212,14 @@ public class AppDockFragment extends Fragment
             return true;
         });
 
-        // Settings Button
+        // Settings Button -> Layout Toggle
         btnSettings = root.findViewById(net.osmand.plus.R.id.btn_settings);
         if (btnSettings != null) {
-            btnSettings.setOnClickListener(v -> openSettings());
+            btnSettings.setImageResource(net.osmand.plus.R.drawable.ic_action_view_as_list); // Or dashboard icon
+            btnSettings.setOnClickListener(v -> {
+                if (listener != null)
+                    listener.onLayoutToggle();
+            });
         }
 
         // Clock container also opens settings

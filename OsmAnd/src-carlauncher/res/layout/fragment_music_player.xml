@@ -1,3 +1,4 @@
+```xml
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modern Music Player - Split Layout -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -9,233 +10,137 @@
     android:clickable="true"
     android:focusable="true">
 
-    <!-- LEFT PANEL: Track List (40%) - Only visible in internal mode -->
+    <!-- Main Container -->
     <LinearLayout
-        android:id="@+id/track_list_panel"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="6"
-        android:orientation="vertical"
-        android:background="#1A1A1A"
-        android:visibility="gone">
+        android:orientation="horizontal"
+        android:baselineAligned="false">
 
-        <!-- Search Bar -->
+        <!-- LEFT PANEL: PLAYER CONTROLS (40%) -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:orientation="horizontal"
-            android:background="#2A2A2A"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="12dp">
+            android:id="@+id/player_panel"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="4"
+            android:background="#111111"
+            android:orientation="vertical">
 
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_search"
-                android:tint="#888888" />
-
-            <EditText
-                android:id="@+id/search_input"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:hint="Ara..."
-                android:textColorHint="#666666"
-                android:textColor="#FFFFFF"
-                android:background="@null"
-                android:paddingStart="12dp"
-                android:inputType="text"
-                android:imeOptions="actionSearch" />
-        </LinearLayout>
-
-        <!-- Playlist Selector Spinner -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:orientation="horizontal"
-            android:background="#222222"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="12dp">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_agenda"
-                android:tint="#00FFFF"
-                android:layout_marginEnd="8dp"/>
-
-            <Spinner
-                android:id="@+id/playlist_spinner"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@null"
-                android:theme="@android:style/Theme.Holo.NoActionBar"
-                android:spinnerMode="dropdown"/>
-        </LinearLayout>
-
-        <!-- Track List -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/music_recycler"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:padding="8dp"
-            android:clipToPadding="false" />
-    </LinearLayout>
-
-    <!-- RIGHT PANEL: Player Controls (60% or 100%) -->
-    <RelativeLayout
-        android:id="@+id/player_panel"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="4"
-        android:background="#111111">
-
-        <!-- Top Bar: App Icon + Playlist Button -->
-        <LinearLayout
-            android:id="@+id/top_bar"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_alignParentTop="true"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="16dp">
-
-            <!-- App Icon with Dropdown Arrow -->
+            <!-- App Selector / Header -->
             <LinearLayout
                 android:id="@+id/app_selector"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
                 android:gravity="center_vertical"
-                android:background="?android:attr/selectableItemBackground"
-                android:padding="8dp">
-
+                android:paddingHorizontal="16dp"
+                android:background="?android:attr/selectableItemBackground">
+                
                 <ImageView
                     android:id="@+id/app_icon"
                     android:layout_width="32dp"
                     android:layout_height="32dp"
-                    android:src="@android:drawable/ic_media_play" />
+                    android:src="@android:drawable/ic_media_play"/>
+                
+                <TextView
+                     android:id="@+id/app_name"
+                     android:layout_width="wrap_content"
+                     android:layout_height="wrap_content"
+                     android:text="Muzik Kaynagi"
+                     android:textColor="#FFFFFF"
+                     android:textSize="16sp"
+                     android:textStyle="bold"
+                     android:layout_marginStart="12dp"/>
 
-                <ImageView
-                    android:id="@+id/app_dropdown_arrow"
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@android:drawable/arrow_down_float"
-                    android:tint="#888888"
-                    android:layout_marginStart="4dp" />
+                 <ImageView
+                     android:layout_width="24dp"
+                     android:layout_height="24dp"
+                     android:src="@android:drawable/arrow_down_float"
+                     android:tint="#888888"
+                     android:layout_marginStart="8dp"/>
             </LinearLayout>
 
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#333333"/>
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="16dp">
 
-            <!-- Playlist Button -->
-            <ImageButton
-                android:id="@+id/btn_playlist"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@android:drawable/ic_menu_agenda"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:tint="#FFFFFF"
-                android:contentDescription="Playlist" />
+                <!-- Album Art (Modernized) -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="220dp"
+                    android:layout_height="220dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp"
+                    app:cardBackgroundColor="#00000000">
+                    <ImageView
+                        android:id="@+id/now_playing_art"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:src="@android:drawable/ic_media_play"
+                        android:background="#222222"/>
+                </androidx.cardview.widget.CardView>
 
-            <!-- Equalizer Button -->
-            <ImageButton
-                android:id="@+id/btn_equalizer"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@android:drawable/ic_menu_preferences"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:tint="#FFFFFF"
-                android:contentDescription="Equalizer" />
-
-            <!-- Close Button -->
-            <ImageButton
-                android:id="@+id/btn_close"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@android:drawable/ic_menu_close_clear_cancel"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:tint="#FFFFFF"
-                android:contentDescription="Kapat" />
-        </LinearLayout>
-
-        <!-- Center: Album Art + Info -->
-        <LinearLayout
-            android:id="@+id/center_content"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@id/top_bar"
-            android:layout_above="@id/bottom_controls"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:padding="24dp">
-
-            <!-- Album Art (Large) -->
-            <FrameLayout
-                android:layout_width="200dp"
-                android:layout_height="200dp">
-
-                <ImageView
-                    android:id="@+id/now_playing_art"
+                <!-- Info -->
+                <TextView
+                    android:id="@+id/now_playing_title"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="centerCrop"
-                    android:background="#2A2A2A"
-                    android:src="@android:drawable/ic_media_play" />
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:ellipsize="marquee"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:text="Parca Adi"
+                    android:textColor="#FFFFFF"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
 
-                <!-- Gradient overlay for depth -->
-                <View
+                <TextView
+                    android:id="@+id/now_playing_artist"
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_gravity="bottom"
-                    android:background="@android:color/transparent" />
-            </FrameLayout>
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:text="Sanatci"
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
-            <!-- Song Title -->
-            <TextView
-                android:id="@+id/now_playing_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Muzik Secin"
-                android:textColor="#FFFFFF"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:singleLine="true"
-                android:ellipsize="marquee"
-                android:marqueeRepeatLimit="marquee_forever"
-                android:focusable="true"
-                android:focusableInTouchMode="true" />
-
-            <!-- Artist Name -->
-            <TextView
-                android:id="@+id/now_playing_artist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="---"
-                android:textColor="#AAAAAA"
-                android:textSize="16sp"
-                android:singleLine="true" />
-        </LinearLayout>
-
-        <!-- Bottom: Seekbar + Controls -->
-        <LinearLayout
-            android:id="@+id/bottom_controls"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <!-- Seekbar Row -->
+            <!-- Metadata & Seekbar -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:paddingHorizontal="8dp">
+                android:paddingHorizontal="24dp"
+                android:paddingBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+                    <TextView
+                        android:id="@+id/time_current"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0:00"
+                        android:textColor="#888888"
+                        android:textSize="12sp"/>
+                    <Space android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
+                    <TextView
+                        android:id="@+id/time_total"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0:00"
+                        android:textColor="#888888"
+                        android:textSize="12sp"/>
+                </LinearLayout>
 
                 <SeekBar
                     android:id="@+id/seekbar"
@@ -245,44 +150,16 @@
                     android:progress="0"
                     android:progressTint="#00FFFF"
                     android:thumbTint="#00FFFF" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/time_current"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0:00"
-                        android:textColor="#888888"
-                        android:textSize="12sp" />
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="1dp"
-                        android:layout_weight="1" />
-
-                    <TextView
-                        android:id="@+id/time_total"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0:00"
-                        android:textColor="#888888"
-                        android:textSize="12sp" />
-                </LinearLayout>
             </LinearLayout>
 
-            <!-- Control Buttons Row -->
+            <!-- Controls -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:gravity="center"
                 android:orientation="horizontal"
-                android:gravity="center">
+                android:paddingBottom="24dp">
 
-                <!-- Shuffle -->
                 <ImageButton
                     android:id="@+id/btn_shuffle"
                     android:layout_width="48dp"

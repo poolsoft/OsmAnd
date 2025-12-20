@@ -148,17 +148,17 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         // Örn: previous() mu skipToPrevious() mu?
 
         // Prev
-        ImageButton btnPrev = createControlButton(android.R.drawable.ic_media_previous, 32);
+        ImageButton btnPrev = createControlButton(android.R.drawable.ic_media_previous, 48);
         btnPrev.setOnClickListener(v -> musicManager.skipToPrevious()); // Veya musicManager.previous()
         controlsLayout.addView(btnPrev);
 
         // Play/Pause
-        btnPlay = createControlButton(android.R.drawable.ic_media_play, 42);
+        btnPlay = createControlButton(android.R.drawable.ic_media_play, 56);
         btnPlay.setOnClickListener(v -> musicManager.togglePlayPause()); // Veya musicManager.playPause()
         controlsLayout.addView(btnPlay);
 
         // Next
-        ImageButton btnNext = createControlButton(android.R.drawable.ic_media_next, 32);
+        ImageButton btnNext = createControlButton(android.R.drawable.ic_media_next, 48);
         btnNext.setOnClickListener(v -> musicManager.skipToNext()); // Veya musicManager.next()
         controlsLayout.addView(btnNext);
 
