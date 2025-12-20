@@ -102,8 +102,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         playerPanel = root.findViewById(net.osmand.plus.R.id.player_panel);
         appIcon = root.findViewById(net.osmand.plus.R.id.app_icon);
         appSelector = root.findViewById(net.osmand.plus.R.id.app_selector);
-        btnPlaylist = root.findViewById(net.osmand.plus.R.id.btn_playlist);
-        btnEqualizer = root.findViewById(net.osmand.plus.R.id.btn_equalizer);
+        // btnPlaylist = root.findViewById(net.osmand.plus.R.id.btn_playlist);
+        // btnEqualizer = root.findViewById(net.osmand.plus.R.id.btn_equalizer);
         btnClose = root.findViewById(net.osmand.plus.R.id.btn_close);
         nowPlayingArt = root.findViewById(net.osmand.plus.R.id.now_playing_art);
         nowPlayingTitle = root.findViewById(net.osmand.plus.R.id.now_playing_title);
@@ -215,6 +215,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         // Search
         if (searchInput != null) {
             searchInput.addTextChangedListener(new TextWatcher() {
+
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 }
@@ -227,6 +228,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 @Override
                 public void afterTextChanged(Editable s) {
                 }
+
             });
         }
 
@@ -399,21 +401,23 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         filteredTracks = new ArrayList<>(tracks);
         adapter = new MusicAdapter(filteredTracks, new MusicAdapter.OnTrackClickListener() {
             @Override
-            public void onTrackClick(MusicRepository.AudioTrack track) {
-                // Dahili Moda gec
+            public void onClick(MusicRepository.AudioTrack track) {
+                // Switch to internal mode
                 if (isExternalMode) {
                     isExternalMode = false;
                     updateModeUI();
                 }
-                // Internal Player'a çalma listesi gönder
-                if (musicManager.getInternalPlayer() == null)
+
+                // Internal Player Logic
+                if (musicManager.getInternalPlayer() == null) {
                     return;
+                }
 
                 int index = allTracks.indexOf(track);
                 List<MusicRepository.AudioTrack> queue = isShuffleOn ? shuffleWithFirst(allTracks, track) : allTracks;
                 musicManager.getInternalPlayer().setPlaylist(queue, isShuffleOn ? 0 : index);
 
-                // Son çalınanlara ekle
+                // Add to recently played
                 playlistManager.addToRecentlyPlayed(track.getPath());
             }
 

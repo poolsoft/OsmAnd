@@ -849,6 +849,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	protected void onResume() {
 		super.onResume();
+		hideSystemUI();
 		MapActivity mapViewMapActivity = getMapView().getMapActivity();
 		if (activityRestartNeeded || !getMapLayers().hasMapActivity()
 				|| (mapViewMapActivity != null && mapViewMapActivity != this)) {
@@ -1322,12 +1323,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	public RoutingHelper getRoutingHelper() {
 		return app.getRoutingHelper();
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		hideSystemUI();
 	}
 
 	@Override
