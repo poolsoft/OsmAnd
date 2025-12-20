@@ -167,11 +167,11 @@ public class AppDockFragment extends Fragment
         miniMusicIcon = root.findViewById(net.osmand.plus.R.id.mini_music_icon);
 
         if (miniBtnPlay != null) {
-            miniBtnPlay.setOnClickListener(v -> musicManager.playPause());
+            miniBtnPlay.setOnClickListener(v -> musicManager.togglePlayPause());
         }
 
         if (miniBtnNext != null) {
-            miniBtnNext.setOnClickListener(v -> musicManager.next());
+            miniBtnNext.setOnClickListener(v -> musicManager.skipToNext());
         }
 
         if (miniMusicContainer != null) {
