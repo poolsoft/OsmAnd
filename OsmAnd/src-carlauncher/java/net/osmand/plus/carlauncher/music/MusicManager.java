@@ -20,8 +20,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Merkezi Müzik Yoneticisi.
  * Hem yerel (Internal) hem de harici (External - Spotify, YouTube vs) muzik
  * kaynaklarini yonetir.
- * Oncelik her zaman aktif calan harici kaynaktadir. Harici kaynak durdugunda
- * veya yoksa, dahili player kontrol edilir.
  */
 public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
@@ -56,11 +54,10 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
         setupMediaSessionManager();
 
-        // Scan music on start
+        // Başlangıçta müzikleri tara
         repository.scanMusic((tracks, folders) -> {
             Log.d(TAG, "Scan complete: " + tracks.size() + " tracks");
             if (!tracks.isEmpty()) {
-                // Varsayilan liste
                 internalPlayer.setPlaylist(tracks, 0);
             }
         });
@@ -83,13 +80,14 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
     public void setPreferredPackage(String packageName) {
         this.preferredPackage = packageName;
-        // Try to find controller for this package instantly
+        // Tercih edilen paket değiştiğinde kontrolcüyü güncellemeye çalış
         if (mediaSessionManager != null) {
             try {
-                updateActiveController(mediaSessionManager.getActiveSessions(
-                        new ComponentName(context, "net.osmand.plus.carlauncher.MediaNotificationListener")));
+                ComponentName listenerComp = new ComponentName(context,
+                        "net.osmand.plus.carlauncher.MediaNotificationListener");
+                updateActiveController(mediaSessionManager.getActiveSessions(listenerComp));
             } catch (Exception e) {
-                // Ignore
+                Log.w(TAG, "Failed to update controller for preferred package: " + e.getMessage());
             }
         }
     }
@@ -105,30 +103,28 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         if (mediaSessionManager == null)
             return;
 
+        ComponentName listenerComponent = new ComponentName(context,
+                "net.osmand.plus.carlauncher.MediaNotificationListener");
+
         try {
             mediaSessionManager.addOnActiveSessionsChangedListener(
-                    controllers -> updateActiveController(controllers),
-                    new ComponentName(context, "net.osmand.plus.carlauncher.MediaNotificationListener"));
-        } catch (SecurityException e) {
-            Log.e(TAG, "Missing permission to control media", e);
-            // Will be handled by permission check in MapActivity
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to setup media session listener", e);
-        }
+                    this::updateActiveController,
+                    listenerComponent);
 
-        // Initial check
-        try {
-            updateActiveController(mediaSessionManager.getActiveSessions(
-                    new ComponentName(context, "net.osmand.plus.carlauncher.MediaNotificationListener")));
+            // İlk kontrol
+            updateActiveController(mediaSessionManager.getActiveSessions(listenerComponent));
+
         } catch (SecurityException e) {
-            // Permission might not be granted yet
+            Log.e(TAG, "Media Control izni yok! Kullanıcı ayarlardan izin vermeli.", e);
+        } catch (Exception e) {
+            Log.e(TAG, "MediaSession setup hatası", e);
         }
     }
 
     private void updateActiveController(List<MediaController> controllers) {
-        // Find a playing controller or just first one
         MediaController candidate = null;
         if (controllers != null) {
+            // 1. Önce aktif çalanı bul
             for (MediaController controller : controllers) {
                 PlaybackState state = controller.getPlaybackState();
                 if (state != null && state.getState() == PlaybackState.STATE_PLAYING) {
@@ -136,20 +132,33 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                     break;
                 }
             }
-            // Fallback to first if none playing
-            if (candidate == null && controllers != null && !controllers.isEmpty()) {
+            // 2. Çalan yoksa ve tercih edilen paket varsa onu bul
+            if (candidate == null && preferredPackage != null) {
+                for (MediaController controller : controllers) {
+                    if (controller.getPackageName().equals(preferredPackage)) {
+                        candidate = controller;
+                        break;
+                    }
+                }
+            }
+            // 3. Hiçbiri yoksa listedeki ilk uygulamayı al
+            if (candidate == null && !controllers.isEmpty()) {
                 candidate = controllers.get(0);
             }
         }
 
         if (activeExternalController != candidate) {
+            // Eskiyi temizle
             if (activeExternalController != null) {
                 activeExternalController.unregisterCallback(externalCallback);
             }
+
+            // Yeniyi ata
             activeExternalController = candidate;
+
             if (activeExternalController != null) {
                 activeExternalController.registerCallback(externalCallback);
-                // Trigger update
+                // UI Güncelle
                 externalCallback.onMetadataChanged(activeExternalController.getMetadata());
                 externalCallback.onPlaybackStateChanged(activeExternalController.getPlaybackState());
             }
@@ -161,7 +170,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         public void onPlaybackStateChanged(@Nullable PlaybackState state) {
             boolean isExternalPlaying = state != null && state.getState() == PlaybackState.STATE_PLAYING;
             if (isExternalPlaying) {
-                // Pause internal if external starts
+                // Harici kaynak çalmaya başlarsa dahiliyi durdur
                 if (internalPlayer.isPlaying()) {
                     internalPlayer.pause();
                 }
@@ -173,11 +182,18 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         public void onMetadataChanged(@Nullable MediaMetadata metadata) {
             notifyTrackChanged();
         }
+
+        @Override
+        public void onSessionDestroyed() {
+            // Oturum kapandıysa (örn: Spotify kapatıldı)
+            activeExternalController = null;
+            notifyTrackChanged(); // UI temizlensin
+        }
     };
 
-    // --- Controls ---
+    // --- Controls (Widget ile uyumlu isimler) ---
 
-    public void playPause() {
+    public void togglePlayPause() {
         if (useExternal()) {
             MediaController.TransportControls controls = activeExternalController.getTransportControls();
             PlaybackState state = activeExternalController.getPlaybackState();
@@ -186,8 +202,8 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             } else {
                 controls.play();
             }
-        } else if (preferredPackage != null) {
-            // Try to launch preferred if no active session
+        } else if (preferredPackage != null && activeExternalController == null) {
+            // Hiçbir session yoksa tercih edilen uygulamayı başlat
             startPreferredApplication(preferredPackage);
         } else {
             internalPlayer.playPause();
@@ -206,7 +222,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         }
     }
 
-    public void next() {
+    public void skipToNext() {
         if (useExternal()) {
             activeExternalController.getTransportControls().skipToNext();
         } else {
@@ -214,7 +230,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         }
     }
 
-    public void prev() {
+    public void skipToPrevious() {
         if (useExternal()) {
             activeExternalController.getTransportControls().skipToPrevious();
         } else {
@@ -226,14 +242,13 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
     private boolean useExternal() {
         if (activeExternalController != null) {
-            // If we have a preferred package, prioritize its controller if available
+            // Eğer tercih edilen paket aktifse öncelik ver
             if (preferredPackage != null && activeExternalController.getPackageName().equals(preferredPackage)) {
                 return true;
             }
 
             PlaybackState state = activeExternalController.getPlaybackState();
             if (state != null) {
-                // Eger external caliyorsa veya internal calmiyorsa external kullan
                 boolean extPlaying = state.getState() == PlaybackState.STATE_PLAYING;
                 boolean intPlaying = internalPlayer.isPlaying();
 
@@ -242,7 +257,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 if (intPlaying)
                     return false;
 
-                // Ikisi de duruyorsa, son aktif olani tercih et (Basitce external)
+                // İkisi de duruyorsa external kontrolcüyü kullan (hazırda bekleyen)
                 return true;
             }
         }
@@ -268,14 +283,14 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
     @Override
     public void onCompletion() {
-        // Internal finished, next handled by InternalPlayer
+        // Internal bittiğinde yapılacaklar
     }
 
     // --- UI Notifications ---
 
     public void addListener(MusicUIListener listener) {
         listeners.add(listener);
-        // Instant update
+        // Yeni dinleyici eklendiğinde hemen mevcut durumu bildir
         new Handler(Looper.getMainLooper()).post(() -> {
             notifyTrackChangedForListener(listener);
             notifyStateChangedForListener(listener);
@@ -301,25 +316,31 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     private void notifyTrackChangedForListener(MusicUIListener l) {
         if (useExternal() && activeExternalController != null) {
             MediaMetadata metadata = activeExternalController.getMetadata();
+            String pkg = activeExternalController.getPackageName();
+
             if (metadata != null) {
                 String title = metadata.getString(MediaMetadata.METADATA_KEY_TITLE);
                 String artist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST);
+                // Not: Bitmap almak main thread'i yavaşlatabilir, dikkat edilmeli.
                 android.graphics.Bitmap art = metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
-                String pkg = activeExternalController.getPackageName();
-                l.onTrackChanged(title, artist, art, pkg);
+
+                l.onTrackChanged(
+                        title != null ? title : "Bilinmeyen",
+                        artist != null ? artist : "",
+                        art,
+                        pkg);
                 l.onSourceChanged(false);
+            } else {
+                // Metadata yok ama controller var
+                l.onTrackChanged(null, null, null, pkg);
             }
         } else {
             MusicRepository.AudioTrack track = internalPlayer.getCurrentTrack();
             if (track != null) {
-                // Load art uri to bitmap separately if needed, passing null for now or decoding
-                // in UI
-                // Load art uri to bitmap separately if needed, passing null for now or decoding
-                // in UI
                 l.onTrackChanged(track.getTitle(), track.getArtist(), null, context.getPackageName());
                 l.onSourceChanged(true);
             } else {
-                l.onTrackChanged("Muzik Yok", "", null, context.getPackageName());
+                l.onTrackChanged("Muzik Secin", "", null, context.getPackageName());
                 l.onSourceChanged(true);
             }
         }
