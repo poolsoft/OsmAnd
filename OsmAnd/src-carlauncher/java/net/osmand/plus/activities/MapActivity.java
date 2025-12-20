@@ -142,7 +142,7 @@ import net.osmand.plus.views.mapwidgets.TopToolbarController.TopToolbarControlle
 import net.osmand.plus.views.mapwidgets.WidgetsVisibilityHelper;
 import net.osmand.shared.gpx.GpxFile;
 import net.osmand.util.Algorithms;
-import net.osmand.plus.carlauncher.ui.AppDockFragment;
+import net.osmand.plus.carlauncher.ui.AppDockFragmentV2;
 
 import org.apache.commons.logging.Log;
 
@@ -152,7 +152,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MapActivity extends OsmandActionBarActivity implements AppDockFragment.OnAppDockListener, DownloadEvents,
+public class MapActivity extends OsmandActionBarActivity implements AppDockFragmentV2.OnAppDockListener, DownloadEvents,
 		IRouteInformationListener, AMapPointUpdateListener, MapMarkerChangedListener,
 		OnDrawMapListener, OsmAndAppCustomizationListener, LockUIAdapter,
 		OnPreferenceStartFragmentCallback, net.osmand.plus.carlauncher.CarLauncherInterface {
@@ -428,7 +428,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	private void embedAppDock() {
 		if (appDock != null) {
-			net.osmand.plus.carlauncher.ui.AppDockFragment appDockFragment = new net.osmand.plus.carlauncher.ui.AppDockFragment();
+			net.osmand.plus.carlauncher.ui.AppDockFragmentV2 appDockFragment = new net.osmand.plus.carlauncher.ui.AppDockFragmentV2();
 			getSupportFragmentManager().beginTransaction()
 					.replace(appDock.getId(), appDockFragment, "app_dock")
 					.commitAllowingStateLoss();

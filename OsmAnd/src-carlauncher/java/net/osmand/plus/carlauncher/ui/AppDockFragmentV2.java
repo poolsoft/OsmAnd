@@ -37,12 +37,10 @@ import net.osmand.plus.carlauncher.music.MusicManager;
 
 /**
  * App Dock fragment.
- * Uygulama kisayollarini ve Mini Player'i gosterir.
- */
-public class AppDockFragment extends Fragment
+public class AppDockFragmentV2 extends Fragment
         implements AppDockAdapter.OnShortcutListener, MusicManager.MusicUIListener {
 
-    public static final String TAG = "AppDockFragment";
+    public static final String TAG = "AppDockFragmentV2";
     // Sync Fix: Ensure remote matches local
     private static final String PREFS_NAME = "app_dock_settings";
     private static final String KEY_ORIENTATION = "orientation";
