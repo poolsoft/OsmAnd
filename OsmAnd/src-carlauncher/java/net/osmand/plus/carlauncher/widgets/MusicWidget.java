@@ -135,9 +135,23 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         statusText.setEllipsize(TextUtils.TruncateAt.MARQUEE);
         statusText.setSelected(true);
         headerLayout.addView(statusText);
-        // ...
-        // ...
-        // ...
+
+        // Artist Name (Small)
+        TextView artistText = new TextView(context);
+        artistText.setId(View.generateViewId()); // Keep valid ID if needed
+        artistText.setText("-");
+        artistText.setTextColor(Color.LTGRAY);
+        artistText.setTextSize(14);
+        artistText.setSingleLine(true);
+        artistText.setPadding(dpToPx(56) /* Icon + Margins */, 0, dpToPx(12), dpToPx(12));
+
+        RelativeLayout.LayoutParams artistParams = new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        artistParams.addRule(RelativeLayout.BELOW, headerId);
+        rootFrame.addView(artistText, artistParams);
+
+        // Click on widget opens Music Drawer
+        rootFrame.setOnClickListener(v -> openMusicDrawer());
 
         rootView = rootFrame;
         return rootView;
