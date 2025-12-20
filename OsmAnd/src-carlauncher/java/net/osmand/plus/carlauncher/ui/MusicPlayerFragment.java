@@ -226,9 +226,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             trackListPanel.setVisibility(isExternalMode ? View.GONE : View.VISIBLE);
         }
 
-        // Dahili moddaysa ve liste boşsa yükle
+        // Dahili moddaysa ve liste boşsa (izin varsa yükle, yoksa iste)
         if (!isExternalMode && allTracks.isEmpty()) {
-            loadAllTracks();
+            checkPermissionsAndLoadTracks();
         }
 
         // Uygulama ikonunu güncelle
@@ -242,6 +242,37 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         }
     }
 
+    private void checkPermissionsAndLoadTracks() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (getContext().checkSelfPermission(
+                    android.Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[] { android.Manifest.permission.READ_MEDIA_AUDIO }, 100);
+            } else {
+                loadAllTracks();
+            }
+        } else {
+            if (getContext().checkSelfPermission(
+                    android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[] { android.Manifest.permission.READ_EXTERNAL_STORAGE }, 100);
+            } else {
+                loadAllTracks();
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+            @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 100) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                loadAllTracks();
+            } else {
+                Toast.makeText(getContext(), "Muzik taramak icin izin gerekli!", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
     private void loadAllTracks() {
         if (musicManager != null && musicManager.getRepository() != null) {
             List<MusicRepository.AudioFolder> folders = musicManager.getRepository().getCachedFolders();
@@ -252,7 +283,12 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                         allTracks.addAll(folder.getTracks());
                     }
                     if (getActivity() != null) {
-                        getActivity().runOnUiThread(() -> showTracks(allTracks));
+                        getActivity().runOnUiThread(() -> {
+                            if (allTracks.isEmpty()) {
+                                Toast.makeText(getContext(), "Cihazda muzik bulunamadi", Toast.LENGTH_SHORT).show();
+                            }
+                            showTracks(allTracks);
+                        });
                     }
                 });
             } else {
