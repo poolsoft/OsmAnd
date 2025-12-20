@@ -590,7 +590,77 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (musicManager != null) {
+            musicManager.addListener(this);
+            updateModeUI();
+            updatePlayPauseUI(); // Initial state
+        }
+        startSeekUpdater();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (musicManager != null) {
+            musicManager.removeListener(this);
+        }
+        stopSeekUpdater();
+    }
+
+    // --- Seek Updater ---
+
+    private void startSeekUpdater() {
+        stopSeekUpdater(); // Stop existing if any
+        seekRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (getActivity() == null || musicManager == null)
+                    return;
+
+                // Only update if playing (or force update once?)
+                // Update for Internal Player
+                if (!isExternalMode && musicManager.getInternalPlayer() != null) {
+                    long current = musicManager.getInternalPlayer().getCurrentPosition();
+                    long total = musicManager.getInternalPlayer().getDuration();
+
+                    if (total > 0) {
+                        int progress = (int) (current * 100 / total);
+                        if (seekbar != null && !seekbar.isPressed()) {
+                            seekbar.setProgress(progress);
+                        }
+                        if (timeCurrent != null)
+                            timeCurrent.setText(formatTime(current));
+                        if (timeTotal != null)
+                            timeTotal.setText(formatTime(total));
+                    }
+                }
+
+                // Re-post
+                seekHandler.postDelayed(this, 1000);
+            }
+        };
+        seekHandler.post(seekRunnable);
+    }
+
+    private void stopSeekUpdater() {
+        if (seekRunnable != null) {
+            seekHandler.removeCallbacks(seekRunnable);
+            seekRunnable = null;
+        }
+    }
+
+    private String formatTime(long millis) {
+        long seconds = millis / 1000;
+        long minutes = seconds / 60;
+        long remainingSeconds = seconds % 60;
+        return String.format(Locale.getDefault(), "%d:%02d", minutes, remainingSeconds);
+    }
+
     private void closeFragment() {
+        // ... (existing implementation)
         if (getActivity() instanceof MapActivity) {
             ((MapActivity) getActivity()).closeAppDrawer();
         } else if (getParentFragmentManager() != null) {
