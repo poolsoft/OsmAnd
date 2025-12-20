@@ -5,12 +5,12 @@
     android:orientation="horizontal"
     android:background="?android:attr/selectableItemBackground"
     android:gravity="center_vertical"
-    android:padding="8dp">
+    android:padding="12dp">
 
     <ImageView
         android:id="@+id/music_icon"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
         android:src="@android:drawable/ic_media_play"
         android:scaleType="centerInside"
         android:background="#33FFFFFF"
@@ -49,8 +49,8 @@
 
     <ImageButton
         android:id="@+id/btn_add_to_playlist"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
         android:background="?android:attr/selectableItemBackgroundBorderless"
         android:src="@android:drawable/ic_input_add"
         android:tint="#888888"

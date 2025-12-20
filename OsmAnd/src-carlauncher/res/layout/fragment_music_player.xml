@@ -14,7 +14,7 @@
         android:id="@+id/track_list_panel"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="4"
+        android:layout_weight="6"
         android:orientation="vertical"
         android:background="#1A1A1A"
         android:visibility="gone">
@@ -87,7 +87,7 @@
         android:id="@+id/player_panel"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="6"
+        android:layout_weight="4"
         android:background="#111111">
 
         <!-- Top Bar: App Icon + Playlist Button -->
