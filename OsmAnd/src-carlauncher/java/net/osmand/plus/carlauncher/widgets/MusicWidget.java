@@ -137,7 +137,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         headerLayout.addView(statusText);
 
         // Artist Name (Small)
-        TextView artistText = new TextView(context);
+        this.artistText = new TextView(context);
         artistText.setId(View.generateViewId()); // Keep valid ID if needed
         artistText.setText("-");
         artistText.setTextColor(Color.LTGRAY);
@@ -148,7 +148,33 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         RelativeLayout.LayoutParams artistParams = new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         artistParams.addRule(RelativeLayout.BELOW, headerId);
-        rootFrame.addView(artistText, artistParams);
+        rootFrame.addView(this.artistText, artistParams);
+
+        // --- Controls (Prev, Play, Next) ---
+        LinearLayout controlsLayout = new LinearLayout(context);
+        controlsLayout.setOrientation(LinearLayout.HORIZONTAL);
+        controlsLayout.setGravity(Gravity.CENTER);
+
+        // Prev
+        ImageButton btnPrev = createControlButton(android.R.drawable.ic_media_previous, 32);
+        btnPrev.setOnClickListener(v -> musicManager.previous());
+        controlsLayout.addView(btnPrev);
+
+        // Play/Pause
+        this.btnPlay = createControlButton(android.R.drawable.ic_media_play, 40);
+        this.btnPlay.setOnClickListener(v -> musicManager.playPause());
+        controlsLayout.addView(this.btnPlay);
+
+        // Next
+        ImageButton btnNext = createControlButton(android.R.drawable.ic_media_next, 32);
+        btnNext.setOnClickListener(v -> musicManager.next());
+        controlsLayout.addView(btnNext);
+
+        RelativeLayout.LayoutParams controlsParams = new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        controlsParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        controlsParams.setMargins(0, 0, 0, dpToPx(8));
+        rootFrame.addView(controlsLayout, controlsParams);
 
         // Click on widget opens Music Drawer
         rootFrame.setOnClickListener(v -> openMusicDrawer());
