@@ -213,5 +213,127 @@
                     android:contentDescription="Tekrar" />
             </LinearLayout>
         </LinearLayout>
-    </RelativeLayout>
+
+        <!-- RIGHT PANEL: TRACK LIST (60%) -->
+        <LinearLayout
+            android:id="@+id/track_list_panel"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="6"
+            android:orientation="vertical"
+            android:background="#DD000000"
+            android:padding="8dp">
+
+            <!-- Hybrid Tabs -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:orientation="horizontal"
+                android:background="@drawable/bg_card_rounded_black"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="8dp"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:id="@+id/tab_all_tracks"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="Tum Sarkilar"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:background="?android:attr/selectableItemBackground"/>
+                
+                <View android:layout_width="1dp" android:layout_height="24dp" android:background="#444444"/>
+
+                <TextView
+                    android:id="@+id/tab_recent"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="Son Calinan"
+                    android:textColor="#888888"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:background="?android:attr/selectableItemBackground"/>
+
+                <View android:layout_width="1dp" android:layout_height="24dp" android:background="#444444"/>
+
+                <!-- Playlist Tab with Spinner -->
+                <LinearLayout
+                    android:id="@+id/tab_playlists_container"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1.5"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:paddingStart="8dp">
+                    
+                    <TextView
+                        android:id="@+id/tab_playlist_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Listeler: "
+                        android:textColor="#888888"
+                        android:textSize="14sp"
+                        android:textStyle="bold"/>
+
+                    <Spinner
+                        android:id="@+id/playlist_spinner"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@null"
+                        android:spinnerMode="dropdown"/>
+                </LinearLayout>
+            </LinearLayout>
+            
+            <!-- Search Bar -->
+            <EditText
+                android:id="@+id/search_input"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_widget_card"
+                android:hint="Ara..."
+                android:textColor="#FFFFFF"
+                android:textColorHint="#888888"
+                android:textSize="14sp"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:singleLine="true"
+                android:imeOptions="actionSearch"
+                android:drawableStart="@android:drawable/ic_menu_search"
+                android:drawableTint="#888888"
+                android:drawablePadding="8dp"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/music_recycler"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:scrollbars="vertical"
+                android:clipToPadding="false"
+                android:paddingBottom="16dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Close Button (Overlay) -->
+    <ImageButton
+        android:id="@+id/btn_close"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="16dp"
+        android:tint="#FFFFFF"
+        android:visibility="gone"/>
+
 </LinearLayout>
