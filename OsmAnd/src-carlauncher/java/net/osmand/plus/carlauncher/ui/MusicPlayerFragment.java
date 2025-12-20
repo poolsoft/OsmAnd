@@ -396,41 +396,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
     // --- Playlist & Dialog Logic (Kısaltıldı, orijinal mantık korundu) ---
 
-    private void loadPlaylists() {
-        if (tabPlaylists != null)
-            tabPlaylists.setTextColor(0xFF00FFFF);
-        if (tabRecent != null)
-            tabRecent.setTextColor(0xFF888888);
-        showPlaylistDialog();
-    }
-
-    private void showPlaylistDialog() {
-        if (getContext() == null)
-            return;
-        List<PlaylistManager.Playlist> playlists = playlistManager.getAllPlaylists();
-        String[] options;
-        if (playlists.isEmpty()) {
-            options = new String[] { "+ Yeni Playlist Olustur" };
-        } else {
-            options = new String[playlists.size() + 1];
-            options[0] = "+ Yeni Playlist Olustur";
-            for (int i = 0; i < playlists.size(); i++) {
-                PlaylistManager.Playlist p = playlists.get(i);
-                options[i + 1] = p.name + " (" + p.tracks.size() + " sarki)";
-            }
-        }
-        new android.app.AlertDialog.Builder(getContext())
-                .setTitle("Playlistler")
-                .setItems(options, (dialog, which) -> {
-                    if (which == 0)
-                        showCreatePlaylistDialog();
-                    else
-                        showPlaylistOptionsDialog(playlists.get(which - 1));
-                })
-                .setNegativeButton("Kapat", null)
-                .show();
-    }
-
     private void showAddTrackToPlaylistDialog(MusicRepository.AudioTrack track) {
         if (getContext() == null)
             return;
@@ -474,9 +439,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                         playlistManager.savePlaylist(p);
                         Toast.makeText(getContext(), "Playlist olusturuldu ve sarki eklendi", Toast.LENGTH_SHORT)
                                 .show();
-                        // Spinner'i guncellemek gerekir ama su an basit tutalim,
-                        // kullanici spinner'i kapatip acinca gorecek veya setupPlaylistSpinner()
-                        // cagirabiliriz.
                         setupPlaylistSpinner();
                     }
                 })
@@ -614,10 +576,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     }
 
     private void loadRecentlyPlayed() {
-        if (tabPlaylists != null)
-            tabPlaylists.setTextColor(0xFF888888);
-        if (tabRecent != null)
-            tabRecent.setTextColor(0xFF00FFFF);
 
         List<String> recentPaths = playlistManager.getRecentlyPlayed();
         List<MusicRepository.AudioTrack> recentTracks = new ArrayList<>();
