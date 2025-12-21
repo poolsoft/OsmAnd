@@ -58,6 +58,7 @@
         android:scaleType="centerInside"
         android:contentDescription="Favorilere Ekle" />
 
+    <ImageButton
         android:id="@+id/btn_add_to_playlist"
         android:layout_width="56dp"
         android:layout_height="56dp"
