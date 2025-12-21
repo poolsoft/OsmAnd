@@ -24,7 +24,7 @@
 
     <!-- 2. Layout Toggle Button (Next to App Drawer) -->
     <ImageButton
-        android:id="@+id/btn_layout_toggle"
+        android:id="@+id/btn_settings"
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:background="?attr/selectableItemBackgroundBorderless"
@@ -149,7 +149,7 @@
             android:includeFontPadding="false" />
 
         <ImageButton
-            android:id="@+id/btn_settings"
+            android:id="@+id/btn_layout_toggle"
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:layout_marginStart="8dp"

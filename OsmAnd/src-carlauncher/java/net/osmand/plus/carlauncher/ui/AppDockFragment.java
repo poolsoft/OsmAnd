@@ -37,10 +37,10 @@ import net.osmand.plus.carlauncher.music.MusicManager;
 
 /**
  * App Dock fragment.
-<<<<<<< HEAD
+ * <<<<<<< HEAD
  * Uygulama kisayollarini ve Mini Player'i gosterir.
-=======
->>>>>>> 32c2ee2e47809bba5011d01849fb227eaed926a9
+ * =======
+ * >>>>>>> 32c2ee2e47809bba5011d01849fb227eaed926a9
  */
 public class AppDockFragment extends Fragment
         implements AppDockAdapter.OnShortcutListener, MusicManager.MusicUIListener {
@@ -160,6 +160,7 @@ public class AppDockFragment extends Fragment
         // Find Views
         appListButton = root.findViewById(net.osmand.plus.R.id.btn_app_list);
         layoutButton = root.findViewById(net.osmand.plus.R.id.btn_layout_toggle);
+        btnSettings = root.findViewById(net.osmand.plus.R.id.btn_settings);
         recyclerView = root.findViewById(net.osmand.plus.R.id.dock_recycler);
 
         // Setup New Views
@@ -216,15 +217,11 @@ public class AppDockFragment extends Fragment
             return true;
         });
 
+        // btnSettings.setImageResource(net.osmand.plus.R.drawable.ic_action_view_as_list);
+        // Or dashboard icon
+
         // Settings Button -> Layout Toggle
-        btnSettings = root.findViewById(net.osmand.plus.R.id.btn_settings);
-        if (btnSettings != null) {
-            btnSettings.setImageResource(net.osmand.plus.R.drawable.ic_action_view_as_list); // Or dashboard icon
-            btnSettings.setOnClickListener(v -> {
-                if (listener != null)
-                    listener.onLayoutToggle();
-            });
-        }
+        btnSettings.setOnClickListener(v -> openSettings());
 
         // Clock container also opens settings
         View clockContainer = root.findViewById(net.osmand.plus.R.id.clock_settings_container);
