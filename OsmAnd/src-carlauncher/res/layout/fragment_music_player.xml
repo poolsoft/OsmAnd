@@ -27,13 +27,12 @@
 
             <!-- App Selector / Header -->
             <LinearLayout
-                android:id="@+id/app_selector"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
+                android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingHorizontal="16dp"
-                android:background="?android:attr/selectableItemBackground">
-                
+                android:paddingHorizontal="16dp">
+
                 <ImageButton
                     android:id="@+id/btn_close"
                     android:layout_width="40dp"
@@ -41,31 +40,43 @@
                     android:src="@android:drawable/ic_menu_close_clear_cancel"
                     android:background="?android:attr/selectableItemBackgroundBorderless"
                     android:tint="#FFFFFF"
-                    android:layout_marginEnd="12dp"
-                    android:contentDescription="Kapat" />
+                    android:contentDescription="Kapat"
+                    android:layout_marginEnd="12dp" />
 
-                <ImageView
-                    android:id="@+id/app_icon"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:src="@android:drawable/ic_media_play"/>
-                
-                <TextView
-                     android:id="@+id/app_name"
-                     android:layout_width="wrap_content"
-                     android:layout_height="wrap_content"
-                     android:text="Muzik Kaynagi"
-                     android:textColor="#FFFFFF"
-                     android:textSize="16sp"
-                     android:textStyle="bold"
-                     android:layout_marginStart="12dp"/>
+                <!-- Selector Area (Clickable) -->
+                <LinearLayout
+                    android:id="@+id/app_selector"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:paddingHorizontal="8dp">
 
-                 <ImageView
-                     android:layout_width="24dp"
-                     android:layout_height="24dp"
-                     android:src="@android:drawable/arrow_down_float"
-                     android:tint="#888888"
-                     android:layout_marginStart="8dp"/>
+                    <ImageView
+                        android:id="@+id/app_icon"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@android:drawable/ic_media_play"/>
+
+                    <TextView
+                         android:id="@+id/app_name"
+                         android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:text="Muzik Kaynagi"
+                         android:textColor="#FFFFFF"
+                         android:textSize="16sp"
+                         android:textStyle="bold"
+                         android:layout_marginStart="12dp"/>
+
+                     <ImageView
+                         android:layout_width="24dp"
+                         android:layout_height="24dp"
+                         android:src="@android:drawable/arrow_down_float"
+                         android:tint="#888888"
+                         android:layout_marginStart="8dp"/>
+                </LinearLayout>
+
             </LinearLayout>
 
             <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#333333"/>
