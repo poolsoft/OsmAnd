@@ -129,14 +129,24 @@ public class WidgetManager {
 
             if (widgetView != null) {
                 // Apply margins consistently to all widgets
+                // Detect Layout Orientation
+                boolean isVertical = true;
                 LinearLayout.LayoutParams params;
-                if (widgetView.getLayoutParams() instanceof LinearLayout.LayoutParams) {
-                    params = (LinearLayout.LayoutParams) widgetView.getLayoutParams();
-                } else {
-                    // Default to WRAP_CONTENT if no params set
+                if (container instanceof LinearLayout) {
+                    isVertical = ((LinearLayout) container).getOrientation() == LinearLayout.VERTICAL;
+                }
+
+                if (isVertical) {
+                    // Vertical (Landscape): Width Fill, Height Wrap
                     params = new LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.WRAP_CONTENT);
+                } else {
+                    // Horizontal (Portrait): Width Fixed (~100-130dp), Height Fill
+                    int width = dpToPx(130);
+                    params = new LinearLayout.LayoutParams(
+                            width,
+                            ViewGroup.LayoutParams.MATCH_PARENT);
                 }
 
                 params.setMargins(margin, margin, margin, margin);
