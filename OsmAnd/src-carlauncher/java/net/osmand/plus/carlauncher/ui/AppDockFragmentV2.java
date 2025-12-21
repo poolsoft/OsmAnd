@@ -37,6 +37,7 @@ import net.osmand.plus.carlauncher.music.MusicManager;
 
 /**
  * App Dock fragment.
+ */
 public class AppDockFragmentV2 extends Fragment
         implements AppDockAdapter.OnShortcutListener, MusicManager.MusicUIListener {
 
