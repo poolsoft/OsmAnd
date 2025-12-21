@@ -7,9 +7,14 @@ import android.content.pm.ResolveInfo;
 import android.media.audiofx.AudioEffect;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -52,53 +57,60 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        view.setBackgroundColor(0xFF111111); // Dark background
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
+        View prefsView = super.onCreateView(inflater, container, savedInstanceState);
+        if (prefsView == null)
+            return null;
 
-        // Add close button overlay
-        addCloseButton(view);
-    }
+        prefsView.setBackgroundColor(0xFF111111); // Dark background
 
-    private void addCloseButton(View rootView) {
-        if (getContext() == null || !(rootView instanceof android.view.ViewGroup))
-            return;
-
-        android.view.ViewGroup parent = (android.view.ViewGroup) rootView;
-
-        // Create close button
-        android.widget.ImageButton closeBtn = new android.widget.ImageButton(getContext());
-        closeBtn.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
-        closeBtn.setBackgroundColor(0x00000000); // Transparent
-        closeBtn.setColorFilter(0xFFFFFFFF); // White tint
-        closeBtn.setPadding(24, 24, 24, 24);
-        closeBtn.setOnClickListener(v -> {
-            if (getActivity() != null) {
-                // Close settings by going back or hiding drawer
-                if (getActivity() instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
-                    ((net.osmand.plus.carlauncher.CarLauncherInterface) getActivity()).closeAppDrawer();
-                } else {
-                    getActivity().onBackPressed();
-                }
-            }
-        });
-
-        // Layout params for top-right position
-        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
-        params.topMargin = 48;
-        params.rightMargin = 24;
-
-        // Wrap in FrameLayout if needed
-        android.widget.FrameLayout container = new android.widget.FrameLayout(getContext());
-        container.setLayoutParams(new android.widget.FrameLayout.LayoutParams(
+        // Wrapper to hold Prefs + Close Button
+        android.widget.FrameLayout wrapper = new android.widget.FrameLayout(getContext());
+        wrapper.setLayoutParams(new android.view.ViewGroup.LayoutParams(
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT));
-        container.addView(closeBtn, params);
+        wrapper.setFitsSystemWindows(true); // Ensure padding for status bar
 
-        parent.addView(container);
+        // Add Prefs View
+        wrapper.addView(prefsView, new android.widget.FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+
+        // Add Close Button (Top-Right)
+        if (getContext() != null) {
+            android.widget.ImageButton closeBtn = new android.widget.ImageButton(getContext());
+            closeBtn.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+            closeBtn.setBackground(getContext().getDrawable(android.R.drawable.selectable_item_background));
+            closeBtn.setColorFilter(0xFFFFFFFF);
+            closeBtn.setPadding(32, 32, 32, 32);
+            closeBtn.setOnClickListener(v -> closeSettings());
+
+            android.widget.FrameLayout.LayoutParams btnParams = new android.widget.FrameLayout.LayoutParams(
+                    120, 120); // approx 40-48dp
+            btnParams.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
+            btnParams.setMargins(24, 24, 24, 24);
+
+            wrapper.addView(closeBtn, btnParams);
+        }
+
+        return wrapper;
+    }
+
+    private void closeSettings() {
+        if (getActivity() != null) {
+            if (getActivity() instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
+                ((net.osmand.plus.carlauncher.CarLauncherInterface) getActivity()).closeAppDrawer();
+            } else {
+                getActivity().onBackPressed();
+            }
+        }
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        // Clean up old logic if any remains
     }
 
     // ═══════════════════════════════════════════════════════════════

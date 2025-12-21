@@ -35,6 +35,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -250,6 +251,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
 		setRequestedOrientation(AndroidUiHelper.getScreenOrientation(this));
 		super.onCreate(savedInstanceState);
+
+		// Car Launcher Specific Header
+		if (isCarLauncherMode()) {
+			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN); // Legacy Request
+			androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+		}
 
 		lockHelper = app.getLockHelper();
 		mapScrollHelper = new MapScrollHelper(app);
