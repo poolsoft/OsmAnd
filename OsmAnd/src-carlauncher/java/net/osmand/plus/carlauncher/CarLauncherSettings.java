@@ -99,6 +99,16 @@ public class CarLauncherSettings {
         // This method is a placeholder for future use
     }
 
+    // --- General ---
+
+    public boolean isLauncherEnabled() {
+        return prefs.getBoolean("car_launcher_enabled", true);
+    }
+
+    public void setLauncherEnabled(boolean enabled) {
+        prefs.edit().putBoolean("car_launcher_enabled", enabled).apply();
+    }
+
     // --- Utility ---
 
     public SharedPreferences getPrefs() {

@@ -253,7 +253,10 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		super.onCreate(savedInstanceState);
 
 		// Car Launcher Specific Header
-		if (app.getSettings().CAR_LAUNCHER_ENABLED.get()) {
+		// Car Launcher Specific Header
+		net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(
+				this);
+		if (settings.isLauncherEnabled()) {
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 			androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 		}
