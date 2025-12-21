@@ -81,7 +81,9 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         if (getContext() != null) {
             android.widget.ImageButton closeBtn = new android.widget.ImageButton(getContext());
             closeBtn.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
-            closeBtn.setBackground(getContext().getDrawable(android.R.drawable.selectable_item_background));
+            android.util.TypedValue outValue = new android.util.TypedValue();
+            getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+            closeBtn.setBackgroundResource(outValue.resourceId);
             closeBtn.setColorFilter(0xFFFFFFFF);
             closeBtn.setPadding(32, 32, 32, 32);
             closeBtn.setOnClickListener(v -> closeSettings());
