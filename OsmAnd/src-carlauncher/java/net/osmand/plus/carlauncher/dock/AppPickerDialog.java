@@ -148,6 +148,15 @@ public class AppPickerDialog {
         Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
         mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
 
+        if (onlyMusicApps) {
+            // Add Internal Player Option
+            AppInfo internalPlayer = new AppInfo();
+            internalPlayer.name = "Dahili Muzik Calar"; // "Internal Music Player"
+            internalPlayer.packageName = "usage.internal.player"; // Special ID
+            internalPlayer.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play); // Default icon
+            apps.add(internalPlayer);
+        }
+
         List<ResolveInfo> resolveInfos = pm.queryIntentActivities(mainIntent, 0);
 
         // Prepare music filter if needed

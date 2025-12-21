@@ -34,6 +34,16 @@
                 android:paddingHorizontal="16dp"
                 android:background="?android:attr/selectableItemBackground">
                 
+                <ImageButton
+                    android:id="@+id/btn_close"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@android:drawable/ic_menu_close_clear_cancel"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:tint="#FFFFFF"
+                    android:layout_marginEnd="12dp"
+                    android:contentDescription="Kapat" />
+
                 <ImageView
                     android:id="@+id/app_icon"
                     android:layout_width="32dp"
@@ -323,17 +333,6 @@
 
     </LinearLayout>
 
-    <!-- Close Button (Overlay) -->
-    <ImageButton
-        android:id="@+id/btn_close"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:src="@android:drawable/ic_menu_close_clear_cancel"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_margin="16dp"
-        android:tint="#FFFFFF"
-        android:visibility="gone"/>
+    <!-- Close Button Removed (Moved to Header) -->
 
 </LinearLayout>

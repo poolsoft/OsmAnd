@@ -81,6 +81,14 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
     public void setPreferredPackage(String packageName) {
         this.preferredPackage = packageName;
+
+        // If switching to external app, pause internal player
+        if (packageName != null && !packageName.equals("usage.internal.player")) {
+            if (internalPlayer != null && internalPlayer.isPlaying()) {
+                internalPlayer.pause();
+            }
+        }
+
         // Tercih edilen paket değiştiğinde kontrolcüyü güncellemeye çalış
         if (mediaSessionManager != null) {
             try {

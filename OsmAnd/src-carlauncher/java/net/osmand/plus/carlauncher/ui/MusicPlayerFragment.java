@@ -134,6 +134,32 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         setupRecyclerView();
         updateModeUI();
 
+        // Handle Orientation
+        boolean isPortrait = getResources()
+                .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        if (root instanceof LinearLayout) {
+            ((LinearLayout) root).setOrientation(isPortrait ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+
+            if (playerPanel != null && trackListPanel != null) {
+                LinearLayout.LayoutParams p1 = (LinearLayout.LayoutParams) playerPanel.getLayoutParams();
+                LinearLayout.LayoutParams p2 = (LinearLayout.LayoutParams) trackListPanel.getLayoutParams();
+
+                if (isPortrait) {
+                    p1.width = LinearLayout.LayoutParams.MATCH_PARENT;
+                    p1.height = 0;
+                    p2.width = LinearLayout.LayoutParams.MATCH_PARENT;
+                    p2.height = 0;
+                } else {
+                    p1.width = 0;
+                    p1.height = LinearLayout.LayoutParams.MATCH_PARENT;
+                    p2.width = 0;
+                    p2.height = LinearLayout.LayoutParams.MATCH_PARENT;
+                }
+                playerPanel.setLayoutParams(p1);
+                trackListPanel.setLayoutParams(p2);
+            }
+        }
+
         return root;
     }
 
@@ -318,9 +344,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     }
 
     private void updateModeUI() {
-        if (trackListPanel != null) {
-            trackListPanel.setVisibility(isExternalMode ? View.GONE : View.VISIBLE);
-        }
+        // Track list visible in both modes (handled by layout)
 
         // Dahili moddaysa ve liste boşsa (izin varsa yükle, yoksa iste)
         if (!isExternalMode && allTracks.isEmpty()) {
@@ -656,8 +680,28 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         if (getContext() == null)
             return;
         new AppPickerDialog(getContext(), true, (packageName, appName, icon) -> {
-            musicManager.setPreferredPackage(packageName);
-            updateAppIcon();
+            if ("usage.internal.player".equals(packageName)) {
+                isExternalMode = false;
+                musicManager.setPreferredPackage(null);
+                updateModeUI();
+                if (musicManager.getInternalPlayer() != null) {
+                    musicManager.getInternalPlayer().resumeLastSession();
+                }
+            } else {
+                musicManager.setPreferredPackage(packageName);
+                updateAppIcon();
+                // Launch App
+                try {
+                    android.content.Intent launchIntent = getContext().getPackageManager()
+                            .getLaunchIntentForPackage(packageName);
+                    if (launchIntent != null) {
+                        launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(launchIntent);
+                    }
+                } catch (Exception e) {
+                    // Ignore
+                }
+            }
         }).show();
     }
 
@@ -810,6 +854,16 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 else
                     nowPlayingArt.setImageResource(android.R.drawable.ic_media_play);
             }
+
+            // Update Adapter Highlight
+            if (!isExternalMode && musicManager.getInternalPlayer() != null) {
+                MusicRepository.AudioTrack current = musicManager.getInternalPlayer().getCurrentTrack();
+                String path = current != null ? current.getPath() : null;
+                boolean isPlaying = musicManager.getInternalPlayer().isPlaying();
+                if (adapter != null) {
+                    adapter.updateCurrentTrack(path, isPlaying);
+                }
+            }
         });
     }
 
@@ -821,6 +875,15 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             if (btnPlay != null) {
                 btnPlay.setImageResource(
                         isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+            }
+
+            // Update Adapter Icon
+            if (!isExternalMode && musicManager.getInternalPlayer() != null) {
+                MusicRepository.AudioTrack current = musicManager.getInternalPlayer().getCurrentTrack();
+                String path = current != null ? current.getPath() : null;
+                if (adapter != null) {
+                    adapter.updateCurrentTrack(path, isPlaying);
+                }
             }
         });
     }
@@ -841,6 +904,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private static class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.Holder> {
         private final List<MusicRepository.AudioTrack> tracks;
         private final OnTrackClickListener listener;
+        private String currentTrackPath;
+        private boolean isPlaying;
 
         public interface OnTrackClickListener {
             void onClick(MusicRepository.AudioTrack track);
@@ -851,6 +916,12 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         public MusicAdapter(List<MusicRepository.AudioTrack> tracks, OnTrackClickListener listener) {
             this.tracks = tracks;
             this.listener = listener;
+        }
+
+        public void updateCurrentTrack(String path, boolean playing) {
+            this.currentTrackPath = path;
+            this.isPlaying = playing;
+            notifyDataSetChanged();
         }
 
         @NonNull
@@ -866,6 +937,20 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             MusicRepository.AudioTrack track = tracks.get(position);
             holder.title.setText(track.getTitle());
             holder.artist.setText(track.getArtist());
+
+            // Icon Logic
+            boolean isCurrent = track.getPath().equals(currentTrackPath);
+            if (isCurrent) {
+                holder.icon.setVisibility(View.VISIBLE);
+                holder.icon.setImageResource(
+                        isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+                holder.itemView.setBackgroundColor(0x3300FFFF); // Highlight
+            } else {
+                holder.icon.setVisibility(View.INVISIBLE);
+                holder.icon.setImageResource(0);
+                holder.itemView.setBackgroundResource(android.R.drawable.list_selector_background);
+            }
+
             holder.itemView.setOnClickListener(v -> listener.onClick(track));
             if (holder.btnAdd != null) {
                 holder.btnAdd.setOnClickListener(v -> listener.onAddClick(track));
@@ -880,12 +965,14 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         static class Holder extends RecyclerView.ViewHolder {
             TextView title, artist;
             ImageButton btnAdd;
+            ImageView icon;
 
             public Holder(@NonNull View itemView) {
                 super(itemView);
                 title = itemView.findViewById(net.osmand.plus.R.id.music_title);
                 artist = itemView.findViewById(net.osmand.plus.R.id.music_artist);
                 btnAdd = itemView.findViewById(net.osmand.plus.R.id.btn_add_to_playlist);
+                icon = itemView.findViewById(net.osmand.plus.R.id.music_icon);
             }
         }
     }

@@ -110,6 +110,14 @@ public class MusicRepository {
                     String path = cursor.getString(dataColumn);
                     long albumId = cursor.getLong(albumIdColumn);
 
+                    // Filter by extension (MP3/MP4 only)
+                    if (path != null) {
+                        String lowerPath = path.toLowerCase(java.util.Locale.ROOT);
+                        if (!lowerPath.endsWith(".mp3") && !lowerPath.endsWith(".mp4")) {
+                            continue;
+                        }
+                    }
+
                     Uri contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
 
                     // Album art uri
