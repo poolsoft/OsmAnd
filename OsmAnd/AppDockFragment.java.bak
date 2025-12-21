@@ -37,10 +37,7 @@ import net.osmand.plus.carlauncher.music.MusicManager;
 
 /**
  * App Dock fragment.
-<<<<<<< HEAD
  * Uygulama kisayollarini ve Mini Player'i gosterir.
-=======
->>>>>>> 32c2ee2e47809bba5011d01849fb227eaed926a9
  */
 public class AppDockFragment extends Fragment
         implements AppDockAdapter.OnShortcutListener, MusicManager.MusicUIListener {
