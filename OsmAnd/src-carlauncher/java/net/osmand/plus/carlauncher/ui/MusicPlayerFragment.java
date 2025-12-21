@@ -309,7 +309,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             return;
 
         List<String> options = new ArrayList<>();
-        options.add("Seciniz..."); // Placeholder for index 0
+        options.add("Seciniz..."); // 0
+        options.add("Favoriler"); // 1
 
         List<PlaylistManager.Playlist> playlists = playlistManager.getAllPlaylists();
         for (PlaylistManager.Playlist p : playlists) {
@@ -324,12 +325,31 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         playlistSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position > 0) {
-                    selectTab(2);
-                    int playlistIndex = position - 1;
-                    if (playlistIndex < playlists.size()) {
-                        // Sadece listeyi goster, otomatik calmaya baslama (User istegi: "tıklayınca
-                        // playlist gelsin")
+                if (position == 0)
+                    return;
+
+                selectTab(2);
+
+                if (position == 1) {
+                    // Favorites
+                    List<String> favPaths = playlistManager.getFavorites();
+                    List<MusicRepository.AudioTrack> favTracks = new ArrayList<>();
+                    for (String path : favPaths) {
+                        for (MusicRepository.AudioTrack t : allTracks) {
+                            if (t.getPath().equals(path)) {
+                                favTracks.add(t);
+                                break;
+                            }
+                        }
+                    }
+                    if (favTracks.isEmpty()) {
+                        Toast.makeText(getContext(), "Favori listeniz bos", Toast.LENGTH_SHORT).show();
+                    }
+                    showTracks(favTracks);
+                } else {
+                    // Playlists
+                    int playlistIndex = position - 2;
+                    if (playlistIndex >= 0 && playlistIndex < playlists.size()) {
                         List<MusicRepository.AudioTrack> playlistTracks = getPlaylistTracks(
                                 playlists.get(playlistIndex));
                         showTracks(playlistTracks);
@@ -437,8 +457,10 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     return;
                 }
 
-                int index = allTracks.indexOf(track);
-                List<MusicRepository.AudioTrack> queue = isShuffleOn ? shuffleWithFirst(allTracks, track) : allTracks;
+                // Use current list (filteredTracks) as queue!
+                int index = filteredTracks.indexOf(track);
+                List<MusicRepository.AudioTrack> queue = isShuffleOn ? shuffleWithFirst(filteredTracks, track)
+                        : filteredTracks;
                 musicManager.getInternalPlayer().setPlaylist(queue, isShuffleOn ? 0 : index);
 
                 // Add to recently played
@@ -449,7 +471,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             public void onAddClick(MusicRepository.AudioTrack track) {
                 showAddTrackToPlaylistDialog(track);
             }
-        });
+        }, playlistManager);
         if (recyclerView != null) {
             recyclerView.setAdapter(adapter);
         }
@@ -904,6 +926,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private static class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.Holder> {
         private final List<MusicRepository.AudioTrack> tracks;
         private final OnTrackClickListener listener;
+        private final net.osmand.plus.carlauncher.music.PlaylistManager playlistManager;
         private String currentTrackPath;
         private boolean isPlaying;
 
@@ -913,9 +936,11 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             void onAddClick(MusicRepository.AudioTrack track);
         }
 
-        public MusicAdapter(List<MusicRepository.AudioTrack> tracks, OnTrackClickListener listener) {
+        public MusicAdapter(List<MusicRepository.AudioTrack> tracks, OnTrackClickListener listener,
+                net.osmand.plus.carlauncher.music.PlaylistManager playlistManager) {
             this.tracks = tracks;
             this.listener = listener;
+            this.playlistManager = playlistManager;
         }
 
         public void updateCurrentTrack(String path, boolean playing) {
@@ -951,6 +976,20 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 holder.itemView.setBackgroundResource(android.R.drawable.list_selector_background);
             }
 
+            // Favorites Logic
+            if (holder.btnFavorite != null && playlistManager != null) {
+                boolean isFav = playlistManager.isFavorite(track.getPath());
+                holder.btnFavorite.setImageResource(isFav ? android.R.drawable.star_on : android.R.drawable.star_off);
+                holder.btnFavorite.setOnClickListener(v -> {
+                    if (isFav) {
+                        playlistManager.removeFromFavorites(track.getPath());
+                    } else {
+                        playlistManager.addToFavorites(track.getPath());
+                    }
+                    notifyItemChanged(position);
+                });
+            }
+
             holder.itemView.setOnClickListener(v -> listener.onClick(track));
             if (holder.btnAdd != null) {
                 holder.btnAdd.setOnClickListener(v -> listener.onAddClick(track));
@@ -965,6 +1004,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         static class Holder extends RecyclerView.ViewHolder {
             TextView title, artist;
             ImageButton btnAdd;
+            ImageButton btnFavorite;
             ImageView icon;
 
             public Holder(@NonNull View itemView) {
@@ -972,6 +1012,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 title = itemView.findViewById(net.osmand.plus.R.id.music_title);
                 artist = itemView.findViewById(net.osmand.plus.R.id.music_artist);
                 btnAdd = itemView.findViewById(net.osmand.plus.R.id.btn_add_to_playlist);
+                btnFavorite = itemView.findViewById(net.osmand.plus.R.id.btn_favorite);
                 icon = itemView.findViewById(net.osmand.plus.R.id.music_icon);
             }
         }

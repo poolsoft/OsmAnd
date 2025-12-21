@@ -138,13 +138,15 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         if (location == null)
             return;
 
+        float currentSpeed = 0;
         // 1. Mevcut Hız ve Birim
         if (speedText != null) {
             String speedStr = "--";
             String unitStr = "";
 
             if (location.hasSpeed()) {
-                FormattedValue formatted = OsmAndFormatter.getFormattedSpeedValue(location.getSpeed(), app);
+                currentSpeed = location.getSpeed();
+                FormattedValue formatted = OsmAndFormatter.getFormattedSpeedValue(currentSpeed, app);
                 speedStr = formatted.value;
                 unitStr = formatted.unit;
             }
@@ -159,11 +161,11 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
             });
         }
 
-        // 2. Hız Limiti
-        updateMaxSpeed(location);
+        // 2. Hız Limiti ve Uyarı
+        updateMaxSpeed(location, currentSpeed);
     }
 
-    private void updateMaxSpeed(Location location) {
+    private void updateMaxSpeed(Location location, float currentSpeed) {
         if (limitText == null || limitContainer == null)
             return;
 
@@ -183,6 +185,24 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
 
                 limitText.setText(limitStr);
                 limitContainer.setVisibility(View.VISIBLE);
+
+                // Speed Limit Warning Logic
+                // Tolerance: +2 km/h (~0.55 m/s) buffer
+                float tolerance = 0.55f;
+                if (currentSpeed > (maxSpeed + tolerance)) {
+                    // Warning: Red Circle, White Text
+                    android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+                    gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+                    gd.setColor(Color.parseColor("#CCFF0000")); // Semi-transparent Red
+                    gd.setStroke(dpToPx(4), Color.RED);
+                    limitText.setBackground(gd);
+                    limitText.setTextColor(Color.WHITE);
+                } else {
+                    // Normal
+                    limitText.setBackgroundResource(net.osmand.plus.R.drawable.bg_speed_limit);
+                    limitText.setTextColor(Color.BLACK);
+                }
+
             } else {
                 limitContainer.setVisibility(View.GONE);
             }

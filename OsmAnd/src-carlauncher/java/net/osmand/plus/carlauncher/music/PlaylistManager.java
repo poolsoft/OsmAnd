@@ -20,6 +20,7 @@ public class PlaylistManager {
     private static final String PREFS_NAME = "music_playlists";
     private static final String KEY_PLAYLISTS = "playlists";
     private static final String KEY_RECENTLY_PLAYED = "recently_played";
+    private static final String KEY_FAVORITES = "favorites";
     private static final int MAX_RECENT = 50;
 
     private final SharedPreferences prefs;
@@ -124,6 +125,36 @@ public class PlaylistManager {
         List<String> shuffled = new ArrayList<>(tracks);
         Collections.shuffle(shuffled);
         return shuffled;
+    }
+
+    // --- Favorites ---
+
+    public List<String> getFavorites() {
+        try {
+            String json = prefs.getString(KEY_FAVORITES, "[]");
+            return jsonArrayToList(new JSONArray(json));
+        } catch (JSONException e) {
+            return new ArrayList<>();
+        }
+    }
+
+    public void addToFavorites(String trackPath) {
+        List<String> favs = getFavorites();
+        if (!favs.contains(trackPath)) {
+            favs.add(trackPath);
+            prefs.edit().putString(KEY_FAVORITES, new JSONArray(favs).toString()).apply();
+        }
+    }
+
+    public void removeFromFavorites(String trackPath) {
+        List<String> favs = getFavorites();
+        if (favs.remove(trackPath)) {
+            prefs.edit().putString(KEY_FAVORITES, new JSONArray(favs).toString()).apply();
+        }
+    }
+
+    public boolean isFavorite(String trackPath) {
+        return getFavorites().contains(trackPath);
     }
 
     // --- Helpers ---

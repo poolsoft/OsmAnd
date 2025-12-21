@@ -48,6 +48,16 @@
     </LinearLayout>
 
     <ImageButton
+        android:id="@+id/btn_favorite"
+        android:layout_width="48dp"
+        android:layout_height="56dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/star_off"
+        android:tint="#888888"
+        android:padding="12dp"
+        android:scaleType="centerInside"
+        android:contentDescription="Favorilere Ekle" />
+
         android:id="@+id/btn_add_to_playlist"
         android:layout_width="56dp"
         android:layout_height="56dp"
