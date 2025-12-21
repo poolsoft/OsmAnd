@@ -201,32 +201,36 @@ public class AppDockFragment extends Fragment
         startClock();
 
         // Setup Buttons
+        // Listeners
         appListButton.setOnClickListener(v -> {
             if (listener != null)
                 listener.onAppDrawerOpen();
         });
 
-        layoutButton.setOnClickListener(v -> {
-            if (listener != null)
-                listener.onLayoutToggle();
-        });
+        // Left Button: Settings
+        if (btnSettings != null) {
+            btnSettings.setOnClickListener(v -> openSettings());
+        }
 
-        layoutButton.setOnLongClickListener(v -> {
-            // Fallback via context cast
-            openSettings();
-            return true;
-        });
+        // Right Button: Layout Toggle
+        if (layoutButton != null) {
+            layoutButton.setOnClickListener(v -> {
+                if (listener != null)
+                    listener.onLayoutToggle();
+            });
+            // Long press opens settings as backup
+            layoutButton.setOnLongClickListener(v -> {
+                openSettings();
+                return true;
+            });
+        }
 
-        // btnSettings.setImageResource(net.osmand.plus.R.drawable.ic_action_view_as_list);
-        // Or dashboard icon
-
-        // Settings Button -> Layout Toggle
-        btnSettings.setOnClickListener(v -> openSettings());
-
-        // Clock container also opens settings
+        // Clock container (Removes generic click to avoid confusion with layout toggle)
         View clockContainer = root.findViewById(net.osmand.plus.R.id.clock_settings_container);
         if (clockContainer != null) {
-            clockContainer.setOnClickListener(v -> openSettings());
+            // Optional: Clicking clock could open clock app, but removing settings link for
+            // now
+            clockContainer.setOnClickListener(null);
         }
 
         // Setup RecyclerView (Force Horizontal)
