@@ -170,6 +170,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
 
         // Drawer Opener
         rootFrame.setOnClickListener(v -> openMusicDrawer());
+        rootFrame.setOnLongClickListener(v -> false); // Allow parent to handle long click (Widget Management)
 
         rootView = rootFrame;
         return rootView;
