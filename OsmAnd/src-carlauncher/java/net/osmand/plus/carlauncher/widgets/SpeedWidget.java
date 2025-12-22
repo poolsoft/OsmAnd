@@ -41,10 +41,10 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
     public View createView() {
         // Modern Kart Yapisi (FrameLayout)
         android.widget.FrameLayout rootFrame = new android.widget.FrameLayout(context);
-        rootFrame.setPadding(12, 12, 12, 12);
+        rootFrame.setPadding(0, 0, 0, 0); // No extra padding
 
         // Arka Plan (XML Kaynagi)
-        rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
+        rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_modern);
 
         // Ana Icerik (Horizontal: Limit - Hiz)
         LinearLayout contentLayout = new LinearLayout(context);

@@ -69,8 +69,7 @@ public class WidgetPanelFragment extends Fragment {
         }
 
         rootScroll.setLayoutParams(scrollParams);
-        // rootScroll.setBackgroundResource(net.osmand.plus.R.drawable.bg_glass_panel);
-        // // Android Auto style uses transparent/card bg defined in XML
+        rootScroll.setBackgroundResource(net.osmand.plus.R.drawable.bg_panel_modern);
 
         widgetContainer = new LinearLayout(getContext());
         widgetContainer.setOrientation(isPortrait ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);

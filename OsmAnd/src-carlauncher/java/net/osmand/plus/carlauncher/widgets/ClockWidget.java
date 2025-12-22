@@ -40,10 +40,10 @@ public class ClockWidget extends BaseWidget {
 
         // Kart Boyutlandirmasi (Android Auto benzeri)
         // Genislik ve yukseklik parent tarafindan belirlenecek ama padding verelim
-        rootFrame.setPadding(4, 4, 4, 4);
+        rootFrame.setPadding(0, 0, 0, 0);
 
         // Arka Plan (XML Kaynagi)
-        rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
+        rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_modern);
 
         // Icerik Konteyneri (Dikey)
         LinearLayout contentLayout = new LinearLayout(context);

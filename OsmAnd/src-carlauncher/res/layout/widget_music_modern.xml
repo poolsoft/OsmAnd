@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_widget_modern"
+    android:minHeight="140dp"
+    android:clipToOutline="true">
+
+    <!-- Album Art Background -->
+    <ImageView
+        android:id="@+id/widget_album_art"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:alpha="0.4"
+        android:src="@android:drawable/ic_menu_gallery" />
+
+    <!-- Gradient Overlay for readability -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_gradient_overlay" />
+
+    <!-- Top Left: App Icon + Title -->
+    <LinearLayout
+        android:id="@+id/widget_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="12dp">
+
+        <ImageView
+            android:id="@+id/widget_app_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@android:drawable/ic_media_play"
+            android:layout_marginEnd="8dp"
+            android:background="@android:color/transparent" />
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Müzik"
+            android:textColor="#FFFFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:maxLines="1" />
+    </LinearLayout>
+
+    <!-- Track Info (Centered Vertical) -->
+    <LinearLayout
+        android:id="@+id/widget_track_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:layout_centerInParent="true"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:layout_below="@id/widget_header"
+        android:layout_above="@+id/widget_controls">
+
+        <TextView
+            android:id="@+id/widget_track_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Parça Adı"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:ellipsize="end"
+            android:maxLines="1" />
+
+        <TextView
+            android:id="@+id/widget_track_artist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sanatçı"
+            android:textColor="#BBBBBB"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:layout_marginTop="2dp"/>
+    </LinearLayout>
+
+    <!-- Controls (Bottom) -->
+    <LinearLayout
+        android:id="@+id/widget_controls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_alignParentBottom="true"
+        android:paddingBottom="12dp"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <ImageButton
+            android:id="@+id/widget_btn_prev"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@android:drawable/ic_media_previous"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:tint="#FFFFFF"
+            android:padding="12dp" />
+
+        <ImageButton
+            android:id="@+id/widget_btn_play"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@android:drawable/ic_media_play"
+            android:background="@drawable/bg_circle_button"
+            android:tint="#000000"
+            android:padding="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:elevation="4dp"/>
+
+        <ImageButton
+            android:id="@+id/widget_btn_next"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@android:drawable/ic_media_next"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:tint="#FFFFFF"
+            android:padding="12dp" />
+
+    </LinearLayout>
+
+</RelativeLayout>

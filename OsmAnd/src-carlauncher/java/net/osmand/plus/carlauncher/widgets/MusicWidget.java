@@ -44,57 +44,24 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     }
 
     @NonNull
+    @NonNull
     @Override
     public View createView() {
-        // --- Root Frame ---
-        RelativeLayout rootFrame = new RelativeLayout(context);
-        rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
-        rootFrame.setClipToOutline(true);
+        // Inflate XML
+        View view = android.view.LayoutInflater.from(context).inflate(net.osmand.plus.R.layout.widget_music_modern,
+                null);
 
-        // Sabit Genişlik (Grid yapısı için)
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dpToPx(220),
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        rootFrame.setLayoutParams(params);
-        rootFrame.setMinimumHeight(dpToPx(120)); // Yüksekliği butonlar sığsın diye biraz arttırdım
+        // --- Bind Views ---
+        appIconView = view.findViewById(net.osmand.plus.R.id.widget_app_icon);
+        statusText = view.findViewById(net.osmand.plus.R.id.widget_track_title);
+        artistText = view.findViewById(net.osmand.plus.R.id.widget_track_artist);
+        albumArtView = view.findViewById(net.osmand.plus.R.id.widget_album_art);
 
-        // --- Album Art ---
-        albumArtView = new ImageView(context);
-        albumArtView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        albumArtView.setAlpha(0.6f);
-        RelativeLayout.LayoutParams artParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        rootFrame.addView(albumArtView, artParams);
+        ImageButton btnPrev = view.findViewById(net.osmand.plus.R.id.widget_btn_prev);
+        ImageButton btnNext = view.findViewById(net.osmand.plus.R.id.widget_btn_next);
+        btnPlay = view.findViewById(net.osmand.plus.R.id.widget_btn_play);
 
-        // --- Gradient Overlay ---
-        View albumArtOverlay = new View(context);
-        GradientDrawable gradient = new GradientDrawable(
-                GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[] { Color.parseColor("#88000000"), Color.parseColor("#FF000000") });
-        albumArtOverlay.setBackground(gradient);
-        rootFrame.addView(albumArtOverlay, artParams);
-
-        // --- Header (Icon + Title) ---
-        int headerId = View.generateViewId();
-        LinearLayout headerLayout = new LinearLayout(context);
-        headerLayout.setId(headerId);
-        headerLayout.setOrientation(LinearLayout.HORIZONTAL);
-        headerLayout.setGravity(Gravity.CENTER_VERTICAL);
-        headerLayout.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), 0);
-
-        RelativeLayout.LayoutParams headerParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        headerParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-        rootFrame.addView(headerLayout, headerParams);
-
-        // App Icon
-        appIconView = new ImageView(context);
-        int iconSize = dpToPx(24);
-        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(iconSize, iconSize);
-        iconParams.setMargins(0, 0, dpToPx(12), 0);
-        appIconView.setLayoutParams(iconParams);
-        appIconView.setImageResource(android.R.drawable.ic_media_play);
-
-        // Listeners
+        // --- Setup Listeners ---
         appIconView.setOnClickListener(v -> {
             String pkg = musicManager.getPreferredPackage();
             if (pkg != null) {
@@ -109,70 +76,27 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
             showMusicAppPicker();
             return true;
         });
-        headerLayout.addView(appIconView);
 
-        // Title Text
-        statusText = new TextView(context);
-        statusText.setText("Muzik Secin");
-        statusText.setTextColor(Color.WHITE);
-        statusText.setTextSize(18);
-        statusText.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
-        statusText.setSingleLine(true);
-        statusText.setEllipsize(TextUtils.TruncateAt.MARQUEE);
-        statusText.setSelected(true);
-        headerLayout.addView(statusText);
+        if (btnPrev != null)
+            btnPrev.setOnClickListener(v -> musicManager.skipToPrevious());
+        if (btnPlay != null)
+            btnPlay.setOnClickListener(v -> musicManager.togglePlayPause());
+        if (btnNext != null)
+            btnNext.setOnClickListener(v -> musicManager.skipToNext());
 
-        // --- Artist Name ---
-        artistText = new TextView(context);
-        artistText.setId(View.generateViewId());
-        artistText.setText("-");
-        artistText.setTextColor(Color.LTGRAY);
-        artistText.setTextSize(14);
-        artistText.setSingleLine(true);
-        artistText.setEllipsize(TextUtils.TruncateAt.END);
-        artistText.setPadding(dpToPx(48) /* Icon hizası */, 0, dpToPx(12), 0);
+        // Open Music Drawer on content click
+        View contentArea = view.findViewById(net.osmand.plus.R.id.widget_track_info);
+        if (contentArea != null) {
+            contentArea.setOnClickListener(v -> openMusicDrawer());
+        }
 
-        RelativeLayout.LayoutParams artistParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        artistParams.addRule(RelativeLayout.BELOW, headerId);
-        artistParams.setMargins(0, dpToPx(4), 0, 0);
-        rootFrame.addView(artistText, artistParams);
+        // Widget Layout Params for Grid
+        view.setLayoutParams(new ViewGroup.LayoutParams(dpToPx(220), ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        // --- Controls ---
-        LinearLayout controlsLayout = new LinearLayout(context);
-        controlsLayout.setOrientation(LinearLayout.HORIZONTAL);
-        controlsLayout.setGravity(Gravity.CENTER);
+        // Long click propagation
+        view.setOnLongClickListener(v -> false);
 
-        // !!! NOT: MusicManager'daki metot isimlerinizi kontrol edip burayı güncelleyin
-        // !!!
-        // Örn: previous() mu skipToPrevious() mu?
-
-        // Prev
-        ImageButton btnPrev = createControlButton(android.R.drawable.ic_media_previous, 48);
-        btnPrev.setOnClickListener(v -> musicManager.skipToPrevious()); // Veya musicManager.previous()
-        controlsLayout.addView(btnPrev);
-
-        // Play/Pause
-        btnPlay = createControlButton(android.R.drawable.ic_media_play, 56);
-        btnPlay.setOnClickListener(v -> musicManager.togglePlayPause()); // Veya musicManager.playPause()
-        controlsLayout.addView(btnPlay);
-
-        // Next
-        ImageButton btnNext = createControlButton(android.R.drawable.ic_media_next, 48);
-        btnNext.setOnClickListener(v -> musicManager.skipToNext()); // Veya musicManager.next()
-        controlsLayout.addView(btnNext);
-
-        RelativeLayout.LayoutParams controlsParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        controlsParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        controlsParams.setMargins(0, dpToPx(8), 0, dpToPx(8));
-        rootFrame.addView(controlsLayout, controlsParams);
-
-        // Drawer Opener
-        rootFrame.setOnClickListener(v -> openMusicDrawer());
-        rootFrame.setOnLongClickListener(v -> false); // Allow parent to handle long click (Widget Management)
-
-        rootView = rootFrame;
+        rootView = view;
         return rootView;
     }
 
