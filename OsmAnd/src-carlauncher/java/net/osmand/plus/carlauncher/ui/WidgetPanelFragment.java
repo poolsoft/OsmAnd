@@ -210,11 +210,50 @@ public class WidgetPanelFragment extends Fragment {
         }
     }
 
+    // Antenna Components
+    private net.osmand.plus.carlauncher.antenna.AntennaMapLayer antennaMapLayer;
+    private android.content.BroadcastReceiver antennaReceiver;
+
     @Override
     public void onResume() {
         super.onResume();
         if (widgetManager != null) {
             widgetManager.startAllWidgets();
+        }
+
+        // Add Map Layer (Antenna Visualization)
+        if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+            net.osmand.plus.activities.MapActivity mapActivity = (net.osmand.plus.activities.MapActivity) getActivity();
+            if (antennaMapLayer == null) {
+                antennaMapLayer = new net.osmand.plus.carlauncher.antenna.AntennaMapLayer(mapActivity.getMapView());
+            }
+            if (!mapActivity.getMapLayers().getLayers().contains(antennaMapLayer)) {
+                mapActivity.getMapLayers().addLayer(antennaMapLayer);
+            }
+        }
+
+        // Register Receiver for Picker Actions
+        antennaReceiver = new android.content.BroadcastReceiver() {
+            @Override
+            public void onReceive(android.content.Context context, android.content.Intent intent) {
+                if (net.osmand.plus.carlauncher.widgets.AntennaWidget.ACTION_PICK_ANTENNA_POINT
+                        .equals(intent.getAction())) {
+                    String type = intent
+                            .getStringExtra(net.osmand.plus.carlauncher.widgets.AntennaWidget.EXTRA_POINT_TYPE);
+                    if (antennaMapLayer != null) {
+                        antennaMapLayer.setPickingMode(type);
+                    }
+                }
+            }
+        };
+
+        if (getContext() != null) {
+            // Note: Context.RECEIVER_EXPORTED or equivalent might be needed for newer
+            // Android, but local broadcast is preferred.
+            // Using standard registration for now.
+            android.content.IntentFilter filter = new android.content.IntentFilter(
+                    net.osmand.plus.carlauncher.widgets.AntennaWidget.ACTION_PICK_ANTENNA_POINT);
+            getContext().registerReceiver(antennaReceiver, filter);
         }
     }
 
@@ -223,6 +262,21 @@ public class WidgetPanelFragment extends Fragment {
         super.onPause();
         if (widgetManager != null) {
             widgetManager.stopAllWidgets();
+        }
+
+        // Remove Map Layer
+        if (getActivity() instanceof net.osmand.plus.activities.MapActivity && antennaMapLayer != null) {
+            ((net.osmand.plus.activities.MapActivity) getActivity()).getMapLayers().removeLayer(antennaMapLayer);
+        }
+
+        // Unregister Receiver
+        if (getContext() != null && antennaReceiver != null) {
+            try {
+                getContext().unregisterReceiver(antennaReceiver);
+            } catch (Exception e) {
+                // Ignore
+            }
+            antennaReceiver = null;
         }
     }
 
@@ -248,7 +302,10 @@ public class WidgetPanelFragment extends Fragment {
         widgetManager.addWidget(new SpeedWidget(getContext(), app));
 
         // Yon widget
-        widgetManager.addWidget(new DirectionWidget(getContext(), app));
+        widgetManager.addWidget(new DirectionWidget(getContext()));
+
+        // Anten Widget
+        widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.AntennaWidget(getContext(), app));
 
         // Navigasyon widget
         widgetManager.addWidget(new NavigationWidget(getContext(), app));
