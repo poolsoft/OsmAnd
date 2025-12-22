@@ -77,9 +77,27 @@ public class AppDockManager {
                 }
 
                 try {
-                    ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
-                    String appName = appInfo.loadLabel(pm).toString();
-                    Drawable icon = appInfo.loadIcon(pm);
+                    String appName;
+                    Drawable icon;
+
+                    if (packageName.startsWith("internal://")) {
+                        // Handle Internal Apps
+                        if (packageName.equals("internal://settings")) {
+                            appName = "Ayarlar";
+                            icon = context.getResources().getDrawable(android.R.drawable.ic_menu_preferences, null);
+                        } else if (packageName.equals("internal://music")) {
+                            appName = "Muzik";
+                            icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
+                        } else {
+                            appName = "Bilinmeyen";
+                            icon = context.getResources().getDrawable(android.R.drawable.sym_def_app_icon, null);
+                        }
+                    } else {
+                        // Handle Normal Apps
+                        ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
+                        appName = appInfo.loadLabel(pm).toString();
+                        icon = appInfo.loadIcon(pm);
+                    }
 
                     shortcuts.add(new AppShortcut(packageName, appName, icon, order, launchMode));
                 } catch (PackageManager.NameNotFoundException e) {
@@ -121,6 +139,26 @@ public class AppDockManager {
                 // Uygulama yuklu degil
             }
         }
+    }
+
+    /**
+     * Kisayol sirasini degistir.
+     */
+    public void moveShortcut(int fromPosition, int toPosition) {
+        if (fromPosition < 0 || fromPosition >= shortcuts.size() ||
+                toPosition < 0 || toPosition >= shortcuts.size()) {
+            return;
+        }
+
+        AppShortcut s = shortcuts.remove(fromPosition);
+        shortcuts.add(toPosition, s);
+
+        // Update order indices
+        for (int i = 0; i < shortcuts.size(); i++) {
+            shortcuts.get(i).setOrder(i);
+        }
+
+        saveShortcuts();
     }
 
     /**
@@ -175,26 +213,6 @@ public class AppDockManager {
         shortcuts.remove(shortcut);
 
         // Order'lari yeniden duzenle
-        for (int i = 0; i < shortcuts.size(); i++) {
-            shortcuts.get(i).setOrder(i);
-        }
-
-        saveShortcuts();
-    }
-
-    /**
-     * Kisayol siralamasi degistir.
-     */
-    public void moveShortcut(int fromPosition, int toPosition) {
-        if (fromPosition < 0 || fromPosition >= shortcuts.size() ||
-                toPosition < 0 || toPosition >= shortcuts.size()) {
-            return;
-        }
-
-        AppShortcut shortcut = shortcuts.remove(fromPosition);
-        shortcuts.add(toPosition, shortcut);
-
-        // Order'lari guncelle
         for (int i = 0; i < shortcuts.size(); i++) {
             shortcuts.get(i).setOrder(i);
         }

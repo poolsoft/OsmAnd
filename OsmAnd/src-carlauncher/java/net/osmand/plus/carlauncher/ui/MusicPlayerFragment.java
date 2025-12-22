@@ -457,6 +457,17 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     return;
                 }
 
+                MusicRepository.AudioTrack current = musicManager.getInternalPlayer().getCurrentTrack();
+                if (current != null && current.getPath().equals(track.getPath())) {
+                    // Toggle Logic
+                    if (musicManager.getInternalPlayer().isPlaying()) {
+                        musicManager.getInternalPlayer().pause();
+                    } else {
+                        musicManager.getInternalPlayer().play();
+                    }
+                    return;
+                }
+
                 // Use current list (filteredTracks) as queue!
                 int index = filteredTracks.indexOf(track);
                 List<MusicRepository.AudioTrack> queue = isShuffleOn ? shuffleWithFirst(filteredTracks, track)
@@ -980,6 +991,14 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             if (holder.btnFavorite != null && playlistManager != null) {
                 boolean isFav = playlistManager.isFavorite(track.getPath());
                 holder.btnFavorite.setImageResource(isFav ? android.R.drawable.star_on : android.R.drawable.star_off);
+
+                // Tint: Gold if Fav, Gray/White if not
+                if (isFav) {
+                    holder.btnFavorite.setColorFilter(0xFFFFD700); // Gold
+                } else {
+                    holder.btnFavorite.setColorFilter(0xFF888888); // Gray
+                }
+
                 holder.btnFavorite.setOnClickListener(v -> {
                     if (isFav) {
                         playlistManager.removeFromFavorites(track.getPath());

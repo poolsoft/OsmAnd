@@ -245,6 +245,47 @@ public class AppDockFragment extends Fragment
         root.setOnLongClickListener(longClickListener);
         recyclerView.setOnLongClickListener(longClickListener);
 
+        // Drag and Drop
+        androidx.recyclerview.widget.ItemTouchHelper.Callback callback = new androidx.recyclerview.widget.ItemTouchHelper.Callback() {
+            @Override
+            public int getMovementFlags(@NonNull RecyclerView recyclerView,
+                    @NonNull RecyclerView.ViewHolder viewHolder) {
+                int dragFlags = androidx.recyclerview.widget.ItemTouchHelper.LEFT
+                        | androidx.recyclerview.widget.ItemTouchHelper.RIGHT
+                        | androidx.recyclerview.widget.ItemTouchHelper.UP
+                        | androidx.recyclerview.widget.ItemTouchHelper.DOWN;
+                return makeMovementFlags(dragFlags, 0);
+            }
+
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder,
+                    @NonNull RecyclerView.ViewHolder target) {
+                int from = viewHolder.getAdapterPosition();
+                int to = target.getAdapterPosition();
+
+                // Update Adapter
+                if (adapter != null) {
+                    adapter.onItemMove(from, to);
+                }
+                // Update Manager
+                if (dockManager != null) {
+                    dockManager.moveShortcut(from, to);
+                }
+                return true;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                // No swipe
+            }
+
+            @Override
+            public boolean isLongPressDragEnabled() {
+                return true;
+            }
+        };
+        new androidx.recyclerview.widget.ItemTouchHelper(callback).attachToRecyclerView(recyclerView);
+
         return root;
     }
 

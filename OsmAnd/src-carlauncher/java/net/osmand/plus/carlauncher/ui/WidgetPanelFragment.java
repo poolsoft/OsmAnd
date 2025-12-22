@@ -79,7 +79,7 @@ public class WidgetPanelFragment extends Fragment {
         widgetContainer.setLayoutParams(new ViewGroup.LayoutParams(
                 isPortrait ? ViewGroup.LayoutParams.WRAP_CONTENT : ViewGroup.LayoutParams.MATCH_PARENT,
                 isPortrait ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT));
-        widgetContainer.setPadding(4, 16, 4, 16); // Reduced padding
+        widgetContainer.setPadding(2, 0, 2, 16); // Reduced padding, no top padding
 
         // Long click to manage widgets
         widgetContainer.setOnLongClickListener(v -> {

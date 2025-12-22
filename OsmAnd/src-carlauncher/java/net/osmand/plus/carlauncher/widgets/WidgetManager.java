@@ -119,9 +119,10 @@ public class WidgetManager {
     public void attachWidgetsToContainer(@NonNull ViewGroup container) {
         container.removeAllViews();
 
-        int margin = dpToPx(8);
+        int margin = dpToPx(4); // Reduced margin
 
-        for (BaseWidget widget : visibleWidgets) {
+        for (int i = 0; i < visibleWidgets.size(); i++) {
+            BaseWidget widget = visibleWidgets.get(i);
             View widgetView = widget.getRootView();
             if (widgetView == null) {
                 widgetView = widget.createView();
@@ -149,7 +150,9 @@ public class WidgetManager {
                             ViewGroup.LayoutParams.MATCH_PARENT);
                 }
 
-                params.setMargins(margin, margin, margin, margin);
+                // First widget gets 0 top margin
+                int topMargin = (i == 0) ? 0 : margin;
+                params.setMargins(margin, topMargin, margin, margin);
                 widgetView.setLayoutParams(params);
 
                 container.addView(widgetView);

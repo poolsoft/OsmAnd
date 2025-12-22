@@ -50,6 +50,19 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
         notifyDataSetChanged();
     }
 
+    public void onItemMove(int fromPosition, int toPosition) {
+        if (fromPosition < toPosition) {
+            for (int i = fromPosition; i < toPosition; i++) {
+                java.util.Collections.swap(shortcuts, i, i + 1);
+            }
+        } else {
+            for (int i = fromPosition; i > toPosition; i--) {
+                java.util.Collections.swap(shortcuts, i, i - 1);
+            }
+        }
+        notifyItemMoved(fromPosition, toPosition);
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
