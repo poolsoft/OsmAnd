@@ -148,4 +148,10 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
 
         Toast.makeText(context, "Haritada bir noktaya uzun basarak seçin.", Toast.LENGTH_LONG).show();
     }
+
+    }
+
+    private int dpToPx(int dp) {
+        return (int) (dp * context.getResources().getDisplayMetrics().density);
+    }
 }

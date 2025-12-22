@@ -33,6 +33,8 @@ public class WidgetPanelFragment extends Fragment {
     private LinearLayout widgetContainer;
     private WidgetManager widgetManager;
     private OsmandApplication app;
+    private net.osmand.plus.carlauncher.antenna.AntennaMapLayer antennaMapLayer;
+    private android.content.BroadcastReceiver antennaReceiver;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {

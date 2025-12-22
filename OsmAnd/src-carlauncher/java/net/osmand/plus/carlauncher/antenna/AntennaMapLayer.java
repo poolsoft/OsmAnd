@@ -54,8 +54,9 @@ public class AntennaMapLayer extends OsmandMapLayer implements AntennaManager.An
     }
 
     @Override
+    @Override
     public void onDraw(Canvas canvas, RotatedTileBox tileBox,
-            net.osmand.plus.views.OsmandMapLayer.DrawSettings settings) {
+            OsmandMapLayer.DrawSettings settings) {
         AntennaManager.AntennaPoint pA = manager.getPointA();
         AntennaManager.AntennaPoint pB = manager.getPointB();
 
