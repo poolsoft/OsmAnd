@@ -264,7 +264,7 @@ public class WidgetPanelFragment extends Fragment {
 
         // Remove Map Layer
         if (getActivity() instanceof net.osmand.plus.activities.MapActivity && antennaMapLayer != null) {
-            ((net.osmand.plus.activities.MapActivity) getActivity()).getMapLayers().removeLayer(antennaMapLayer);
+            ((net.osmand.plus.activities.MapActivity) getActivity()).getMapView().removeLayer(antennaMapLayer);
         }
 
         // Unregister Receiver
