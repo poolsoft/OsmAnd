@@ -154,4 +154,9 @@ public class AntennaMapLayer extends OsmandMapLayer implements AntennaManager.An
             view.refreshMap();
         }
     }
+
+    @Override
+    public boolean drawInScreenPixels() {
+        return true;
+    }
 }

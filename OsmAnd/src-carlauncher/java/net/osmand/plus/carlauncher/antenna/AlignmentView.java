@@ -30,7 +30,7 @@ public class AlignmentView extends View {
         paintCircle.setColor(Color.WHITE);
 
         paintTarget = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paintTarget.setStyle(Paint.Style.ITEM_FIT); // STROKE/FILL
+        paintTarget.setStyle(Paint.Style.FILL); // STROKE/FILL
         paintTarget.setStrokeWidth(12f);
         paintTarget.setColor(Color.GREEN);
         paintTarget.setStrokeCap(Paint.Cap.ROUND);

@@ -302,7 +302,7 @@ public class WidgetPanelFragment extends Fragment {
         widgetManager.addWidget(new SpeedWidget(getContext(), app));
 
         // Yon widget
-        widgetManager.addWidget(new DirectionWidget(getContext()));
+        widgetManager.addWidget(new DirectionWidget(getContext(), app));
 
         // Anten Widget
         widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.AntennaWidget(getContext(), app));
