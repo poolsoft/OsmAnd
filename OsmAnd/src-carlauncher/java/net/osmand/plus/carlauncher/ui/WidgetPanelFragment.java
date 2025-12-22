@@ -242,7 +242,7 @@ public class WidgetPanelFragment extends Fragment {
             return;
 
         // Saat widget (her zaman en ustte)
-        widgetManager.addWidget(new ClockWidget(getContext()));
+        widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.Material3ClockWidget(getContext()));
 
         // Hiz widget
         widgetManager.addWidget(new SpeedWidget(getContext(), app));

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="8dp"
+    android:background="@drawable/bg_widget_modern">
+
+    <!-- Hours -->
+    <TextView
+        android:id="@+id/clock_hours"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="12"
+        android:textColor="#D0BCFF" 
+        android:textSize="64sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-black"
+        android:includeFontPadding="false"
+        android:lineSpacingMultiplier="0.8"
+        android:gravity="center"
+        tools:text="12" />
+
+    <!-- Minutes -->
+    <TextView
+        android:id="@+id/clock_minutes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="30"
+        android:textColor="#D0BCFF"
+        android:textSize="64sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-black"
+        android:includeFontPadding="false"
+        android:lineSpacingMultiplier="0.8"
+        android:layout_marginTop="-16dp" 
+        android:gravity="center"
+        tools:text="30" />
+
+    <!-- Date (Optional, smaller below) -->
+    <TextView
+        android:id="@+id/clock_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Paz, 22 Ara"
+        android:textColor="#CCC2DC"
+        android:textSize="14sp"
+        android:fontFamily="sans-serif-medium"
+        android:layout_marginTop="4dp"
+        tools:text="Paz, 22 Ara" />
+
+</LinearLayout>
