@@ -57,6 +57,17 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
         btnSetA.setOnClickListener(v -> startPickPoint("A"));
         btnSetB.setOnClickListener(v -> startPickPoint("B"));
 
+        View btnAlign = view.findViewById(net.osmand.plus.R.id.btn_align);
+        btnAlign.setOnClickListener(v -> {
+            if (manager.getPointA() != null && manager.getPointB() != null) {
+                Intent intent = new Intent(context, net.osmand.plus.carlauncher.antenna.AntennaAlignmentActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            } else {
+                Toast.makeText(context, "Lütfen önce A ve B noktalarını seçin.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         // Setup Layout Params
         view.setLayoutParams(new ViewGroup.LayoutParams(dpToPx(300), ViewGroup.LayoutParams.WRAP_CONTENT));
 
