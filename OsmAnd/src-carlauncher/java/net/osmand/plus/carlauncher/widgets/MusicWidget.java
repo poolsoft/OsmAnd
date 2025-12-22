@@ -44,7 +44,6 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     }
 
     @NonNull
-    @NonNull
     @Override
     public View createView() {
         // Inflate XML
