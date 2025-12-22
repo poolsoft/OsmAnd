@@ -99,39 +99,58 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
         updateExpandState();
     }
 
-    private void updateExpandState() {
-        if (contentLayout != null) {
-            contentLayout.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
-            iconExpand.animate().rotation(isExpanded ? 180 : 0).setDuration(200).start();
-        }
-    }
-
-    private net.osmand.plus.carlauncher.antenna.AntennaMapLayer mapLayer;
-
     @Override
     public void onStart() {
         super.onStart();
         manager.setListener(this);
-
-        if (context instanceof net.osmand.plus.activities.MapActivity) {
-            net.osmand.plus.activities.MapActivity mapActivity = (net.osmand.plus.activities.MapActivity) context;
-            if (mapLayer == null) {
-                mapLayer = new net.osmand.plus.carlauncher.antenna.AntennaMapLayer(mapActivity.getMapView());
-            }
-            if (!mapActivity.getMapView().getLayers().contains(mapLayer)) {
-                mapActivity.getMapView().addLayer(mapLayer, 5.5f);
-            }
-        }
+        initMapLayer();
         updateUI();
+        // Add layer only if expanded
+        if (isExpanded) {
+            addMapLayer();
+        }
     }
 
     @Override
     public void onStop() {
         super.onStop();
         manager.setListener(null);
+        removeMapLayer();
+    }
 
-        if (context instanceof net.osmand.plus.activities.MapActivity && mapLayer != null) {
+    private void initMapLayer() {
+        if (context instanceof net.osmand.plus.activities.MapActivity) {
+            net.osmand.plus.activities.MapActivity mapActivity = (net.osmand.plus.activities.MapActivity) context;
+            if (mapLayer == null) {
+                mapLayer = new net.osmand.plus.carlauncher.antenna.AntennaMapLayer(mapActivity.getMapView());
+            }
+        }
+    }
+
+    private void addMapLayer() {
+        if (mapLayer != null && context instanceof net.osmand.plus.activities.MapActivity) {
+            net.osmand.plus.activities.MapActivity mapActivity = (net.osmand.plus.activities.MapActivity) context;
+            if (!mapActivity.getMapView().getLayers().contains(mapLayer)) {
+                mapActivity.getMapView().addLayer(mapLayer, 5.5f);
+            }
+        }
+    }
+
+    private void removeMapLayer() {
+        if (mapLayer != null && context instanceof net.osmand.plus.activities.MapActivity) {
             ((net.osmand.plus.activities.MapActivity) context).getMapView().removeLayer(mapLayer);
+        }
+    }
+
+    private void updateExpandState() {
+        if (contentLayout != null) {
+            contentLayout.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+            iconExpand.animate().rotation(isExpanded ? 180 : 0).setDuration(200).start();
+        }
+        if (isExpanded) {
+            addMapLayer();
+        } else {
+            removeMapLayer();
         }
     }
 
