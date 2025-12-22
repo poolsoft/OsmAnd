@@ -212,10 +212,6 @@ public class WidgetPanelFragment extends Fragment {
         }
     }
 
-    // Antenna Components
-    private net.osmand.plus.carlauncher.antenna.AntennaMapLayer antennaMapLayer;
-    private android.content.BroadcastReceiver antennaReceiver;
-
     @Override
     public void onResume() {
         super.onResume();
