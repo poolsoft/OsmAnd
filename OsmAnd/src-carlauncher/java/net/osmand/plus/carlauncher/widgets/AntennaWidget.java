@@ -13,6 +13,9 @@ import androidx.annotation.NonNull;
 
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.carlauncher.antenna.AntennaManager;
+import net.osmand.plus.carlauncher.antenna.AntennaMapLayer;
+import net.osmand.plus.views.OsmandMapTileView;
+import net.osmand.plus.views.OsmandMap;
 
 import java.util.Locale;
 
@@ -119,27 +122,37 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
     }
 
     private void initMapLayer() {
-        if (context instanceof net.osmand.plus.activities.MapActivity) {
-            net.osmand.plus.activities.MapActivity mapActivity = (net.osmand.plus.activities.MapActivity) context;
-            if (mapLayer == null) {
-                mapLayer = new net.osmand.plus.carlauncher.antenna.AntennaMapLayer(mapActivity.getMapView());
-            }
+        OsmandMapTileView mapView = getMapView();
+        if (mapView != null && mapLayer == null) {
+            mapLayer = new AntennaMapLayer(mapView);
         }
     }
 
     private void addMapLayer() {
-        if (mapLayer != null && context instanceof net.osmand.plus.activities.MapActivity) {
-            net.osmand.plus.activities.MapActivity mapActivity = (net.osmand.plus.activities.MapActivity) context;
-            if (!mapActivity.getMapView().getLayers().contains(mapLayer)) {
-                mapActivity.getMapView().addLayer(mapLayer, 5.5f);
+        OsmandMapTileView mapView = getMapView();
+        if (mapLayer != null && mapView != null) {
+            if (!mapView.getLayers().contains(mapLayer)) {
+                mapView.addLayer(mapLayer, 5.5f);
             }
         }
     }
 
     private void removeMapLayer() {
-        if (mapLayer != null && context instanceof net.osmand.plus.activities.MapActivity) {
-            ((net.osmand.plus.activities.MapActivity) context).getMapView().removeLayer(mapLayer);
+        OsmandMapTileView mapView = getMapView();
+        if (mapLayer != null && mapView != null) {
+            mapView.removeLayer(mapLayer);
         }
+    }
+
+    private OsmandMapTileView getMapView() {
+        if (context.getApplicationContext() instanceof OsmandApplication) {
+            OsmandApplication app = (OsmandApplication) context.getApplicationContext();
+            OsmandMap osmandMap = app.getOsmandMap();
+            if (osmandMap != null) {
+                return osmandMap.getMapView();
+            }
+        }
+        return null;
     }
 
     private void updateExpandState() {
