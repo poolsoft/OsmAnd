@@ -75,10 +75,22 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
         return rootView;
     }
 
+    private net.osmand.plus.carlauncher.antenna.AntennaMapLayer mapLayer;
+
     @Override
     public void onStart() {
         super.onStart();
         manager.setListener(this);
+
+        if (context instanceof net.osmand.plus.activities.MapActivity) {
+            net.osmand.plus.activities.MapActivity mapActivity = (net.osmand.plus.activities.MapActivity) context;
+            if (mapLayer == null) {
+                mapLayer = new net.osmand.plus.carlauncher.antenna.AntennaMapLayer(mapActivity.getMapView());
+            }
+            if (!mapActivity.getMapView().getLayers().contains(mapLayer)) {
+                mapActivity.getMapView().addLayer(mapLayer, 5.5f);
+            }
+        }
         updateUI();
     }
 
@@ -86,6 +98,10 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
     public void onStop() {
         super.onStop();
         manager.setListener(null);
+
+        if (context instanceof net.osmand.plus.activities.MapActivity && mapLayer != null) {
+            ((net.osmand.plus.activities.MapActivity) context).getMapView().removeLayer(mapLayer);
+        }
     }
 
     @Override
@@ -140,13 +156,11 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
     }
 
     private void startPickPoint(String type) {
-        // Broadcast to Activity to open Map Selection
-        Intent intent = new Intent(ACTION_PICK_ANTENNA_POINT);
-        intent.putExtra(EXTRA_POINT_TYPE, type);
-        intent.setPackage(context.getPackageName());
-        context.sendBroadcast(intent);
-
-        Toast.makeText(context, "Haritada bir noktaya uzun basarak seçin.", Toast.LENGTH_LONG).show();
+        if (mapLayer != null) {
+            mapLayer.setPickingMode(type);
+        } else {
+            Toast.makeText(context, "Harita katmanı henüz hazır değil.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private int dpToPx(int dp) {

@@ -33,8 +33,6 @@ public class WidgetPanelFragment extends Fragment {
     private LinearLayout widgetContainer;
     private WidgetManager widgetManager;
     private OsmandApplication app;
-    private net.osmand.plus.carlauncher.antenna.AntennaMapLayer antennaMapLayer;
-    private android.content.BroadcastReceiver antennaReceiver;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -218,41 +216,14 @@ public class WidgetPanelFragment extends Fragment {
         if (widgetManager != null) {
             widgetManager.startAllWidgets();
         }
+        // Note: Context.RECEIVER_EXPORTED or equivalent might be needed for newer
+        // Android, but local broadcast is preferred.
+        // Using standard registration for now.
+        android.content.IntentFilter filter = new android.content.IntentFilter(
+                net.osmand.plus.carlauncher.widgets.AntennaWidget.ACTION_PICK_ANTENNA_POINT);
+        getContext().registerReceiver(antennaReceiver, filter);
+    }
 
-        // Add Map Layer (Antenna Visualization)
-        if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
-            net.osmand.plus.activities.MapActivity mapActivity = (net.osmand.plus.activities.MapActivity) getActivity();
-            if (antennaMapLayer == null) {
-                antennaMapLayer = new net.osmand.plus.carlauncher.antenna.AntennaMapLayer(mapActivity.getMapView());
-            }
-            if (!mapActivity.getMapLayers().getLayers().contains(antennaMapLayer)) {
-                mapActivity.getMapLayers().addLayer(antennaMapLayer);
-            }
-        }
-
-        // Register Receiver for Picker Actions
-        antennaReceiver = new android.content.BroadcastReceiver() {
-            @Override
-            public void onReceive(android.content.Context context, android.content.Intent intent) {
-                if (net.osmand.plus.carlauncher.widgets.AntennaWidget.ACTION_PICK_ANTENNA_POINT
-                        .equals(intent.getAction())) {
-                    String type = intent
-                            .getStringExtra(net.osmand.plus.carlauncher.widgets.AntennaWidget.EXTRA_POINT_TYPE);
-                    if (antennaMapLayer != null) {
-                        antennaMapLayer.setPickingMode(type);
-                    }
-                }
-            }
-        };
-
-        if (getContext() != null) {
-            // Note: Context.RECEIVER_EXPORTED or equivalent might be needed for newer
-            // Android, but local broadcast is preferred.
-            // Using standard registration for now.
-            android.content.IntentFilter filter = new android.content.IntentFilter(
-                    net.osmand.plus.carlauncher.widgets.AntennaWidget.ACTION_PICK_ANTENNA_POINT);
-            getContext().registerReceiver(antennaReceiver, filter);
-        }
     }
 
     @Override
