@@ -43,7 +43,7 @@ public class AppDrawerFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private AppDrawerAdapter adapter;
-    private FrameLayout loadingView;
+    private View loadingView;
     private List<AppItem> cachedApps; // Cache
     private PackageReceiver packageReceiver;
 
@@ -77,74 +77,42 @@ public class AppDrawerFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
-
-        FrameLayout rootLayout = new FrameLayout(getContext());
-        rootLayout.setLayoutParams(new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
-
-        // Close button (Top Right)
-        ImageButton closeButton = new ImageButton(getContext());
-        closeButton.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
-        closeButton.setBackgroundColor(0x00000000);
-        closeButton.setColorFilter(0xFFFFFFFF);
-        closeButton.setOnClickListener(v -> closeDrawer());
-
-        FrameLayout.LayoutParams closeParams = new FrameLayout.LayoutParams(96, 96); // Bigger touch target
-        closeParams.gravity = Gravity.TOP | Gravity.END;
-        closeParams.setMargins(0, 32, 32, 0); // 32dp margin top/right
-
-        // Ensure close button handles insets too
-        closeButton.setOnApplyWindowInsetsListener((v, insets) -> {
-            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) v.getLayoutParams();
-            params.topMargin = insets.getSystemWindowInsetTop() + 16;
-            v.setLayoutParams(params);
-            return insets;
-        });
-
-        closeButton.setElevation(100f); // High elevation
-        closeButton.setFocusable(true);
-        closeButton.setClickable(true);
-        rootLayout.addView(closeButton, closeParams);
-
-        // RecyclerView
-        recyclerView = new RecyclerView(getContext());
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 5)); // 5 Columns
-
-        // Dynamic Status Bar Padding
-        recyclerView.setOnApplyWindowInsetsListener((v, insets) -> {
-            int topPadding = insets.getSystemWindowInsetTop();
-            // Add extra space for close button (e.g. 64dp)
-            v.setPadding(32, topPadding + 150, 32, 32);
-            return insets;
-        });
-        // Initial fallback
-        recyclerView.setPadding(32, 100, 32, 32);
-        recyclerView.setClipToPadding(false);
-
-        rootLayout.addView(recyclerView, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
-
-        // Loading View
-        loadingView = new FrameLayout(getContext());
-        TextView loadingText = new TextView(getContext());
-        loadingText.setText("Yukleniyor...");
-        loadingText.setTextColor(0xFFFFFFFF);
-        loadingText.setGravity(Gravity.CENTER);
-        loadingView.addView(loadingText, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
-
-        rootLayout.addView(loadingView, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
-
-        return rootLayout;
+        return inflater.inflate(net.osmand.plus.R.layout.fragment_app_drawer, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // Bind Views
+        recyclerView = view.findViewById(net.osmand.plus.R.id.apps_recycler_view);
+        loadingView = view.findViewById(net.osmand.plus.R.id.loading_progress);
+
+        android.view.View closeBtn = view.findViewById(net.osmand.plus.R.id.btn_close_drawer);
+        android.widget.EditText searchInput = view.findViewById(net.osmand.plus.R.id.search_input);
+
+        // Logic
+        closeBtn.setOnClickListener(v -> closeDrawer());
+
+        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 5));
+
+        // Search Filter
+        searchInput.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (adapter != null)
+                    adapter.filter(s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+            }
+        });
+
         loadApps();
     }
 
@@ -260,44 +228,42 @@ public class AppDrawerFragment extends Fragment {
 
     private class AppDrawerAdapter extends RecyclerView.Adapter<AppDrawerAdapter.ViewHolder> {
 
-        private List<AppItem> apps;
+        private List<AppItem> originalApps;
+        private List<AppItem> displayedApps;
 
         AppDrawerAdapter(List<AppItem> apps) {
-            this.apps = apps;
+            this.originalApps = new ArrayList<>(apps);
+            this.displayedApps = new ArrayList<>(apps);
+        }
+
+        void filter(String query) {
+            displayedApps.clear();
+            if (android.text.TextUtils.isEmpty(query)) {
+                displayedApps.addAll(originalApps);
+            } else {
+                String q = query.toLowerCase();
+                for (AppItem item : originalApps) {
+                    if (item.label.toLowerCase().contains(q)) {
+                        displayedApps.add(item);
+                    }
+                }
+            }
+            notifyDataSetChanged();
         }
 
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            LinearLayout layout = new LinearLayout(getContext());
-            layout.setOrientation(LinearLayout.VERTICAL);
-            layout.setGravity(Gravity.CENTER);
-            layout.setPadding(16, 16, 16, 16);
-            layout.setBackgroundResource(android.R.drawable.list_selector_background);
-
-            // Icon
-            ImageView iconView = new ImageView(getContext());
-            iconView.setLayoutParams(new LinearLayout.LayoutParams(96, 96)); // Large Icon
-            layout.addView(iconView);
-
-            // Text
-            TextView textView = new TextView(getContext());
-            textView.setTextColor(0xFFFFFFFF);
-            textView.setTextSize(14);
-            textView.setGravity(Gravity.CENTER);
-            textView.setSingleLine(true);
-            textView.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            textView.setPadding(0, 8, 0, 0);
-
-            layout.addView(textView, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-            return new ViewHolder(layout, iconView, textView);
+            // Using ID directly might fail if R is not imported correctly, but following
+            // pattern
+            View view = LayoutInflater.from(parent.getContext()).inflate(net.osmand.plus.R.layout.item_app_drawer,
+                    parent, false);
+            return new ViewHolder(view);
         }
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            AppItem item = apps.get(position);
+            AppItem item = displayedApps.get(position);
             holder.textView.setText(item.label);
             holder.iconView.setImageDrawable(item.icon);
 
@@ -314,17 +280,17 @@ public class AppDrawerFragment extends Fragment {
 
         @Override
         public int getItemCount() {
-            return apps.size();
+            return displayedApps.size();
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
             ImageView iconView;
             TextView textView;
 
-            ViewHolder(View itemView, ImageView iconView, TextView textView) {
+            ViewHolder(View itemView) {
                 super(itemView);
-                this.iconView = iconView;
-                this.textView = textView;
+                iconView = itemView.findViewById(net.osmand.plus.R.id.app_icon);
+                textView = itemView.findViewById(net.osmand.plus.R.id.app_label);
             }
         }
     }
