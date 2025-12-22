@@ -28,6 +28,9 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
     private TextView textPointA, textPointB;
     private TextView valDistance, valAzimuth, valElevation;
     private ImageView compassArrow;
+    private View contentLayout;
+    private ImageView iconExpand;
+    private boolean isExpanded = false;
 
     private final AntennaManager manager;
 
@@ -43,6 +46,10 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
         View view = LayoutInflater.from(context).inflate(net.osmand.plus.R.layout.widget_antenna_modern, null);
 
         // Bind Views
+        View headerLayout = view.findViewById(net.osmand.plus.R.id.header_layout);
+        contentLayout = view.findViewById(net.osmand.plus.R.id.content_layout);
+        iconExpand = view.findViewById(net.osmand.plus.R.id.icon_expand);
+
         textPointA = view.findViewById(net.osmand.plus.R.id.text_point_a);
         textPointB = view.findViewById(net.osmand.plus.R.id.text_point_b);
         valDistance = view.findViewById(net.osmand.plus.R.id.val_distance);
@@ -54,6 +61,8 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
         View btnSetB = view.findViewById(net.osmand.plus.R.id.btn_set_b);
 
         // Listeners
+        headerLayout.setOnClickListener(v -> toggleExpand());
+
         btnSetA.setOnClickListener(v -> startPickPoint("A"));
         btnSetB.setOnClickListener(v -> startPickPoint("B"));
 
@@ -69,10 +78,32 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
         });
 
         // Setup Layout Params
-        view.setLayoutParams(new ViewGroup.LayoutParams(dpToPx(300), ViewGroup.LayoutParams.WRAP_CONTENT));
+        // view.setLayoutParams(new ViewGroup.LayoutParams(dpToPx(300),
+        // ViewGroup.LayoutParams.WRAP_CONTENT));
+        // Use match_parent width handled by container usually, but keep specific if
+        // needed.
+        // XML is match_parent width. FrameLayout container might constraint it.
+        // Keeping dpToPx(300) causes it to be fixed width.
+        // If user wants modern, maybe full width?
+        // NavigationWidget uses match parent.
+        view.setLayoutParams(
+                new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         rootView = view;
+        updateExpandState();
         return rootView;
+    }
+
+    private void toggleExpand() {
+        isExpanded = !isExpanded;
+        updateExpandState();
+    }
+
+    private void updateExpandState() {
+        if (contentLayout != null) {
+            contentLayout.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+            iconExpand.animate().rotation(isExpanded ? 180 : 0).setDuration(200).start();
+        }
     }
 
     private net.osmand.plus.carlauncher.antenna.AntennaMapLayer mapLayer;
