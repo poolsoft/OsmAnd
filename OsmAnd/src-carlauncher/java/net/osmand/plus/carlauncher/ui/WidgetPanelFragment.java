@@ -216,14 +216,6 @@ public class WidgetPanelFragment extends Fragment {
         if (widgetManager != null) {
             widgetManager.startAllWidgets();
         }
-        // Note: Context.RECEIVER_EXPORTED or equivalent might be needed for newer
-        // Android, but local broadcast is preferred.
-        // Using standard registration for now.
-        android.content.IntentFilter filter = new android.content.IntentFilter(
-                net.osmand.plus.carlauncher.widgets.AntennaWidget.ACTION_PICK_ANTENNA_POINT);
-        getContext().registerReceiver(antennaReceiver, filter);
-    }
-
     }
 
     @Override
@@ -231,21 +223,6 @@ public class WidgetPanelFragment extends Fragment {
         super.onPause();
         if (widgetManager != null) {
             widgetManager.stopAllWidgets();
-        }
-
-        // Remove Map Layer
-        if (getActivity() instanceof net.osmand.plus.activities.MapActivity && antennaMapLayer != null) {
-            ((net.osmand.plus.activities.MapActivity) getActivity()).getMapView().removeLayer(antennaMapLayer);
-        }
-
-        // Unregister Receiver
-        if (getContext() != null && antennaReceiver != null) {
-            try {
-                getContext().unregisterReceiver(antennaReceiver);
-            } catch (Exception e) {
-                // Ignore
-            }
-            antennaReceiver = null;
         }
     }
 
