@@ -110,10 +110,28 @@ public class MusicRepository {
                     String path = cursor.getString(dataColumn);
                     long albumId = cursor.getLong(albumIdColumn);
 
-                    // Filter by extension (MP3/MP4 only)
+                    // Strict Filter: Duration > 15s (Avoids SFX/Notification sounds)
+                    if (duration < 15000) {
+                        continue;
+                    }
+
+                    // Strict Filter: Extension and Path
                     if (path != null) {
                         String lowerPath = path.toLowerCase(java.util.Locale.ROOT);
+
+                        // Allowed extensions (User requested MP3/MP4)
                         if (!lowerPath.endsWith(".mp3") && !lowerPath.endsWith(".mp4")) {
+                            continue;
+                        }
+
+                        // Exclude unwanted folders (App Data, Social Media Audio, System Sounds)
+                        if (lowerPath.contains("/android/data/") ||
+                                lowerPath.contains("/whatsapp/") ||
+                                lowerPath.contains("/telegram/") ||
+                                lowerPath.contains("/notifications/") ||
+                                lowerPath.contains("/ringtones/") ||
+                                lowerPath.contains("/alarms/") ||
+                                lowerPath.contains("/samsung/music/")) { // Example generic exclusion if needed
                             continue;
                         }
                     }
