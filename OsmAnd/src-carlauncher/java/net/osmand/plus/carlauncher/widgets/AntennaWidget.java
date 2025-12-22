@@ -16,6 +16,7 @@ import net.osmand.plus.carlauncher.antenna.AntennaManager;
 import net.osmand.plus.carlauncher.antenna.AntennaMapLayer;
 import net.osmand.plus.views.OsmandMapTileView;
 import net.osmand.plus.views.OsmandMap;
+import net.osmand.plus.activities.MapActivity;
 
 import java.util.Locale;
 
@@ -144,10 +145,16 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
         }
     }
 
-    private OsmandMapTileView getMapView() {
+    private net.osmand.plus.views.OsmandMapTileView getMapView() {
+        // Method 1: Try casting context to MapActivity
+        if (context instanceof net.osmand.plus.activities.MapActivity) {
+            return ((net.osmand.plus.activities.MapActivity) context).getMapView();
+        }
+
+        // Method 2: Try accessing via OsmandApplication
         if (context.getApplicationContext() instanceof OsmandApplication) {
             OsmandApplication app = (OsmandApplication) context.getApplicationContext();
-            OsmandMap osmandMap = app.getOsmandMap();
+            net.osmand.plus.views.OsmandMap osmandMap = app.getOsmandMap();
             if (osmandMap != null) {
                 return osmandMap.getMapView();
             }
