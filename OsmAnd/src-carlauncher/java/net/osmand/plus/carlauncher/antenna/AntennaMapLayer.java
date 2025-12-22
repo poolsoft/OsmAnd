@@ -12,6 +12,7 @@ import net.osmand.data.LatLon;
 import net.osmand.data.RotatedTileBox;
 import net.osmand.plus.views.OsmandMapTileView;
 import net.osmand.plus.views.layers.base.OsmandMapLayer;
+import net.osmand.plus.views.layers.base.OsmandMapLayer.DrawSettings;
 
 /**
  * Layer to visualize Antenna Alignment (Line between A and B).
@@ -54,9 +55,8 @@ public class AntennaMapLayer extends OsmandMapLayer implements AntennaManager.An
     }
 
     @Override
-    @Override
     public void onDraw(Canvas canvas, RotatedTileBox tileBox,
-            OsmandMapLayer.DrawSettings settings) {
+            DrawSettings settings) {
         AntennaManager.AntennaPoint pA = manager.getPointA();
         AntennaManager.AntennaPoint pB = manager.getPointB();
 
