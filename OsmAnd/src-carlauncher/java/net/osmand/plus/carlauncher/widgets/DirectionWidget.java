@@ -34,8 +34,9 @@ public class DirectionWidget extends BaseWidget implements OsmAndLocationProvide
     public View createView() {
         // Modern Kart Yapisi
         FrameLayout rootFrame = new FrameLayout(context);
-        rootFrame.setPadding(16, 16, 16, 16);
-        rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
+        // rootFrame.setPadding(16, 16, 16, 16); // Removed padding
+        // rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
+        // // Removed frame
 
         LinearLayout container = new LinearLayout(context);
         container.setOrientation(LinearLayout.VERTICAL);
@@ -44,7 +45,7 @@ public class DirectionWidget extends BaseWidget implements OsmAndLocationProvide
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT);
-        params.setMargins(16, 16, 16, 16);
+        // params.setMargins(16, 16, 16, 16); // Removed margins
         container.setLayoutParams(params);
 
         // Ikon (Pusula)

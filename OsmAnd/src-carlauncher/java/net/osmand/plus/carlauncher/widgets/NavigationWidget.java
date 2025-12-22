@@ -46,8 +46,9 @@ public class NavigationWidget extends BaseWidget {
     public View createView() {
         // Modern Kart Yapisi
         FrameLayout rootFrame = new FrameLayout(context);
-        rootFrame.setPadding(16, 16, 16, 16);
-        rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
+        // rootFrame.setPadding(16, 16, 16, 16); // Removed padding
+        // rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_card);
+        // // Removed frame
 
         LinearLayout container = new LinearLayout(context);
         container.setOrientation(LinearLayout.VERTICAL);
