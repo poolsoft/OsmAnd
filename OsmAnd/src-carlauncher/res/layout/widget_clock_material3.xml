@@ -13,15 +13,9 @@
         android:layout_height="wrap_content"
         android:text="23"
         android:textColor="#FFFFFF"
-        android:textSize="80sp"
+        android:textSize="90sp"
         android:includeFontPadding="false"
         android:gravity="center" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=" "
-        android:textSize="30sp" />
 
     <TextView
         android:id="@+id/clock_minutes"
@@ -29,8 +23,9 @@
         android:layout_height="wrap_content"
         android:text="59"
         android:textColor="#A8C7FA"
-        android:textSize="80sp"
+        android:textSize="90sp"
         android:includeFontPadding="false"
-        android:gravity="center" />
+        android:gravity="center"
+        android:layout_marginStart="-5dp" />
 
 </LinearLayout>
