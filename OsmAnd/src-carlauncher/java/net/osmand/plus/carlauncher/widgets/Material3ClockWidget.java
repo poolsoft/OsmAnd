@@ -39,8 +39,6 @@ public class Material3ClockWidget extends BaseWidget {
         this.order = 0; // Top position
     }
 
-    private android.graphics.Typeface clockTypeface;
-
     @Override
     public View createView() {
         View view = LayoutInflater.from(context).inflate(net.osmand.plus.R.layout.widget_clock_material3, null);
@@ -48,17 +46,6 @@ public class Material3ClockWidget extends BaseWidget {
         tvHours = view.findViewById(net.osmand.plus.R.id.clock_hours);
         tvMinutes = view.findViewById(net.osmand.plus.R.id.clock_minutes);
         tvDate = view.findViewById(net.osmand.plus.R.id.clock_date);
-
-        try {
-            clockTypeface = android.graphics.Typeface.createFromAsset(context.getAssets(),
-                    "fonts/curved-seven-segment.ttf");
-            if (tvHours != null)
-                tvHours.setTypeface(clockTypeface);
-            if (tvMinutes != null)
-                tvMinutes.setTypeface(clockTypeface);
-        } catch (Exception e) {
-            // Fallback to default
-        }
 
         rootView = view;
         updateUI();

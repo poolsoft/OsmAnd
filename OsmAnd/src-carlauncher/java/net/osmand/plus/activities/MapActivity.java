@@ -837,6 +837,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				return;
 			}
 		}
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            getSupportFragmentManager().popBackStack();
+            return;
+        }
+
 		// If at standard Map state (no drawers/menus), do nothing (block exit)
 		// super.onBackPressed();
 	}
