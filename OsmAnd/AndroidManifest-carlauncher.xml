@@ -75,6 +75,12 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
+        <activity android:name="net.osmand.plus.carlauncher.antenna.AntennaAlignmentActivity"
+                  android:label="Antenna Alignment"
+                  android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+                  android:screenOrientation="portrait"
+                  android:exported="false" />
         
 
 
