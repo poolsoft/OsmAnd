@@ -796,15 +796,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
             return;
         }
 
-        if (appDrawerContainer != null && appDrawerContainer.getVisibility() == View.VISIBLE) {
-            // Check if there are fragments in the back stack (e.g. Settings, Music Player nested screens)
-            if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
-                getSupportFragmentManager().popBackStack();
-            } else {
-                closeAppDrawer();
-            }
-            return;
-        }
+
 		if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
 			closeDrawer();
 			return;
@@ -839,6 +831,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
         if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
             getSupportFragmentManager().popBackStack();
+            return;
+        }
+
+        if (appDrawerContainer != null && appDrawerContainer.getVisibility() == View.VISIBLE) {
+            closeAppDrawer();
             return;
         }
 
