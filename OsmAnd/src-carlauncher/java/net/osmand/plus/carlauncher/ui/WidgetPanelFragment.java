@@ -252,7 +252,7 @@ public class WidgetPanelFragment extends Fragment {
         widgetManager.addWidget(new DirectionWidget(getContext(), app));
 
         // Anten Widget (Check if Plugin is enabled)
-        net.osmand.plus.carlauncher.antenna.AntennaPlugin antennaPlugin = OsmandPlugin
+        net.osmand.plus.carlauncher.antenna.AntennaPlugin antennaPlugin = net.osmand.plus.plugins.PluginsHelper
                 .getPlugin(net.osmand.plus.carlauncher.antenna.AntennaPlugin.class);
         if (antennaPlugin != null && antennaPlugin.isActive()) {
             widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.AntennaWidget(getContext(), app));

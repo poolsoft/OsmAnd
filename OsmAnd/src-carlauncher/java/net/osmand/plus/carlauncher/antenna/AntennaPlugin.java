@@ -65,8 +65,5 @@ public class AntennaPlugin extends OsmandPlugin {
         return net.osmand.plus.R.drawable.ic_extension_dark; // Default or custom
     }
 
-    @Override
-    public Class<? extends MapActivity> getMapActivityClass() {
-        return MapActivity.class;
-    }
+
 }
