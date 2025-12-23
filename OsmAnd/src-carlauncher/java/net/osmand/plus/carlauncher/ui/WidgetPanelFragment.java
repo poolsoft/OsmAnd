@@ -21,6 +21,7 @@ import net.osmand.plus.carlauncher.widgets.SpeedWidget;
 import net.osmand.plus.carlauncher.widgets.WidgetManager;
 import net.osmand.plus.carlauncher.widgets.NavigationWidget;
 import net.osmand.plus.carlauncher.widgets.MusicWidget;
+import net.osmand.plus.plugins.OsmandPlugin;
 
 /**
  * Widget paneli fragment.
@@ -250,8 +251,12 @@ public class WidgetPanelFragment extends Fragment {
         // Yon widget
         widgetManager.addWidget(new DirectionWidget(getContext(), app));
 
-        // Anten Widget
-        widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.AntennaWidget(getContext(), app));
+        // Anten Widget (Check if Plugin is enabled)
+        net.osmand.plus.carlauncher.antenna.AntennaPlugin antennaPlugin = OsmandPlugin
+                .getPlugin(net.osmand.plus.carlauncher.antenna.AntennaPlugin.class);
+        if (antennaPlugin != null && antennaPlugin.isActive()) {
+            widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.AntennaWidget(getContext(), app));
+        }
 
         // Navigasyon widget
         widgetManager.addWidget(new NavigationWidget(getContext(), app));
