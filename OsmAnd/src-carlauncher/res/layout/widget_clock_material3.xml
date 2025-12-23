@@ -1,67 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout 
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:padding="16dp"
-    android:background="@drawable/bg_widget_modern">
+    android:background="#121212" 
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:gravity="center">
 
-    <!-- Üst Sol Rakam (0) -->
-    <TextView
-        android:id="@+id/hour_first"
+    <!-- Üst Sıra: Saat (23) -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="0"
-        android:textColor="#F0F5FF"
-        android:textSize="120sp"
-        android:textStyle="bold"
-        android:includeFontPadding="false"
-        android:lineSpacingExtra="0dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:orientation="horizontal">
 
-    <!-- Üst Sağ Rakam (7) -->
-    <TextView
-        android:id="@+id/hour_second"
+        <TextView
+            android:id="@+id/hour_digit_1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2"
+            android:textColor="#FFFFFF"
+            android:textSize="90sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-black"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:id="@+id/hour_digit_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3"
+            android:textColor="#A8C7FA"
+            android:textSize="90sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-black"
+            android:includeFontPadding="false"
+            android:layout_marginStart="-5dp" />
+    </LinearLayout>
+
+    <!-- Alt Sıra: Dakika (41) -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="7"
-        android:textColor="#B3D7FF"
-        android:textSize="120sp"
-        android:textStyle="bold"
-        android:includeFontPadding="false"
-        android:layout_marginStart="-20dp"
-        app:layout_constraintTop_toTopOf="@+id/hour_first"
-        app:layout_constraintStart_toEndOf="@+id/hour_first" />
+        android:orientation="horizontal"
+        android:layout_marginTop="-15dp"> <!-- Satır arası boşluğu azaltmak için -->
 
-    <!-- Alt Sol Rakam (4) -->
-    <TextView
-        android:id="@+id/min_first"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="4"
-        android:textColor="#B3D7FF"
-        android:textSize="120sp"
-        android:textStyle="bold"
-        android:includeFontPadding="false"
-        android:layout_marginTop="-40dp"
-        app:layout_constraintTop_toBottomOf="@+id/hour_first"
-        app:layout_constraintStart_toStartOf="@+id/hour_first"
-        app:layout_constraintEnd_toEndOf="@+id/hour_first" />
+        <TextView
+            android:id="@+id/min_digit_1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="4"
+            android:textColor="#A8C7FA"
+            android:textSize="90sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-black"
+            android:includeFontPadding="false" />
 
-    <!-- Alt Sağ Rakam (9) -->
-    <TextView
-        android:id="@+id/min_second"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="9"
-        android:textColor="#F0F5FF"
-        android:textSize="120sp"
-        android:textStyle="bold"
-        android:includeFontPadding="false"
-        android:layout_marginStart="-20dp"
-        app:layout_constraintTop_toTopOf="@+id/min_first"
-        app:layout_constraintStart_toEndOf="@+id/min_first" />
+        <TextView
+            android:id="@+id/min_digit_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1"
+            android:textColor="#FFFFFF"
+            android:textSize="90sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-black"
+            android:includeFontPadding="false"
+            android:layout_marginStart="-5dp" />
+    </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>
