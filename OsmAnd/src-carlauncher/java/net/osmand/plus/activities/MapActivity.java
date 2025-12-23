@@ -252,7 +252,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		setRequestedOrientation(AndroidUiHelper.getScreenOrientation(this));
 		super.onCreate(savedInstanceState);
 
-		// Car Launcher Specific Header
+
 		// Car Launcher Specific Header
 		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(
 				this);
@@ -288,7 +288,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		setupCarLauncherUI();
 
 		// DEBUG: Verify CarLauncher Activity
-		android.widget.Toast.makeText(this, "CarLauncher MapActivity Active!", android.widget.Toast.LENGTH_LONG).show();
+		//android.widget.Toast.makeText(this, "CarLauncher MapActivity Active!", android.widget.Toast.LENGTH_LONG).show();
 
 		enterToFullScreen();
 		// Navigation Drawer
