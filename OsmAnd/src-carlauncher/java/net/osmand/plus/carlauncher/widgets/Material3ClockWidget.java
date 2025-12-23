@@ -23,10 +23,12 @@ public class Material3ClockWidget extends BaseWidget {
 
     private TextView tvHours;
     private TextView tvMinutes;
+    private TextView tvDate;
     private android.graphics.Typeface clockTypeface;
 
     private final SimpleDateFormat hourFormat;
     private final SimpleDateFormat minuteFormat;
+    private final SimpleDateFormat dateFormat;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private Runnable updateRunnable;
 
@@ -34,6 +36,7 @@ public class Material3ClockWidget extends BaseWidget {
         super(context, "clock_material3", "Saat (M3)");
         this.hourFormat = new SimpleDateFormat("HH", Locale.getDefault());
         this.minuteFormat = new SimpleDateFormat("mm", Locale.getDefault());
+        this.dateFormat = new SimpleDateFormat("EEE, d MMM", Locale.getDefault());
         this.order = 0; // Top position
     }
 
@@ -43,6 +46,7 @@ public class Material3ClockWidget extends BaseWidget {
 
         tvHours = view.findViewById(net.osmand.plus.R.id.clock_hours);
         tvMinutes = view.findViewById(net.osmand.plus.R.id.clock_minutes);
+        tvDate = view.findViewById(net.osmand.plus.R.id.clock_date);
 
         try {
             clockTypeface = android.graphics.Typeface.createFromAsset(context.getAssets(),
@@ -84,6 +88,10 @@ public class Material3ClockWidget extends BaseWidget {
         Date now = new Date();
         tvHours.setText(hourFormat.format(now));
         tvMinutes.setText(minuteFormat.format(now));
+
+        if (tvDate != null) {
+            tvDate.setText(dateFormat.format(now));
+        }
     }
 
     private void startTimer() {

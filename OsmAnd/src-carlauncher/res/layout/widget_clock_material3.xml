@@ -3,29 +3,46 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_widget_modern"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:gravity="center"
     android:padding="8dp">
 
-    <TextView
-        android:id="@+id/clock_hours"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="23"
-        android:textColor="#FFFFFF"
-        android:textSize="90sp"
-        android:includeFontPadding="false"
-        android:gravity="center" />
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/clock_hours"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="12"
+            android:textColor="#FFFFFF"
+            android:textSize="90sp"
+            android:includeFontPadding="false"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/clock_minutes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00"
+            android:textColor="#A8C7FA"
+            android:textSize="90sp"
+            android:includeFontPadding="false"
+            android:gravity="center"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/clock_minutes"
+        android:id="@+id/clock_date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="59"
-        android:textColor="#A8C7FA"
-        android:textSize="90sp"
-        android:includeFontPadding="false"
+        android:text="Pts, 1 Oca"
+        android:textColor="#C0C0C0"
+        android:textSize="18sp"
         android:gravity="center"
-        android:layout_marginStart="-5dp" />
+        android:layout_marginTop="-8dp" />
 
 </LinearLayout>
