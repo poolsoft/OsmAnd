@@ -109,9 +109,13 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     }
 
     private void openMusicDrawer() {
-        Intent intent = new Intent("net.osmand.carlauncher.OPEN_MUSIC_DRAWER");
-        intent.setPackage(context.getPackageName());
-        context.sendBroadcast(intent);
+        if (context instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
+            ((net.osmand.plus.carlauncher.CarLauncherInterface) context).openMusicPlayer();
+        } else {
+            Intent intent = new Intent("net.osmand.carlauncher.OPEN_MUSIC_DRAWER");
+            intent.setPackage(context.getPackageName());
+            context.sendBroadcast(intent);
+        }
     }
 
     private void updateAppIcon(String packageName) {

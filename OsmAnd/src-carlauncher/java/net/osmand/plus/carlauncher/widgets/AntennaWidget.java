@@ -69,9 +69,29 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
         View btnAlign = view.findViewById(net.osmand.plus.R.id.btn_align);
         btnAlign.setOnClickListener(v -> {
             if (manager.getPointA() != null && manager.getPointB() != null) {
-                Intent intent = new Intent(context, net.osmand.plus.carlauncher.antenna.AntennaAlignmentActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(intent);
+                try {
+                    Intent intent = new Intent(context,
+                            net.osmand.plus.carlauncher.antenna.AntennaAlignmentActivity.class);
+                    // Explicitly set component to match where it is declared (net.osmand.plus) if
+                    // needed,
+                    // though class reference should work if package is correct.
+                    // If application ID differs from package name in manifest, implicit resolution
+                    // might fail for explicit class?
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
+                } catch (Exception e) {
+                    try {
+                        // Fallback: Try explicit ComponentName with fixed package "net.osmand.plus"
+                        Intent intent = new Intent();
+                        intent.setComponent(new android.content.ComponentName("net.osmand.plus",
+                                "net.osmand.plus.carlauncher.antenna.AntennaAlignmentActivity"));
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(intent);
+                    } catch (Exception e2) {
+                        Toast.makeText(context, "Hata: Anten aracı başlatılamadı.", Toast.LENGTH_SHORT).show();
+                        e2.printStackTrace();
+                    }
+                }
             } else {
                 Toast.makeText(context, "Lütfen önce A ve B noktalarını seçin.", Toast.LENGTH_SHORT).show();
             }
