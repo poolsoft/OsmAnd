@@ -13,9 +13,6 @@ import androidx.annotation.NonNull;
 
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.carlauncher.antenna.AntennaManager;
-import net.osmand.plus.carlauncher.antenna.AntennaMapLayer;
-import net.osmand.plus.views.OsmandMapTileView;
-import net.osmand.plus.views.OsmandMap;
 
 import java.util.Locale;
 
@@ -106,60 +103,15 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
     public void onStart() {
         super.onStart();
         manager.setListener(this);
-        initMapLayer();
         updateUI();
-        // Add layer only if expanded
-        if (isExpanded) {
-            addMapLayer();
-        }
+        manager.setLayerVisible(isExpanded);
     }
 
     @Override
     public void onStop() {
         super.onStop();
         manager.setListener(null);
-        removeMapLayer();
-    }
-
-    private void initMapLayer() {
-        OsmandMapTileView mapView = getMapView();
-        if (mapView != null && mapLayer == null) {
-            mapLayer = new AntennaMapLayer(mapView);
-        }
-    }
-
-    private void addMapLayer() {
-        OsmandMapTileView mapView = getMapView();
-        if (mapLayer != null && mapView != null) {
-            if (!mapView.getLayers().contains(mapLayer)) {
-                mapView.addLayer(mapLayer, 5.5f);
-            }
-        }
-    }
-
-    private void removeMapLayer() {
-        OsmandMapTileView mapView = getMapView();
-        if (mapLayer != null && mapView != null) {
-            mapView.removeLayer(mapLayer);
-        }
-    }
-
-    private net.osmand.plus.views.OsmandMapTileView getMapView() {
-        // Method 1: Try casting context to CarLauncherInterface (safe wrapper around
-        // MapActivity)
-        if (context instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
-            return ((net.osmand.plus.carlauncher.CarLauncherInterface) context).getMapView();
-        }
-
-        // Method 2: Try accessing via OsmandApplication
-        if (context.getApplicationContext() instanceof OsmandApplication) {
-            OsmandApplication app = (OsmandApplication) context.getApplicationContext();
-            net.osmand.plus.views.OsmandMap osmandMap = app.getOsmandMap();
-            if (osmandMap != null) {
-                return osmandMap.getMapView();
-            }
-        }
-        return null;
+        manager.setLayerVisible(false);
     }
 
     private void updateExpandState() {
@@ -167,11 +119,7 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
             contentLayout.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
             iconExpand.animate().rotation(isExpanded ? 180 : 0).setDuration(200).start();
         }
-        if (isExpanded) {
-            addMapLayer();
-        } else {
-            removeMapLayer();
-        }
+        manager.setLayerVisible(isExpanded);
     }
 
     @Override
@@ -226,11 +174,8 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
     }
 
     private void startPickPoint(String type) {
-        if (mapLayer != null) {
-            mapLayer.setPickingMode(type);
-        } else {
-            Toast.makeText(context, "Harita katmanı henüz hazır değil.", Toast.LENGTH_SHORT).show();
-        }
+        manager.setPickingMode(type);
+        Toast.makeText(context, "Haritada anten " + type + " noktasına dokunun.", Toast.LENGTH_SHORT).show();
     }
 
     private int dpToPx(int dp) {

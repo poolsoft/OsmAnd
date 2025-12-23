@@ -21,6 +21,9 @@ public class AntennaManager {
     private static final String KEY_POINT_A = "point_a";
     private static final String KEY_POINT_B = "point_b";
 
+    private boolean layerVisible = false;
+    private String pickingMode = null; // "A" or "B" or null
+
     private final Context context;
     private final SharedPreferences prefs;
 
@@ -76,6 +79,24 @@ public class AntennaManager {
     @Nullable
     public AntennaPoint getPointB() {
         return pointB;
+    }
+
+    public boolean isLayerVisible() {
+        return layerVisible;
+    }
+
+    public void setLayerVisible(boolean visible) {
+        this.layerVisible = visible;
+        notifyListener();
+    }
+
+    public String getPickingMode() {
+        return pickingMode;
+    }
+
+    public void setPickingMode(String mode) {
+        this.pickingMode = mode;
+        notifyListener();
     }
 
     // Calculations

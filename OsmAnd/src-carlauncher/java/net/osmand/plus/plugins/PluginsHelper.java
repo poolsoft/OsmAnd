@@ -57,6 +57,7 @@ import net.osmand.plus.plugins.skimaps.SkiMapsPlugin;
 import net.osmand.plus.plugins.astro.StarWatcherPlugin;
 import net.osmand.plus.plugins.srtm.SRTMPlugin;
 import net.osmand.plus.plugins.weather.WeatherPlugin;
+import net.osmand.plus.carlauncher.antenna.AntennaPlugin;
 //import net.osmand.plus.plugins.carlauncher.CarLauncherPlugin;
 
 import net.osmand.plus.poi.PoiUIFilter;
@@ -129,6 +130,7 @@ public class PluginsHelper {
         allPlugins.add(new OsmandDevelopmentPlugin(app));
         // allPlugins.add(new RightPanelPlugin(app));
         // allPlugins.add(new CarLauncherPlugin(app));
+        allPlugins.add(new AntennaPlugin(app));
 
         loadCustomPlugins(app);
         registerAppInitializingDependedProperties(app);

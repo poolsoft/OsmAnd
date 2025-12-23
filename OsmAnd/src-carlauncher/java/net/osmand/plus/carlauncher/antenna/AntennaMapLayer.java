@@ -57,6 +57,10 @@ public class AntennaMapLayer extends OsmandMapLayer implements AntennaManager.An
     @Override
     public void onDraw(Canvas canvas, RotatedTileBox tileBox,
             DrawSettings settings) {
+        if (!manager.isLayerVisible()) {
+            return;
+        }
+
         AntennaManager.AntennaPoint pA = manager.getPointA();
         AntennaManager.AntennaPoint pB = manager.getPointB();
 
@@ -111,18 +115,9 @@ public class AntennaMapLayer extends OsmandMapLayer implements AntennaManager.An
         // Ideally we remove listener.
     }
 
-    private String pickingMode = null; // "A" or "B" or null
-
-    public void setPickingMode(String mode) {
-        this.pickingMode = mode;
-        if (mode != null) {
-            android.widget.Toast.makeText(view.getContext(), "Haritada anten " + mode + " noktasına dokunun.",
-                    android.widget.Toast.LENGTH_SHORT).show();
-        }
-    }
-
     @Override
     public boolean onSingleTap(PointF point, RotatedTileBox tileBox) {
+        String pickingMode = manager.getPickingMode();
         if (pickingMode != null) {
             LatLon latLon = tileBox.getLatLonFromPixel(point.x, point.y);
             // Get altitude if available (e.g. from context or just 0 for now)
@@ -136,7 +131,7 @@ public class AntennaMapLayer extends OsmandMapLayer implements AntennaManager.An
 
             android.widget.Toast.makeText(view.getContext(), "Anten " + pickingMode + " ayarlandı.",
                     android.widget.Toast.LENGTH_SHORT).show();
-            pickingMode = null; // Reset mode
+            manager.setPickingMode(null); // Reset mode
             view.refreshMap();
             return true; // Consumed
         }
