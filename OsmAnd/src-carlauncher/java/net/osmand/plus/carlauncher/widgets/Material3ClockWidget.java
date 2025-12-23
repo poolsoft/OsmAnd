@@ -21,8 +21,9 @@ import java.util.Locale;
  */
 public class Material3ClockWidget extends BaseWidget {
 
-    private TextView tvHourFirst, tvHourSecond;
-    private TextView tvMinFirst, tvMinSecond;
+    private TextView tvHours;
+    private TextView tvMinutes;
+    private android.graphics.Typeface clockTypeface;
 
     private final SimpleDateFormat hourFormat;
     private final SimpleDateFormat minuteFormat;
@@ -40,10 +41,19 @@ public class Material3ClockWidget extends BaseWidget {
     public View createView() {
         View view = LayoutInflater.from(context).inflate(net.osmand.plus.R.layout.widget_clock_material3, null);
 
-        tvHourFirst = view.findViewById(net.osmand.plus.R.id.hour_first);
-        tvHourSecond = view.findViewById(net.osmand.plus.R.id.hour_second);
-        tvMinFirst = view.findViewById(net.osmand.plus.R.id.min_first);
-        tvMinSecond = view.findViewById(net.osmand.plus.R.id.min_second);
+        tvHours = view.findViewById(net.osmand.plus.R.id.clock_hours);
+        tvMinutes = view.findViewById(net.osmand.plus.R.id.clock_minutes);
+
+        try {
+            clockTypeface = android.graphics.Typeface.createFromAsset(context.getAssets(),
+                    "fonts/Cross Boxed.ttf");
+            if (tvHours != null)
+                tvHours.setTypeface(clockTypeface);
+            if (tvMinutes != null)
+                tvMinutes.setTypeface(clockTypeface);
+        } catch (Exception e) {
+            // Fallback to default
+        }
 
         rootView = view;
         updateUI();
@@ -68,21 +78,12 @@ public class Material3ClockWidget extends BaseWidget {
     }
 
     private void updateUI() {
-        if (tvHourFirst == null || tvHourSecond == null || tvMinFirst == null || tvMinSecond == null)
+        if (tvHours == null || tvMinutes == null)
             return;
 
         Date now = new Date();
-        String hours = hourFormat.format(now);
-        String minutes = minuteFormat.format(now);
-
-        if (hours.length() >= 2) {
-            tvHourFirst.setText(String.valueOf(hours.charAt(0)));
-            tvHourSecond.setText(String.valueOf(hours.charAt(1)));
-        }
-        if (minutes.length() >= 2) {
-            tvMinFirst.setText(String.valueOf(minutes.charAt(0)));
-            tvMinSecond.setText(String.valueOf(minutes.charAt(1)));
-        }
+        tvHours.setText(hourFormat.format(now));
+        tvMinutes.setText(minuteFormat.format(now));
     }
 
     private void startTimer() {

@@ -2,70 +2,35 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="#121212" 
-    android:orientation="vertical"
-    android:padding="12dp"
-    android:gravity="center">
+    android:background="@drawable/bg_widget_modern"
+    android:orientation="horizontal"
+    android:gravity="center"
+    android:padding="8dp">
 
-    <!-- Üst Sıra: Saat (23) -->
-    <LinearLayout
+    <TextView
+        android:id="@+id/clock_hours"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:text="23"
+        android:textColor="#FFFFFF"
+        android:textSize="80sp"
+        android:includeFontPadding="false"
+        android:gravity="center" />
 
-        <TextView
-            android:id="@+id/hour_digit_1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="2"
-            android:textColor="#FFFFFF"
-            android:textSize="90sp"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-black"
-            android:includeFontPadding="false" />
-
-        <TextView
-            android:id="@+id/hour_digit_2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="3"
-            android:textColor="#A8C7FA"
-            android:textSize="90sp"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-black"
-            android:includeFontPadding="false"
-            android:layout_marginStart="-5dp" />
-    </LinearLayout>
-
-    <!-- Alt Sıra: Dakika (41) -->
-    <LinearLayout
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="-15dp"> <!-- Satır arası boşluğu azaltmak için -->
+        android:text=" "
+        android:textSize="30sp" />
 
-        <TextView
-            android:id="@+id/min_digit_1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="4"
-            android:textColor="#A8C7FA"
-            android:textSize="90sp"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-black"
-            android:includeFontPadding="false" />
-
-        <TextView
-            android:id="@+id/min_digit_2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="1"
-            android:textColor="#FFFFFF"
-            android:textSize="90sp"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-black"
-            android:includeFontPadding="false"
-            android:layout_marginStart="-5dp" />
-    </LinearLayout>
+    <TextView
+        android:id="@+id/clock_minutes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="59"
+        android:textColor="#A8C7FA"
+        android:textSize="80sp"
+        android:includeFontPadding="false"
+        android:gravity="center" />
 
 </LinearLayout>
