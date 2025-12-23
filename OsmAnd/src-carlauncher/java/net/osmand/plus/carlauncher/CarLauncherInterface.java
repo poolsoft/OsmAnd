@@ -12,5 +12,7 @@ public interface CarLauncherInterface {
 
     void closeAppDrawer();
 
+    void openMusicPlayer();
+
     OsmandMapTileView getMapView();
 }
