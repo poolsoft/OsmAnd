@@ -793,7 +793,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	public void onBackPressed() {
 		if (appDrawerContainer != null && appDrawerContainer.getVisibility() == View.VISIBLE) {
-			closeAppDrawer();
+			// Check if there are fragments in the back stack (e.g. Settings, Music Player nested screens)
+			if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+				getSupportFragmentManager().popBackStack();
+			} else {
+				closeAppDrawer();
+			}
 			return;
 		}
 		if (dashboardOnMap.onBackPressed()) {
