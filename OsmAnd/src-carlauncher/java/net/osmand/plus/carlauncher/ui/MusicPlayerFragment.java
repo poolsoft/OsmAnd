@@ -160,6 +160,15 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             }
         }
 
+        // Set Icons
+        if (btnPlay != null) btnPlay.setImageResource(net.osmand.plus.R.drawable.ic_music_play);
+        if (btnNext != null) btnNext.setImageResource(net.osmand.plus.R.drawable.ic_music_next);
+        if (btnPrev != null) btnPrev.setImageResource(net.osmand.plus.R.drawable.ic_music_prev);
+        if (btnShuffle != null) btnShuffle.setImageResource(net.osmand.plus.R.drawable.ic_music_shuffle);
+        if (btnRepeat != null) btnRepeat.setImageResource(net.osmand.plus.R.drawable.ic_music_repeat);
+        if (btnClose != null) btnClose.setImageResource(net.osmand.plus.R.drawable.ic_music_close);
+        // if (btnPlaylist != null) btnPlaylist.setImageResource(net.osmand.plus.R.drawable.ic_music_playlist); 
+
         return root;
     }
 
@@ -772,13 +781,13 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             if (icon != null)
                 appIcon.setImageDrawable(icon);
             else
-                appIcon.setImageResource(android.R.drawable.ic_media_play);
+                appIcon.setImageResource(net.osmand.plus.R.drawable.ic_music_play);
 
             if (appName != null) {
                 appName.setText(label);
             }
         } catch (Exception e) {
-            appIcon.setImageResource(android.R.drawable.ic_media_play);
+            appIcon.setImageResource(net.osmand.plus.R.drawable.ic_music_play);
             if (appName != null)
                 appName.setText("Muzik");
         }
@@ -796,12 +805,15 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         switch (repeatMode) {
             case 0:
                 btnRepeat.setColorFilter(0xFF666666);
+                btnRepeat.setImageResource(net.osmand.plus.R.drawable.ic_music_repeat);
                 break;
             case 1:
                 btnRepeat.setColorFilter(0xFF00FFFF);
+                btnRepeat.setImageResource(net.osmand.plus.R.drawable.ic_music_repeat_one);
                 break; // Repeat One
             case 2:
                 btnRepeat.setColorFilter(0xFF00FF00);
+                btnRepeat.setImageResource(net.osmand.plus.R.drawable.ic_music_repeat);
                 break; // Repeat All
         }
     }
@@ -894,7 +906,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 if (albumArt != null)
                     nowPlayingArt.setImageBitmap(albumArt);
                 else
-                    nowPlayingArt.setImageResource(android.R.drawable.ic_media_play);
+                    nowPlayingArt.setImageResource(net.osmand.plus.R.drawable.ic_music_play);
             }
 
             // Update Adapter Highlight
@@ -916,7 +928,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         getActivity().runOnUiThread(() -> {
             if (btnPlay != null) {
                 btnPlay.setImageResource(
-                        isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+                        isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play);
             }
 
             // Update Adapter Icon
@@ -988,7 +1000,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             if (isCurrent) {
                 holder.icon.setVisibility(View.VISIBLE);
                 holder.icon.setImageResource(
-                        isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+                        isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play);
                 holder.itemView.setBackgroundColor(0x3300FFFF); // Highlight
             } else {
                 holder.icon.setVisibility(View.INVISIBLE);
