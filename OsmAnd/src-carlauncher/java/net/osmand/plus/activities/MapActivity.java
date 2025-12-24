@@ -220,7 +220,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 	};
 
-    	private final StateChangedListener<Integer> mapScreenOrientationSettingListener = new StateChangedListener<Integer>() {
+    private final StateChangedListener<Integer> mapScreenOrientationSettingListener = new StateChangedListener<Integer>() {
 		@Override
 		public void stateChanged(Integer change) {
 			app.runInUIThread(() -> applyScreenOrientation());
