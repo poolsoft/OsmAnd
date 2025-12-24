@@ -76,7 +76,7 @@ public class AppDockFragmentV2 extends Fragment
     private ImageView miniMusicIcon;
 
     private MusicManager musicManager;
-    private ImageButton btnSettings;
+
 
     public interface OnAppDockListener {
         void onLayoutToggle();
@@ -213,14 +213,7 @@ public class AppDockFragmentV2 extends Fragment
         });
 
         // Settings Button -> Layout Toggle
-        btnSettings = root.findViewById(net.osmand.plus.R.id.btn_settings);
-        if (btnSettings != null) {
-            btnSettings.setImageResource(net.osmand.plus.R.drawable.ic_action_view_as_list); // Or dashboard icon
-            btnSettings.setOnClickListener(v -> {
-                if (listener != null)
-                    listener.onLayoutToggle();
-            });
-        }
+
 
         // Clock container also opens settings
         View clockContainer = root.findViewById(net.osmand.plus.R.id.clock_settings_container);

@@ -173,7 +173,7 @@ public class AppDockFragment extends Fragment
             clockView.setOnClickListener(v -> openSettings());
             // Typeface digitalFont = Typeface.createFromAsset(context.getAssets(),
             // "fonts/curved-seven-segment.ttf");
-            Typeface digitalFont = Typeface.createFromAsset(context.getAssets(), "fonts/Cross Boxed.ttf");
+            Typeface digitalFont = Typeface.createFromAsset(requireContext().getAssets(), "fonts/Cross Boxed.ttf");
             clockView.setTypeface(digitalFont);
         }
 
