@@ -483,6 +483,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.VISIBLE);
 				break;
 		}
+
+        // Update App Dock Icon
+        androidx.fragment.app.Fragment fragment = getSupportFragmentManager().findFragmentByTag("app_dock");
+        if (fragment instanceof net.osmand.plus.carlauncher.ui.AppDockFragment) {
+            ((net.osmand.plus.carlauncher.ui.AppDockFragment) fragment).updateLayoutIcon(layoutMode);
+        }
 	}
 
 	@Override
@@ -865,6 +871,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
             getSupportFragmentManager().popBackStack();
             return;
         }
+
 
         if (appDrawerContainer != null && appDrawerContainer.getVisibility() == View.VISIBLE) {
             closeAppDrawer();

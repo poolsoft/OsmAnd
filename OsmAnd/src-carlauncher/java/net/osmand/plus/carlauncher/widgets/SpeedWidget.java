@@ -102,24 +102,15 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
 
         speedContainer.addView(speedText);
 
-        // Birim (km/h)
-        unitText = new TextView(context);
-        unitText.setTextColor(Color.LTGRAY);
-        unitText.setTextSize(14);
-        unitText.setGravity(Gravity.CENTER);
-        unitText.setText("km/h");
-        unitText.setTranslationY(-dpToPx(4)); // Sayiya yaklastir
-
-        // speedContainer.addView(unitText);
-
-        contentLayout.addView(speedContainer); // Add speed container to content layout
-
         // Alignments - Make it compact
         limitContainer.setPadding(0, 0, dpToPx(8), 0);
-        speedText.setTextSize(68);
-        unitText.setTextSize(12);
-        unitText.setTranslationY(-dpToPx(6));
+        speedText.setTextSize(64); // Reduced from 68
+        
+        // Removed Unit Text as per user request
 
+        // Reduce vertical space by centering tightly
+        contentLayout.setGravity(Gravity.CENTER);
+        
         rootFrame.addView(contentLayout);
         rootView = rootFrame;
         return rootView;
@@ -158,8 +149,6 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
 
             speedText.post(() -> {
                 speedText.setText(finalSpeed);
-                if (unitText != null)
-                    unitText.setText(finalUnit);
             });
         }
 

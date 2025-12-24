@@ -5,23 +5,25 @@
     android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000">
+    android:background="#000000"
+    android:fitsSystemWindows="true">
 
-    <!-- MAP CONTAINER (Weight 3 - %60 Height) -->
+    <!-- MAP CONTAINER (Weight 3 - %75 height) -->
     <FrameLayout
         android:id="@+id/map_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="8dp"
-        android:background="@drawable/bg_card_rounded_black"
-        android:elevation="4dp"
+        android:layout_marginTop="32dp"
+        android:background="@drawable/bg_card_rounded_black" 
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/widget_panel"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_weight="3" />
+        app:layout_constraintVertical_weight="3"
+        android:elevation="4dp"/>
 
-    <!-- WIDGET PANEL (Weight 2 - %40 Height) -->
+    <!-- WIDGET PANEL (Weight 1 - %25 height) - Reduced Size -->
     <FrameLayout
         android:id="@+id/widget_panel"
         android:layout_width="0dp"
@@ -32,18 +34,19 @@
         app:layout_constraintBottom_toTopOf="@+id/app_dock"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_weight="2" />
+        app:layout_constraintVertical_weight="1" />
 
-    <!-- APP DOCK (Bottom Nav Bar Style) -->
+    <!-- APP DOCK -->
     <FrameLayout
         android:id="@+id/app_dock"
         android:layout_width="0dp"
-        android:layout_height="72dp"
+        android:layout_height="54dp"
         android:background="#111111"
         android:elevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
+    </FrameLayout>
 
     <!-- APP DRAWER OVERLAY -->
     <FrameLayout
@@ -52,12 +55,30 @@
         android:layout_height="0dp"
         android:background="#DD000000"
         android:visibility="gone"
+        android:paddingTop="32dp"
         android:elevation="20dp"
         android:clickable="true"
         android:focusable="true"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- FULL SCREEN EXIT BUTTON -->
+    <ImageButton
+        android:id="@+id/btn_fullscreen_exit"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_action_view_as_list"
+        android:background="@drawable/bg_circle_translucent_black"
+        android:padding="12dp"
+        android:scaleType="fitCenter"
+        android:visibility="gone"
+        android:elevation="25dp"
+        android:contentDescription="Exit Full Screen"
+        app:tint="#FFFFFF"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

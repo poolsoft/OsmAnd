@@ -59,3 +59,4 @@ OsmAnd-shared/src/jvmMain/resources/
 # Logs
 .log/
 **/.log/
+replay_pid38744.log

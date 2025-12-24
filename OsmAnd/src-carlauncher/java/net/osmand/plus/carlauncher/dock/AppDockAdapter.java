@@ -81,6 +81,20 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         AppShortcut shortcut = shortcuts.get(position);
         holder.bind(shortcut);
+        setAnimation(holder.itemView, position);
+    }
+
+    private void setAnimation(View viewToAnimate, int position) {
+        // Simple Fade & Slide-In Animation
+        viewToAnimate.setAlpha(0f);
+        viewToAnimate.setTranslationY(dpToPx(20)); // Start slightly below
+        viewToAnimate.animate()
+                .alpha(1f)
+                .translationY(0)
+                .setDuration(400)
+                .setStartDelay(position * 50L) // Stagger effect
+                .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                .start();
     }
 
     @Override
@@ -122,9 +136,22 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
             container.addView(iconView);
 
             // Name
-            nameView = new TextView(context);
             nameView.setVisibility(View.GONE); // Hide text
             container.addView(nameView);
+
+            // Touch Feedback (Scale Effect)
+            itemView.setOnTouchListener((v, event) -> {
+                switch (event.getAction()) {
+                    case android.view.MotionEvent.ACTION_DOWN:
+                        v.animate().scaleX(0.9f).scaleY(0.9f).setDuration(100).start();
+                        break;
+                    case android.view.MotionEvent.ACTION_UP:
+                    case android.view.MotionEvent.ACTION_CANCEL:
+                        v.animate().scaleX(1f).scaleY(1f).setDuration(100).start();
+                        break;
+                }
+                return false; // Don't consume, let click listener handle it
+            });
         }
 
         public void bind(AppShortcut shortcut) {

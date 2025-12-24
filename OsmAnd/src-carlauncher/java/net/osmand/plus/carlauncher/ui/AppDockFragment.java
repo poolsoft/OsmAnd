@@ -322,8 +322,38 @@ public class AppDockFragment extends Fragment
         if (miniMusicTitle != null) {
             miniMusicTitle.post(() -> miniMusicTitle.setText(title != null ? title : "Muzik"));
         }
-        // Ikon degistirme logic'i (Opsiyonel: Kaynak ikonunu veya album art'i kucultup
-        // goster)
+        
+        // Dynamic Color Logic
+        int color = android.graphics.Color.WHITE;
+        if (albumArt != null) {
+            color = getDominantColor(albumArt);
+        }
+
+        final int finalColor = color;
+        if (miniMusicIcon != null) miniMusicIcon.post(() -> miniMusicIcon.setColorFilter(finalColor));
+        if (miniBtnPlay != null) miniBtnPlay.post(() -> miniBtnPlay.setColorFilter(finalColor));
+        if (miniBtnNext != null) miniBtnNext.post(() -> miniBtnNext.setColorFilter(finalColor));
+    }
+
+    private int getDominantColor(Bitmap bitmap) {
+        if (bitmap == null) return android.graphics.Color.WHITE;
+        try {
+            // Sample 1x1 pixel for average
+            Bitmap small = Bitmap.createScaledBitmap(bitmap, 1, 1, true);
+            int color = small.getPixel(0, 0);
+            small.recycle();
+
+            // Check Luminance (if too dark, return White)
+            int r = android.graphics.Color.red(color);
+            int g = android.graphics.Color.green(color);
+            int b = android.graphics.Color.blue(color);
+            double lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+            if (lum < 0.5) return android.graphics.Color.WHITE; // Ensure visibility on dark background
+            return color;
+        } catch (Exception e) {
+            return android.graphics.Color.WHITE;
+        }
     }
 
     @Override
@@ -476,5 +506,27 @@ public class AppDockFragment extends Fragment
                 // Ignore if already unregistered
             }
         }
+    }
+
+    public void updateLayoutIcon(int mode) {
+        if (layoutButton == null) return;
+        
+        layoutButton.post(() -> {
+            switch (mode) {
+                case 0: // Normal (Widgets Visible) -> Show 'List/Dashboard' icon implies 'View as Dashboard' (Current) or 'Switch view'
+                    // If we want to imply "Click to hide widgets", maybe an icon showing just a square?
+                    // Let's use the list icon for now.
+                    layoutButton.setImageResource(net.osmand.plus.R.drawable.ic_action_view_as_list);
+                    break;
+                case 1: // No Widgets (Map Only) -> Show Map specific icon or Fullscreen hint
+                    // android.R.drawable.ic_menu_mapmode is usually available
+                    layoutButton.setImageResource(android.R.drawable.ic_menu_mapmode); 
+                    break;
+                case 2: // Full Screen
+                    // Button is hidden in parent, but if visible, maybe Exit icon
+                    layoutButton.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+                    break;
+            }
+        });
     }
 }
