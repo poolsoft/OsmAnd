@@ -68,4 +68,21 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- FULL SCREEN EXIT BUTTON -->
+    <ImageButton
+        android:id="@+id/btn_fullscreen_exit"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_action_view_as_list"
+        android:background="@drawable/bg_circle_translucent_black"
+        android:padding="12dp"
+        android:scaleType="fitCenter"
+        android:visibility="gone"
+        android:elevation="25dp"
+        android:contentDescription="Exit Full Screen"
+        app:tint="#FFFFFF"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

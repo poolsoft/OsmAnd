@@ -80,7 +80,6 @@ public class AppDockFragment extends Fragment
     private ImageView miniMusicIcon;
 
     private MusicManager musicManager;
-    private ImageButton btnSettings;
 
     public interface OnAppDockListener {
         void onLayoutToggle();
@@ -160,7 +159,6 @@ public class AppDockFragment extends Fragment
         // Find Views
         appListButton = root.findViewById(net.osmand.plus.R.id.btn_app_list);
         layoutButton = root.findViewById(net.osmand.plus.R.id.btn_layout_toggle);
-        btnSettings = root.findViewById(net.osmand.plus.R.id.btn_settings);
         recyclerView = root.findViewById(net.osmand.plus.R.id.dock_recycler);
 
         // Setup New Views
@@ -173,6 +171,10 @@ public class AppDockFragment extends Fragment
 
         if (clockView != null) {
             clockView.setOnClickListener(v -> openSettings());
+            // Typeface digitalFont = Typeface.createFromAsset(context.getAssets(),
+            // "fonts/curved-seven-segment.ttf");
+            Typeface digitalFont = Typeface.createFromAsset(context.getAssets(), "fonts/Cross Boxed.ttf");
+            clockView.setTypeface(digitalFont);
         }
 
         // Hide Mini Player in Portrait Mode
@@ -210,11 +212,6 @@ public class AppDockFragment extends Fragment
             if (listener != null)
                 listener.onAppDrawerOpen();
         });
-
-        // Left Button: Settings
-        if (btnSettings != null) {
-            btnSettings.setOnClickListener(v -> openSettings());
-        }
 
         // Right Button: Layout Toggle
         if (layoutButton != null) {

@@ -207,7 +207,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	private android.widget.FrameLayout widgetPanel;
 	private android.widget.FrameLayout appDock;
 	private android.widget.FrameLayout appDrawerContainer;
+	private android.widget.ImageButton btnFullscreenExit;
 	private View mainLayoutRoot; // main.xml root reference
+
+	// Layout Mode: 0 = Normal, 1 = No Widgets, 2 = Full Screen
+	private int layoutMode = 0;
 
 	private android.content.BroadcastReceiver musicDrawerReceiver = new android.content.BroadcastReceiver() {
 		@Override
@@ -216,7 +220,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 	};
 
-	private final StateChangedListener<Integer> mapScreenOrientationSettingListener = new StateChangedListener<Integer>() {
+    	private final StateChangedListener<Integer> mapScreenOrientationSettingListener = new StateChangedListener<Integer>() {
 		@Override
 		public void stateChanged(Integer change) {
 			app.runInUIThread(() -> applyScreenOrientation());
@@ -388,7 +392,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	@Nullable
 	public <T extends View> T findViewById(int id) {
-		// İlk önce CarLauncher layout'unda ara
+		// İlk önce CarLauncher layout'unu set et
 		T view = super.findViewById(id);
 		if (view != null) {
 			return view;
@@ -412,6 +416,15 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		widgetPanel = findViewById(R.id.widget_panel);
 		appDock = findViewById(R.id.app_dock);
 		appDrawerContainer = findViewById(R.id.app_drawer_container);
+		btnFullscreenExit = findViewById(R.id.btn_fullscreen_exit);
+
+		if (btnFullscreenExit != null) {
+			btnFullscreenExit.setOnClickListener(v -> {
+				// Exit Full Screen -> Reset to Normal (Mode 0) or Toggle
+				layoutMode = 2; // Force current state to 2 so toggle goes to 0
+				onLayoutToggle();
+			});
+		}
 
 		// 3. Orijinal main.xml layout'unu inflate et ve referansını sakla
 		mainLayoutRoot = getLayoutInflater().inflate(R.layout.main, mapContainer, false);
@@ -447,9 +460,28 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	@Override
 	public void onLayoutToggle() {
-		if (widgetPanel != null) {
-			boolean isVisible = widgetPanel.getVisibility() == View.VISIBLE;
-			widgetPanel.setVisibility(isVisible ? View.GONE : View.VISIBLE);
+		// Cycle: 0 (Normal) -> 1 (Widget Hidden) -> 2 (Full Screen) -> 0
+		layoutMode = (layoutMode + 1) % 3;
+		updateLayoutMode();
+	}
+
+	private void updateLayoutMode() {
+		switch (layoutMode) {
+			case 0: // Normal
+				if (widgetPanel != null) widgetPanel.setVisibility(View.VISIBLE);
+				if (appDock != null) appDock.setVisibility(View.VISIBLE);
+				if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.GONE);
+				break;
+			case 1: // No Widgets
+				if (widgetPanel != null) widgetPanel.setVisibility(View.GONE);
+				if (appDock != null) appDock.setVisibility(View.VISIBLE);
+				if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.GONE);
+				break;
+			case 2: // Full Screen
+				if (widgetPanel != null) widgetPanel.setVisibility(View.GONE);
+				if (appDock != null) appDock.setVisibility(View.GONE);
+				if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.VISIBLE);
+				break;
 		}
 	}
 
