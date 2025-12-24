@@ -171,6 +171,10 @@ public class AppDockFragment extends Fragment
         miniBtnNext = root.findViewById(net.osmand.plus.R.id.mini_btn_next);
         miniMusicIcon = root.findViewById(net.osmand.plus.R.id.mini_music_icon);
 
+        if (clockView != null) {
+            clockView.setOnClickListener(v -> openSettings());
+        }
+
         // Hide Mini Player in Portrait Mode
         if (getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT) {
             if (miniMusicContainer != null)

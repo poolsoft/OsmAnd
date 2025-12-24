@@ -85,14 +85,16 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
 
         // Hız Değeri
         speedText = new TextView(context);
-        speedText.setTextColor(Color.parseColor("#FFFFFF")); // Beyaz (Daha net)
+        speedText.setTextColor(Color.parseColor("#6582c1ff")); // Beyaz (Daha net)
         speedText.setTextSize(64); // Larger for 7-segment
         speedText.setGravity(Gravity.CENTER);
         speedText.setText("--");
         speedText.setIncludeFontPadding(false);
 
         try {
-            Typeface digitalFont = Typeface.createFromAsset(context.getAssets(), "fonts/curved-seven-segment.ttf");
+            // Typeface digitalFont = Typeface.createFromAsset(context.getAssets(),
+            // "fonts/curved-seven-segment.ttf");
+            Typeface digitalFont = Typeface.createFromAsset(context.getAssets(), "fonts/Cross Boxed.ttf");
             speedText.setTypeface(digitalFont);
         } catch (Exception e) {
             speedText.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
@@ -108,7 +110,7 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         unitText.setText("km/h");
         unitText.setTranslationY(-dpToPx(4)); // Sayiya yaklastir
 
-        speedContainer.addView(unitText);
+        // speedContainer.addView(unitText);
 
         contentLayout.addView(speedContainer); // Add speed container to content layout
 
