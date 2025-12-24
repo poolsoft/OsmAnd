@@ -136,6 +136,7 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
             container.addView(iconView);
 
             // Name
+            nameView = new TextView(context);
             nameView.setVisibility(View.GONE); // Hide text
             container.addView(nameView);
 
