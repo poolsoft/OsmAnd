@@ -483,6 +483,15 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 showAddTrackToPlaylistDialog(track);
             }
         }, playlistManager);
+        
+        // Sync Adapter State immediately
+        if (!isExternalMode && musicManager != null && musicManager.getInternalPlayer() != null) {
+            MusicRepository.AudioTrack current = musicManager.getInternalPlayer().getCurrentTrack();
+            String path = current != null ? current.getPath() : null;
+            boolean isPlaying = musicManager.getInternalPlayer().isPlaying();
+            adapter.updateCurrentTrack(path, isPlaying);
+        }
+
         if (recyclerView != null) {
             recyclerView.setAdapter(adapter);
         }

@@ -107,6 +107,7 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         speedText.setTextSize(64); // Reduced from 68
         
         // Removed Unit Text as per user request
+        contentLayout.addView(speedContainer); // Add speed container back!
 
         // Reduce vertical space by centering tightly
         contentLayout.setGravity(Gravity.CENTER);
