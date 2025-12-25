@@ -57,7 +57,7 @@
         android:id="@+id/app_drawer_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#DD000000"
+        android:background="@android:color/transparent"
         android:visibility="gone"
         android:paddingTop="32dp"
         android:elevation="20dp"
