@@ -104,7 +104,7 @@ android {
 		carlauncher {
 			java.srcDirs = [
 				"src-carlauncher/java",
-				"src-google",
+				//"src-google",
 				"src-osmand"
 			]
 			// 'src' is inherited from 'main' source set (in build-common.gradle)
