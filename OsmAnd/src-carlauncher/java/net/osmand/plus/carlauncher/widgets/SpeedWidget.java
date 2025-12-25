@@ -90,6 +90,9 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         speedText.setGravity(Gravity.CENTER);
         speedText.setText("--");
         speedText.setIncludeFontPadding(false);
+        // Auto-resize for Speed (Min 24sp, Max 80sp)
+        androidx.core.widget.TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
+                speedText, 24, 80, 2, android.util.TypedValue.COMPLEX_UNIT_SP);
 
         try {
             // Typeface digitalFont = Typeface.createFromAsset(context.getAssets(),

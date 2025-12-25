@@ -49,14 +49,16 @@ public class Material3ClockWidget extends BaseWidget {
         try {
             clockTypeface = android.graphics.Typeface.createFromAsset(context.getAssets(),
                     "fonts/Cross Boxed.ttf");
-            if (tvHourFirst != null)
-                tvHourFirst.setTypeface(clockTypeface);
-            if (tvHourSecond != null)
-                tvHourSecond.setTypeface(clockTypeface);
-            if (tvMinFirst != null)
-                tvMinFirst.setTypeface(clockTypeface);
-            if (tvMinSecond != null)
-                tvMinSecond.setTypeface(clockTypeface);
+
+            TextView[] textViews = {tvHourFirst, tvHourSecond, tvMinFirst, tvMinSecond};
+            for (TextView tv : textViews) {
+                if (tv != null) {
+                    tv.setTypeface(clockTypeface);
+                    // Auto-size configuration: Min 20sp, Max 100sp, Step 2sp
+                    androidx.core.widget.TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
+                            tv, 20, 100, 2, android.util.TypedValue.COMPLEX_UNIT_SP);
+                }
+            }
         } catch (Exception e) {
             // Fallback to default
         }
