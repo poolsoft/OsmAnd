@@ -54,12 +54,13 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
         setupMediaSessionManager();
 
-        // Başlangıçta müzikleri tara
+        // Baslangicta muzikleri tara
         repository.scanMusic((tracks, folders) -> {
             Log.d(TAG, "Scan complete: " + tracks.size() + " tracks");
             if (!tracks.isEmpty()) {
                 internalPlayer.setPlaylist(tracks, 0);
-                internalPlayer.resumeLastSession();
+                // internalPlayer.resumeLastSession(); // KALDIRILDI: Aggressive auto-play prevention
+                // Sadece playlist'i hazirla ama baslatma.
             }
         });
     }
@@ -250,26 +251,25 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     // --- Logic ---
 
     private boolean useExternal() {
+        // 1. Dahili oynatıcı aktifse, kesinlikle dahili kullan (Focus bizde)
+        if (internalPlayer.isPlaying()) {
+            return false;
+        }
+
+        // 2. Harici bir kaynak aktif olarak oynuyorsa, onu kullan
         if (activeExternalController != null) {
-            // Eğer tercih edilen paket aktifse öncelik ver
-            if (preferredPackage != null && activeExternalController.getPackageName().equals(preferredPackage)) {
-                return true;
-            }
-
             PlaybackState state = activeExternalController.getPlaybackState();
-            if (state != null) {
-                boolean extPlaying = state.getState() == PlaybackState.STATE_PLAYING;
-                boolean intPlaying = internalPlayer.isPlaying();
-
-                if (extPlaying)
-                    return true;
-                if (intPlaying)
-                    return false;
-
-                // İkisi de duruyorsa external kontrolcüyü kullan (hazırda bekleyen)
+            if (state != null && state.getState() == PlaybackState.STATE_PLAYING) {
                 return true;
             }
         }
+
+        // 3. Kimse oynamıyorsa, tercih edilen pakete göre karar ver
+        if (preferredPackage != null && !preferredPackage.equals("usage.internal.player")) {
+            return true;
+        }
+
+        // 4. Varsayılan: Dahili
         return false;
     }
 

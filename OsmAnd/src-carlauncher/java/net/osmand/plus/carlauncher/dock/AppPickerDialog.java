@@ -47,6 +47,8 @@ public class AppPickerDialog {
         this.listener = listener;
     }
 
+    private AlertDialog dialog;
+
     /**
      * Dialogu goster.
      */
@@ -89,7 +91,8 @@ public class AppPickerDialog {
         builder.setView(scrollView);
         builder.setNegativeButton("Iptal", null);
 
-        builder.show();
+        dialog = builder.create();
+        dialog.show();
     }
 
     /**
@@ -125,6 +128,9 @@ public class AppPickerDialog {
         itemLayout.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onAppSelected(app.packageName, app.name, app.icon);
+            }
+            if (dialog != null && dialog.isShowing()) {
+                dialog.dismiss();
             }
         });
 

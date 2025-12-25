@@ -360,7 +360,7 @@ public class AppDockFragment extends Fragment
     public void onPlaybackStateChanged(boolean isPlaying) {
         if (miniBtnPlay != null) {
             miniBtnPlay.post(() -> miniBtnPlay.setImageResource(
-                    isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play));
+                    isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play));
         }
     }
 
@@ -369,7 +369,7 @@ public class AppDockFragment extends Fragment
         // Kaynak degistiginde yapilacaklar (Ornegin ikon degisimi)
         if (miniMusicIcon != null) {
             miniMusicIcon.post(() -> {
-                miniMusicIcon.setImageResource(isInternal ? android.R.drawable.ic_media_play : // Internal icon
+                miniMusicIcon.setImageResource(isInternal ? net.osmand.plus.R.drawable.ic_music_play : // Internal icon
                         android.R.drawable.stat_sys_headset); // External icon placeholder
                 miniMusicIcon.setColorFilter(android.graphics.Color.WHITE);
             });

@@ -76,12 +76,16 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
             return true;
         });
 
-        if (btnPrev != null)
+        if (btnPrev != null) {
             btnPrev.setOnClickListener(v -> musicManager.skipToPrevious());
+            btnPrev.setImageResource(net.osmand.plus.R.drawable.ic_music_prev);
+        }
         if (btnPlay != null)
             btnPlay.setOnClickListener(v -> musicManager.togglePlayPause());
-        if (btnNext != null)
+        if (btnNext != null) {
             btnNext.setOnClickListener(v -> musicManager.skipToNext());
+            btnNext.setImageResource(net.osmand.plus.R.drawable.ic_music_next);
+        }
 
         // Open Music Drawer on content click
         View contentArea = view.findViewById(net.osmand.plus.R.id.widget_track_info);
@@ -130,7 +134,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         try {
             appIconView.setImageDrawable(context.getPackageManager().getApplicationIcon(target));
         } catch (Exception e) {
-            appIconView.setImageResource(android.R.drawable.ic_media_play);
+            appIconView.setImageResource(net.osmand.plus.R.drawable.ic_music_play);
         }
     }
 
@@ -195,7 +199,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         if (btnPlay != null) {
             btnPlay.post(() -> {
                 btnPlay.setImageResource(
-                        isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+                        isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play);
             });
         }
     }
