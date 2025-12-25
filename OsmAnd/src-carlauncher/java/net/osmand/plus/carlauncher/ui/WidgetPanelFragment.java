@@ -21,7 +21,10 @@ import net.osmand.plus.carlauncher.widgets.SpeedWidget;
 import net.osmand.plus.carlauncher.widgets.WidgetManager;
 import net.osmand.plus.carlauncher.widgets.NavigationWidget;
 import net.osmand.plus.carlauncher.widgets.MusicWidget;
+import net.osmand.plus.carlauncher.widgets.OBDWidget;
 import net.osmand.plus.plugins.OsmandPlugin;
+import net.osmand.plus.plugins.PluginsHelper;
+import net.osmand.plus.plugins.odb.VehicleMetricsPlugin;
 
 /**
  * Widget paneli fragment.
@@ -263,6 +266,13 @@ public class WidgetPanelFragment extends Fragment {
 
         // Muzik widget
         widgetManager.addWidget(new MusicWidget(getContext(), app));
+
+        // OBD Widget (Check if Plugin is enabled)
+        VehicleMetricsPlugin obdPlugin = PluginsHelper
+                .getPlugin(VehicleMetricsPlugin.class);
+        if (obdPlugin != null && obdPlugin.isActive()) {
+            widgetManager.addWidget(new OBDWidget(getContext(), app));
+        }
 
         // Gelecekte: Daha fazla widget eklenecek
         // widgetManager.addWidget(new AltitudeWidget(getContext(), app));
