@@ -17,223 +17,247 @@
         android:baselineAligned="false">
 
         <!-- LEFT PANEL: PLAYER CONTROLS (40%) -->
-        <LinearLayout
+        <FrameLayout
             android:id="@+id/player_panel"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="4"
-            android:background="#111111"
-            android:orientation="vertical">
+            android:background="#111111">
 
-            <!-- App Selector / Header -->
+            <!-- 1. Full Cover Background -->
+            <ImageView
+                android:id="@+id/now_playing_art"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/bg_default_music_art"
+                android:alpha="0.6"/>
+
+            <!-- 2. Dark Overlay Gradient (Bottom to Top) -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_music_player_overlay_gradient"/>
+
+            <!-- 3. Content -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="16dp">
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
-                <ImageButton
-                    android:id="@+id/btn_close"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:src="@android:drawable/ic_menu_close_clear_cancel"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:tint="#FFFFFF"
-                    android:contentDescription="Kapat"
-                    android:layout_marginEnd="12dp" />
-
-                <!-- Selector Area (Clickable) -->
-                <LinearLayout
-                    android:id="@+id/app_selector"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:paddingHorizontal="8dp">
-
-                    <ImageView
-                        android:id="@+id/app_icon"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@android:drawable/ic_media_play"/>
-
-                    <TextView
-                         android:id="@+id/app_name"
-                         android:layout_width="wrap_content"
-                         android:layout_height="wrap_content"
-                         android:text="Muzik Kaynagi"
-                         android:textColor="#FFFFFF"
-                         android:textSize="16sp"
-                         android:textStyle="bold"
-                         android:layout_marginStart="12dp"/>
-
-                     <ImageView
-                         android:layout_width="24dp"
-                         android:layout_height="24dp"
-                         android:src="@android:drawable/arrow_down_float"
-                         android:tint="#888888"
-                         android:layout_marginStart="8dp"/>
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#333333"/>
-            
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <!-- Album Art (Modernized) -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="220dp"
-                    android:layout_height="220dp"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="8dp"
-                    app:cardBackgroundColor="#00000000">
-                    <ImageView
-                        android:id="@+id/now_playing_art"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:scaleType="centerCrop"
-                        android:src="@android:drawable/ic_media_play"
-                        android:background="#222222"/>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Info -->
-                <TextView
-                    android:id="@+id/now_playing_title"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:ellipsize="marquee"
-                    android:gravity="center"
-                    android:singleLine="true"
-                    android:text="Parca Adi"
-                    android:textColor="#FFFFFF"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/now_playing_artist"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:ellipsize="end"
-                    android:gravity="center"
-                    android:singleLine="true"
-                    android:text="Sanatci"
-                    android:textColor="#AAAAAA"
-                    android:textSize="14sp" />
-            </LinearLayout>
-
-            <!-- Metadata & Seekbar -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingHorizontal="24dp"
-                android:paddingBottom="16dp">
-
+                <!-- App Selector / Header -->
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="60dp"
                     android:orientation="horizontal"
-                    android:layout_marginBottom="8dp">
-                    <TextView
-                        android:id="@+id/time_current"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0:00"
-                        android:textColor="#888888"
-                        android:textSize="12sp"/>
-                    <Space android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
-                    <TextView
-                        android:id="@+id/time_total"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0:00"
-                        android:textColor="#888888"
-                        android:textSize="12sp"/>
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp"
+                    android:background="#40000000">
+
+                    <ImageButton
+                        android:id="@+id/btn_close"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@android:drawable/ic_menu_close_clear_cancel"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:tint="#FFFFFF"
+                        android:contentDescription="Kapat"
+                        android:layout_marginEnd="12dp" />
+
+                    <!-- Selector Area (Clickable) -->
+                    <LinearLayout
+                        android:id="@+id/app_selector"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center_vertical"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:paddingHorizontal="8dp">
+
+                        <ImageView
+                            android:id="@+id/app_icon"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@android:drawable/ic_media_play"/>
+
+                        <TextView
+                             android:id="@+id/app_name"
+                             android:layout_width="wrap_content"
+                             android:layout_height="wrap_content"
+                             android:text="Muzik Kaynagi"
+                             android:textColor="#FFFFFF"
+                             android:textSize="16sp"
+                             android:textStyle="bold"
+                             android:shadowColor="#000000"
+                             android:shadowDx="1"
+                             android:shadowDy="1"
+                             android:shadowRadius="2"
+                             android:layout_marginStart="12dp"/>
+
+                         <ImageView
+                             android:layout_width="24dp"
+                             android:layout_height="24dp"
+                             android:src="@android:drawable/arrow_down_float"
+                             android:tint="#FFFFFF"
+                             android:layout_marginStart="8dp"/>
+                    </LinearLayout>
                 </LinearLayout>
 
-                <SeekBar
-                    android:id="@+id/seekbar"
+                <!-- Spacer -->
+                <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+                
+                <!-- Info (Now in middle/bottom) -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:max="100"
-                    android:progress="0"
-                    android:progressTint="#00FFFF"
-                    android:thumbTint="#00FFFF" />
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/now_playing_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="marquee"
+                        android:gravity="center"
+                        android:singleLine="true"
+                        android:text="Parca Adi"
+                        android:textColor="#FFFFFF"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:shadowColor="#000000"
+                        android:shadowDx="1"
+                        android:shadowDy="1"
+                        android:shadowRadius="4"/>
+
+                    <TextView
+                        android:id="@+id/now_playing_artist"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:ellipsize="end"
+                        android:gravity="center"
+                        android:singleLine="true"
+                        android:text="Sanatci"
+                        android:textColor="#DDDDDD"
+                        android:textSize="14sp"
+                        android:shadowColor="#000000"
+                        android:shadowDx="1"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"/>
+                </LinearLayout>
+
+                <!-- Metadata & Seekbar -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="24dp"
+                    android:paddingBottom="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="8dp">
+                        <TextView
+                            android:id="@+id/time_current"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0:00"
+                            android:textColor="#FFFFFF"
+                            android:textSize="12sp"
+                            android:shadowColor="#000000"
+                            android:shadowDx="1"
+                            android:shadowDy="1"
+                            android:shadowRadius="2"/>
+                        <Space android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
+                        <TextView
+                            android:id="@+id/time_total"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0:00"
+                            android:textColor="#FFFFFF"
+                            android:textSize="12sp"
+                            android:shadowColor="#000000"
+                            android:shadowDx="1"
+                            android:shadowDy="1"
+                            android:shadowRadius="2"/>
+                    </LinearLayout>
+
+                    <SeekBar
+                        android:id="@+id/seekbar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:max="100"
+                        android:progress="0"
+                        android:progressTint="#00FFFF"
+                        android:thumbTint="#00FFFF" />
+                </LinearLayout>
+
+                <!-- Controls -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingBottom="32dp">
+
+                    <ImageButton
+                        android:id="@+id/btn_shuffle"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/ic_music_shuffle"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:tint="#FFFFFF"
+                        android:contentDescription="Karistir" />
+
+                    <!-- Previous -->
+                    <ImageButton
+                        android:id="@+id/btn_prev"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_marginStart="16dp"
+                        android:src="@drawable/ic_music_prev"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:tint="#FFFFFF"
+                        android:contentDescription="Onceki" />
+
+                    <!-- Play/Pause (Large) -->
+                    <ImageButton
+                        android:id="@+id/btn_play"
+                        android:layout_width="72dp"
+                        android:layout_height="72dp"
+                        android:layout_marginHorizontal="24dp"
+                        android:src="@drawable/ic_music_play"
+                        android:background="@drawable/bg_circle_cyan"
+                        android:tint="#000000"
+                        android:padding="16dp"
+                        android:contentDescription="Oynat" />
+
+                    <!-- Next -->
+                    <ImageButton
+                        android:id="@+id/btn_next"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:layout_marginEnd="16dp"
+                        android:src="@drawable/ic_music_next"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:tint="#FFFFFF"
+                        android:contentDescription="Sonraki" />
+
+                    <!-- Repeat -->
+                    <ImageButton
+                        android:id="@+id/btn_repeat"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/ic_music_repeat"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:tint="#FFFFFF"
+                        android:contentDescription="Tekrar" />
+                </LinearLayout>
             </LinearLayout>
-
-            <!-- Controls -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:paddingBottom="24dp">
-
-                <ImageButton
-                    android:id="@+id/btn_shuffle"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@android:drawable/stat_notify_sync"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:tint="#666666"
-                    android:contentDescription="Karistir" />
-
-                <!-- Previous -->
-                <ImageButton
-                    android:id="@+id/btn_prev"
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:layout_marginStart="16dp"
-                    android:src="@android:drawable/ic_media_previous"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:tint="#FFFFFF"
-                    android:contentDescription="Onceki" />
-
-                <!-- Play/Pause (Large) -->
-                <ImageButton
-                    android:id="@+id/btn_play"
-                    android:layout_width="72dp"
-                    android:layout_height="72dp"
-                    android:layout_marginHorizontal="24dp"
-                    android:src="@android:drawable/ic_media_play"
-                    android:background="@drawable/bg_circle_cyan"
-                    android:tint="#000000"
-                    android:padding="16dp"
-                    android:contentDescription="Oynat" />
-
-                <!-- Next -->
-                <ImageButton
-                    android:id="@+id/btn_next"
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:layout_marginEnd="16dp"
-                    android:src="@android:drawable/ic_media_next"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:tint="#FFFFFF"
-                    android:contentDescription="Sonraki" />
-
-                <!-- Repeat -->
-                <ImageButton
-                    android:id="@+id/btn_repeat"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@android:drawable/ic_popup_sync"
-                    android:background="?android:attr/selectableItemBackgroundBorderless"
-                    android:tint="#666666"
-                    android:contentDescription="Tekrar" />
-            </LinearLayout>
-        </LinearLayout>
+        </FrameLayout>
 
         <!-- RIGHT PANEL: TRACK LIST (60%) -->
         <LinearLayout
