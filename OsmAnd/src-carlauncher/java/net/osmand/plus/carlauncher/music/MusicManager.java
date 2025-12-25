@@ -80,6 +80,10 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         return internalPlayer;
     }
 
+    public MediaController getActiveExternalController() {
+        return activeExternalController;
+    }
+
     public void setPreferredPackage(String packageName) {
         this.preferredPackage = packageName;
 
