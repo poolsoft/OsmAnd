@@ -116,7 +116,6 @@ public class AppPickerDialog {
         // Name
         TextView nameView = new TextView(context);
         nameView.setText(app.name);
-        nameView.setTextColor(0xFFFFFFFF);
         nameView.setTextSize(16);
         nameView.setPadding(16, 0, 0, 0);
 

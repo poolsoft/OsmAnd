@@ -758,6 +758,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                             .getLaunchIntentForPackage(packageName);
                     if (launchIntent != null) {
                         launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                        launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT);
                         startActivity(launchIntent);
                     }
                 } catch (Exception e) {

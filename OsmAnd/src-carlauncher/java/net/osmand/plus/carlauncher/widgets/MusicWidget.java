@@ -65,8 +65,11 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
             String pkg = musicManager.getPreferredPackage();
             if (pkg != null) {
                 Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(pkg);
-                if (launchIntent != null)
+                if (launchIntent != null) {
+                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT);
                     context.startActivity(launchIntent);
+                }
             } else {
                 showMusicAppPicker();
             }
