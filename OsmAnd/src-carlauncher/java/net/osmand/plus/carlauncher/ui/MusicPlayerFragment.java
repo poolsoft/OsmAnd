@@ -466,6 +466,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                             // ignore
                         }
                     }
+                    // Force MusicManager to drop external preference so it picks up internal player
+                    musicManager.setPreferredPackage(null);
+                    
                     updateModeUI();
                 }
 

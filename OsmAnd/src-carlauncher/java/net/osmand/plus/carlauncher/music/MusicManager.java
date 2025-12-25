@@ -93,6 +93,10 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 internalPlayer.pause();
             }
         }
+        
+        // State might have changed (Internal vs External), notify UI to refresh
+        notifyTrackChanged();
+        notifyStateChanged();
 
         // Tercih edilen paket değiştiğinde kontrolcüyü güncellemeye çalış
         if (mediaSessionManager != null) {
