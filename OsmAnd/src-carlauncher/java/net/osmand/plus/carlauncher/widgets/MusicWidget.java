@@ -99,6 +99,9 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         // Long click propagation
         view.setOnLongClickListener(v -> false);
 
+        // Click on background opens player
+        view.setOnClickListener(v -> openMusicDrawer());
+
         rootView = view;
         return rootView;
     }

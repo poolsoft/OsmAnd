@@ -375,8 +375,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private void updateModeUI() {
         // Track list visible in both modes (handled by layout)
 
-        // Dahili moddaysa ve liste boşsa (izin varsa yükle, yoksa iste)
-        if (!isExternalMode && allTracks.isEmpty()) {
+        // Dahili moddaysa veya liste bossa (izin varsa yükle, yoksa iste)
+        if (allTracks.isEmpty()) {
             checkPermissionsAndLoadTracks();
         }
 
@@ -458,6 +458,14 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 // Switch to internal mode
                 if (isExternalMode) {
                     isExternalMode = false;
+                    // Harici oynatıcıyı durdur
+                    if (musicManager.getActiveExternalController() != null) {
+                        try {
+                            musicManager.getActiveExternalController().getTransportControls().pause();
+                        } catch (Exception e) {
+                            // ignore
+                        }
+                    }
                     updateModeUI();
                 }
 
