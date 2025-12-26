@@ -44,6 +44,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+        getPreferenceManager().setSharedPreferencesName("car_launcher_prefs");
         setPreferencesFromResource(R.xml.carlauncher_prefs, rootKey);
 
         if (getContext() != null) {

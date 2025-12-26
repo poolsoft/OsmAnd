@@ -429,22 +429,31 @@ if (btnFullscreenExit != null) {
 				btnFullscreenExit.setY(savedY);
                 
                 // Ensure button is on screen (Clamp)
-                btnFullscreenExit.post(() -> {
-                    View parent = (View) btnFullscreenExit.getParent();
-                    if (parent != null) {
-                        float maxW = parent.getWidth() - btnFullscreenExit.getWidth();
-                        float maxH = parent.getHeight() - btnFullscreenExit.getHeight();
-                        float curX = btnFullscreenExit.getX();
-                        float curY = btnFullscreenExit.getY();
+                btnFullscreenExit.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        View parent = (View) btnFullscreenExit.getParent();
+                        if (parent != null) {
+                             if (parent.getWidth() == 0 || parent.getHeight() == 0) {
+                                // Retry if layout not ready
+                                btnFullscreenExit.postDelayed(this, 100);
+                                return;
+                            }
 
-                        boolean offScreen = false;
-                        if (curX < 0) { curX = 0; offScreen = true; }
-                        if (curY < 0) { curY = 0; offScreen = true; }
-                        if (curX > maxW && maxW > 0) { curX = maxW; offScreen = true; }
-                        if (curY > maxH && maxH > 0) { curY = maxH; offScreen = true; }
+                            float maxW = parent.getWidth() - btnFullscreenExit.getWidth();
+                            float maxH = parent.getHeight() - btnFullscreenExit.getHeight();
+                            float curX = btnFullscreenExit.getX();
+                            float curY = btnFullscreenExit.getY();
 
-                        if (offScreen) {
-                            btnFullscreenExit.animate().x(curX).y(curY).setDuration(300).start();
+                            boolean offScreen = false;
+                            if (curX < 0) { curX = 0; offScreen = true; }
+                            if (curY < 0) { curY = 0; offScreen = true; }
+                            if (curX > maxW && maxW > 0) { curX = maxW; offScreen = true; }
+                            if (curY > maxH && maxH > 0) { curY = maxH; offScreen = true; }
+
+                            if (offScreen) {
+                                btnFullscreenExit.animate().x(curX).y(curY).setDuration(300).start();
+                            }
                         }
                     }
                 });
@@ -568,9 +577,7 @@ if (btnFullscreenExit != null) {
 			case 2: // Full Screen
 				if (widgetPanel != null) widgetPanel.setVisibility(View.GONE);
 				if (appDock != null) appDock.setVisibility(View.GONE);
-				if (btnFullscreenExit != null) {
-                    btnFullscreenExit.setVisibility(View.VISIBLE);
-                }
+				if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.VISIBLE);
 				break;
 		}
 
