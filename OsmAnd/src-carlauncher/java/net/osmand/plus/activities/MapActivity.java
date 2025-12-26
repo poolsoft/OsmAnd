@@ -537,17 +537,22 @@ if (btnFullscreenExit != null) {
 			case 0: // Normal
 				if (widgetPanel != null) widgetPanel.setVisibility(View.VISIBLE);
 				if (appDock != null) appDock.setVisibility(View.VISIBLE);
-				if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.GONE);
+				if (btnFullscreenExit != null) {
+                    btnFullscreenExit.setVisibility(View.VISIBLE);
+                    // Optional: Change icon to indicate "Enter Full Screen"
+                }
 				break;
 			case 1: // No Widgets
 				if (widgetPanel != null) widgetPanel.setVisibility(View.GONE);
 				if (appDock != null) appDock.setVisibility(View.VISIBLE);
-				if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.GONE);
+				if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.VISIBLE);
 				break;
 			case 2: // Full Screen
 				if (widgetPanel != null) widgetPanel.setVisibility(View.GONE);
 				if (appDock != null) appDock.setVisibility(View.GONE);
-				if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.VISIBLE);
+				if (btnFullscreenExit != null) {
+                    btnFullscreenExit.setVisibility(View.VISIBLE);
+                }
 				break;
 		}
 
