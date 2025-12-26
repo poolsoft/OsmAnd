@@ -44,6 +44,7 @@ public class WidgetPanelFragment extends Fragment {
 
     private LinearLayout widgetContainerList;
     private ViewPager2 widgetViewPager;
+    private TabLayout tabLayout;
     private WidgetManager widgetManager;
     private OsmandApplication app;
     private BroadcastReceiver modeChangeReceiver;
@@ -193,7 +194,7 @@ public class WidgetPanelFragment extends Fragment {
         widgetViewPager.setLayoutParams(startParams);
         
         // TabLayout (Dots)
-        TabLayout tabLayout = new TabLayout(getContext());
+        tabLayout = new TabLayout(getContext());
         LinearLayout.LayoutParams tabParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         tabLayout.setLayoutParams(tabParams);
@@ -205,13 +206,8 @@ public class WidgetPanelFragment extends Fragment {
         container.addView(widgetViewPager);
         container.addView(tabLayout);
         root.addView(container);
-
-        // Link TabLayout with ViewPager2
-        new TabLayoutMediator(tabLayout, widgetViewPager,
-                (tab, position) -> {
-                    // Start with empty dots
-                }
-        ).attach();
+        
+        // Mediator attachment moved to applyWidgetsToView()
     }
 
 
@@ -329,27 +325,18 @@ public class WidgetPanelFragment extends Fragment {
         if (widgetContainerList != null) {
             // List Mode
             widgetManager.attachWidgetsToContainer(widgetContainerList);
-        } else if (widgetViewPager != null) {
+        } else if (widgetViewPager != null && tabLayout != null) {
             // Paged Mode
             WidgetPagerAdapter adapter = new WidgetPagerAdapter(widgetManager.getVisibleWidgets());
             widgetViewPager.setAdapter(adapter);
             
-            // Connect Tabs
-            // Find TabLayout (sibling of pager in container)
-             ViewGroup parent = (ViewGroup) widgetViewPager.getParent();
-             if (parent != null) {
-                 for(int i=0; i<parent.getChildCount(); i++) {
-                     View child = parent.getChildAt(i);
-                     if (child instanceof TabLayout) {
-                         new TabLayoutMediator((TabLayout) child, widgetViewPager,
-                                 (tab, position) -> {
-                                     // Empty title, just dots
-                                 }
-                         ).attach();
-                         break;
-                     }
-                 }
-             }
+            // Connect Tabs (Only if not already connected - though mediator handles re-attach gracefully usually, 
+            // but we can just create a new one as the adapter is new)
+            new TabLayoutMediator(tabLayout, widgetViewPager,
+                    (tab, position) -> {
+                        // Empty title, just dots
+                    }
+            ).attach();
         }
     }
 
