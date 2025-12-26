@@ -58,11 +58,16 @@ public class CarLauncherSettings {
     }
 
     public int getWidgetDisplayMode() {
-        return prefs.getInt(KEY_WIDGET_DISPLAY_MODE, 0); // 0 = List (Default)
+        try {
+            String val = prefs.getString(KEY_WIDGET_DISPLAY_MODE, "0");
+            return Integer.parseInt(val);
+        } catch (Exception e) {
+            return 0; // Default to List
+        }
     }
 
     public void setWidgetDisplayMode(int mode) {
-        prefs.edit().putInt(KEY_WIDGET_DISPLAY_MODE, mode).apply();
+        prefs.edit().putString(KEY_WIDGET_DISPLAY_MODE, String.valueOf(mode)).apply();
     }
 
     // --- Appearance Settings ---

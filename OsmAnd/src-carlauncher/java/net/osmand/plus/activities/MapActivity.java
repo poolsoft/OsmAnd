@@ -427,6 +427,27 @@ if (btnFullscreenExit != null) {
 			if (savedX != -1 && savedY != -1) {
 				btnFullscreenExit.setX(savedX);
 				btnFullscreenExit.setY(savedY);
+                
+                // Ensure button is on screen (Clamp)
+                btnFullscreenExit.post(() -> {
+                    View parent = (View) btnFullscreenExit.getParent();
+                    if (parent != null) {
+                        float maxW = parent.getWidth() - btnFullscreenExit.getWidth();
+                        float maxH = parent.getHeight() - btnFullscreenExit.getHeight();
+                        float curX = btnFullscreenExit.getX();
+                        float curY = btnFullscreenExit.getY();
+
+                        boolean offScreen = false;
+                        if (curX < 0) { curX = 0; offScreen = true; }
+                        if (curY < 0) { curY = 0; offScreen = true; }
+                        if (curX > maxW && maxW > 0) { curX = maxW; offScreen = true; }
+                        if (curY > maxH && maxH > 0) { curY = maxH; offScreen = true; }
+
+                        if (offScreen) {
+                            btnFullscreenExit.animate().x(curX).y(curY).setDuration(300).start();
+                        }
+                    }
+                });
 			}
 
 			// Drag & Click Logic
