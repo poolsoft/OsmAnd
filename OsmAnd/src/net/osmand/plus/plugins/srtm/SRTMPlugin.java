@@ -71,6 +71,7 @@ public class SRTMPlugin extends OsmandPlugin {
 	public static final String ELEVATION_UNITS_ATTR = "eleUnits";
 	public static final String ELEVATION_UNITS_FEET_VALUE = "feet";
 	public static final String ELEVATION_UNITS_METERS_VALUE = "meters";
+	public static final String BUILDINGS_3D = "3D Buildings";
 
 	public static final int TERRAIN_MIN_SUPPORTED_ZOOM = 4;
 	public static final int TERRAIN_MAX_SUPPORTED_ZOOM = 19;
@@ -366,6 +367,10 @@ public class SRTMPlugin extends OsmandPlugin {
 			if (nauticalPlugin != null) {
 				nauticalPlugin.createAdapterItem(TERRAIN_DEPTH_CONTOURS, adapter, mapActivity, customRules);
 			}
+			OsmandDevelopmentPlugin developmentPlugin = PluginsHelper.getEnabledPlugin(OsmandDevelopmentPlugin.class);
+			if (developmentPlugin != null) {
+				createDeveloperItems(developmentPlugin, adapter, mapActivity);
+			}
 		}
 	}
 
@@ -511,6 +516,66 @@ public class SRTMPlugin extends OsmandPlugin {
 			item.setDescription(app.getString(enabled3DMode ? R.string.shared_string_on : R.string.shared_string_off));
 		}
 		adapter.addItem(item);
+	}
+
+	private void createDeveloperItems(@NonNull OsmandDevelopmentPlugin plugin,
+			@NonNull ContextMenuAdapter adapter, @NonNull MapActivity activity) {
+		boolean enabled = plugin.ENABLE_3D_MAP_OBJECTS.get();
+		adapter.addItem(new ContextMenuItem(TERRAIN_3D_MAP_OBJECTS)
+				.setTitleId(R.string.enable_3d_objects, activity)
+				.setIcon(R.drawable.ic_action_3d)
+				.setSecondaryIcon(R.drawable.ic_action_additional_option)
+				.setDescription(app.getString(enabled ? R.string.shared_string_on : R.string.shared_string_off))
+				.setSelected(enabled)
+				.setColor(app, enabled ? R.color.osmand_orange : INVALID_ID)
+				.setListener(new OnRowItemClick() {
+
+					@Override
+					public boolean onRowItemClick(@NonNull OnDataChangeUiAdapter uiAdapter,
+							@NonNull View view, @NonNull ContextMenuItem item) {
+						int[] viewCoordinates = AndroidUtils.getCenterViewCoordinates(view);
+						int itemId = item.getTitleId();
+						if (itemId == R.string.enable_3d_objects) {
+							activity.getDashboard().setDashboardVisibility(true, DashboardType.BUILDINGS_3D, viewCoordinates);
+							return false;
+						}
+						return true;
+					}
+
+					@Override
+					public boolean onContextMenuClick(@NonNull OnDataChangeUiAdapter uiAdapter,
+							@Nullable View view, @NotNull ContextMenuItem item, boolean isChecked) {
+						int itemId = item.getTitleId();
+						if (itemId == R.string.enable_3d_objects) {
+							plugin.ENABLE_3D_MAP_OBJECTS.set(isChecked);
+							item.setColor(app, isChecked ? R.color.osmand_orange : ContextMenuItem.INVALID_ID);
+							item.setSelected(isChecked);
+							item.setDescription(app.getString(isChecked ? R.string.shared_string_on : R.string.shared_string_off));
+							uiAdapter.onDataSetChanged();
+						}
+						return true;
+					}
+				}).setItemDeleteAction(plugin.ENABLE_3D_MAP_OBJECTS));
+
+
+		adapter.addItem(new ContextMenuItem(TERRAIN_SPHERICAL_MAP)
+				.setTitleId(R.string.show_spherical_map, activity)
+				.setIcon(R.drawable.ic_world_globe_dark)
+				.setDescription(app.getString(R.string.show_spherical_map_description))
+				.setSelected(settings.SPHERICAL_MAP.get())
+				.setColor(app, settings.SPHERICAL_MAP.get() ? R.color.osmand_orange : INVALID_ID)
+				.setListener(new OnRowItemClick() {
+					@Override
+					public boolean onContextMenuClick(@Nullable OnDataChangeUiAdapter uiAdapter,
+							@Nullable View view, @NotNull ContextMenuItem item, boolean isChecked) {
+						settings.SPHERICAL_MAP.set(isChecked);
+						item.setColor(app, settings.SPHERICAL_MAP.get() ? R.color.osmand_orange : INVALID_ID);
+						if (uiAdapter != null) {
+							uiAdapter.onDataSetChanged();
+						}
+						return true;
+					}
+				}).setItemDeleteAction(settings.SPHERICAL_MAP));
 	}
 
 	@Nullable
