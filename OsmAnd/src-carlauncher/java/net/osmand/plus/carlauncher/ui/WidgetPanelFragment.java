@@ -78,8 +78,10 @@ public class WidgetPanelFragment extends Fragment {
         int mode = settings.getWidgetDisplayMode(); // 0: List, 1: Paged
 
         if (mode == 1) {
+            Toast.makeText(getContext(), "Debug: Sayfali Mod (1) Yuklendi", Toast.LENGTH_LONG).show();
             setupPagedLayout(mainFrame);
         } else {
+            Toast.makeText(getContext(), "Debug: Liste Modu (0) Yuklendi - Deger: " + mode, Toast.LENGTH_LONG).show();
             setupListLayout(mainFrame);
         }
 
@@ -202,6 +204,13 @@ public class WidgetPanelFragment extends Fragment {
         container.addView(widgetViewPager);
         container.addView(tabLayout);
         root.addView(container);
+
+        // Link TabLayout with ViewPager2
+        new TabLayoutMediator(tabLayout, widgetViewPager,
+                (tab, position) -> {
+                    // Start with empty dots
+                }
+        ).attach();
     }
 
 
