@@ -17,6 +17,7 @@ public class CarLauncherSettings {
     // Widget Keys
     private static final String KEY_WIDGET_ORDER = "widget_order";
     private static final String KEY_WIDGET_VISIBILITY_PREFIX = "widget_visible_";
+    public static final String KEY_WIDGET_DISPLAY_MODE = "widget_display_mode"; // 0: List, 1: Paged
 
     // Appearance Keys
     public static final String KEY_STATUS_BAR = "car_launcher_status_bar";
@@ -54,6 +55,14 @@ public class CarLauncherSettings {
 
     public void setWidgetVisible(String widgetKey, boolean visible) {
         prefs.edit().putBoolean(KEY_WIDGET_VISIBILITY_PREFIX + widgetKey, visible).apply();
+    }
+
+    public int getWidgetDisplayMode() {
+        return prefs.getInt(KEY_WIDGET_DISPLAY_MODE, 0); // 0 = List (Default)
+    }
+
+    public void setWidgetDisplayMode(int mode) {
+        prefs.edit().putInt(KEY_WIDGET_DISPLAY_MODE, mode).apply();
     }
 
     // --- Appearance Settings ---

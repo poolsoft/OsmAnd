@@ -1,42 +1,53 @@
 package net.osmand.plus.carlauncher.ui;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import net.osmand.plus.carlauncher.CarLauncherSettings;
-import java.util.ArrayList;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.viewpager2.widget.ViewPager2;
+
+
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 
 import net.osmand.plus.OsmandApplication;
+import net.osmand.plus.carlauncher.CarLauncherSettings;
 import net.osmand.plus.carlauncher.widgets.BaseWidget;
-import net.osmand.plus.carlauncher.widgets.ClockWidget;
 import net.osmand.plus.carlauncher.widgets.DirectionWidget;
+import net.osmand.plus.carlauncher.widgets.MusicWidget;
+import net.osmand.plus.carlauncher.widgets.NavigationWidget;
+import net.osmand.plus.carlauncher.widgets.OBDWidget;
 import net.osmand.plus.carlauncher.widgets.SpeedWidget;
 import net.osmand.plus.carlauncher.widgets.WidgetManager;
-import net.osmand.plus.carlauncher.widgets.NavigationWidget;
-import net.osmand.plus.carlauncher.widgets.MusicWidget;
-import net.osmand.plus.carlauncher.widgets.OBDWidget;
-import net.osmand.plus.plugins.OsmandPlugin;
 import net.osmand.plus.plugins.PluginsHelper;
 import net.osmand.plus.plugins.odb.VehicleMetricsPlugin;
 
 /**
  * Widget paneli fragment.
  * Widget'lari gosterir ve yonetir.
+ * List (Scroll) ve Paged (ViewPager) modlarini destekler.
  */
 public class WidgetPanelFragment extends Fragment {
 
     public static final String TAG = "WidgetPanelFragment";
 
-    private LinearLayout widgetContainer;
+    private LinearLayout widgetContainerList;
+    private ViewPager2 widgetViewPager;
     private WidgetManager widgetManager;
     private OsmandApplication app;
+    private BroadcastReceiver modeChangeReceiver;
+    
+    private ViewGroup rootContent;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -54,10 +65,77 @@ public class WidgetPanelFragment extends Fragment {
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
 
+        // Main Container
+        FrameLayout mainFrame = new FrameLayout(getContext());
+        mainFrame.setLayoutParams(new ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, 
+            ViewGroup.LayoutParams.MATCH_PARENT));
+        mainFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_panel_modern);
+        rootContent = mainFrame;
+
+        // Determine Mode
+        CarLauncherSettings settings = new CarLauncherSettings(getContext());
+        int mode = settings.getWidgetDisplayMode(); // 0: List, 1: Paged
+
+        if (mode == 1) {
+            setupPagedLayout(mainFrame);
+        } else {
+            setupListLayout(mainFrame);
+        }
+
+        // Long click to manage widgets
+        mainFrame.setOnLongClickListener(v -> {
+            showWidgetManagementDialog();
+            return true;
+        });
+
+        // Register Receiver for Mode Change
+        modeChangeReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if ("net.osmand.carlauncher.WIDGET_MODE_CHANGED".equals(intent.getAction())) {
+                    reloadFragment();
+                }
+            }
+        };
+        if (getContext() != null) {
+            getContext().registerReceiver(modeChangeReceiver, 
+                new IntentFilter("net.osmand.carlauncher.WIDGET_MODE_CHANGED"));
+        }
+
+        return mainFrame;
+    }
+
+    private void reloadFragment() {
+         if (getFragmentManager() != null) {
+            getFragmentManager().beginTransaction()
+                    .detach(this)
+                    .attach(this)
+                    .commitAllowingStateLoss();
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (getContext() != null && modeChangeReceiver != null) {
+            try {
+                getContext().unregisterReceiver(modeChangeReceiver);
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+        if (widgetManager != null) {
+            widgetManager.saveWidgetConfig();
+        }
+    }
+
+    // --- MODE 0: LIST LAYOUT ---
+    private void setupListLayout(ViewGroup root) {
         boolean isPortrait = getResources()
                 .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
 
-        ViewGroup rootScroll;
+        ViewGroup scrollContainer;
         ViewGroup.LayoutParams scrollParams = new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT);
@@ -65,39 +143,63 @@ public class WidgetPanelFragment extends Fragment {
         if (isPortrait) {
             android.widget.HorizontalScrollView hScroll = new android.widget.HorizontalScrollView(getContext());
             hScroll.setFillViewport(true);
-            rootScroll = hScroll;
+            scrollContainer = hScroll;
         } else {
             ScrollView vScroll = new ScrollView(getContext());
             vScroll.setFillViewport(true);
-            rootScroll = vScroll;
+            scrollContainer = vScroll;
         }
+        scrollContainer.setLayoutParams(scrollParams);
+        
+        scrollContainer.setOnLongClickListener(v -> {
+            showWidgetManagementDialog();
+            return true;
+        });
 
-        rootScroll.setLayoutParams(scrollParams);
-        rootScroll.setBackgroundResource(net.osmand.plus.R.drawable.bg_panel_modern);
-
-        widgetContainer = new LinearLayout(getContext());
-        widgetContainer.setOrientation(isPortrait ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
-        // In portrait, use WRAP_CONTENT for horizontal scroll to work with fixed-width
-        // widgets
-        widgetContainer.setLayoutParams(new ViewGroup.LayoutParams(
+        widgetContainerList = new LinearLayout(getContext());
+        widgetContainerList.setOrientation(isPortrait ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
+        widgetContainerList.setLayoutParams(new ViewGroup.LayoutParams(
                 isPortrait ? ViewGroup.LayoutParams.WRAP_CONTENT : ViewGroup.LayoutParams.MATCH_PARENT,
                 isPortrait ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT));
-        widgetContainer.setPadding(2, 0, 2, 16); // Reduced padding, no top padding
+        widgetContainerList.setPadding(2, 0, 2, 16);
 
-        // Long click to manage widgets
-        widgetContainer.setOnLongClickListener(v -> {
-            showWidgetManagementDialog();
-            return true;
-        });
-        // Also allow clicking on empty space
-        rootScroll.setOnLongClickListener(v -> {
+        widgetContainerList.setOnLongClickListener(v -> {
             showWidgetManagementDialog();
             return true;
         });
 
-        rootScroll.addView(widgetContainer);
-        return rootScroll;
+        scrollContainer.addView(widgetContainerList);
+        root.addView(scrollContainer);
     }
+
+    // --- MODE 1: PAGED LAYOUT ---
+    private void setupPagedLayout(ViewGroup root) {
+        LinearLayout container = new LinearLayout(getContext());
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setLayoutParams(new ViewGroup.LayoutParams(
+                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        // ViewPager
+        widgetViewPager = new ViewPager2(getContext());
+        LinearLayout.LayoutParams startParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f);
+        widgetViewPager.setLayoutParams(startParams);
+        
+        // TabLayout (Dots)
+        TabLayout tabLayout = new TabLayout(getContext());
+        LinearLayout.LayoutParams tabParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        tabLayout.setLayoutParams(tabParams);
+        tabLayout.setTabGravity(TabLayout.GRAVITY_CENTER);
+        tabLayout.setBackgroundColor(0x00000000);
+        tabLayout.setSelectedTabIndicatorColor(0xFFFFFFFF);
+        
+        // Add Views
+        container.addView(widgetViewPager);
+        container.addView(tabLayout);
+        root.addView(container);
+    }
+
 
     private void showWidgetManagementDialog() {
         if (getContext() == null || widgetManager == null)
@@ -115,14 +217,12 @@ public class WidgetPanelFragment extends Fragment {
 
         builder.setView(scrollView);
         builder.setPositiveButton("Kapat", (dialog, which) -> {
-            widgetManager.attachWidgetsToContainer(widgetContainer);
+            applyWidgetsToView(); // Re-attach based on mode
             widgetManager.startAllWidgets();
         });
 
         final android.app.AlertDialog dialog = builder.create();
-
         updateDialogList(listLayout, dialog);
-
         dialog.show();
     }
 
@@ -165,8 +265,8 @@ public class WidgetPanelFragment extends Fragment {
                 android.widget.ImageButton upBtn = new android.widget.ImageButton(getContext());
                 upBtn.setImageResource(android.R.drawable.arrow_up_float);
                 upBtn.setBackgroundColor(0x00000000);
-                upBtn.setPadding(24, 24, 24, 24); // Increase touch area
-                LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(96, 96); // Bigger button
+                upBtn.setPadding(24, 24, 24, 24);
+                LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(96, 96);
                 btnParams.setMargins(8, 0, 8, 0);
                 upBtn.setLayoutParams(btnParams);
 
@@ -176,7 +276,6 @@ public class WidgetPanelFragment extends Fragment {
                 });
                 row.addView(upBtn);
             } else {
-                // Empty placeholder to align
                 android.view.View spacer = new android.view.View(getContext());
                 spacer.setLayoutParams(new LinearLayout.LayoutParams(96, 96));
                 row.addView(spacer);
@@ -187,8 +286,8 @@ public class WidgetPanelFragment extends Fragment {
                 android.widget.ImageButton downBtn = new android.widget.ImageButton(getContext());
                 downBtn.setImageResource(android.R.drawable.arrow_down_float);
                 downBtn.setBackgroundColor(0x00000000);
-                downBtn.setPadding(24, 24, 24, 24); // Increase touch area
-                LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(96, 96); // Bigger button
+                downBtn.setPadding(24, 24, 24, 24);
+                LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(96, 96);
                 btnParams.setMargins(8, 0, 8, 0);
                 downBtn.setLayoutParams(btnParams);
 
@@ -206,11 +305,37 @@ public class WidgetPanelFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        // Widget config yukle
         if (widgetManager != null) {
             widgetManager.loadWidgetConfig();
-            widgetManager.attachWidgetsToContainer(widgetContainer);
+            applyWidgetsToView();
+        }
+    }
+
+    private void applyWidgetsToView() {
+        if (widgetContainerList != null) {
+            // List Mode
+            widgetManager.attachWidgetsToContainer(widgetContainerList);
+        } else if (widgetViewPager != null) {
+            // Paged Mode
+            WidgetPagerAdapter adapter = new WidgetPagerAdapter(widgetManager.getVisibleWidgets());
+            widgetViewPager.setAdapter(adapter);
+            
+            // Connect Tabs
+            // Find TabLayout (sibling of pager in container)
+             ViewGroup parent = (ViewGroup) widgetViewPager.getParent();
+             if (parent != null) {
+                 for(int i=0; i<parent.getChildCount(); i++) {
+                     View child = parent.getChildAt(i);
+                     if (child instanceof TabLayout) {
+                         new TabLayoutMediator((TabLayout) child, widgetViewPager,
+                                 (tab, position) -> {
+                                     // Empty title, just dots
+                                 }
+                         ).attach();
+                         break;
+                     }
+                 }
+             }
         }
     }
 
@@ -230,14 +355,6 @@ public class WidgetPanelFragment extends Fragment {
         }
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        if (widgetManager != null) {
-            widgetManager.saveWidgetConfig();
-        }
-    }
-
     /**
      * Widget'lari initialize et.
      */
@@ -254,7 +371,7 @@ public class WidgetPanelFragment extends Fragment {
         // Yon widget
         widgetManager.addWidget(new DirectionWidget(getContext(), app));
 
-        // Anten Widget (Check if Plugin is enabled)
+        // Anten Widget
         net.osmand.plus.carlauncher.antenna.AntennaPlugin antennaPlugin = net.osmand.plus.plugins.PluginsHelper
                 .getPlugin(net.osmand.plus.carlauncher.antenna.AntennaPlugin.class);
         if (antennaPlugin != null && antennaPlugin.isActive()) {
@@ -267,20 +384,14 @@ public class WidgetPanelFragment extends Fragment {
         // Muzik widget
         widgetManager.addWidget(new MusicWidget(getContext(), app));
 
-        // OBD Widget (Check if Plugin is enabled)
+        // OBD Widget
         VehicleMetricsPlugin obdPlugin = PluginsHelper
                 .getPlugin(VehicleMetricsPlugin.class);
         if (obdPlugin != null && obdPlugin.isActive()) {
             widgetManager.addWidget(new OBDWidget(getContext(), app));
         }
-
-        // Gelecekte: Daha fazla widget eklenecek
-        // widgetManager.addWidget(new AltitudeWidget(getContext(), app));
     }
 
-    /**
-     * Widget manager'i al (ayarlar icin).
-     */
     public WidgetManager getWidgetManager() {
         return widgetManager;
     }

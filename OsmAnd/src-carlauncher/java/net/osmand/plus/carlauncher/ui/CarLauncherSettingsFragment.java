@@ -142,6 +142,29 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             });
         }
 
+                return true;
+            });
+        }
+
+        // Widget Display Mode
+        androidx.preference.ListPreference displayModePref = findPreference(CarLauncherSettings.KEY_WIDGET_DISPLAY_MODE);
+        if (displayModePref != null) {
+            displayModePref.setEntries(new CharSequence[]{"Liste (Varsayılan)", "Sayfalı (Carousel)"});
+            displayModePref.setEntryValues(new CharSequence[]{"0", "1"});
+            displayModePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                // Restart required message
+                Toast.makeText(getContext(), "Görünüm değişikliği için widget paneli yenilenecek",
+                        Toast.LENGTH_SHORT).show();
+                
+                // Trigger refresh if attached to activity
+                 if (getActivity() != null) {
+                    Intent intent = new Intent("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
+                    getActivity().sendBroadcast(intent);
+                }
+                return true;
+            });
+        }
+
         // Widget Manager
         Preference widgetPref = findPreference("car_launcher_widget_manager");
         if (widgetPref != null) {
