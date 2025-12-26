@@ -922,7 +922,7 @@ public class PluginsHelper {
     }
 
     public static void getAvailableGPXDataSetTypes(@NonNull GpxTrackAnalysis analysis,
-            @NonNull List<GPXDataSetType[]> availableTypes) {
+            @NonNull List<GPXDataSetType> availableTypes) {
         for (OsmandPlugin plugin : getAvailablePlugins()) {
             plugin.getAvailableGPXDataSetTypes(analysis, availableTypes);
         }
