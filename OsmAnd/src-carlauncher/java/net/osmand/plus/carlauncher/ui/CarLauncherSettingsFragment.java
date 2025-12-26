@@ -142,9 +142,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             });
         }
 
-                return true;
-            });
-        }
+
 
         // Widget Display Mode
         androidx.preference.ListPreference displayModePref = findPreference(CarLauncherSettings.KEY_WIDGET_DISPLAY_MODE);
