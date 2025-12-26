@@ -72,7 +72,7 @@ jobs:
       working-directory: ./android
       run: mv OsmAnd/build/outputs/apk/carlauncherLegacyFat/debug/OsmAnd-carlauncher-legacy-fat-debug.apk OsmAnd/build/outputs/apk/carlauncherLegacyFat/debug/OsmAnd-carlauncher-legacy-fat-debug-$(git log -n 1 --format='%h').apk
     - name: Archive APK
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: CarLauncher-$(git log -n 1 --format='%h')
         path: android/OsmAnd/build/outputs/apk/*/*/*.apk
