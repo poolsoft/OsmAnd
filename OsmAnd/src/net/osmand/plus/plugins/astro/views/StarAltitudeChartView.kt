@@ -15,8 +15,9 @@ import io.github.cosinekitty.astronomy.Observer
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import net.osmand.plus.R
-import net.osmand.plus.plugins.astro.AstroUtils
-import net.osmand.plus.plugins.astro.AstroUtils.Twilight
+import net.osmand.plus.plugins.astro.SkyObject
+import net.osmand.plus.plugins.astro.utils.AstroUtils
+import net.osmand.plus.plugins.astro.utils.AstroUtils.Twilight
 import java.time.Duration
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
