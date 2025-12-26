@@ -99,8 +99,12 @@ public class WidgetPanelFragment extends Fragment {
             }
         };
         if (getContext() != null) {
-            getContext().registerReceiver(modeChangeReceiver, 
-                new IntentFilter("net.osmand.carlauncher.WIDGET_MODE_CHANGED"));
+            IntentFilter filter = new IntentFilter("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                getContext().registerReceiver(modeChangeReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                getContext().registerReceiver(modeChangeReceiver, filter);
+            }
         }
 
         return mainFrame;
