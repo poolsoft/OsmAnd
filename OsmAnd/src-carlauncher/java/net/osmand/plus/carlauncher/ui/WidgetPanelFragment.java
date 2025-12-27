@@ -54,6 +54,8 @@ public class WidgetPanelFragment extends Fragment {
     
     private ViewGroup rootContent;
 
+    private android.widget.Button doneButton;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -90,12 +92,30 @@ public class WidgetPanelFragment extends Fragment {
             initListLayout(mainFrame);
         }
 
-        // Long click to manage widgets
-        mainFrame.setOnLongClickListener(v -> {
-            showWidgetManagementDialog();
-            return true;
+        // --- Done Button for Edit Mode ---
+        doneButton = new android.widget.Button(getContext());
+        doneButton.setText("TAMAM");
+        doneButton.setBackgroundColor(0xFF00AA00);
+        doneButton.setTextColor(0xFFFFFFFF);
+        doneButton.setVisibility(View.GONE);
+        
+        FrameLayout.LayoutParams doneParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, 
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        doneParams.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.END;
+        doneParams.setMargins(0, 0, 32, 32);
+        
+        doneButton.setOnClickListener(v -> {
+            doneButton.setVisibility(View.GONE);
+            if (listRecyclerView != null && listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
+                ((WidgetListAdapter) listRecyclerView.getAdapter()).setEditMode(false);
+            }
         });
+        
+        mainFrame.addView(doneButton);
 
+        // Long click to manage widgets (Legacy listener removed, now handled by Adapter)
+        
         // Register Receiver for Mode Change
         modeChangeReceiver = new BroadcastReceiver() {
             @Override
@@ -116,6 +136,67 @@ public class WidgetPanelFragment extends Fragment {
 
         return mainFrame;
     }
+    
+    // ... (rest of methods)
+
+    private void applyWidgetsToView() {
+        if (listRecyclerView != null) {
+            // List Mode (RecyclerView)
+            boolean isPortrait = getResources()
+                    .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+            
+            // Adapter with Reorder Listener and Action Callbacks
+            WidgetListAdapter adapter = new WidgetListAdapter(
+                widgetManager.getVisibleWidgets(), 
+                isPortrait, 
+                new WidgetListAdapter.OnWidgetActionListener() {
+                    @Override
+                    public void onWidgetOrderChanged(java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> newOrder) {
+                         widgetManager.updateVisibleOrder(newOrder);
+                    }
+                    
+                    @Override
+                    public void onWidgetRemoved(net.osmand.plus.carlauncher.widgets.BaseWidget widget) {
+                        widgetManager.setWidgetVisible(widget.getId(), false);
+                        widgetManager.saveWidgetConfig();
+                        applyWidgetsToView(); // Refresh list to remove item
+                        
+                        // Keep Edit Mode Active
+                         if (listRecyclerView != null && listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
+                            ((WidgetListAdapter) listRecyclerView.getAdapter()).setEditMode(true);
+                            if (doneButton != null) doneButton.setVisibility(View.VISIBLE);
+                        }
+                    }
+                    
+                    @Override
+                    public void onAddWidgetClicked() {
+                        showAddWidgetDialog();
+                    }
+                    
+                    @Override
+                    public void onEditModeRequested() {
+                         if (listRecyclerView != null && listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
+                            ((WidgetListAdapter) listRecyclerView.getAdapter()).setEditMode(true);
+                            if (doneButton != null) doneButton.setVisibility(View.VISIBLE);
+                        }
+                    }
+                }
+            );
+            listRecyclerView.setAdapter(adapter);
+            
+            // Attach Drag & Drop Helper
+            androidx.recyclerview.widget.ItemTouchHelper.Callback callback = new QuickItemTouchHelperCallback(adapter);
+            androidx.recyclerview.widget.ItemTouchHelper touchHelper = new androidx.recyclerview.widget.ItemTouchHelper(callback);
+            touchHelper.attachToRecyclerView(listRecyclerView);
+
+            // Apply Layout Animation
+            int resId = net.osmand.plus.R.anim.widget_layout_animation;
+            android.view.animation.LayoutAnimationController animation = 
+                android.view.animation.AnimationUtils.loadLayoutAnimation(getContext(), resId);
+            listRecyclerView.setLayoutAnimation(animation);
+            listRecyclerView.scheduleLayoutAnimation();
+            
+        } else if (widgetViewPager != null && tabLayout != null) {
 
     private void reloadFragment() {
          if (getFragmentManager() != null) {
@@ -198,106 +279,54 @@ public class WidgetPanelFragment extends Fragment {
     }
 
 
-    private void showWidgetManagementDialog() {
-        if (getContext() == null || widgetManager == null)
+    private void showAddWidgetDialog() {
+        if (getContext() == null || widgetManager == null) return;
+
+        java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> allWidgets = widgetManager.getAllWidgets();
+        java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> hiddenWidgets = new java.util.ArrayList<>();
+        
+        for (net.osmand.plus.carlauncher.widgets.BaseWidget w : allWidgets) {
+            if (!w.isVisible()) {
+                hiddenWidgets.add(w);
+            }
+        }
+
+        if (hiddenWidgets.isEmpty()) {
+            Toast.makeText(getContext(), "Tüm widgetlar zaten ekli!", Toast.LENGTH_SHORT).show();
             return;
+        }
 
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
-        builder.setTitle("Widget Yonetimi");
+        builder.setTitle("Widget Ekle");
+        
+        String[] names = new String[hiddenWidgets.size()];
+        for (int i = 0; i < hiddenWidgets.size(); i++) {
+            names[i] = hiddenWidgets.get(i).getTitle();
+        }
 
-        final LinearLayout listLayout = new LinearLayout(getContext());
-        listLayout.setOrientation(LinearLayout.VERTICAL);
-        listLayout.setPadding(16, 16, 16, 16);
-
-        ScrollView scrollView = new ScrollView(getContext());
-        scrollView.addView(listLayout);
-
-        builder.setView(scrollView);
-        builder.setPositiveButton("Kapat", (dialog, which) -> {
-            applyWidgetsToView(); // Re-attach based on mode
-            widgetManager.startAllWidgets();
+        builder.setItems(names, (dialog, which) -> {
+            net.osmand.plus.carlauncher.widgets.BaseWidget selected = hiddenWidgets.get(which);
+            widgetManager.setWidgetVisible(selected.getId(), true);
+            widgetManager.saveWidgetConfig();
+            
+            // Refresh Adapter to show new widget
+            if (listRecyclerView != null && listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
+                WidgetListAdapter adapter = (WidgetListAdapter) listRecyclerView.getAdapter();
+                // We need to re-fetch visible widgets or just add this one?
+                // Re-setting adapter is safest for order
+                applyWidgetsToView();
+                // Restore Edit Mode if needed
+                if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
+                    ((WidgetListAdapter) listRecyclerView.getAdapter()).setEditMode(true);
+                }
+            }
         });
 
-        final android.app.AlertDialog dialog = builder.create();
-        updateDialogList(listLayout, dialog);
-        dialog.show();
+        builder.setNegativeButton("İptal", null);
+        builder.show();
     }
-
-    private void updateDialogList(final LinearLayout listLayout, final android.app.AlertDialog dialog) {
-        listLayout.removeAllViews();
-        java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> widgets = widgetManager.getAllWidgets();
-
-        for (int i = 0; i < widgets.size(); i++) {
-            final net.osmand.plus.carlauncher.widgets.BaseWidget w = widgets.get(i);
-            final int index = i;
-
-            LinearLayout row = new LinearLayout(getContext());
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
-            row.setPadding(0, 8, 0, 8);
-            row.setBackgroundResource(android.R.drawable.list_selector_background);
-
-            // Visibility Checkbox
-            android.widget.CheckBox cb = new android.widget.CheckBox(getContext());
-            cb.setChecked(w.isVisible());
-            cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                widgetManager.setWidgetVisible(w.getId(), isChecked);
-                widgetManager.saveWidgetConfig();
-            });
-            row.addView(cb);
-
-            // Name
-            android.widget.TextView nameView = new android.widget.TextView(getContext());
-            nameView.setText(w.getTitle());
-            nameView.setTextSize(16);
-            nameView.setTextColor(0xFFFFFFFF);
-            nameView.setPadding(16, 0, 16, 0);
-
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
-            row.addView(nameView, params);
-
-            // Up Button
-            if (index > 0) {
-                android.widget.ImageButton upBtn = new android.widget.ImageButton(getContext());
-                upBtn.setImageResource(android.R.drawable.arrow_up_float);
-                upBtn.setBackgroundColor(0x00000000);
-                upBtn.setPadding(24, 24, 24, 24);
-                LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(96, 96);
-                btnParams.setMargins(8, 0, 8, 0);
-                upBtn.setLayoutParams(btnParams);
-
-                upBtn.setOnClickListener(v -> {
-                    widgetManager.moveWidget(index, index - 1);
-                    updateDialogList(listLayout, dialog);
-                });
-                row.addView(upBtn);
-            } else {
-                android.view.View spacer = new android.view.View(getContext());
-                spacer.setLayoutParams(new LinearLayout.LayoutParams(96, 96));
-                row.addView(spacer);
-            }
-
-            // Down Button
-            if (index < widgets.size() - 1) {
-                android.widget.ImageButton downBtn = new android.widget.ImageButton(getContext());
-                downBtn.setImageResource(android.R.drawable.arrow_down_float);
-                downBtn.setBackgroundColor(0x00000000);
-                downBtn.setPadding(24, 24, 24, 24);
-                LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(96, 96);
-                btnParams.setMargins(8, 0, 8, 0);
-                downBtn.setLayoutParams(btnParams);
-
-                downBtn.setOnClickListener(v -> {
-                    widgetManager.moveWidget(index, index + 1);
-                    updateDialogList(listLayout, dialog);
-                });
-                row.addView(downBtn);
-            }
-
-            listLayout.addView(row);
-        }
-    }
+    
+    // Toggle Edit Mode Logic managed via Adapter callbacks below
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
