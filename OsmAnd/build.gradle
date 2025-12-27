@@ -1,3 +1,4 @@
+// Force Rebuild: 2025-12-27 - Fix cached compilation
 apply plugin: 'com.android.application'
 apply from: 'build-common.gradle'
 apply from: rootProject.file("versions.gradle")
