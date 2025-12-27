@@ -578,7 +578,13 @@ if (btnFullscreenExit != null) {
 			case 2: // Full Screen
 				if (widgetPanel != null) widgetPanel.setVisibility(View.GONE);
 				if (appDock != null) appDock.setVisibility(View.GONE);
-				if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.VISIBLE);
+				if (btnFullscreenExit != null) {
+                    btnFullscreenExit.setVisibility(View.VISIBLE);
+                    android.widget.Toast.makeText(this, "Mode 2: Full Screen (Button VISIBLE)", android.widget.Toast.LENGTH_SHORT).show();
+                    android.util.Log.d("OsmAndCar", "Btn Pos: " + btnFullscreenExit.getX() + "," + btnFullscreenExit.getY());
+                } else {
+                    android.widget.Toast.makeText(this, "Mode 2: But NULL!", android.widget.Toast.LENGTH_SHORT).show();
+                }
 				break;
 		}
 
