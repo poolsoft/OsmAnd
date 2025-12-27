@@ -419,6 +419,58 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		btnFullscreenExit = findViewById(R.id.btn_fullscreen_exit);
 
 		if (btnFullscreenExit != null) {
+            // Drag & Click Logic (Ephemeral Position)
+            btnFullscreenExit.setOnTouchListener(new View.OnTouchListener() {
+                float dX, dY;
+                float startX, startY;
+                boolean isDragging = false;
+                final int CLICK_DRAG_TOLERANCE = 20;
+
+                @Override
+                public boolean onTouch(View view, MotionEvent event) {
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            dX = view.getX() - event.getRawX();
+                            dY = view.getY() - event.getRawY();
+                            startX = event.getRawX();
+                            startY = event.getRawY();
+                            isDragging = false;
+                            return true;
+
+                        case MotionEvent.ACTION_MOVE:
+                            if (!isDragging && (Math.abs(event.getRawX() - startX) > CLICK_DRAG_TOLERANCE || Math.abs(event.getRawY() - startY) > CLICK_DRAG_TOLERANCE)) {
+                                isDragging = true;
+                            }
+                            if (isDragging) {
+                                float newX = event.getRawX() + dX;
+                                float newY = event.getRawY() + dY;
+
+                                // Boundary Checks
+                                View parent = (View) view.getParent();
+                                if (parent != null) {
+                                    newX = Math.max(0, Math.min(parent.getWidth() - view.getWidth(), newX));
+                                    newY = Math.max(0, Math.min(parent.getHeight() - view.getHeight(), newY));
+                                }
+
+                                view.animate()
+                                        .x(newX)
+                                        .y(newY)
+                                        .setDuration(0)
+                                        .start();
+                            }
+                            return true;
+
+                        case MotionEvent.ACTION_UP:
+                            if (!isDragging) {
+                                view.performClick();
+                            }
+                            // No saving of position
+                            return true;
+                    }
+                    return false;
+                }
+            });
+
 			btnFullscreenExit.setOnClickListener(v -> {
 				// Exit Full Screen -> Reset to Normal (Mode 0) or Toggle
 				layoutMode = 2; // Force current state to 2 so toggle goes to 0
