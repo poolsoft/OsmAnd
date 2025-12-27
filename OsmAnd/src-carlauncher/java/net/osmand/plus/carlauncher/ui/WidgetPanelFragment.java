@@ -80,11 +80,11 @@ public class WidgetPanelFragment extends Fragment {
         int mode = settings.getWidgetDisplayMode(); // 0: List, 1: Paged
 
         if (mode == 1) {
-            Toast.makeText(getContext(), "Debug: Sayfali Mod (1) Yuklendi", Toast.LENGTH_LONG).show();
-            setupPagedLayout(mainFrame);
+            Toast.makeText(getContext(), "Debug: Sayfali Mod (1) Yuklendi - V2", Toast.LENGTH_LONG).show();
+            initPagedLayout(mainFrame);
         } else {
             Toast.makeText(getContext(), "Debug: Liste Modu (0) Yuklendi - Deger: " + mode, Toast.LENGTH_LONG).show();
-            setupListLayout(mainFrame);
+            initListLayout(mainFrame);
         }
 
         // Long click to manage widgets
@@ -139,7 +139,7 @@ public class WidgetPanelFragment extends Fragment {
     }
 
     // --- MODE 0: LIST LAYOUT ---
-    private void setupListLayout(ViewGroup root) {
+    private void initListLayout(ViewGroup root) {
         boolean isPortrait = getResources()
                 .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
 
@@ -181,7 +181,7 @@ public class WidgetPanelFragment extends Fragment {
     }
 
     // --- MODE 1: PAGED LAYOUT ---
-    private void setupPagedLayout(ViewGroup root) {
+    private void initPagedLayout(ViewGroup root) {
         LinearLayout container = new LinearLayout(getContext());
         container.setOrientation(LinearLayout.VERTICAL);
         container.setLayoutParams(new ViewGroup.LayoutParams(
