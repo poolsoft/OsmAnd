@@ -14,6 +14,9 @@ import android.widget.ScrollView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSnapHelper;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 import android.widget.Toast;
 
@@ -42,7 +45,7 @@ public class WidgetPanelFragment extends Fragment {
 
     public static final String TAG = "WidgetPanelFragment";
 
-    private LinearLayout widgetContainerList;
+    private RecyclerView listRecyclerView;
     private ViewPager2 widgetViewPager;
     private TabLayout tabLayout;
     private WidgetManager widgetManager;
@@ -139,45 +142,29 @@ public class WidgetPanelFragment extends Fragment {
     }
 
     // --- MODE 0: LIST LAYOUT ---
+    // --- MODE 0: LIST LAYOUT ---
     private void initListLayout(ViewGroup root) {
         boolean isPortrait = getResources()
                 .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
 
-        ViewGroup scrollContainer;
-        ViewGroup.LayoutParams scrollParams = new ViewGroup.LayoutParams(
+        listRecyclerView = new RecyclerView(getContext());
+        listRecyclerView.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT);
+                ViewGroup.LayoutParams.MATCH_PARENT));
 
-        if (isPortrait) {
-            android.widget.HorizontalScrollView hScroll = new android.widget.HorizontalScrollView(getContext());
-            hScroll.setFillViewport(true);
-            scrollContainer = hScroll;
-        } else {
-            ScrollView vScroll = new ScrollView(getContext());
-            vScroll.setFillViewport(true);
-            scrollContainer = vScroll;
-        }
-        scrollContainer.setLayoutParams(scrollParams);
+        // Layout Manager
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
+        layoutManager.setOrientation(isPortrait ? LinearLayoutManager.HORIZONTAL : LinearLayoutManager.VERTICAL);
+        listRecyclerView.setLayoutManager(layoutManager);
+
+        // Snap Helper (Snaps to start/center)
+        LinearSnapHelper snapHelper = new LinearSnapHelper();
+        snapHelper.attachToRecyclerView(listRecyclerView);
         
-        scrollContainer.setOnLongClickListener(v -> {
-            showWidgetManagementDialog();
-            return true;
-        });
-
-        widgetContainerList = new LinearLayout(getContext());
-        widgetContainerList.setOrientation(isPortrait ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
-        widgetContainerList.setLayoutParams(new ViewGroup.LayoutParams(
-                isPortrait ? ViewGroup.LayoutParams.WRAP_CONTENT : ViewGroup.LayoutParams.MATCH_PARENT,
-                isPortrait ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT));
-        widgetContainerList.setPadding(2, 0, 2, 16);
-
-        widgetContainerList.setOnLongClickListener(v -> {
-            showWidgetManagementDialog();
-            return true;
-        });
-
-        scrollContainer.addView(widgetContainerList);
-        root.addView(scrollContainer);
+        // Long click listener for container logic if needed
+        // RecyclerView handles its own touch, so we might need ItemTouchListener if we want "Empty Area" long click
+        
+        root.addView(listRecyclerView);
     }
 
     // --- MODE 1: PAGED LAYOUT ---
@@ -322,9 +309,13 @@ public class WidgetPanelFragment extends Fragment {
     }
 
     private void applyWidgetsToView() {
-        if (widgetContainerList != null) {
-            // List Mode
-            widgetManager.attachWidgetsToContainer(widgetContainerList);
+        if (listRecyclerView != null) {
+            // List Mode (RecyclerView)
+            boolean isPortrait = getResources()
+                    .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+            
+            WidgetListAdapter adapter = new WidgetListAdapter(widgetManager.getVisibleWidgets(), isPortrait);
+            listRecyclerView.setAdapter(adapter);
         } else if (widgetViewPager != null && tabLayout != null) {
             // Paged Mode
             WidgetPagerAdapter adapter = new WidgetPagerAdapter(widgetManager.getVisibleWidgets());
