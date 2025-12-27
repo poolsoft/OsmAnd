@@ -13,10 +13,34 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
 
     private final List<BaseWidget> widgets;
     private final boolean isPortrait;
+    private final OnWidgetOrderChangedListener orderChangedListener;
 
-    public WidgetListAdapter(List<BaseWidget> widgets, boolean isPortrait) {
+    public interface OnWidgetOrderChangedListener {
+        void onWidgetOrderChanged(List<BaseWidget> newOrder);
+    }
+
+    public WidgetListAdapter(List<BaseWidget> widgets, boolean isPortrait, OnWidgetOrderChangedListener listener) {
         this.widgets = widgets;
         this.isPortrait = isPortrait;
+        this.orderChangedListener = listener;
+    }
+    
+    public boolean onItemMove(int fromPosition, int toPosition) {
+        if (fromPosition < toPosition) {
+            for (int i = fromPosition; i < toPosition; i++) {
+                java.util.Collections.swap(widgets, i, i + 1);
+            }
+        } else {
+            for (int i = fromPosition; i > toPosition; i--) {
+                java.util.Collections.swap(widgets, i, i - 1);
+            }
+        }
+        notifyItemMoved(fromPosition, toPosition);
+        
+        if (orderChangedListener != null) {
+            orderChangedListener.onWidgetOrderChanged(widgets);
+        }
+        return true;
     }
 
     @NonNull

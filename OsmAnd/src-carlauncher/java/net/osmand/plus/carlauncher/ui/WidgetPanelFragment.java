@@ -314,8 +314,21 @@ public class WidgetPanelFragment extends Fragment {
             boolean isPortrait = getResources()
                     .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
             
-            WidgetListAdapter adapter = new WidgetListAdapter(widgetManager.getVisibleWidgets(), isPortrait);
+            // Adapter with Reorder Listener
+            WidgetListAdapter adapter = new WidgetListAdapter(
+                widgetManager.getVisibleWidgets(), 
+                isPortrait, 
+                newOrder -> {
+                     widgetManager.updateVisibleOrder(newOrder);
+                }
+            );
             listRecyclerView.setAdapter(adapter);
+            
+            // Attach Drag & Drop Helper
+            androidx.recyclerview.widget.ItemTouchHelper.Callback callback = new QuickItemTouchHelperCallback(adapter);
+            androidx.recyclerview.widget.ItemTouchHelper touchHelper = new androidx.recyclerview.widget.ItemTouchHelper(callback);
+            touchHelper.attachToRecyclerView(listRecyclerView);
+            
         } else if (widgetViewPager != null && tabLayout != null) {
             // Paged Mode
             WidgetPagerAdapter adapter = new WidgetPagerAdapter(widgetManager.getVisibleWidgets());

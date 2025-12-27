@@ -94,6 +94,34 @@ public class WidgetManager {
     }
 
     /**
+     * Gorunur widget siralamasini guncelle (Adapter'dan gelen)
+     */
+    public void updateVisibleOrder(List<BaseWidget> newVisibleOrder) {
+        // 1. Yeni siralamayi order field'ina isle
+        int orderCounter = 0;
+        for (BaseWidget w : newVisibleOrder) {
+            w.setOrder(orderCounter++);
+        }
+
+        // 2. Gorunmeyenleri sona ekle (mevcut siralarini koruyarak veya oteleyerek)
+        for (BaseWidget w : allWidgets) {
+            if (!newVisibleOrder.contains(w)) {
+                w.setOrder(orderCounter++);
+            }
+        }
+        
+        // 3. visibleWidgets listesini guncelle
+        this.visibleWidgets.clear();
+        this.visibleWidgets.addAll(newVisibleOrder);
+        
+        // 4. allWidgets listesini de order'a gore sirala ki tutarli olsun
+        Collections.sort(allWidgets, (w1, w2) -> Integer.compare(w1.getOrder(), w2.getOrder()));
+
+        // 5. Kaydet
+        saveWidgetConfig();
+    }
+
+    /**
      * Gorunur widget'lari guncelle ve sirala.
      */
     private void updateVisibleWidgets() {
