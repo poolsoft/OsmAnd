@@ -55,7 +55,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private LinearLayout trackListPanel;
     private View playerPanel;
     private ImageView appIcon;
-    private View appSelector;
+    private View appSelectorLaunch;
+    private View appSelectorArrow;
     private ImageButton btnPlaylist, btnClose, btnEqualizer;
     private ImageView nowPlayingArt;
     private TextView nowPlayingTitle, nowPlayingArtist;
@@ -101,7 +102,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         trackListPanel = root.findViewById(net.osmand.plus.R.id.track_list_panel);
         playerPanel = root.findViewById(net.osmand.plus.R.id.player_panel);
         appIcon = root.findViewById(net.osmand.plus.R.id.app_icon);
-        appSelector = root.findViewById(net.osmand.plus.R.id.app_selector);
+        appSelectorLaunch = root.findViewById(net.osmand.plus.R.id.app_selector_launch);
+        appSelectorArrow = root.findViewById(net.osmand.plus.R.id.app_selector_arrow);
         // btnPlaylist = root.findViewById(net.osmand.plus.R.id.btn_playlist);
         // btnEqualizer = root.findViewById(net.osmand.plus.R.id.btn_equalizer);
         btnClose = root.findViewById(net.osmand.plus.R.id.btn_close);
@@ -209,9 +211,34 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 updateRepeatUI();
             });
 
-        // App Selector
-        if (appSelector != null)
-            appSelector.setOnClickListener(v -> showAppPicker());
+        // App Selector Launch (Icon + Name)
+        if (appSelectorLaunch != null) {
+            appSelectorLaunch.setOnClickListener(v -> {
+                if (isExternalMode) {
+                    // Launch External App
+                    String pkg = musicManager.getExternalPlayerPackage();
+                    if (pkg != null && !pkg.isEmpty()) {
+                         try {
+                            Intent launchIntent = getContext().getPackageManager().getLaunchIntentForPackage(pkg);
+                            if (launchIntent != null) {
+                                // Launch in Overlay/Split based on logic, or just standard launch
+                                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(launchIntent);
+                            }
+                        } catch (Exception e) {
+                            android.widget.Toast.makeText(getContext(), "Uygulama açılamadı", android.widget.Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                } else {
+                    android.widget.Toast.makeText(getContext(), "Dahili Oynatıcı", android.widget.Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        // App Selector Picker (Arrow)
+        if (appSelectorArrow != null) {
+            appSelectorArrow.setOnClickListener(v -> showAppPicker());
+        }
 
         // Playlist Toggle (Switch Modes)
         if (btnPlaylist != null)
