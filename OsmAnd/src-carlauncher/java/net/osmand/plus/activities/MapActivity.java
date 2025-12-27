@@ -452,12 +452,12 @@ if (btnFullscreenExit != null) {
                             if (curY > maxH && maxH > 0) { curY = maxH; offScreen = true; }
 
                             if (offScreen) {
-                                btnFullscreenExit.animate().x(curX).y(curY).setDuration(300).start();
+                                btnFullscreenExit.setX(curX);
+                                btnFullscreenExit.setY(curY);
                             }
                         }
                     }
                 });
-			}
 
 			// Drag & Click Logic
 			btnFullscreenExit.setOnTouchListener(new View.OnTouchListener() {

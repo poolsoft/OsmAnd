@@ -151,6 +151,14 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             displayModePref.setEntries(new CharSequence[]{"Liste (Varsayılan)", "Sayfalı (Carousel)"});
             displayModePref.setEntryValues(new CharSequence[]{"0", "1"});
             displayModePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                // Explicitly save the value immediately to handle race condition with BroadcastReceiver
+                CarLauncherSettings settings = new CarLauncherSettings(getContext());
+                try {
+                    settings.setWidgetDisplayMode(Integer.parseInt((String) newValue));
+                } catch (NumberFormatException e) {
+                    settings.setWidgetDisplayMode(0);
+                }
+
                 // Restart required message
                 Toast.makeText(getContext(), "Görünüm değişikliği için widget paneli yenilenecek",
                         Toast.LENGTH_SHORT).show();
