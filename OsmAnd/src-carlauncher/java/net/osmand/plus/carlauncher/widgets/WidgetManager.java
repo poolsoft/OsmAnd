@@ -216,4 +216,11 @@ public class WidgetManager {
              if(widget.isVisible() && widget.isStarted()) widget.update();
         }
     }
+    public void moveWidget(int fromIndex, int toIndex) {
+        if (fromIndex >= 0 && fromIndex < widgets.size() && toIndex >= 0 && toIndex < widgets.size()) {
+            BaseWidget widget = widgets.remove(fromIndex);
+            widgets.add(toIndex, widget);
+            saveWidgetConfig();
+        }
+    }
 }
