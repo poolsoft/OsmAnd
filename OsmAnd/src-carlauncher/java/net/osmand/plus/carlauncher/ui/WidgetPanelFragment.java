@@ -328,6 +328,13 @@ public class WidgetPanelFragment extends Fragment {
             androidx.recyclerview.widget.ItemTouchHelper.Callback callback = new QuickItemTouchHelperCallback(adapter);
             androidx.recyclerview.widget.ItemTouchHelper touchHelper = new androidx.recyclerview.widget.ItemTouchHelper(callback);
             touchHelper.attachToRecyclerView(listRecyclerView);
+
+            // Apply Layout Animation
+            int resId = net.osmand.plus.R.anim.widget_layout_animation;
+            android.view.animation.LayoutAnimationController animation = 
+                android.view.animation.AnimationUtils.loadLayoutAnimation(getContext(), resId);
+            listRecyclerView.setLayoutAnimation(animation);
+            listRecyclerView.scheduleLayoutAnimation();
             
         } else if (widgetViewPager != null && tabLayout != null) {
             // Paged Mode
