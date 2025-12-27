@@ -18,6 +18,7 @@ public class CarLauncherSettings {
     private static final String KEY_WIDGET_ORDER = "widget_order";
     private static final String KEY_WIDGET_VISIBILITY_PREFIX = "widget_visible_";
     public static final String KEY_WIDGET_DISPLAY_MODE = "widget_display_mode"; // 0: List, 1: Paged
+    public static final String KEY_WIDGET_CONFIG_JSON = "widget_config_json"; // Multi-Instance Config
 
     // Appearance Keys
     public static final String KEY_STATUS_BAR = "car_launcher_status_bar";
@@ -68,6 +69,14 @@ public class CarLauncherSettings {
 
     public void setWidgetDisplayMode(int mode) {
         prefs.edit().putString(KEY_WIDGET_DISPLAY_MODE, String.valueOf(mode)).apply();
+    }
+
+    public String getWidgetConfigJson() {
+        return prefs.getString(KEY_WIDGET_CONFIG_JSON, null);
+    }
+
+    public void setWidgetConfigJson(String json) {
+        prefs.edit().putString(KEY_WIDGET_CONFIG_JSON, json).apply();
     }
 
     // --- Appearance Settings ---

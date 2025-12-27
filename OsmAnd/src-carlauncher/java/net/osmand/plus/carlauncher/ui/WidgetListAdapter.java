@@ -22,6 +22,7 @@ public class WidgetListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     public interface OnWidgetActionListener {
         void onWidgetOrderChanged(List<BaseWidget> newOrder);
         void onWidgetRemoved(BaseWidget widget);
+        void onWidgetSizeChanged(BaseWidget widget);
         void onAddWidgetClicked();
         void onEditModeRequested(); // Long press triggers this
     }
@@ -53,6 +54,22 @@ public class WidgetListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     public int getItemCount() {
         // In Edit Mode, +1 for "Add Button"
         return isEditMode ? widgets.size() + 1 : widgets.size();
+    }
+    
+    // Grid Span Logic
+    public int getSpanSize(int position) {
+        if (getItemViewType(position) == VIEW_TYPE_ADD) {
+            return 1; // Add button takes 1 slot (Small)
+        }
+        if (position >= widgets.size()) return 1; // Safety
+        
+        BaseWidget w = widgets.get(position);
+        switch (w.getSize()) {
+            case LARGE: return 4; // Full Width
+            case MEDIUM: return 2; // Half Width
+            case SMALL: return 1; // Quarter Width
+            default: return 4;
+        }
     }
 
     public boolean onItemMove(int fromPosition, int toPosition) {
@@ -88,14 +105,13 @@ public class WidgetListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             addBtn.setBackgroundResource(android.R.drawable.btn_default);
             addBtn.setColorFilter(0xFF00FF00); // Green tint
             
-            // Layout Params for Add Button
-            ViewGroup.MarginLayoutParams params;
-            if (isPortrait) {
-                int width = dpToPx(parent.getContext(), 130);
-                params = new ViewGroup.MarginLayoutParams(width, ViewGroup.LayoutParams.MATCH_PARENT);
-            } else {
-                params = new ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(parent.getContext(), 100));
-            }
+            // Layout Params for Add Button - needs to adapt to grid cell
+            // In Grid, height should match standard widget height (which varies)
+            // Or just a fixed height box.
+            
+            int height = dpToPx(parent.getContext(), 130); // Standard widget height
+            ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, height);
+            
             int margin = dpToPx(parent.getContext(), 8);
             params.setMargins(margin, margin, margin, margin);
             addBtn.setLayoutParams(params);
@@ -114,18 +130,23 @@ public class WidgetListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
                     parent.getContext(), net.osmand.plus.R.animator.widget_touch_scale));
         }
         
-        ViewGroup.MarginLayoutParams params;
-        if (isPortrait) {
-             int width = dpToPx(parent.getContext(), 130);
-             params = new ViewGroup.MarginLayoutParams(width, ViewGroup.LayoutParams.MATCH_PARENT);
-        } else {
-             params = new ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        }
+        // Layout Params - Height fixed, Width MATCH_PARENT (controlled by Grid)
+        int height = isPortrait ? ViewGroup.LayoutParams.MATCH_PARENT : dpToPx(parent.getContext(), 130);
+        // In Portrait grid, height is fixed? Or width fixed? Grid scrolls horizontally?
+        // Wait, current design: Landscape -> Vertical Scroll. Portrait -> Horizontal Scroll.
+        // If Grid Manager is Vertical (Landscape), we set height fixed.
+        // If Grid Manager is Horizontal (Portrait), we set width fixed? No, in Grid width is calculated.
+        
+        // Let's assume standard cell height for Vertical Grid
+        ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, // Width filled by Grid
+                dpToPx(parent.getContext(), 140)); // Fixed Height 140dp
+        
         int margin = dpToPx(parent.getContext(), 4);
         params.setMargins(margin, margin, margin, margin);
         
         container.setLayoutParams(params);
-        // Padding is handled by background drawable
+        container.setPadding(4, 4, 4, 4);
         
         return new WidgetViewHolder(container);
     }
@@ -155,10 +176,11 @@ public class WidgetListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             widgetHolder.container.removeAllViews();
             widgetHolder.container.addView(widgetView, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT));
+                    ViewGroup.LayoutParams.MATCH_PARENT)); // Fill container
             
-            // --- Edit Mode Overlay (Delete Button) ---
+            // --- Edit Mode Overlay ---
             if (isEditMode) {
+                // 1. Delete Button (Top Right)
                 android.widget.ImageView deleteBtn = new android.widget.ImageView(widgetHolder.container.getContext());
                 deleteBtn.setImageResource(android.R.drawable.ic_delete);
                 deleteBtn.setBackgroundColor(0xAAFF0000); // Semi-transparent Red
@@ -172,7 +194,21 @@ public class WidgetListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
                     if (actionListener != null) actionListener.onWidgetRemoved(widget);
                 });
                 
-                // Shake Animation or Scale can depend on isEditMode too
+                // 2. Resize Button (Bottom Right)
+                android.widget.ImageView resizeBtn = new android.widget.ImageView(widgetHolder.container.getContext());
+                resizeBtn.setImageResource(android.R.drawable.ic_menu_crop); // Use crop as resize icon
+                resizeBtn.setBackgroundColor(0xAA0000FF); // Semi-transparent Blue
+                resizeBtn.setPadding(8, 8, 8, 8);
+                
+                FrameLayout.LayoutParams resizeParams = new FrameLayout.LayoutParams(64, 64);
+                resizeParams.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.END;
+                widgetHolder.container.addView(resizeBtn, resizeParams);
+                
+                resizeBtn.setOnClickListener(v -> {
+                    cycleWidgetSize(widget);
+                });
+                
+                // Scale Effect
                 widgetHolder.itemView.setScaleX(0.95f);
                 widgetHolder.itemView.setScaleY(0.95f);
             } else {
@@ -183,9 +219,23 @@ public class WidgetListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
         // Long Press to Enter Edit Mode
         widgetHolder.itemView.setOnLongClickListener(v -> {
-            if (actionListener != null) actionListener.onEditModeRequested();
-            return true;
+            if (actionListener != null && !isEditMode) {
+                 actionListener.onEditModeRequested();
+                 return true;
+            }
+            return false;
         });
+    }
+    
+    private void cycleWidgetSize(BaseWidget widget) {
+        // Cycle: S -> M -> L -> S
+        switch (widget.getSize()) {
+            case SMALL: widget.setSize(BaseWidget.WidgetSize.MEDIUM); break;
+            case MEDIUM: widget.setSize(BaseWidget.WidgetSize.LARGE); break;
+            case LARGE: widget.setSize(BaseWidget.WidgetSize.SMALL); break;
+        }
+        notifyItemChanged(widgets.indexOf(widget));
+        if (actionListener != null) actionListener.onWidgetSizeChanged(widget);
     }
 
     private int dpToPx(android.content.Context context, int dp) {

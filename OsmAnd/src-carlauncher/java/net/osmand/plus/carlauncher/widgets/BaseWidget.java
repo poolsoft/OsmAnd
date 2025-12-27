@@ -6,24 +6,36 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.UUID;
+
 /**
  * Tum widget'larin base class'i.
  * Her widget bu class'i extend eder.
  */
 public abstract class BaseWidget {
 
-    protected String id;
+    public enum WidgetSize {
+        SMALL,  // 1 Column (25%)
+        MEDIUM, // 2 Columns (50%)
+        LARGE   // 4 Columns (100%)
+    }
+
+    protected String instanceId; // Unique UUID
+    protected String type;       // "music", "map", etc.
     protected String title;
     protected boolean isVisible;
     protected int order;
+    protected WidgetSize size = WidgetSize.LARGE; // Default to Large
+    
     protected Context context;
     protected View rootView;
 
     private boolean isStarted = false;
 
-    public BaseWidget(@NonNull Context context, @NonNull String id, @NonNull String title) {
+    public BaseWidget(@NonNull Context context, @NonNull String type, @NonNull String title) {
         this.context = context;
-        this.id = id;
+        this.type = type; // The type identifier (e.g. "music")
+        this.instanceId = UUID.randomUUID().toString(); // Generate unique instance ID
         this.title = title;
         this.isVisible = true;
         this.order = 0;
@@ -66,7 +78,15 @@ public abstract class BaseWidget {
     // Getters & Setters
 
     public String getId() {
-        return id;
+        return instanceId;
+    }
+    
+    public void setInstanceId(String instanceId) {
+        this.instanceId = instanceId;
+    }
+
+    public String getType() {
+        return type;
     }
 
     public String getTitle() {
@@ -90,6 +110,14 @@ public abstract class BaseWidget {
 
     public void setOrder(int order) {
         this.order = order;
+    }
+    
+    public WidgetSize getSize() {
+        return size;
+    }
+
+    public void setSize(WidgetSize size) {
+        this.size = size;
     }
 
     public boolean isStarted() {

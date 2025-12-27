@@ -24,7 +24,12 @@ public class QuickItemTouchHelperCallback extends ItemTouchHelper.Callback {
     @Override
     public int getMovementFlags(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
         // Detect layout direction from LayoutManager
-        if (recyclerView.getLayoutManager() instanceof androidx.recyclerview.widget.LinearLayoutManager) {
+        // Detect layout direction from LayoutManager
+        if (recyclerView.getLayoutManager() instanceof androidx.recyclerview.widget.GridLayoutManager) {
+            final int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN | ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT;
+            final int swipeFlags = 0;
+            return makeMovementFlags(dragFlags, swipeFlags);
+        } else if (recyclerView.getLayoutManager() instanceof androidx.recyclerview.widget.LinearLayoutManager) {
             int orientation = ((androidx.recyclerview.widget.LinearLayoutManager) recyclerView.getLayoutManager()).getOrientation();
             if (orientation == androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL) {
                 int dragFlags = ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT;

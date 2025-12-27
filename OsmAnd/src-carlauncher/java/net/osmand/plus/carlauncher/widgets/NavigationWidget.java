@@ -35,7 +35,7 @@ public class NavigationWidget extends BaseWidget {
     private Runnable updateRunnable;
 
     public NavigationWidget(@NonNull Context context, @NonNull OsmandApplication app) {
-        super(context, "navigation", "Navigasyon");
+        super(context, WidgetFactory.TYPE_NAVIGATION, "Navigasyon");
         this.app = app;
         this.routingHelper = app.getRoutingHelper();
         this.order = 3; // Hiz/yon'den sonra

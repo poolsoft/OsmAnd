@@ -37,7 +37,7 @@ public class OBDWidget extends BaseWidget {
     private OBDDataComputer.OBDComputerWidget voltComputer;
 
     public OBDWidget(@NonNull Context context, @NonNull OsmandApplication app) {
-        super(context, "obd_dashboard", "Araç Verileri");
+        super(context, WidgetFactory.TYPE_OBD, "Araç Verileri");
         this.app = app;
         this.order = 2; // Position after Clock and Speed
     }

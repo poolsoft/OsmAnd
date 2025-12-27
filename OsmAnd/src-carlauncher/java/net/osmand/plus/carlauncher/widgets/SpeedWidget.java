@@ -31,7 +31,7 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
     private final OsmandApplication app;
 
     public SpeedWidget(@NonNull Context context, @NonNull OsmandApplication app) {
-        super(context, "speed", "Hiz");
+        super(context, WidgetFactory.TYPE_SPEED, "Hız");
         this.app = app;
         this.order = 1;
     }

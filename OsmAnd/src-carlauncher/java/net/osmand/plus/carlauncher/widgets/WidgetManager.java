@@ -1,340 +1,219 @@
 package net.osmand.plus.carlauncher.widgets;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.view.View;
+import android.text.TextUtils;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 
 import net.osmand.plus.OsmandApplication;
+import net.osmand.plus.carlauncher.CarLauncherSettings;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
  * Widget'lari yoneten merkezi sinif.
- * Widget ekleme, cikarma, siralama, kaydetme.
+ * - Multi-Instance destegi (UUID based IDs)
+ * - JSON Configuration (Type, ID, Size, Order)
+ * - WidgetFactory entegrasyonu
  */
 public class WidgetManager {
 
-    private static final String PREFS_NAME = "car_launcher_widgets";
-    private static final String KEY_WIDGET_CONFIG = "widget_config";
-
     private final Context context;
     private final OsmandApplication app;
-    private final SharedPreferences prefs;
+    private final CarLauncherSettings settings;
 
-    private final List<BaseWidget> allWidgets;
-    private final List<BaseWidget> visibleWidgets;
+    // List of active widget instances
+    private final List<BaseWidget> widgets;
 
     public WidgetManager(@NonNull Context context, @NonNull OsmandApplication app) {
         this.context = context;
         this.app = app;
-        this.prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        this.allWidgets = new ArrayList<>();
-        this.visibleWidgets = new ArrayList<>();
+        this.settings = new CarLauncherSettings(context);
+        this.widgets = new ArrayList<>();
     }
 
     /**
-     * Widget ekle.
+     * Initializes widgets from saved configuration or default migration.
      */
-    public void addWidget(@NonNull BaseWidget widget) {
-        if (!allWidgets.contains(widget)) {
-            allWidgets.add(widget);
-            updateVisibleWidgets();
+    public void loadWidgetConfig() {
+        widgets.clear();
+        String jsonConfig = settings.getWidgetConfigJson();
+
+        if (!TextUtils.isEmpty(jsonConfig)) {
+            loadFromJson(jsonConfig);
+        } else {
+            loadFromLegacyAndMigrate();
         }
     }
 
-    /**
-     * Widget cikar.
-     */
-    public void removeWidget(@NonNull BaseWidget widget) {
-        allWidgets.remove(widget);
-        visibleWidgets.remove(widget);
+    private void loadFromJson(String json) {
+        try {
+            JSONArray arr = new JSONArray(json);
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject obj = arr.getJSONObject(i);
+                String type = obj.optString("type");
+                String instanceId = obj.optString("id");
+                String sizeName = obj.optString("size", "LARGE");
+                boolean visible = obj.optBoolean("visible", true);
+
+                BaseWidget widget = WidgetFactory.createWidget(context, app, type);
+                if (widget != null) {
+                    if (!TextUtils.isEmpty(instanceId)) {
+                        widget.setInstanceId(instanceId);
+                    }
+                    try {
+                        widget.setSize(BaseWidget.WidgetSize.valueOf(sizeName));
+                    } catch (IllegalArgumentException e) {
+                        widget.setSize(BaseWidget.WidgetSize.LARGE);
+                    }
+                    widget.setVisible(visible);
+                    widgets.add(widget);
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+            loadFromLegacyAndMigrate(); // Fallback
+        }
+    }
+
+    private void loadFromLegacyAndMigrate() {
+        // Default Legacy List
+        java.util.List<String> defaults = new ArrayList<>();
+        defaults.add(WidgetFactory.TYPE_CLOCK);
+        defaults.add(WidgetFactory.TYPE_SPEED);
+        defaults.add(WidgetFactory.TYPE_OBD); // OBD
+        defaults.add(WidgetFactory.TYPE_NAVIGATION);
+        defaults.add(WidgetFactory.TYPE_MUSIC);
+        defaults.add(WidgetFactory.TYPE_ANTENNA);
+        defaults.add(WidgetFactory.TYPE_COMPASS);
+
+        // Load old order from legacy settings
+        List<String> legacyOrder = settings.getWidgetOrder(defaults);
+
+        for (String type : legacyOrder) {
+            // Map legacy IDs to new Types if needed (e.g. "clock_material3" -> TYPE_CLOCK)
+            String mappedType = mapLegacyType(type);
+            
+            BaseWidget widget = WidgetFactory.createWidget(context, app, mappedType);
+            if (widget != null) {
+                // Visibility was stored separately in legacy
+                boolean visible = settings.isWidgetVisible(type, true); // Use old ID for lookup
+                widget.setVisible(visible);
+                widgets.add(widget);
+            }
+        }
+        
+        saveWidgetConfig(); // Save as new JSON format
+    }
+
+    private String mapLegacyType(String oldId) {
+        if ("clock_material3".equals(oldId)) return WidgetFactory.TYPE_CLOCK;
+        if ("direction".equals(oldId)) return WidgetFactory.TYPE_COMPASS;
+        if ("obd_dashboard".equals(oldId)) return WidgetFactory.TYPE_OBD;
+        // Others matched factory types: "speed", "music", "navigation", "antenna"
+        return oldId;
+    }
+
+    public void saveWidgetConfig() {
+        JSONArray arr = new JSONArray();
+        for (BaseWidget widget : widgets) {
+            try {
+                JSONObject obj = new JSONObject();
+                obj.put("type", widget.getType());
+                obj.put("id", widget.getId()); // Instance ID
+                obj.put("size", widget.getSize().name());
+                obj.put("visible", widget.isVisible());
+                arr.put(obj);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        settings.setWidgetConfigJson(arr.toString());
     }
 
     /**
-     * Widget'i gosterilir/gizli yap.
+     * Create and add a new widget instance by type.
      */
-    public void setWidgetVisible(@NonNull String widgetId, boolean visible) {
-        BaseWidget widget = findWidgetById(widgetId);
+    public void addWidgetByType(String type) {
+        BaseWidget widget = WidgetFactory.createWidget(context, app, type);
         if (widget != null) {
-            widget.setVisible(visible);
-            updateVisibleWidgets();
+            widgets.add(widget);
+            saveWidgetConfig();
+            updateVisibleOrder(widgets); // Notify listeners? Adapter triggers this usually.
+            // Actually adapter is listening to changes if we implement observer pattern.
+            // For now, caller usually refreshes adapter.
         }
     }
 
-    /**
-     * Widget siralamasini degistir.
-     */
-    public void moveWidget(int fromIndex, int toIndex) {
-        if (fromIndex < 0 || fromIndex >= allWidgets.size() ||
-                toIndex < 0 || toIndex >= allWidgets.size()) {
-            return;
-        }
-
-        BaseWidget widget = allWidgets.remove(fromIndex);
-        allWidgets.add(toIndex, widget);
-
-        // Update order fields
-        for (int i = 0; i < allWidgets.size(); i++) {
-            allWidgets.get(i).setOrder(i);
-        }
-
-        updateVisibleWidgets();
+    public void removeWidget(BaseWidget widget) {
+        widgets.remove(widget);
         saveWidgetConfig();
     }
-
-    /**
-     * Gorunur widget siralamasini guncelle (Adapter'dan gelen)
-     */
-    public void updateVisibleOrder(List<BaseWidget> newVisibleOrder) {
-        // 1. Yeni siralamayi order field'ina isle
-        int orderCounter = 0;
-        for (BaseWidget w : newVisibleOrder) {
-            w.setOrder(orderCounter++);
-        }
-
-        // 2. Gorunmeyenleri sona ekle (mevcut siralarini koruyarak veya oteleyerek)
-        for (BaseWidget w : allWidgets) {
-            if (!newVisibleOrder.contains(w)) {
-                w.setOrder(orderCounter++);
-            }
-        }
-        
-        // 3. visibleWidgets listesini guncelle
-        this.visibleWidgets.clear();
-        this.visibleWidgets.addAll(newVisibleOrder);
-        
-        // 4. allWidgets listesini de order'a gore sirala ki tutarli olsun
-        Collections.sort(allWidgets, (w1, w2) -> Integer.compare(w1.getOrder(), w2.getOrder()));
-
-        // 5. Kaydet
-        saveWidgetConfig();
+    
+    // For manual addition if needed (e.g. from tests or old init)
+    public void addWidget(BaseWidget widget) {
+         if (widget != null && !widgets.contains(widget)) {
+             widgets.add(widget);
+             saveWidgetConfig();
+         }
     }
 
-    /**
-     * Gorunur widget'lari guncelle ve sirala.
-     */
-    private void updateVisibleWidgets() {
-        visibleWidgets.clear();
-        for (BaseWidget widget : allWidgets) {
-            if (widget.isVisible()) {
-                visibleWidgets.add(widget);
+    public void updateVisibleOrder(List<BaseWidget> newOrder) {
+         // newOrder contains only visible widgets in order.
+         // We need to reconstruct 'widgets' list: New Visible Order + Hidden Widgets.
+         
+         List<BaseWidget> hiddenWidgets = new ArrayList<>();
+         for (BaseWidget w : widgets) {
+             if (!newOrder.contains(w)) {
+                 hiddenWidgets.add(w);
+             }
+         }
+         
+         widgets.clear();
+         widgets.addAll(newOrder);
+         widgets.addAll(hiddenWidgets);
+         
+         saveWidgetConfig();
+    }
+
+    public List<BaseWidget> getAllWidgets() {
+        return new ArrayList<>(widgets);
+    }
+
+    public List<BaseWidget> getVisibleWidgets() {
+        List<BaseWidget> visible = new ArrayList<>();
+        for (BaseWidget w : widgets) {
+            if (w.isVisible()) {
+                visible.add(w);
             }
         }
-
-        // Order'a gore sirala
-        Collections.sort(visibleWidgets, new Comparator<BaseWidget>() {
-            @Override
-            public int compare(BaseWidget w1, BaseWidget w2) {
-                return Integer.compare(w1.getOrder(), w2.getOrder());
-            }
-        });
+        return visible;
     }
+    
+    // --- Lifecycle Methods ---
 
-    /**
-     * Widget'lari container'a ekle.
-     */
-    public void attachWidgetsToContainer(@NonNull ViewGroup container) {
-        container.removeAllViews();
-
-        int margin = dpToPx(4); // Reduced margin
-
-        for (int i = 0; i < visibleWidgets.size(); i++) {
-            BaseWidget widget = visibleWidgets.get(i);
-            View widgetView = widget.getRootView();
-            if (widgetView == null) {
-                widgetView = widget.createView();
-            }
-
-            if (widgetView != null) {
-                // Apply margins consistently to all widgets
-                // Detect Layout Orientation
-                boolean isVertical = true;
-                LinearLayout.LayoutParams params;
-                if (container instanceof LinearLayout) {
-                    isVertical = ((LinearLayout) container).getOrientation() == LinearLayout.VERTICAL;
-                }
-
-                if (isVertical) {
-                    // Vertical (Landscape): Width Fill, Height Wrap
-                    params = new LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT);
-                } else {
-                    // Horizontal (Portrait): Width Fixed (~100-130dp), Height Fill
-                    int width = dpToPx(130);
-                    params = new LinearLayout.LayoutParams(
-                            width,
-                            ViewGroup.LayoutParams.MATCH_PARENT);
-                }
-
-                // First widget gets 0 top margin
-                int topMargin = (i == 0) ? 0 : margin;
-                params.setMargins(margin, topMargin, margin, margin);
-                widgetView.setLayoutParams(params);
-
-                container.addView(widgetView);
-            }
-        }
-    }
-
-    private int dpToPx(int dp) {
-        float density = context.getResources().getDisplayMetrics().density;
-        return Math.round(dp * density);
-    }
-
-    /**
-     * Tum widget'lari guncelle.
-     */
-    public void updateAllWidgets() {
-        for (BaseWidget widget : visibleWidgets) {
-            if (widget.isStarted()) {
-                widget.update();
-            }
-        }
-    }
-
-    /**
-     * Tum widget'lari baslat.
-     */
     public void startAllWidgets() {
-        for (BaseWidget widget : visibleWidgets) {
-            widget.onStart();
+        for (BaseWidget widget : widgets) {
+            if (widget.isVisible()) widget.onStart();
         }
     }
 
-    /**
-     * Tum widget'lari durdur.
-     */
     public void stopAllWidgets() {
-        for (BaseWidget widget : visibleWidgets) {
+        for (BaseWidget widget : widgets) {
             widget.onStop();
         }
     }
-
-    /**
-     * Widget config'i kaydet.
-     */
-    /**
-     * Widget config'i kaydet.
-     */
-    public void saveWidgetConfig() {
-        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(
-                context);
-
-        List<String> order = new ArrayList<>();
-        for (BaseWidget widget : allWidgets) {
-            settings.setWidgetVisible(widget.getId(), widget.isVisible());
-            // Order is effectively the index in allWidgets dependent on how we manage it,
-            // but for simple list order saving:
-            order.add(widget.getId());
+    
+    public void updateAllWidgets() {
+        for (BaseWidget widget : widgets) {
+             if(widget.isVisible() && widget.isStarted()) widget.update();
         }
-
-        // Actually, we should save the order of *visible* widgets or just the sorted
-        // order of all widgets via a specific list?
-        // Let's save the order of 'visibleWidgets' first, then invisible ones appended?
-        // Or better: Let CarLauncherSettings store the 'Sort Order' of IDs.
-
-        // Current 'allWidgets' list might be sorted by insertion or by previous load.
-        // Let's create a list of IDs representing the current desired order.
-        // Since 'moveWidget' modifies 'visibleWidgets' only, we need to reflect that in
-        // 'allWidgets' or just save 'visibleWidgets' order?
-
-        // Strategy: Save all IDs in the order they should appear.
-        // visibleWidgets are at the top (sorted). Invisible ones don't have an order
-        // per se, but let's keep them stable.
-
-        List<String> sortedIds = new ArrayList<>();
-        for (BaseWidget w : visibleWidgets) {
-            sortedIds.add(w.getId());
-        }
-        // Add remaining invisible widgets
-        for (BaseWidget w : allWidgets) {
-            if (!visibleWidgets.contains(w)) {
-                sortedIds.add(w.getId());
-            }
-        }
-
-        settings.setWidgetOrder(sortedIds);
-    }
-
-    /**
-     * Widget config'i yukle.
-     */
-    public void loadWidgetConfig() {
-        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(
-                context);
-
-        // Default order... if simple we rely on initialization order.
-        List<String> savedOrder = settings.getWidgetOrder(null);
-
-        if (savedOrder != null) {
-            // Reorder 'allWidgets' based on savedOrder
-            List<BaseWidget> reordered = new ArrayList<>();
-            for (String id : savedOrder) {
-                BaseWidget w = findWidgetById(id);
-                if (w != null) {
-                    reordered.add(w);
-                }
-            }
-            // Add any new/unknown widgets that were not in saved settings
-            for (BaseWidget w : allWidgets) {
-                if (!reordered.contains(w)) {
-                    reordered.add(w);
-                }
-            }
-
-            allWidgets.clear();
-            allWidgets.addAll(reordered);
-        }
-
-        // Restore visibility
-        for (BaseWidget widget : allWidgets) {
-            // Default visibility true? Or based on some default list? Assuming true for
-            // now.
-            boolean visible = settings.isWidgetVisible(widget.getId(), true);
-            widget.setVisible(visible);
-
-            // Set internal order field based on list index
-            widget.setOrder(allWidgets.indexOf(widget));
-        }
-
-        updateVisibleWidgets();
-    }
-
-    /**
-     * ID'ye gore widget bul.
-     */
-    private BaseWidget findWidgetById(String id) {
-        for (BaseWidget widget : allWidgets) {
-            if (widget.getId().equals(id)) {
-                return widget;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Tum widget'lari al.
-     */
-    public List<BaseWidget> getAllWidgets() {
-        return new ArrayList<>(allWidgets);
-    }
-
-    /**
-     * Gorunur widget'lari al.
-     */
-    public List<BaseWidget> getVisibleWidgets() {
-        return new ArrayList<>(visibleWidgets);
     }
 }

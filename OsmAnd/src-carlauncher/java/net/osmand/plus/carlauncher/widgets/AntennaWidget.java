@@ -35,7 +35,7 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
     private final AntennaManager manager;
 
     public AntennaWidget(@NonNull Context context, @NonNull OsmandApplication app) {
-        super(context, "antenna", "Anten");
+        super(context, WidgetFactory.TYPE_ANTENNA, "Anten");
         this.manager = AntennaManager.getInstance(context);
         this.order = 4; // Place after Music
     }

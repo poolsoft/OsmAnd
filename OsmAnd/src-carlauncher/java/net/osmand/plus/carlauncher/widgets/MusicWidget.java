@@ -38,7 +38,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     private final MusicManager musicManager;
 
     public MusicWidget(@NonNull Context context, @NonNull OsmandApplication app) {
-        super(context, "music", "Muzik");
+        super(context, WidgetFactory.TYPE_MUSIC, "Muzik");
         this.musicManager = MusicManager.getInstance(context);
         this.order = 3;
     }
