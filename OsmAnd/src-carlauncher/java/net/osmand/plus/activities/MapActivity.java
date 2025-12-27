@@ -458,6 +458,7 @@ if (btnFullscreenExit != null) {
                         }
                     }
                 });
+            }
 
 			// Drag & Click Logic
 			btnFullscreenExit.setOnTouchListener(new View.OnTouchListener() {
