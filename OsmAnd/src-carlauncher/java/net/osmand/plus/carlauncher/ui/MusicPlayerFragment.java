@@ -1,6 +1,7 @@
 package net.osmand.plus.carlauncher.ui;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -216,7 +217,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             appSelectorLaunch.setOnClickListener(v -> {
                 if (isExternalMode) {
                     // Launch External App
-                    String pkg = musicManager.getExternalPlayerPackage();
+                    String pkg = musicManager.getPreferredPackage();
                     if (pkg != null && !pkg.isEmpty()) {
                          try {
                             Intent launchIntent = getContext().getPackageManager().getLaunchIntentForPackage(pkg);
