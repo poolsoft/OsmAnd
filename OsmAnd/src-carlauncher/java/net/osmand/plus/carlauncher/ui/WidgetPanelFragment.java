@@ -185,30 +185,20 @@ public class WidgetPanelFragment extends Fragment {
 
     // --- ADD WIDGET DIALOG ---
     private void showAddWidgetDialog() {
+        java.util.List<net.osmand.plus.carlauncher.widgets.WidgetRegistry.WidgetEntry> widgets = 
+            net.osmand.plus.carlauncher.widgets.WidgetRegistry.getAvailableWidgets();
+            
+        final String[] displayNames = new String[widgets.size()];
+        final String[] typeKeys = new String[widgets.size()];
+        
+        for (int i = 0; i < widgets.size(); i++) {
+            displayNames[i] = widgets.get(i).displayName;
+            typeKeys[i] = widgets.get(i).typeId;
+        }
+
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
         builder.setTitle("Widget Ekle");
-
-        final String[] widgetTypes = {
-            "Hız Göstergesi", 
-            "Müzik Çalar", 
-            "Navigasyon", 
-            "Pusula", 
-            "OBD Bilgileri",
-            "Analog Saat",
-            "Rakım (Anten)"
-        };
-        
-        final String[] typeKeys = {
-            net.osmand.plus.carlauncher.widgets.WidgetFactory.TYPE_SPEED,
-            net.osmand.plus.carlauncher.widgets.WidgetFactory.TYPE_MUSIC,
-            net.osmand.plus.carlauncher.widgets.WidgetFactory.TYPE_NAVIGATION,
-            net.osmand.plus.carlauncher.widgets.WidgetFactory.TYPE_COMPASS,
-            net.osmand.plus.carlauncher.widgets.WidgetFactory.TYPE_OBD,
-            net.osmand.plus.carlauncher.widgets.WidgetFactory.TYPE_CLOCK,
-            net.osmand.plus.carlauncher.widgets.WidgetFactory.TYPE_ANTENNA
-        };
-
-        builder.setItems(widgetTypes, (dialog, which) -> {
+        builder.setItems(displayNames, (dialog, which) -> {
             String selectedType = typeKeys[which];
             showWidgetSizeDialog(selectedType);
         });
@@ -220,8 +210,11 @@ public class WidgetPanelFragment extends Fragment {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
         builder.setTitle("Boyut Seçiniz");
         
-        // 0: Small (2/6), 1: Medium (3/6), 2: Large (6/6)
-        final String[] sizes = {"Küçük (1/3 Ekran)", "Orta (1/2 Ekran)", "Büyük (Tam Ekran)"};
+        // 0: Small (1/3), 1: Medium (1/2), 2: Large (Full)
+        // Note: Descriptions are for Landscape (Vertical List).
+        // For Portrait: Small (1/2), Medium (?), Large (?) -> Maybe generic text?
+        // "Küçük", "Orta", "Büyük"
+        final String[] sizes = {"Küçük (Standart)", "Orta (Geniş)", "Büyük (Tam)"};
         
         builder.setItems(sizes, (dialog, which) -> {
             BaseWidget.WidgetSize size = BaseWidget.WidgetSize.SMALL;
@@ -237,10 +230,24 @@ public class WidgetPanelFragment extends Fragment {
     }
     
     private void addNewWidget(String type, BaseWidget.WidgetSize size) {
-        BaseWidget widget = net.osmand.plus.carlauncher.widgets.WidgetFactory.createWidget(getContext(), app, type);
+        BaseWidget widget = net.osmand.plus.carlauncher.widgets.WidgetRegistry.createWidget(getContext(), app, type);
         if (widget != null) {
             widget.setSize(size);
-            // Assign unique ID if needed or let Manager handle it
+            // Unique ID generation or handling could be here, but Manager likely uses widget.getId() which is type-based?
+            // If multiple of same type allowed, WidgetFactory/Registry creates distinct instances but IDs?
+            // BaseWidget constructor usually takes type as ID.
+            // If we want multiple clocks, ID needs to be unique.
+            // Let's modify ID to be type + timestamp if needed.
+            // Checking BaseWidget/Implementation... usually ID is fixed prefix.
+            // Hack for uniqueness:
+            try {
+                java.lang.reflect.Field idField = BaseWidget.class.getDeclaredField("id");
+                idField.setAccessible(true);
+                idField.set(widget, type + "_" + System.currentTimeMillis());
+            } catch (Exception e) {
+                // Ignore
+            }
+            
             widgetManager.addWidget(widget);
             
             // Refresh View
