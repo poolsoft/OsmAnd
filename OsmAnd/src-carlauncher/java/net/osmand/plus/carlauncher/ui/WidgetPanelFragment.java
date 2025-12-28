@@ -142,7 +142,7 @@ public class WidgetPanelFragment extends Fragment {
     }
 
     // --- MODE 0: LIST LAYOUT ---
-    // --- MODE 0: LIST LAYOUT ---
+    // --- MODE 0: LIST LAYOUT (UNIT BASED) ---
     private void initListLayout(ViewGroup root) {
         boolean isPortrait = getResources()
                 .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
@@ -151,18 +151,50 @@ public class WidgetPanelFragment extends Fragment {
         listRecyclerView.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
+        
+        // Zero Margin/Padding for perfect stacking
+        listRecyclerView.setPadding(0, 0, 0, 0);
+        listRecyclerView.setClipToPadding(false);
 
         // Layout Manager
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
         layoutManager.setOrientation(isPortrait ? LinearLayoutManager.HORIZONTAL : LinearLayoutManager.VERTICAL);
         listRecyclerView.setLayoutManager(layoutManager);
 
-        // Snap Helper (Snaps to start/center)
-        LinearSnapHelper snapHelper = new LinearSnapHelper();
-        snapHelper.attachToRecyclerView(listRecyclerView);
+        // Unit Size Calculation
+        // Landscape: Total Height / 6 = 1 Unit
+        // Portrait: Total Width / 2 = 1 Unit (User Requirement: 2 widgets side-by-side)
         
-        // Long click listener for container logic if needed
-        // RecyclerView handles its own touch, so we might need ItemTouchListener if we want "Empty Area" long click
+        listRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if (listRecyclerView.getMeasuredHeight() > 0 && listRecyclerView.getMeasuredWidth() > 0) {
+                    listRecyclerView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    
+                    int unitSize;
+                    if (isPortrait) {
+                        // Portrait: 2 Items per screen width
+                        unitSize = listRecyclerView.getMeasuredWidth() / 2;
+                    } else {
+                        // Landscape: 6 Units per screen height
+                        unitSize = listRecyclerView.getMeasuredHeight() / 6;
+                    }
+                    
+                    if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
+                        ((WidgetListAdapter) listRecyclerView.getAdapter()).setUnitSize(unitSize, isPortrait);
+                    }
+                }
+            }
+        });
+
+        // Snap Helper: Use PagerSnapHelper because our items are perfectly sized to fit the screen 
+        // (e.g. 3xSmall = 1 Screen, 2xMedium = 1 Screen). PagerSnap helps lock them in place.
+        // Or LinearSnapHelper for free scrolling but snapping to edges. 
+        // User requested "Magnetic", PagerSnapHelper is strongest for this if items fill screen.
+        // However, if we have 1 Medium + 1 Small, that's 5/6 screen. PagerSnap might be weird.
+        // Let's use LinearSnapHelper which snaps to Closest View Center/Start.
+        LinearSnapHelper snapHelper = new LinearSnapHelper(); 
+        snapHelper.attachToRecyclerView(listRecyclerView);
         
         root.addView(listRecyclerView);
     }
@@ -198,106 +230,71 @@ public class WidgetPanelFragment extends Fragment {
     }
 
 
-    private void showWidgetManagementDialog() {
-        if (getContext() == null || widgetManager == null)
-            return;
-
+    // --- ADD WIDGET DIALOG ---
+    private void showAddWidgetDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
-        builder.setTitle("Widget Yonetimi");
+        builder.setTitle("Widget Ekle");
 
-        final LinearLayout listLayout = new LinearLayout(getContext());
-        listLayout.setOrientation(LinearLayout.VERTICAL);
-        listLayout.setPadding(16, 16, 16, 16);
+        final String[] widgetTypes = {
+            "Hız Göstergesi", 
+            "Müzik Çalar", 
+            "Navigasyon", 
+            "Pusula", 
+            "OBD Bilgileri",
+            "Analog Saat",
+            "Rakım (Anten)"
+        };
+        
+        final String[] typeKeys = {
+            net.osmand.plus.carlauncher.widgets.WidgetFactory.TYPE_SPEED,
+            net.osmand.plus.carlauncher.widgets.WidgetFactory.TYPE_MUSIC,
+            net.osmand.plus.carlauncher.widgets.WidgetFactory.TYPE_NAVIGATION,
+            net.osmand.plus.carlauncher.widgets.WidgetFactory.TYPE_COMPASS,
+            net.osmand.plus.carlauncher.widgets.WidgetFactory.TYPE_OBD,
+            net.osmand.plus.carlauncher.widgets.WidgetFactory.TYPE_CLOCK,
+            net.osmand.plus.carlauncher.widgets.WidgetFactory.TYPE_ANTENNA
+        };
 
-        ScrollView scrollView = new ScrollView(getContext());
-        scrollView.addView(listLayout);
-
-        builder.setView(scrollView);
-        builder.setPositiveButton("Kapat", (dialog, which) -> {
-            applyWidgetsToView(); // Re-attach based on mode
-            widgetManager.startAllWidgets();
+        builder.setItems(widgetTypes, (dialog, which) -> {
+            String selectedType = typeKeys[which];
+            showWidgetSizeDialog(selectedType);
         });
-
-        final android.app.AlertDialog dialog = builder.create();
-        updateDialogList(listLayout, dialog);
-        dialog.show();
+        
+        builder.show();
     }
 
-    private void updateDialogList(final LinearLayout listLayout, final android.app.AlertDialog dialog) {
-        listLayout.removeAllViews();
-        java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> widgets = widgetManager.getAllWidgets();
-
-        for (int i = 0; i < widgets.size(); i++) {
-            final net.osmand.plus.carlauncher.widgets.BaseWidget w = widgets.get(i);
-            final int index = i;
-
-            LinearLayout row = new LinearLayout(getContext());
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
-            row.setPadding(0, 8, 0, 8);
-            row.setBackgroundResource(android.R.drawable.list_selector_background);
-
-            // Visibility Checkbox
-            android.widget.CheckBox cb = new android.widget.CheckBox(getContext());
-            cb.setChecked(w.isVisible());
-            cb.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                widgetManager.setWidgetVisible(w.getId(), isChecked);
-                widgetManager.saveWidgetConfig();
-            });
-            row.addView(cb);
-
-            // Name
-            android.widget.TextView nameView = new android.widget.TextView(getContext());
-            nameView.setText(w.getTitle());
-            nameView.setTextSize(16);
-            nameView.setTextColor(0xFFFFFFFF);
-            nameView.setPadding(16, 0, 16, 0);
-
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
-            row.addView(nameView, params);
-
-            // Up Button
-            if (index > 0) {
-                android.widget.ImageButton upBtn = new android.widget.ImageButton(getContext());
-                upBtn.setImageResource(android.R.drawable.arrow_up_float);
-                upBtn.setBackgroundColor(0x00000000);
-                upBtn.setPadding(24, 24, 24, 24);
-                LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(96, 96);
-                btnParams.setMargins(8, 0, 8, 0);
-                upBtn.setLayoutParams(btnParams);
-
-                upBtn.setOnClickListener(v -> {
-                    widgetManager.moveWidget(index, index - 1);
-                    updateDialogList(listLayout, dialog);
-                });
-                row.addView(upBtn);
-            } else {
-                android.view.View spacer = new android.view.View(getContext());
-                spacer.setLayoutParams(new LinearLayout.LayoutParams(96, 96));
-                row.addView(spacer);
+    private void showWidgetSizeDialog(String type) {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
+        builder.setTitle("Boyut Seçiniz");
+        
+        // 0: Small (2/6), 1: Medium (3/6), 2: Large (6/6)
+        final String[] sizes = {"Küçük (1/3 Ekran)", "Orta (1/2 Ekran)", "Büyük (Tam Ekran)"};
+        
+        builder.setItems(sizes, (dialog, which) -> {
+            BaseWidget.WidgetSize size = BaseWidget.WidgetSize.SMALL;
+            switch (which) {
+                case 0: size = BaseWidget.WidgetSize.SMALL; break;
+                case 1: size = BaseWidget.WidgetSize.MEDIUM; break;
+                case 2: size = BaseWidget.WidgetSize.LARGE; break;
             }
-
-            // Down Button
-            if (index < widgets.size() - 1) {
-                android.widget.ImageButton downBtn = new android.widget.ImageButton(getContext());
-                downBtn.setImageResource(android.R.drawable.arrow_down_float);
-                downBtn.setBackgroundColor(0x00000000);
-                downBtn.setPadding(24, 24, 24, 24);
-                LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(96, 96);
-                btnParams.setMargins(8, 0, 8, 0);
-                downBtn.setLayoutParams(btnParams);
-
-                downBtn.setOnClickListener(v -> {
-                    widgetManager.moveWidget(index, index + 1);
-                    updateDialogList(listLayout, dialog);
-                });
-                row.addView(downBtn);
-            }
-
-            listLayout.addView(row);
+            addNewWidget(type, size);
+        });
+        
+        builder.show();
+    }
+    
+    private void addNewWidget(String type, BaseWidget.WidgetSize size) {
+        BaseWidget widget = net.osmand.plus.carlauncher.widgets.WidgetFactory.createWidget(getContext(), app, type);
+        if (widget != null) {
+            widget.setSize(size);
+            // Assign unique ID if needed or let Manager handle it
+            widgetManager.addWidget(widget);
+            
+            // Refresh View
+            applyWidgetsToView();
         }
     }
+    
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -314,20 +311,97 @@ public class WidgetPanelFragment extends Fragment {
             boolean isPortrait = getResources()
                     .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
             
-            WidgetListAdapter adapter = new WidgetListAdapter(widgetManager.getVisibleWidgets(), isPortrait);
+            WidgetListAdapter adapter = new WidgetListAdapter(
+                widgetManager.getVisibleWidgets(), 
+                isPortrait,
+                new WidgetListAdapter.OnWidgetActionListener() {
+                    @Override
+                    public void onWidgetOrderChanged(java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> newOrder) {
+                        widgetManager.updateVisibleOrder(newOrder); // Save new order
+                    }
+
+                    @Override
+                    public void onWidgetRemoved(net.osmand.plus.carlauncher.widgets.BaseWidget widget) {
+                        widgetManager.removeWidget(widget);
+                        applyWidgetsToView(); // Refresh
+                    }
+
+                    @Override
+                    public void onAddWidgetClicked() {
+                        showAddWidgetDialog();
+                    }
+
+                    @Override
+                    public void onEditModeRequested() {
+                        // Toggle Edit Mode on Adapter
+                        if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
+                            WidgetListAdapter a = (WidgetListAdapter) listRecyclerView.getAdapter();
+                            // We don't have a public getter for edit mode, but we can toggle.
+                            // Better: track state in fragment or just set true
+                            // For now, let's assume this enters edit mode.
+                            // To toggle, we need to know current state.
+                            // Let's add isEditMode() to adapter or track here. 
+                            // Simplified: Just set true. Exit via "Done" button or back?
+                            // User asked for "Done" button previously, but it might be gone in revert.
+                            // If we want a toggle, let's just make setEditMode(!current).
+                            // But for now, let's set it to TRUE.
+                            a.setEditMode(true);
+                            
+                            // Show "Done" button? 
+                            // If we don't have a UI for "Done", we need one. 
+                            // Add a Floating Action Button or similar?
+                            // Or just rely on tapping elsewhere? (Hard).
+                            // Let's show a Toast for now or rely on back press if handled.
+                            // Actually, let's add a "Done" button to the root view dynamically if not present.
+                            showDoneButton();
+                        }
+                    }
+                }
+            );
+            
             listRecyclerView.setAdapter(adapter);
+            
+            // Drag & Drop
+            androidx.recyclerview.widget.ItemTouchHelper.Callback callback = 
+                new net.osmand.plus.carlauncher.ui.QuickItemTouchHelperCallback(adapter);
+            androidx.recyclerview.widget.ItemTouchHelper touchHelper = 
+                new androidx.recyclerview.widget.ItemTouchHelper(callback);
+            touchHelper.attachToRecyclerView(listRecyclerView);
+            
         } else if (widgetViewPager != null && tabLayout != null) {
-            // Paged Mode
+            // Paged Mode (Legacy/Alternative)
             WidgetPagerAdapter adapter = new WidgetPagerAdapter(widgetManager.getVisibleWidgets());
             widgetViewPager.setAdapter(adapter);
             
-            // Connect Tabs (Only if not already connected - though mediator handles re-attach gracefully usually, 
-            // but we can just create a new one as the adapter is new)
-            new TabLayoutMediator(tabLayout, widgetViewPager,
+             new TabLayoutMediator(tabLayout, widgetViewPager,
                     (tab, position) -> {
-                        // Empty title, just dots
                     }
             ).attach();
+        }
+    }
+    
+    private void showDoneButton() {
+        // Simple implementation: Add a button to root layout if not exists
+        if (rootContent != null && rootContent.findViewWithTag("DoneButton") == null) {
+             android.widget.Button doneBtn = new android.widget.Button(getContext());
+             doneBtn.setText("BİTTİ");
+             doneBtn.setTag("DoneButton");
+             doneBtn.setBackgroundColor(0xFF4CAF50); // Green
+             doneBtn.setTextColor(0xFFFFFFFF);
+             
+             android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
+                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+             params.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.END;
+             params.setMargins(32, 32, 32, 32);
+             
+             rootContent.addView(doneBtn, params);
+             
+             doneBtn.setOnClickListener(v -> {
+                 if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
+                     ((WidgetListAdapter) listRecyclerView.getAdapter()).setEditMode(false);
+                 }
+                 rootContent.removeView(doneBtn);
+             });
         }
     }
 
