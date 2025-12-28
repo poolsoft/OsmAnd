@@ -46,8 +46,6 @@ public class WidgetPanelFragment extends Fragment {
     public static final String TAG = "WidgetPanelFragment";
 
     private RecyclerView listRecyclerView;
-    private ViewPager2 widgetViewPager;
-    private TabLayout tabLayout;
     private WidgetManager widgetManager;
     private OsmandApplication app;
     private BroadcastReceiver modeChangeReceiver;
@@ -78,25 +76,10 @@ public class WidgetPanelFragment extends Fragment {
         mainFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_panel_modern);
         rootContent = mainFrame;
 
-        // Determine Mode
-        CarLauncherSettings settings = new CarLauncherSettings(getContext());
-        int mode = settings.getWidgetDisplayMode(); // 0: List, 1: Paged
+        // Force List Layout (Unified)
+        initListLayout(mainFrame);
 
-        if (mode == 1) {
-            Toast.makeText(getContext(), "Debug: Sayfali Mod (1) Yuklendi - V2", Toast.LENGTH_LONG).show();
-            initPagedLayout(mainFrame);
-        } else {
-            Toast.makeText(getContext(), "Debug: Liste Modu (0) Yuklendi - Deger: " + mode, Toast.LENGTH_LONG).show();
-            initListLayout(mainFrame);
-        }
-
-        // Long click to manage widgets
-        mainFrame.setOnLongClickListener(v -> {
-            showWidgetManagementDialog();
-            return true;
-        });
-
-        // Register Receiver for Mode Change
+        // Register Receiver for Mode Change (Legacy support - kept for safety if external intents trigger it)
         modeChangeReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -197,36 +180,6 @@ public class WidgetPanelFragment extends Fragment {
         snapHelper.attachToRecyclerView(listRecyclerView);
         
         root.addView(listRecyclerView);
-    }
-
-    // --- MODE 1: PAGED LAYOUT ---
-    private void initPagedLayout(ViewGroup root) {
-        LinearLayout container = new LinearLayout(getContext());
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setLayoutParams(new ViewGroup.LayoutParams(
-                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        // ViewPager
-        widgetViewPager = new ViewPager2(getContext());
-        LinearLayout.LayoutParams startParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f);
-        widgetViewPager.setLayoutParams(startParams);
-        
-        // TabLayout (Dots)
-        tabLayout = new TabLayout(getContext());
-        LinearLayout.LayoutParams tabParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        tabLayout.setLayoutParams(tabParams);
-        tabLayout.setTabGravity(TabLayout.GRAVITY_CENTER);
-        tabLayout.setBackgroundColor(0x00000000);
-        tabLayout.setSelectedTabIndicatorColor(0xFFFFFFFF);
-        
-        // Add Views
-        container.addView(widgetViewPager);
-        container.addView(tabLayout);
-        root.addView(container);
-        
-        // Mediator attachment moved to applyWidgetsToView()
     }
 
 
@@ -400,10 +353,6 @@ public class WidgetPanelFragment extends Fragment {
             androidx.recyclerview.widget.ItemTouchHelper touchHelper = new androidx.recyclerview.widget.ItemTouchHelper(callback);
             touchHelper.attachToRecyclerView(listRecyclerView);
             
-        } else if (widgetViewPager != null && tabLayout != null) {
-             WidgetPagerAdapter adapter = new WidgetPagerAdapter(widgetManager.getVisibleWidgets());
-             widgetViewPager.setAdapter(adapter);
-             new TabLayoutMediator(tabLayout, widgetViewPager, (tab, position) -> {}).attach();
         }
     }
     
