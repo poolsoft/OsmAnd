@@ -42,11 +42,57 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
     
     public void setUnitSize(int unitSize, boolean isPortrait) {
         this.unitSize = unitSize;
-        // Hack: Update local isPortrait if needed, though constructor sets it final. 
-        // Ideally remove final or create new adapter. But for now, we rely on Fragment passing correct Unit Size.
-        // We do need to know orientation for Width vs Height decision.
-        // Let's assume the constructor's isPortrait is correct.
         notifyDataSetChanged();
+    }
+    
+    // Check Drag & Drop
+    public void onItemMove(int fromPosition, int toPosition) {
+        if (getItemViewType(fromPosition) == VIEW_TYPE_ADD || getItemViewType(toPosition) == VIEW_TYPE_ADD) 
+            return; 
+            
+        if (fromPosition < toPosition) {
+            for (int i = fromPosition; i < toPosition; i++) {
+                Collections.swap(widgets, i, i + 1);
+            }
+        } else {
+            for (int i = fromPosition; i > toPosition; i--) {
+                Collections.swap(widgets, i, i - 1);
+            }
+        }
+        notifyItemMoved(fromPosition, toPosition);
+        if (actionListener != null) {
+            actionListener.onWidgetOrderChanged(widgets);
+        }
+    }
+
+    @NonNull
+    @Override
+    public WidgetViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        FrameLayout container = new FrameLayout(parent.getContext());
+        
+        // Initial Defaults
+        int height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        if (unitSize > 0 && viewType == VIEW_TYPE_ADD) {
+            height = unitSize * 2; // Add button is Small
+        }
+        
+        ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, height);
+        params.setMargins(0, 0, 0, 0); 
+        
+        container.setLayoutParams(params);
+        
+        // Add Button Styling
+        if (viewType == VIEW_TYPE_ADD) {
+            ImageView addIcon = new ImageView(parent.getContext());
+            addIcon.setImageResource(android.R.drawable.ic_input_add);
+            addIcon.setScaleType(ImageView.ScaleType.CENTER);
+            addIcon.setBackgroundColor(0x22FFFFFF); 
+            container.addView(addIcon, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        }
+        
+        return new WidgetViewHolder(container);
     }
 
     @Override

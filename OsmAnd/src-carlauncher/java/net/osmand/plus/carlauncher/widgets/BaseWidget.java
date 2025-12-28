@@ -19,6 +19,11 @@ public abstract class BaseWidget {
     protected Context context;
     protected View rootView;
 
+    public enum WidgetSize {
+        SMALL, MEDIUM, LARGE
+    }
+    protected WidgetSize size = WidgetSize.SMALL;
+
     private boolean isStarted = false;
 
     public BaseWidget(@NonNull Context context, @NonNull String id, @NonNull String title) {
@@ -27,6 +32,7 @@ public abstract class BaseWidget {
         this.title = title;
         this.isVisible = true;
         this.order = 0;
+        this.size = WidgetSize.SMALL;
     }
 
     /**
@@ -94,6 +100,14 @@ public abstract class BaseWidget {
 
     public boolean isStarted() {
         return isStarted;
+    }
+
+    public WidgetSize getSize() {
+        return size;
+    }
+
+    public void setSize(WidgetSize size) {
+        this.size = size;
     }
 
     @Nullable
