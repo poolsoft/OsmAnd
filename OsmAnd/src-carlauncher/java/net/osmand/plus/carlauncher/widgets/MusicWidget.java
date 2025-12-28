@@ -91,7 +91,8 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         }
 
         // Open Music Drawer on content click
-        View contentArea = view.findViewById(net.osmand.plus.R.id.widget_track_info);
+        // Open Music Drawer on content click
+        View contentArea = view.findViewById(net.osmand.plus.R.id.widget_track_title);
         if (contentArea != null) {
             contentArea.setOnClickListener(v -> openMusicDrawer());
         }
