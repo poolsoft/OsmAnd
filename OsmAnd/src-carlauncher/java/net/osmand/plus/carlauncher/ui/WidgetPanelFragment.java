@@ -361,11 +361,71 @@ public class WidgetPanelFragment extends Fragment {
             
             listRecyclerView.setAdapter(adapter);
             
-            // Drag & Drop
-            androidx.recyclerview.widget.ItemTouchHelper.Callback callback = 
-                new net.osmand.plus.carlauncher.ui.QuickItemTouchHelperCallback(adapter);
-            androidx.recyclerview.widget.ItemTouchHelper touchHelper = 
-                new androidx.recyclerview.widget.ItemTouchHelper(callback);
+            // Drag & Drop Logic
+            androidx.recyclerview.widget.ItemTouchHelper.Callback callback = new androidx.recyclerview.widget.ItemTouchHelper.Callback() {
+                @Override
+                public boolean isLongPressDragEnabled() {
+                    // Only allow drag if we are ALREADY in edit mode.
+                    // If not, the LongClick listener on the View will trigger enterEditMode first.
+                    return adapter.isEditMode();
+                }
+
+                @Override
+                public boolean isItemViewSwipeEnabled() {
+                    return false;
+                }
+
+                @Override
+                public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                     // Don't drag the Add Button
+                    if (viewHolder.getItemViewType() == 1) return makeMovementFlags(0, 0);
+                    
+                    int dragFlags = androidx.recyclerview.widget.ItemTouchHelper.UP | androidx.recyclerview.widget.ItemTouchHelper.DOWN |
+                                    androidx.recyclerview.widget.ItemTouchHelper.START | androidx.recyclerview.widget.ItemTouchHelper.END;
+                    return makeMovementFlags(dragFlags, 0);
+                }
+
+                @Override
+                public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder source, @NonNull RecyclerView.ViewHolder target) {
+                    if (source.getItemViewType() != target.getItemViewType()) {
+                        return false;
+                    }
+                    adapter.onItemMove(source.getAdapterPosition(), target.getAdapterPosition());
+                    return true;
+                }
+
+                @Override
+                public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                }
+                
+                @Override
+                public void onSelectedChanged(@androidx.annotation.Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
+                    super.onSelectedChanged(viewHolder, actionState);
+                    if (actionState != androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_IDLE) {
+                        if (viewHolder != null) {
+                            viewHolder.itemView.setAlpha(0.7f); // Visual feedback
+                            viewHolder.itemView.setScaleX(1.05f);
+                            viewHolder.itemView.setScaleY(1.05f);
+                        }
+                    }
+                }
+
+                @Override
+                public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                    super.clearView(recyclerView, viewHolder);
+                    viewHolder.itemView.setAlpha(1.0f);
+                    // Reset scale handled by adapter bind usually, but good to reset here
+                     if (adapter.isEditMode()) {
+                        viewHolder.itemView.setScaleX(0.95f);
+                        viewHolder.itemView.setScaleY(0.95f);
+                    } else {
+                        viewHolder.itemView.setScaleX(1.0f);
+                        viewHolder.itemView.setScaleY(1.0f);
+                    }
+                }
+            };
+            
+            androidx.recyclerview.widget.ItemTouchHelper touchHelper = new androidx.recyclerview.widget.ItemTouchHelper(callback);
             touchHelper.attachToRecyclerView(listRecyclerView);
             
         } else if (widgetViewPager != null && tabLayout != null) {
