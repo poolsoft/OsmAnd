@@ -19,7 +19,7 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
         void onWidgetOrderChanged(List<BaseWidget> newOrder);
         void onWidgetRemoved(BaseWidget widget);
         void onAddWidgetClicked();
-        void onEditModeRequested();
+        void onWidgetLongClicked(View view, BaseWidget widget);
     }
 
     private final List<BaseWidget> widgets;
@@ -159,10 +159,10 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
             }
         }
 
-        // Long Press to Enter Edit Mode
+        // Long Press to Enter Edit Mode -> CHANGED to Show Menu
         holder.itemView.setOnLongClickListener(v -> {
-            if (actionListener != null && !isEditMode) {
-                 actionListener.onEditModeRequested();
+            if (actionListener != null) {
+                 actionListener.onWidgetLongClicked(holder.itemView, widget);
                  return true;
             }
             return false;

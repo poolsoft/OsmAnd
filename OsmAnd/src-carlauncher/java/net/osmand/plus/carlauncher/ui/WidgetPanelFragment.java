@@ -311,75 +311,55 @@ public class WidgetPanelFragment extends Fragment {
             boolean isPortrait = getResources()
                     .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
             
-            WidgetListAdapter adapter = new WidgetListAdapter(
-                widgetManager.getVisibleWidgets(), 
-                isPortrait,
-                new WidgetListAdapter.OnWidgetActionListener() {
                     @Override
-                    public void onWidgetOrderChanged(java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> newOrder) {
-                        widgetManager.updateVisibleOrder(newOrder); // Save new order
+                    public void onWidgetLongClicked(View view, net.osmand.plus.carlauncher.widgets.BaseWidget widget) {
+                        showWidgetOptionsMenu(widget);
                     }
-
-                    @Override
-                    public void onWidgetRemoved(net.osmand.plus.carlauncher.widgets.BaseWidget widget) {
-                        widgetManager.removeWidget(widget);
-                        applyWidgetsToView(); // Refresh
-                    }
-
+                    
                     @Override
                     public void onAddWidgetClicked() {
                         showAddWidgetDialog();
                     }
 
                     @Override
-                    public void onEditModeRequested() {
-                        // Toggle Edit Mode on Adapter
-                        if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
-                            WidgetListAdapter a = (WidgetListAdapter) listRecyclerView.getAdapter();
-                            // We don't have a public getter for edit mode, but we can toggle.
-                            // Better: track state in fragment or just set true
-                            // For now, let's assume this enters edit mode.
-                            // To toggle, we need to know current state.
-                            // Let's add isEditMode() to adapter or track here. 
-                            // Simplified: Just set true. Exit via "Done" button or back?
-                            // User asked for "Done" button previously, but it might be gone in revert.
-                            // If we want a toggle, let's just make setEditMode(!current).
-                            // But for now, let's set it to TRUE.
-                            a.setEditMode(true);
-                            
-                            // Show "Done" button? 
-                            // If we don't have a UI for "Done", we need one. 
-                            // Add a Floating Action Button or similar?
-                            // Or just rely on tapping elsewhere? (Hard).
-                            // Let's show a Toast for now or rely on back press if handled.
-                            // Actually, let's add a "Done" button to the root view dynamically if not present.
-                            showDoneButton();
-                        }
+                    public void onWidgetOrderChanged(java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> newOrder) {
+                        widgetManager.updateVisibleOrder(newOrder); 
+                    }
+
+                    @Override
+                    public void onWidgetRemoved(net.osmand.plus.carlauncher.widgets.BaseWidget widget) {
+                        widgetManager.removeWidget(widget);
+                        applyWidgetsToView(); 
                     }
                 }
             );
             
             listRecyclerView.setAdapter(adapter);
             
-            // Drag & Drop Logic
+            // Drag & Drop (Initially Disabled)
             androidx.recyclerview.widget.ItemTouchHelper.Callback callback = new androidx.recyclerview.widget.ItemTouchHelper.Callback() {
                 @Override
                 public boolean isLongPressDragEnabled() {
-                    // Only allow drag if we are ALREADY in edit mode.
-                    // If not, the LongClick listener on the View will trigger enterEditMode first.
-                    return adapter.isEditMode();
+                    // Only allow drag if we are explicitly in SORT MODE (checked via adapter or local flag)
+                    // We can reuse adapter.isEditMode() as "Sort Mode" or add a new flag.
+                    // Let's us adapter.isEditMode() as "Touch Interaction Mode". 
+                    // But wait, "Edit Mode" in adapter shows Delete buttons. "Sort Mode" hides them?
+                    // User said: "Sort" -> Drag & Drop. "Edit" -> Delete.
+                    // So we might need two states or just one 'Edit' state where drag is enabled too?
+                    // User separated "Edit" and "Sort" in menu.
+                    // Implementation: 
+                    // adapter.isEditMode() -> Shows Delete buttons.
+                    // adapter.isSortMode() (New?) -> Enables Drag.
+                    // For simplicity, let's use a local flag `isSortMode` in Fragment.
+                    return isSortMode;
                 }
 
                 @Override
-                public boolean isItemViewSwipeEnabled() {
-                    return false;
-                }
+                public boolean isItemViewSwipeEnabled() { return false; }
 
                 @Override
                 public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
-                     // Don't drag the Add Button
                     if (viewHolder.getItemViewType() == 1) return makeMovementFlags(0, 0);
-                    
                     int dragFlags = androidx.recyclerview.widget.ItemTouchHelper.UP | androidx.recyclerview.widget.ItemTouchHelper.DOWN |
                                     androidx.recyclerview.widget.ItemTouchHelper.START | androidx.recyclerview.widget.ItemTouchHelper.END;
                     return makeMovementFlags(dragFlags, 0);
@@ -387,26 +367,20 @@ public class WidgetPanelFragment extends Fragment {
 
                 @Override
                 public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder source, @NonNull RecyclerView.ViewHolder target) {
-                    if (source.getItemViewType() != target.getItemViewType()) {
-                        return false;
-                    }
+                    if (source.getItemViewType() != target.getItemViewType()) return false;
                     adapter.onItemMove(source.getAdapterPosition(), target.getAdapterPosition());
                     return true;
                 }
 
-                @Override
-                public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                }
+                @Override public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {}
                 
                 @Override
                 public void onSelectedChanged(@androidx.annotation.Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
                     super.onSelectedChanged(viewHolder, actionState);
-                    if (actionState != androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_IDLE) {
-                        if (viewHolder != null) {
-                            viewHolder.itemView.setAlpha(0.7f); // Visual feedback
-                            viewHolder.itemView.setScaleX(1.05f);
-                            viewHolder.itemView.setScaleY(1.05f);
-                        }
+                    if (actionState != androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_IDLE && viewHolder != null) {
+                        viewHolder.itemView.setAlpha(0.7f);
+                        viewHolder.itemView.setScaleX(1.05f);
+                        viewHolder.itemView.setScaleY(1.05f);
                     }
                 }
 
@@ -414,14 +388,8 @@ public class WidgetPanelFragment extends Fragment {
                 public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
                     super.clearView(recyclerView, viewHolder);
                     viewHolder.itemView.setAlpha(1.0f);
-                    // Reset scale handled by adapter bind usually, but good to reset here
-                     if (adapter.isEditMode()) {
-                        viewHolder.itemView.setScaleX(0.95f);
-                        viewHolder.itemView.setScaleY(0.95f);
-                    } else {
-                        viewHolder.itemView.setScaleX(1.0f);
-                        viewHolder.itemView.setScaleY(1.0f);
-                    }
+                    viewHolder.itemView.setScaleX(1.0f);
+                    viewHolder.itemView.setScaleY(1.0f);
                 }
             };
             
@@ -429,39 +397,119 @@ public class WidgetPanelFragment extends Fragment {
             touchHelper.attachToRecyclerView(listRecyclerView);
             
         } else if (widgetViewPager != null && tabLayout != null) {
-            // Paged Mode (Legacy/Alternative)
-            WidgetPagerAdapter adapter = new WidgetPagerAdapter(widgetManager.getVisibleWidgets());
-            widgetViewPager.setAdapter(adapter);
-            
-             new TabLayoutMediator(tabLayout, widgetViewPager,
-                    (tab, position) -> {
-                    }
-            ).attach();
+             WidgetPagerAdapter adapter = new WidgetPagerAdapter(widgetManager.getVisibleWidgets());
+             widgetViewPager.setAdapter(adapter);
+             new TabLayoutMediator(tabLayout, widgetViewPager, (tab, position) -> {}).attach();
         }
     }
     
+    private boolean isSortMode = false;
+
+    private void showWidgetOptionsMenu(final net.osmand.plus.carlauncher.widgets.BaseWidget widget) {
+        String[] options = {"Düzenle (Sil)", "Yeni Ekle", "Sırala"};
+        
+        new android.app.AlertDialog.Builder(getContext())
+            .setTitle(widget.getTitle())
+            .setItems(options, (dialog, which) -> {
+                switch (which) {
+                    case 0: // Edit (Delete Mode)
+                        setEditMode(true);
+                        break;
+                    case 1: // Add New
+                        showAddWidgetDialog();
+                        break;
+                    case 2: // Sort
+                        setSortMode(true);
+                        break;
+                }
+            })
+            .show();
+    }
+    
+    // Toggle Edit Mode (Delete Buttons)
+    private void setEditMode(boolean enable) {
+        if (listRecyclerView != null && listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
+            ((WidgetListAdapter) listRecyclerView.getAdapter()).setEditMode(enable);
+            if (enable) showDoneButton();
+            else removeDoneButton();
+        }
+    }
+
+    // Toggle Sort Mode (Drag & Drop)
+    private void setSortMode(boolean enable) {
+        this.isSortMode = enable;
+        if (enable) showDoneButton();
+        else removeDoneButton();
+    }
+    
+    private View doneButton;
+    
     private void showDoneButton() {
-        // Simple implementation: Add a button to root layout if not exists
-        if (rootContent != null && rootContent.findViewWithTag("DoneButton") == null) {
-             android.widget.Button doneBtn = new android.widget.Button(getContext());
-             doneBtn.setText("BİTTİ");
-             doneBtn.setTag("DoneButton");
-             doneBtn.setBackgroundColor(0xFF4CAF50); // Green
-             doneBtn.setTextColor(0xFFFFFFFF);
-             
-             android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
-                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-             params.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.END;
-             params.setMargins(32, 32, 32, 32);
-             
-             rootContent.addView(doneBtn, params);
-             
-             doneBtn.setOnClickListener(v -> {
-                 if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
-                     ((WidgetListAdapter) listRecyclerView.getAdapter()).setEditMode(false);
-                 }
-                 rootContent.removeView(doneBtn);
-             });
+        if (rootContent == null) return;
+        if (doneButton != null) return; // Already shown
+        
+        android.widget.Button btn = new android.widget.Button(getContext());
+        btn.setText("BİTTİ");
+        btn.setBackgroundColor(0xFF4CAF50); // Green
+        btn.setTextColor(0xFFFFFFFF);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            btn.setElevation(20);
+        }
+        
+        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
+             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.END;
+        params.setMargins(32, 32, 32, 32);
+        
+        btn.setLayoutParams(params);
+        
+        // Draggable Logic
+        btn.setOnTouchListener(new View.OnTouchListener() {
+            float dX, dY;
+            @Override
+            public boolean onTouch(View view, android.view.MotionEvent event) {
+                switch (event.getAction()) {
+                    case android.view.MotionEvent.ACTION_DOWN:
+                        dX = view.getX() - event.getRawX();
+                        dY = view.getY() - event.getRawY();
+                        return true; // Consumed
+                    case android.view.MotionEvent.ACTION_MOVE:
+                        view.animate()
+                            .x(event.getRawX() + dX)
+                            .y(event.getRawY() + dY)
+                            .setDuration(0)
+                            .start();
+                        return true;
+                    case android.view.MotionEvent.ACTION_UP:
+                        // Click detection (if didn't move much)
+                        // Simple check: if this was a tap, treat as click.
+                        // Ideally we check movement delta. 
+                        // For now let's say if UP happens quickly? 
+                        // Or just separate ClickListener? OnTouch returning true consumes Click.
+                        // Let's handle click here manually.
+                        // If moved < 10px?
+                         // Re-implementing simplified click:
+                         view.performClick();
+                         return true;
+                }
+                return false;
+            }
+        });
+        
+        btn.setOnClickListener(v -> {
+            setEditMode(false);
+            setSortMode(false);
+            removeDoneButton();
+        });
+        
+        rootContent.addView(btn);
+        doneButton = btn;
+    }
+    
+    private void removeDoneButton() {
+        if (doneButton != null && rootContent != null) {
+            rootContent.removeView(doneButton);
+            doneButton = null;
         }
     }
 
