@@ -311,6 +311,10 @@ public class WidgetPanelFragment extends Fragment {
             boolean isPortrait = getResources()
                     .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
             
+            WidgetListAdapter adapter = new WidgetListAdapter(
+                widgetManager.getVisibleWidgets(), 
+                isPortrait,
+                new WidgetListAdapter.OnWidgetActionListener() {
                     @Override
                     public void onWidgetLongClicked(View view, net.osmand.plus.carlauncher.widgets.BaseWidget widget) {
                         showWidgetOptionsMenu(widget);
