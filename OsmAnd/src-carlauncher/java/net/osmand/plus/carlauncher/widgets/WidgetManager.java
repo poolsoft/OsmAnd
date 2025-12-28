@@ -92,6 +92,30 @@ public class WidgetManager {
         updateVisibleWidgets();
         saveWidgetConfig();
     }
+    
+    /**
+     * Toplu siralama guncelleme (Adapter'dan gelen).
+     */
+    public void updateVisibleOrder(List<BaseWidget> newOrder) {
+        // Just update indices based on the new list order
+        for (int i = 0; i < newOrder.size(); i++) {
+             BaseWidget w = newOrder.get(i);
+             w.setOrder(i);
+        }
+        
+        // Re-sync allWidgets order? 
+        // Or simplified: update visibleWidgets list and save.
+        // But visibleWidgets is derived.
+        // Let's create a new sorted list for allWidgets based on this order.
+        // Actually, easiest is just to save config since Save logic (ln 203) uses visibleWidgets order if logic is correct.
+        // Wait, Save logic (ln 230) uses visibleWidgets.
+        // So we just need to ensure visibleWidgets reflects newOrder.
+        visibleWidgets.clear();
+        visibleWidgets.addAll(newOrder);
+        
+        // Also update 'order' property on items
+        saveWidgetConfig();
+    }
 
     /**
      * Gorunur widget'lari guncelle ve sirala.
