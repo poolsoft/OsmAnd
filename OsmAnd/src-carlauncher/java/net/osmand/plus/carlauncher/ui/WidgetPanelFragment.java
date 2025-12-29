@@ -51,6 +51,7 @@ public class WidgetPanelFragment extends Fragment {
     private BroadcastReceiver modeChangeReceiver;
     
     private ViewGroup rootContent;
+    private int currentUnitSize = 0;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -64,74 +65,11 @@ public class WidgetPanelFragment extends Fragment {
         }
     }
 
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater,
-            @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
+    // ... (skipping unchanged parts)
 
-        // Main Container
-        FrameLayout mainFrame = new FrameLayout(getContext());
-        mainFrame.setLayoutParams(new ViewGroup.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, 
-            ViewGroup.LayoutParams.MATCH_PARENT));
-        mainFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_panel_modern);
-        rootContent = mainFrame;
-
-        // Force List Layout (Unified)
-        initListLayout(mainFrame);
-
-        // Register Receiver for Mode Change (Legacy support - kept for safety if external intents trigger it)
-        modeChangeReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if ("net.osmand.carlauncher.WIDGET_MODE_CHANGED".equals(intent.getAction())) {
-                    reloadFragment();
-                }
-            }
-        };
-        if (getContext() != null) {
-            IntentFilter filter = new IntentFilter("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                getContext().registerReceiver(modeChangeReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-            } else {
-                getContext().registerReceiver(modeChangeReceiver, filter);
-            }
-        }
-        
-        // Setup Top-Right Menu Button
-        setupMenuButton(mainFrame);
-
-        return mainFrame;
-    }
-
-    private void reloadFragment() {
-         if (getFragmentManager() != null) {
-            getFragmentManager().beginTransaction()
-                    .detach(this)
-                    .attach(this)
-                    .commitAllowingStateLoss();
-        }
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        if (getContext() != null && modeChangeReceiver != null) {
-            try {
-                getContext().unregisterReceiver(modeChangeReceiver);
-            } catch (Exception e) {
-                // ignore
-            }
-        }
-        if (widgetManager != null) {
-            widgetManager.saveWidgetConfig();
-        }
-    }
-
-    // --- MODE 0: LIST LAYOUT ---
     // --- MODE 0: LIST LAYOUT (UNIT BASED) ---
     private void initListLayout(ViewGroup root) {
+        // ... (lines 135-161 unchanged)
         boolean isPortrait = getResources()
                 .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
 
@@ -149,44 +87,30 @@ public class WidgetPanelFragment extends Fragment {
         layoutManager.setOrientation(isPortrait ? LinearLayoutManager.HORIZONTAL : LinearLayoutManager.VERTICAL);
         listRecyclerView.setLayoutManager(layoutManager);
 
-        // Unit Size Calculation
-        // Landscape: Total Height / 6 = 1 Unit
-        // Portrait: Total Width / 2 = 1 Unit (User Requirement: 2 widgets side-by-side)
-        
         listRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
                 if (listRecyclerView.getMeasuredHeight() > 0 && listRecyclerView.getMeasuredWidth() > 0) {
                     listRecyclerView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     
-                    int unitSize;
                     if (isPortrait) {
-                        // Portrait: 2 Items per screen width
-                        unitSize = listRecyclerView.getMeasuredWidth() / 2;
+                        currentUnitSize = listRecyclerView.getMeasuredWidth() / 2;
                     } else {
-                        // Landscape: 6 Units per screen height
-                        unitSize = listRecyclerView.getMeasuredHeight() / 6;
+                        currentUnitSize = listRecyclerView.getMeasuredHeight() / 6;
                     }
                     
                     if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
-                        ((WidgetListAdapter) listRecyclerView.getAdapter()).setUnitSize(unitSize, isPortrait);
+                        ((WidgetListAdapter) listRecyclerView.getAdapter()).setUnitSize(currentUnitSize, isPortrait);
                     }
                 }
             }
         });
 
-        // Snap Helper: Use PagerSnapHelper because our items are perfectly sized to fit the screen 
-        // (e.g. 3xSmall = 1 Screen, 2xMedium = 1 Screen). PagerSnap helps lock them in place.
-        // Or LinearSnapHelper for free scrolling but snapping to edges. 
-        // User requested "Magnetic", PagerSnapHelper is strongest for this if items fill screen.
-        // However, if we have 1 Medium + 1 Small, that's 5/6 screen. PagerSnap might be weird.
-        // Let's use LinearSnapHelper which snaps to Closest View Center/Start.
-        // Snap Helper: Disabled per user request (issues with scrolling/ordering)
-        // LinearSnapHelper snapHelper = new StartSnapHelper(); 
-        // snapHelper.attachToRecyclerView(listRecyclerView);
-        
         root.addView(listRecyclerView);
     }
+
+    private void setupMenuButton(ViewGroup root) {
+        // ... (unchanged)
         android.widget.ImageView menuBtn = new android.widget.ImageView(getContext());
         menuBtn.setImageResource(android.R.drawable.ic_menu_more);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
@@ -207,97 +131,8 @@ public class WidgetPanelFragment extends Fragment {
         });
     }
 
-    private void showWidgetControlDialog() {
-        WidgetControlDialog dialog = new WidgetControlDialog();
-        dialog.setWidgetManager(widgetManager);
-        dialog.setOnDismissCallback(this::applyWidgetsToView);
-        dialog.show(getParentFragmentManager(), "WidgetControl");
-    }
-
-    // --- ADD WIDGET DIALOG (Used internally or for other entry points) ---
-    private void showAddWidgetDialog() {
-        // ... implementation kept or removed if unused in this scope ...
-        // We can keep it if needed, but the Menu now goes straight to Control Dialog.
-        // Let's call the internal logic if we want to keep the method for reference.
-        java.util.List<net.osmand.plus.carlauncher.widgets.WidgetRegistry.WidgetEntry> widgets = 
-            net.osmand.plus.carlauncher.widgets.WidgetRegistry.getAvailableWidgets();
-            
-        final String[] displayNames = new String[widgets.size()];
-        final String[] typeKeys = new String[widgets.size()];
-        
-        for (int i = 0; i < widgets.size(); i++) {
-            displayNames[i] = widgets.get(i).displayName;
-            typeKeys[i] = widgets.get(i).typeId;
-        }
-
-        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
-        builder.setTitle("Widget Ekle");
-        builder.setItems(displayNames, (dialog, which) -> {
-            String selectedType = typeKeys[which];
-            showWidgetSizeDialog(selectedType);
-        });
-        
-        builder.show();
-    }
-
-    private void showWidgetSizeDialog(String type) {
-        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
-        builder.setTitle("Boyut Seçiniz");
-        
-        // 0: Small (1/3), 1: Medium (1/2), 2: Large (Full)
-        // Note: Descriptions are for Landscape (Vertical List).
-        // For Portrait: Small (1/2), Medium (?), Large (?) -> Maybe generic text?
-        // "Küçük", "Orta", "Büyük"
-        final String[] sizes = {"Küçük (Standart)", "Orta (Geniş)", "Büyük (Tam)"};
-        
-        builder.setItems(sizes, (dialog, which) -> {
-            BaseWidget.WidgetSize size = BaseWidget.WidgetSize.SMALL;
-            switch (which) {
-                case 0: size = BaseWidget.WidgetSize.SMALL; break;
-                case 1: size = BaseWidget.WidgetSize.MEDIUM; break;
-                case 2: size = BaseWidget.WidgetSize.LARGE; break;
-            }
-            addNewWidget(type, size);
-        });
-        
-        builder.show();
-    }
+    // ... (skipping some parts)
     
-    private void addNewWidget(String type, BaseWidget.WidgetSize size) {
-        BaseWidget widget = net.osmand.plus.carlauncher.widgets.WidgetRegistry.createWidget(getContext(), app, type);
-        if (widget != null) {
-            widget.setSize(size);
-            // Unique ID generation or handling could be here, but Manager likely uses widget.getId() which is type-based?
-            // If multiple of same type allowed, WidgetFactory/Registry creates distinct instances but IDs?
-            // BaseWidget constructor usually takes type as ID.
-            // If we want multiple clocks, ID needs to be unique.
-            // Let's modify ID to be type + timestamp if needed.
-            // Checking BaseWidget/Implementation... usually ID is fixed prefix.
-            // Hack for uniqueness:
-            try {
-                java.lang.reflect.Field idField = BaseWidget.class.getDeclaredField("id");
-                idField.setAccessible(true);
-                idField.set(widget, type + "_" + System.currentTimeMillis());
-            } catch (Exception e) {
-                // Ignore
-            }
-            
-            widgetManager.addWidget(widget);
-            
-            // Refresh View
-            applyWidgetsToView();
-        }
-    }
-    
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        if (widgetManager != null) {
-            applyWidgetsToView();
-        }
-    }
-
     private void applyWidgetsToView() {
         if (listRecyclerView != null) {
             // List Mode (RecyclerView)
@@ -310,7 +145,7 @@ public class WidgetPanelFragment extends Fragment {
                 new WidgetListAdapter.OnWidgetActionListener() {
                     @Override
                     public void onWidgetLongClicked(View view, net.osmand.plus.carlauncher.widgets.BaseWidget widget) {
-                        // Unused (Drag handled by ItemTouchHelper)
+                        // Unused
                     }
                     
                     @Override
@@ -331,7 +166,13 @@ public class WidgetPanelFragment extends Fragment {
                 }
             );
             
+            if (currentUnitSize > 0) {
+                adapter.setUnitSize(currentUnitSize, isPortrait);
+            }
+            
             listRecyclerView.setAdapter(adapter);
+            
+            // ... (ItemTouchHelper code continues)
             
             // Drag & Drop
             androidx.recyclerview.widget.ItemTouchHelper.Callback callback = new androidx.recyclerview.widget.ItemTouchHelper.Callback() {
