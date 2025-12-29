@@ -133,7 +133,7 @@
             android:textColor="#FFFFFF"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:includeFontPadding="false" />
+            android:layout_gravity="center_vertical" />
 
         <ImageButton
             android:id="@+id/btn_layout_toggle"
