@@ -59,8 +59,13 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             Log.d(TAG, "Scan complete: " + tracks.size() + " tracks");
             if (!tracks.isEmpty()) {
                 internalPlayer.setPlaylist(tracks, 0);
-                // internalPlayer.resumeLastSession(); // KALDIRILDI: Aggressive auto-play prevention
-                // Sadece playlist'i hazirla ama baslatma.
+                
+                // Auto Play Check
+                net.osmand.plus.carlauncher.CarLauncherSettings settings = 
+                     new net.osmand.plus.carlauncher.CarLauncherSettings(context);
+                if (settings.isAutoPlayMusicEnabled()) {
+                     internalPlayer.play();
+                }
             }
         });
     }

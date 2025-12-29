@@ -47,9 +47,6 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
     
     // Check Drag & Drop
     public void onItemMove(int fromPosition, int toPosition) {
-        if (getItemViewType(fromPosition) == VIEW_TYPE_ADD || getItemViewType(toPosition) == VIEW_TYPE_ADD) 
-            return; 
-            
         if (fromPosition < toPosition) {
             for (int i = fromPosition; i < toPosition; i++) {
                 Collections.swap(widgets, i, i + 1);
@@ -70,28 +67,11 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
     public WidgetViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         FrameLayout container = new FrameLayout(parent.getContext());
         
-        // Initial Defaults
-        int height = ViewGroup.LayoutParams.WRAP_CONTENT;
-        if (unitSize > 0 && viewType == VIEW_TYPE_ADD) {
-            height = unitSize * 2; // Add button is Small
-        }
-        
         ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, height);
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         params.setMargins(0, 0, 0, 0); 
         
         container.setLayoutParams(params);
-        
-        // Add Button Styling
-        if (viewType == VIEW_TYPE_ADD) {
-            ImageView addIcon = new ImageView(parent.getContext());
-            addIcon.setImageResource(android.R.drawable.ic_input_add);
-            addIcon.setScaleType(ImageView.ScaleType.CENTER);
-            addIcon.setBackgroundColor(0x22FFFFFF); 
-            container.addView(addIcon, new FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-        }
-        
         return new WidgetViewHolder(container);
     }
 
@@ -112,26 +92,17 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
 
             if (isPortrait) {
                 // Portrait: Horizontal Scroll, Width is Dynamic (Unit), Height is Full
-                // UnitSize here is (ScreenWidth / 2) passed from Fragment
                 params.width = unitSize - marginTotal; 
                 params.height = ViewGroup.LayoutParams.MATCH_PARENT;
-                
-                // Add Button should also follow this? Yes.
             } else {
                 // Landscape: Vertical Scroll, Height is Dynamic, Width is Full
-                // UnitSize is (ScreenHeight / 6)
-                
                 int multiplier = 2; // Default Small
                 
-                if (getItemViewType(position) == VIEW_TYPE_ADD) {
-                     multiplier = 2; 
-                } else {
-                    BaseWidget w = widgets.get(position);
-                    switch (w.getSize()) {
-                        case SMALL: multiplier = 2; break; 
-                        case MEDIUM: multiplier = 3; break; 
-                        case LARGE: multiplier = 6; break; 
-                    }
+                BaseWidget w = widgets.get(position);
+                switch (w.getSize()) {
+                    case SMALL: multiplier = 2; break; 
+                    case MEDIUM: multiplier = 3; break; 
+                    case LARGE: multiplier = 6; break; 
                 }
                 
                 params.height = (unitSize * multiplier) - marginTotal;
@@ -140,18 +111,14 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
             
             holder.itemView.setLayoutParams(params);
         } else {
-             // Fallback if Unit unavailable (shouldn't happen often)
+             // Fallback
              ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) holder.itemView.getLayoutParams();
              params.setMargins(margin, margin, margin, margin);
              holder.itemView.setLayoutParams(params);
         }
 
-        if (getItemViewType(position) == VIEW_TYPE_ADD) {
-            holder.itemView.setOnClickListener(v -> {
-                if (actionListener != null) actionListener.onAddWidgetClicked();
-            });
-            return;
-        }
+        // Safety Catch
+        if (position >= widgets.size()) return;
 
         BaseWidget widget = widgets.get(position);
         
@@ -167,7 +134,6 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
         }
 
         // Edit Mode Overlays (Delete Only)
-        // Check if overlay exists
         View overlay = holder.container.findViewWithTag("EditOverlay");
         if (isEditMode) {
              if (overlay == null) {
@@ -205,27 +171,13 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
             }
         }
 
-        // Long Press to Enter Edit Mode -> CHANGED to Show Menu
-        holder.itemView.setOnLongClickListener(v -> {
-            if (actionListener != null) {
-                 actionListener.onWidgetLongClicked(holder.itemView, widget);
-                 return true;
-            }
-            return false;
-        });
-    }
-
-    @Override
-    public int getItemViewType(int position) {
-        if (position == widgets.size()) {
-            return VIEW_TYPE_ADD;
-        }
-        return VIEW_TYPE_WIDGET;
+        // Long Press handled by ItemTouchHelper for Drag & Drop
+        // holder.itemView.setOnLongClickListener... REMOVED
     }
 
     @Override
     public int getItemCount() {
-        return widgets.size() + 1; // +1 for Add Button
+        return widgets.size(); 
     }
     
     private int dpToPx(android.content.Context context, int dp) {

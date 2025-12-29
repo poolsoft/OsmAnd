@@ -50,6 +50,9 @@ public class WidgetManager {
         if (!allWidgets.contains(widget)) {
             allWidgets.add(widget);
             updateVisibleWidgets();
+            if (isStarted) {
+                widget.onStart();
+            }
         }
     }
 
@@ -189,6 +192,8 @@ public class WidgetManager {
         return Math.round(dp * density);
     }
 
+    private boolean isStarted = false;
+
     /**
      * Tum widget'lari guncelle.
      */
@@ -204,6 +209,7 @@ public class WidgetManager {
      * Tum widget'lari baslat.
      */
     public void startAllWidgets() {
+        isStarted = true;
         for (BaseWidget widget : visibleWidgets) {
             widget.onStart();
         }
@@ -213,6 +219,7 @@ public class WidgetManager {
      * Tum widget'lari durdur.
      */
     public void stopAllWidgets() {
+        isStarted = false;
         for (BaseWidget widget : visibleWidgets) {
             widget.onStop();
         }
@@ -224,87 +231,81 @@ public class WidgetManager {
     /**
      * Widget config'i kaydet.
      */
+    /**
+     * Widget config'i kaydet.
+     */
     public void saveWidgetConfig() {
-        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(
-                context);
-
-        List<String> order = new ArrayList<>();
+        SharedPreferences.Editor editor = prefs.edit();
+        
+        List<String> ids = new ArrayList<>();
         for (BaseWidget widget : allWidgets) {
-            settings.setWidgetVisible(widget.getId(), widget.isVisible());
-            // Order is effectively the index in allWidgets dependent on how we manage it,
-            // but for simple list order saving:
-            order.add(widget.getId());
+            ids.add(widget.getId());
+            editor.putBoolean("visible_" + widget.getId(), widget.isVisible());
+            editor.putInt("size_" + widget.getId(), widget.getSize().ordinal());
         }
-
-        // Actually, we should save the order of *visible* widgets or just the sorted
-        // order of all widgets via a specific list?
-        // Let's save the order of 'visibleWidgets' first, then invisible ones appended?
-        // Or better: Let CarLauncherSettings store the 'Sort Order' of IDs.
-
-        // Current 'allWidgets' list might be sorted by insertion or by previous load.
-        // Let's create a list of IDs representing the current desired order.
-        // Since 'moveWidget' modifies 'visibleWidgets' only, we need to reflect that in
-        // 'allWidgets' or just save 'visibleWidgets' order?
-
-        // Strategy: Save all IDs in the order they should appear.
-        // visibleWidgets are at the top (sorted). Invisible ones don't have an order
-        // per se, but let's keep them stable.
-
-        List<String> sortedIds = new ArrayList<>();
-        for (BaseWidget w : visibleWidgets) {
-            sortedIds.add(w.getId());
+        
+        // Join Ids
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < ids.size(); i++) {
+            sb.append(ids.get(i));
+            if (i < ids.size() - 1) sb.append(",");
         }
-        // Add remaining invisible widgets
-        for (BaseWidget w : allWidgets) {
-            if (!visibleWidgets.contains(w)) {
-                sortedIds.add(w.getId());
-            }
-        }
-
-        settings.setWidgetOrder(sortedIds);
+        editor.putString(KEY_WIDGET_CONFIG, sb.toString());
+        editor.apply();
     }
 
     /**
      * Widget config'i yukle.
      */
     public void loadWidgetConfig() {
-        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(
-                context);
+        String savedConfig = prefs.getString(KEY_WIDGET_CONFIG, null);
+        if (savedConfig == null) return; // Use defaults
 
-        // Default order... if simple we rely on initialization order.
-        List<String> savedOrder = settings.getWidgetOrder(null);
-
-        if (savedOrder != null) {
-            // Reorder 'allWidgets' based on savedOrder
-            List<BaseWidget> reordered = new ArrayList<>();
-            for (String id : savedOrder) {
-                BaseWidget w = findWidgetById(id);
-                if (w != null) {
-                    reordered.add(w);
+        String[] ids = savedConfig.split(",");
+        List<BaseWidget> restoredWidgets = new ArrayList<>();
+        
+        for (String id : ids) {
+            if (id.isEmpty()) continue;
+            
+            // Try to find existing (default) widget
+            BaseWidget widget = findWidgetById(id);
+            
+            // If not found, try to create it (Dynamic Widget)
+            if (widget == null) {
+                // ID format: type OR type_timestamp
+                // Extract type
+                String type = id.split("_")[0];
+                widget = WidgetRegistry.createWidget(context, app, type);
+                if (widget != null) {
+                    // Restore ID hack to match saved ID
+                     try {
+                        java.lang.reflect.Field idField = BaseWidget.class.getDeclaredField("id");
+                        idField.setAccessible(true);
+                        idField.set(widget, id);
+                    } catch (Exception e) {
+                        // Fail silently
+                    }
                 }
             }
-            // Add any new/unknown widgets that were not in saved settings
-            for (BaseWidget w : allWidgets) {
-                if (!reordered.contains(w)) {
-                    reordered.add(w);
+            
+            if (widget != null) {
+                // Restore Properties
+                boolean visible = prefs.getBoolean("visible_" + id, true);
+                int sizeOrd = prefs.getInt("size_" + id, BaseWidget.WidgetSize.SMALL.ordinal());
+                
+                widget.setVisible(visible);
+                if (sizeOrd >= 0 && sizeOrd < BaseWidget.WidgetSize.values().length) {
+                    widget.setSize(BaseWidget.WidgetSize.values()[sizeOrd]);
                 }
+                
+                restoredWidgets.add(widget);
             }
-
-            allWidgets.clear();
-            allWidgets.addAll(reordered);
         }
-
-        // Restore visibility
-        for (BaseWidget widget : allWidgets) {
-            // Default visibility true? Or based on some default list? Assuming true for
-            // now.
-            boolean visible = settings.isWidgetVisible(widget.getId(), true);
-            widget.setVisible(visible);
-
-            // Set internal order field based on list index
-            widget.setOrder(allWidgets.indexOf(widget));
-        }
-
+        
+        // Replace current list with restored list
+        allWidgets.clear();
+        allWidgets.addAll(restoredWidgets);
+        
         updateVisibleWidgets();
     }
 

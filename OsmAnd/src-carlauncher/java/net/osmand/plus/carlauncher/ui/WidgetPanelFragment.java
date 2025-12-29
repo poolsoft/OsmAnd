@@ -96,6 +96,9 @@ public class WidgetPanelFragment extends Fragment {
                 getContext().registerReceiver(modeChangeReceiver, filter);
             }
         }
+        
+        // Setup Top-Right Menu Button
+        setupMenuButton(mainFrame);
 
         return mainFrame;
     }
@@ -176,12 +179,51 @@ public class WidgetPanelFragment extends Fragment {
         // User requested "Magnetic", PagerSnapHelper is strongest for this if items fill screen.
         // However, if we have 1 Medium + 1 Small, that's 5/6 screen. PagerSnap might be weird.
         // Let's use LinearSnapHelper which snaps to Closest View Center/Start.
-        LinearSnapHelper snapHelper = new LinearSnapHelper(); 
+        LinearSnapHelper snapHelper = new StartSnapHelper(); 
         snapHelper.attachToRecyclerView(listRecyclerView);
         
         root.addView(listRecyclerView);
     }
+    
+    // ... (This assumes I'm just replacing the helper instantiation block)
 
+    // --- GLOBAL MENU ---
+    private void setupMenuButton(ViewGroup root) {
+        android.widget.ImageView menuBtn = new android.widget.ImageView(getContext());
+        menuBtn.setImageResource(android.R.drawable.ic_menu_more);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            menuBtn.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
+        }
+        menuBtn.setBackgroundColor(0x44000000); // Semi-transparent bg
+        menuBtn.setPadding(16, 16, 16, 16);
+        
+        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
+             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
+        params.setMargins(16, 16, 16, 16);
+        
+        root.addView(menuBtn, params);
+        
+        menuBtn.setOnClickListener(v -> {
+            android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), menuBtn);
+            popup.getMenu().add(0, 1, 0, "Widget Ekle");
+            popup.getMenu().add(0, 2, 0, "Düzenle (Sil)");
+            // popup.getMenu().add(0, 3, 0, "Ayarlar"); // Future
+            
+            popup.setOnMenuItemClickListener(item -> {
+                switch (item.getItemId()) {
+                    case 1:
+                        showAddWidgetDialog();
+                        return true;
+                    case 2:
+                        setEditMode(true);
+                        return true;
+                }
+                return false;
+            });
+            popup.show();
+        });
+    }
 
     // --- ADD WIDGET DIALOG ---
     private void showAddWidgetDialog() {
@@ -277,7 +319,7 @@ public class WidgetPanelFragment extends Fragment {
                 new WidgetListAdapter.OnWidgetActionListener() {
                     @Override
                     public void onWidgetLongClicked(View view, net.osmand.plus.carlauncher.widgets.BaseWidget widget) {
-                        showWidgetOptionsMenu(widget);
+                        // Unused (Drag handled by ItemTouchHelper)
                     }
                     
                     @Override
@@ -300,22 +342,11 @@ public class WidgetPanelFragment extends Fragment {
             
             listRecyclerView.setAdapter(adapter);
             
-            // Drag & Drop (Initially Disabled)
+            // Drag & Drop
             androidx.recyclerview.widget.ItemTouchHelper.Callback callback = new androidx.recyclerview.widget.ItemTouchHelper.Callback() {
                 @Override
                 public boolean isLongPressDragEnabled() {
-                    // Only allow drag if we are explicitly in SORT MODE (checked via adapter or local flag)
-                    // We can reuse adapter.isEditMode() as "Sort Mode" or add a new flag.
-                    // Let's us adapter.isEditMode() as "Touch Interaction Mode". 
-                    // But wait, "Edit Mode" in adapter shows Delete buttons. "Sort Mode" hides them?
-                    // User said: "Sort" -> Drag & Drop. "Edit" -> Delete.
-                    // So we might need two states or just one 'Edit' state where drag is enabled too?
-                    // User separated "Edit" and "Sort" in menu.
-                    // Implementation: 
-                    // adapter.isEditMode() -> Shows Delete buttons.
-                    // adapter.isSortMode() (New?) -> Enables Drag.
-                    // For simplicity, let's use a local flag `isSortMode` in Fragment.
-                    return isSortMode;
+                    return true; // Use native drag on long press
                 }
 
                 @Override
@@ -323,7 +354,6 @@ public class WidgetPanelFragment extends Fragment {
 
                 @Override
                 public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
-                    if (viewHolder.getItemViewType() == 1) return makeMovementFlags(0, 0);
                     int dragFlags = androidx.recyclerview.widget.ItemTouchHelper.UP | androidx.recyclerview.widget.ItemTouchHelper.DOWN |
                                     androidx.recyclerview.widget.ItemTouchHelper.START | androidx.recyclerview.widget.ItemTouchHelper.END;
                     return makeMovementFlags(dragFlags, 0);
@@ -331,7 +361,6 @@ public class WidgetPanelFragment extends Fragment {
 
                 @Override
                 public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder source, @NonNull RecyclerView.ViewHolder target) {
-                    if (source.getItemViewType() != target.getItemViewType()) return false;
                     adapter.onItemMove(source.getAdapterPosition(), target.getAdapterPosition());
                     return true;
                 }
@@ -363,29 +392,6 @@ public class WidgetPanelFragment extends Fragment {
         }
     }
     
-    private boolean isSortMode = false;
-
-    private void showWidgetOptionsMenu(final net.osmand.plus.carlauncher.widgets.BaseWidget widget) {
-        String[] options = {"Düzenle (Sil)", "Yeni Ekle", "Sırala"};
-        
-        new android.app.AlertDialog.Builder(getContext())
-            .setTitle(widget.getTitle())
-            .setItems(options, (dialog, which) -> {
-                switch (which) {
-                    case 0: // Edit (Delete Mode)
-                        setEditMode(true);
-                        break;
-                    case 1: // Add New
-                        showAddWidgetDialog();
-                        break;
-                    case 2: // Sort
-                        setSortMode(true);
-                        break;
-                }
-            })
-            .show();
-    }
-    
     // Toggle Edit Mode (Delete Buttons)
     private void setEditMode(boolean enable) {
         if (listRecyclerView != null && listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
@@ -395,13 +401,6 @@ public class WidgetPanelFragment extends Fragment {
         }
     }
 
-    // Toggle Sort Mode (Drag & Drop)
-    private void setSortMode(boolean enable) {
-        this.isSortMode = enable;
-        if (enable) showDoneButton();
-        else removeDoneButton();
-    }
-    
     private View doneButton;
     
     private void showDoneButton() {
@@ -441,14 +440,6 @@ public class WidgetPanelFragment extends Fragment {
                             .start();
                         return true;
                     case android.view.MotionEvent.ACTION_UP:
-                        // Click detection (if didn't move much)
-                        // Simple check: if this was a tap, treat as click.
-                        // Ideally we check movement delta. 
-                        // For now let's say if UP happens quickly? 
-                        // Or just separate ClickListener? OnTouch returning true consumes Click.
-                        // Let's handle click here manually.
-                        // If moved < 10px?
-                         // Re-implementing simplified click:
                          view.performClick();
                          return true;
                 }
@@ -458,7 +449,6 @@ public class WidgetPanelFragment extends Fragment {
         
         btn.setOnClickListener(v -> {
             setEditMode(false);
-            setSortMode(false);
             removeDoneButton();
         });
         
@@ -528,5 +518,78 @@ public class WidgetPanelFragment extends Fragment {
 
     public WidgetManager getWidgetManager() {
         return widgetManager;
+    }
+
+    private static class StartSnapHelper extends LinearSnapHelper {
+        private androidx.recyclerview.widget.OrientationHelper mVerticalHelper, mHorizontalHelper;
+
+        @Override
+        public int[] calculateDistanceToFinalSnap(@NonNull RecyclerView.LayoutManager layoutManager,
+                                                  @NonNull View targetView) {
+            int[] out = new int[2];
+            if (layoutManager.canScrollHorizontally()) {
+                out[0] = distanceToStart(targetView, getHorizontalHelper(layoutManager));
+            } else {
+                out[0] = 0;
+            }
+            if (layoutManager.canScrollVertically()) {
+                out[1] = distanceToStart(targetView, getVerticalHelper(layoutManager));
+            } else {
+                out[1] = 0;
+            }
+            return out;
+        }
+
+        @Override
+        public View findSnapView(RecyclerView.LayoutManager layoutManager) {
+            if (layoutManager instanceof LinearLayoutManager) {
+                if (layoutManager.canScrollHorizontally()) {
+                    return findStartView(layoutManager, getHorizontalHelper(layoutManager));
+                } else {
+                    return findStartView(layoutManager, getVerticalHelper(layoutManager));
+                }
+            }
+            return super.findSnapView(layoutManager);
+        }
+
+        private int distanceToStart(View targetView, androidx.recyclerview.widget.OrientationHelper helper) {
+            return helper.getDecoratedStart(targetView) - helper.getStartAfterPadding();
+        }
+
+        private View findStartView(RecyclerView.LayoutManager layoutManager,
+                                   androidx.recyclerview.widget.OrientationHelper helper) {
+            int childCount = layoutManager.getChildCount();
+            if (childCount == 0) {
+                return null;
+            }
+            View closestChild = null;
+            int startest = Integer.MAX_VALUE;
+
+            for (int i = 0; i < childCount; i++) {
+                final View child = layoutManager.getChildAt(i);
+                int childStart = helper.getDecoratedStart(child);
+                int distance = Math.abs(childStart - helper.getStartAfterPadding());
+
+                if (distance < startest) {
+                    startest = distance;
+                    closestChild = child;
+                }
+            }
+            return closestChild;
+        }
+
+        private androidx.recyclerview.widget.OrientationHelper getVerticalHelper(RecyclerView.LayoutManager layoutManager) {
+            if (mVerticalHelper == null || mVerticalHelper.getLayoutManager() != layoutManager) {
+                mVerticalHelper = androidx.recyclerview.widget.OrientationHelper.createVerticalHelper(layoutManager);
+            }
+            return mVerticalHelper;
+        }
+
+        private androidx.recyclerview.widget.OrientationHelper getHorizontalHelper(RecyclerView.LayoutManager layoutManager) {
+            if (mHorizontalHelper == null || mHorizontalHelper.getLayoutManager() != layoutManager) {
+                mHorizontalHelper = androidx.recyclerview.widget.OrientationHelper.createHorizontalHelper(layoutManager);
+            }
+            return mHorizontalHelper;
+        }
     }
 }

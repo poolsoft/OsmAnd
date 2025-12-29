@@ -97,6 +97,16 @@ public class CarLauncherSettings {
     public void setMusicApp(String packageName) {
         prefs.edit().putString(KEY_MUSIC_APP, packageName).apply();
     }
+    
+    private static final String KEY_AUTO_PLAY_MUSIC = "car_launcher_auto_play_music";
+    
+    public boolean isAutoPlayMusicEnabled() {
+        return prefs.getBoolean(KEY_AUTO_PLAY_MUSIC, false);
+    }
+    
+    public void setAutoPlayMusicEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_AUTO_PLAY_MUSIC, enabled).apply();
+    }
 
     // --- Dock Settings ---
 
