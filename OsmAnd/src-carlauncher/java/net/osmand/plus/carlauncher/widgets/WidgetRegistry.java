@@ -48,7 +48,7 @@ public class WidgetRegistry {
         register(TYPE_NAVIGATION, "Navigasyon", NavigationWidget::new);
         register(TYPE_COMPASS, "Pusula", DirectionWidget::new);
         register(TYPE_OBD, "OBD Bilgileri", OBDWidget::new);
-        register(TYPE_CLOCK, "Analog Saat", (ctx, app) -> new Material3ClockWidget(ctx));
+        register(TYPE_CLOCK, "Dijital Saat (M3)", (ctx, app) -> new Material3ClockWidget(ctx));
         register(TYPE_ANTENNA, "Rakım (Anten)", AntennaWidget::new);
     }
 

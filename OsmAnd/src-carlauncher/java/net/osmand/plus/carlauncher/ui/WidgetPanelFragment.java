@@ -58,7 +58,9 @@ public class WidgetPanelFragment extends Fragment {
         if (getContext() != null) {
             app = (OsmandApplication) getContext().getApplicationContext();
             widgetManager = new WidgetManager(getContext(), app);
-            initializeWidgets();
+            if (!widgetManager.loadWidgetConfig()) {
+                initializeWidgets();
+            }
         }
     }
 
@@ -302,7 +304,6 @@ public class WidgetPanelFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         if (widgetManager != null) {
-            widgetManager.loadWidgetConfig();
             applyWidgetsToView();
         }
     }
@@ -383,6 +384,13 @@ public class WidgetPanelFragment extends Fragment {
                     viewHolder.itemView.setAlpha(1.0f);
                     viewHolder.itemView.setScaleX(1.0f);
                     viewHolder.itemView.setScaleY(1.0f);
+                    
+                    if (recyclerView.getAdapter() instanceof WidgetListAdapter) {
+                        WidgetListAdapter adapter = (WidgetListAdapter) recyclerView.getAdapter();
+                        if (widgetManager != null) {
+                            widgetManager.updateVisibleOrder(adapter.getWidgets());
+                        }
+                    }
                 }
             };
             

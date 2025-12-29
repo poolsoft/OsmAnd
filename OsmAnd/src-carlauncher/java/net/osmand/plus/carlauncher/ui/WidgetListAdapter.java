@@ -56,10 +56,13 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
                 Collections.swap(widgets, i, i - 1);
             }
         }
-        notifyItemMoved(fromPosition, toPosition);
-        if (actionListener != null) {
-            actionListener.onWidgetOrderChanged(widgets);
         }
+        notifyItemMoved(fromPosition, toPosition);
+        // DB update now handled in Fragment onDragEnd (clearView)
+    }
+
+    public List<BaseWidget> getWidgets() {
+        return widgets;
     }
 
     @NonNull

@@ -100,23 +100,29 @@ public class WidgetManager {
      * Toplu siralama guncelleme (Adapter'dan gelen).
      */
     public void updateVisibleOrder(List<BaseWidget> newOrder) {
-        // Just update indices based on the new list order
+        // 1. Update order index
         for (int i = 0; i < newOrder.size(); i++) {
              BaseWidget w = newOrder.get(i);
              w.setOrder(i);
         }
         
-        // Re-sync allWidgets order? 
-        // Or simplified: update visibleWidgets list and save.
-        // But visibleWidgets is derived.
-        // Let's create a new sorted list for allWidgets based on this order.
-        // Actually, easiest is just to save config since Save logic (ln 203) uses visibleWidgets order if logic is correct.
-        // Wait, Save logic (ln 230) uses visibleWidgets.
-        // So we just need to ensure visibleWidgets reflects newOrder.
+        // 2. Reconstruct allWidgets to match visual order + invisible ones
+        List<BaseWidget> newAllWidgets = new ArrayList<>(newOrder);
+        
+        for (BaseWidget w : allWidgets) {
+            if (!newOrder.contains(w)) {
+                newAllWidgets.add(w); // Append invisible ones
+            }
+        }
+        
+        allWidgets.clear();
+        allWidgets.addAll(newAllWidgets);
+        
+        // 3. Sync visibleWidgets
         visibleWidgets.clear();
         visibleWidgets.addAll(newOrder);
         
-        // Also update 'order' property on items
+        // 4. Save
         saveWidgetConfig();
     }
 
@@ -257,9 +263,9 @@ public class WidgetManager {
     /**
      * Widget config'i yukle.
      */
-    public void loadWidgetConfig() {
+    public boolean loadWidgetConfig() {
         String savedConfig = prefs.getString(KEY_WIDGET_CONFIG, null);
-        if (savedConfig == null) return; // Use defaults
+        if (savedConfig == null || savedConfig.isEmpty()) return false; // Use defaults
 
         String[] ids = savedConfig.split(",");
         List<BaseWidget> restoredWidgets = new ArrayList<>();
@@ -307,6 +313,7 @@ public class WidgetManager {
         allWidgets.addAll(restoredWidgets);
         
         updateVisibleWidgets();
+        return true;
     }
 
     /**

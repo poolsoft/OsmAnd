@@ -56,6 +56,13 @@
             android:summary="Tıklayarak seçin"
             android:iconSpaceReserved="false" />
 
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="car_launcher_auto_play_music"
+            android:title="Açılışta Otomatik Oynat"
+            android:summary="Uygulama başladığında müziği başlat"
+            android:defaultValue="false"
+            android:iconSpaceReserved="false" />
+
         <androidx.preference.Preference
             android:key="car_launcher_equalizer"
             android:title="Equalizer"
