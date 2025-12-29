@@ -46,6 +46,7 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
     }
     
     // Check Drag & Drop
+    // Check Drag & Drop
     public void onItemMove(int fromPosition, int toPosition) {
         if (fromPosition < toPosition) {
             for (int i = fromPosition; i < toPosition; i++) {
