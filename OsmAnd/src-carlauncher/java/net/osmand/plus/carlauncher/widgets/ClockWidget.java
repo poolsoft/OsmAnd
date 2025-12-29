@@ -26,10 +26,14 @@ public class ClockWidget extends BaseWidget {
     private Runnable updateRunnable;
 
     public ClockWidget(@NonNull Context context) {
-        super(context, "clock", "Saat");
+        super(context, "classic_clock", "Klasik Saat");
         this.timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
         this.dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
         this.order = 0;
+    }
+
+    public ClockWidget(@NonNull Context context, net.osmand.plus.OsmandApplication app) {
+        this(context);
     }
 
     @NonNull

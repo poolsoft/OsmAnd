@@ -37,6 +37,11 @@ public class Material3ClockWidget extends BaseWidget {
         this.order = 0; // Top position
     }
 
+    public Material3ClockWidget(@NonNull Context context, OsmandApplication app) {
+        this(context);
+        // app param is unused but required for WidgetFactory signature
+    }
+
     @Override
     public View createView() {
         View view = LayoutInflater.from(context).inflate(net.osmand.plus.R.layout.widget_clock_material3, null);

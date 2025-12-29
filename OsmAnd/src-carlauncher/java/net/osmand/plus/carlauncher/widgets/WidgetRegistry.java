@@ -19,6 +19,7 @@ public class WidgetRegistry {
     public static final String TYPE_COMPASS = "compass";
     public static final String TYPE_OBD = "obd";
     public static final String TYPE_CLOCK = "clock";
+    public static final String TYPE_CLOCK_CLASSIC = "classic";
     public static final String TYPE_ANTENNA = "antenna";
 
     // Widget Yaratma Arayuzu (Lambda icin)
@@ -48,7 +49,8 @@ public class WidgetRegistry {
         register(TYPE_NAVIGATION, "Navigasyon", NavigationWidget::new);
         register(TYPE_COMPASS, "Pusula", DirectionWidget::new);
         register(TYPE_OBD, "OBD Bilgileri", OBDWidget::new);
-        register(TYPE_CLOCK, "Dijital Saat (M3)", (ctx, app) -> new Material3ClockWidget(ctx));
+        register(TYPE_CLOCK, "Dijital Saat (M3)", Material3ClockWidget::new);
+        register(TYPE_CLOCK_CLASSIC, "Klasik Saat", ClockWidget::new);
         register(TYPE_ANTENNA, "Rakım (Anten)", AntennaWidget::new);
     }
 
