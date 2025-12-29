@@ -26,7 +26,6 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
     private final boolean isPortrait;
     private final OnWidgetActionListener actionListener;
     
-    private boolean isEditMode = false;
     private int unitSize = 0; // The height of 1 unit (Screen / 6)
 
     public WidgetListAdapter(List<BaseWidget> widgets, boolean isPortrait, OnWidgetActionListener actionListener) {
@@ -35,17 +34,11 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
         this.actionListener = actionListener;
     }
 
-    public void setEditMode(boolean editMode) {
-        this.isEditMode = editMode;
-        notifyDataSetChanged();
-    }
-    
     public void setUnitSize(int unitSize, boolean isPortrait) {
         this.unitSize = unitSize;
         notifyDataSetChanged();
     }
     
-    // Check Drag & Drop
     // Check Drag & Drop
     public void onItemMove(int fromPosition, int toPosition) {
         if (fromPosition < toPosition) {
@@ -136,43 +129,11 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         }
 
-        // Edit Mode Overlays (Delete Only)
-        View overlay = holder.container.findViewWithTag("EditOverlay");
-        if (isEditMode) {
-             if (overlay == null) {
-                 int size = dpToPx(holder.itemView.getContext(), 48);
-                 int padding = dpToPx(holder.itemView.getContext(), 8);
-                 
-                 ImageView deleteBtn = new ImageView(holder.itemView.getContext());
-                 deleteBtn.setImageResource(android.R.drawable.ic_menu_delete);
-                 deleteBtn.setBackgroundColor(0xCCFF0000);
-                 deleteBtn.setColorFilter(0xFFFFFFFF);
-                 deleteBtn.setPadding(padding, padding, padding, padding);
-                 deleteBtn.setTag("EditOverlay");
-                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                     deleteBtn.setElevation(20);
-                 }
-                 
-                 FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(size, size);
-                 params.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
-                 params.setMargins(padding, padding, padding, padding);
-                 
-                 holder.container.addView(deleteBtn, params);
-                 deleteBtn.setOnClickListener(v -> {
-                     if (actionListener != null) actionListener.onWidgetRemoved(widget);
-                 });
-                 
-                 // Scale effect
-                 holder.itemView.setScaleX(0.95f);
-                 holder.itemView.setScaleY(0.95f);
-             }
-        } else {
-            if (overlay != null) {
-                holder.container.removeView(overlay);
-                holder.itemView.setScaleX(1.0f);
-                holder.itemView.setScaleY(1.0f);
-            }
         }
+
+        // Long Press handled by ItemTouchHelper for Drag & Drop
+        // holder.itemView.setOnLongClickListener... REMOVED
+    }
 
         // Long Press handled by ItemTouchHelper for Drag & Drop
         // holder.itemView.setOnLongClickListener... REMOVED

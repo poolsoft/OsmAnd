@@ -181,22 +181,18 @@ public class WidgetPanelFragment extends Fragment {
         // User requested "Magnetic", PagerSnapHelper is strongest for this if items fill screen.
         // However, if we have 1 Medium + 1 Small, that's 5/6 screen. PagerSnap might be weird.
         // Let's use LinearSnapHelper which snaps to Closest View Center/Start.
-        LinearSnapHelper snapHelper = new StartSnapHelper(); 
-        snapHelper.attachToRecyclerView(listRecyclerView);
+        // Snap Helper: Disabled per user request (issues with scrolling/ordering)
+        // LinearSnapHelper snapHelper = new StartSnapHelper(); 
+        // snapHelper.attachToRecyclerView(listRecyclerView);
         
         root.addView(listRecyclerView);
     }
-    
-    // ... (This assumes I'm just replacing the helper instantiation block)
-
-    // --- GLOBAL MENU ---
-    private void setupMenuButton(ViewGroup root) {
         android.widget.ImageView menuBtn = new android.widget.ImageView(getContext());
         menuBtn.setImageResource(android.R.drawable.ic_menu_more);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             menuBtn.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
         }
-        menuBtn.setBackgroundColor(0x44000000); // Semi-transparent bg
+        menuBtn.setBackgroundResourceId(android.R.drawable.dialog_holo_dark_frame);
         menuBtn.setPadding(16, 16, 16, 16);
         
         android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
@@ -207,28 +203,22 @@ public class WidgetPanelFragment extends Fragment {
         root.addView(menuBtn, params);
         
         menuBtn.setOnClickListener(v -> {
-            android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), menuBtn);
-            popup.getMenu().add(0, 1, 0, "Widget Ekle");
-            popup.getMenu().add(0, 2, 0, "Düzenle (Sil)");
-            // popup.getMenu().add(0, 3, 0, "Ayarlar"); // Future
-            
-            popup.setOnMenuItemClickListener(item -> {
-                switch (item.getItemId()) {
-                    case 1:
-                        showAddWidgetDialog();
-                        return true;
-                    case 2:
-                        setEditMode(true);
-                        return true;
-                }
-                return false;
-            });
-            popup.show();
+            showWidgetControlDialog();
         });
     }
 
-    // --- ADD WIDGET DIALOG ---
+    private void showWidgetControlDialog() {
+        WidgetControlDialog dialog = new WidgetControlDialog();
+        dialog.setWidgetManager(widgetManager);
+        dialog.setOnDismissCallback(this::applyWidgetsToView);
+        dialog.show(getParentFragmentManager(), "WidgetControl");
+    }
+
+    // --- ADD WIDGET DIALOG (Used internally or for other entry points) ---
     private void showAddWidgetDialog() {
+        // ... implementation kept or removed if unused in this scope ...
+        // We can keep it if needed, but the Menu now goes straight to Control Dialog.
+        // Let's call the internal logic if we want to keep the method for reference.
         java.util.List<net.osmand.plus.carlauncher.widgets.WidgetRegistry.WidgetEntry> widgets = 
             net.osmand.plus.carlauncher.widgets.WidgetRegistry.getAvailableWidgets();
             
@@ -400,77 +390,6 @@ public class WidgetPanelFragment extends Fragment {
         }
     }
     
-    // Toggle Edit Mode (Delete Buttons)
-    private void setEditMode(boolean enable) {
-        if (listRecyclerView != null && listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
-            ((WidgetListAdapter) listRecyclerView.getAdapter()).setEditMode(enable);
-            if (enable) showDoneButton();
-            else removeDoneButton();
-        }
-    }
-
-    private View doneButton;
-    
-    private void showDoneButton() {
-        if (rootContent == null) return;
-        if (doneButton != null) return; // Already shown
-        
-        android.widget.Button btn = new android.widget.Button(getContext());
-        btn.setText("BİTTİ");
-        btn.setBackgroundColor(0xFF4CAF50); // Green
-        btn.setTextColor(0xFFFFFFFF);
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            btn.setElevation(20);
-        }
-        
-        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
-             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.END;
-        params.setMargins(32, 32, 32, 32);
-        
-        btn.setLayoutParams(params);
-        
-        // Draggable Logic
-        btn.setOnTouchListener(new View.OnTouchListener() {
-            float dX, dY;
-            @Override
-            public boolean onTouch(View view, android.view.MotionEvent event) {
-                switch (event.getAction()) {
-                    case android.view.MotionEvent.ACTION_DOWN:
-                        dX = view.getX() - event.getRawX();
-                        dY = view.getY() - event.getRawY();
-                        return true; // Consumed
-                    case android.view.MotionEvent.ACTION_MOVE:
-                        view.animate()
-                            .x(event.getRawX() + dX)
-                            .y(event.getRawY() + dY)
-                            .setDuration(0)
-                            .start();
-                        return true;
-                    case android.view.MotionEvent.ACTION_UP:
-                         view.performClick();
-                         return true;
-                }
-                return false;
-            }
-        });
-        
-        btn.setOnClickListener(v -> {
-            setEditMode(false);
-            removeDoneButton();
-        });
-        
-        rootContent.addView(btn);
-        doneButton = btn;
-    }
-    
-    private void removeDoneButton() {
-        if (doneButton != null && rootContent != null) {
-            rootContent.removeView(doneButton);
-            doneButton = null;
-        }
-    }
-
     @Override
     public void onResume() {
         super.onResume();
@@ -494,6 +413,9 @@ public class WidgetPanelFragment extends Fragment {
         if (widgetManager == null || app == null)
             return;
 
+        // Default Widgets Logic...
+        // (If config exists, this is skipped by onCreate logic)
+        
         // Saat widget (her zaman en ustte)
         widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.Material3ClockWidget(getContext()));
 
@@ -526,78 +448,5 @@ public class WidgetPanelFragment extends Fragment {
 
     public WidgetManager getWidgetManager() {
         return widgetManager;
-    }
-
-    private static class StartSnapHelper extends LinearSnapHelper {
-        private androidx.recyclerview.widget.OrientationHelper mVerticalHelper, mHorizontalHelper;
-
-        @Override
-        public int[] calculateDistanceToFinalSnap(@NonNull RecyclerView.LayoutManager layoutManager,
-                                                  @NonNull View targetView) {
-            int[] out = new int[2];
-            if (layoutManager.canScrollHorizontally()) {
-                out[0] = distanceToStart(targetView, getHorizontalHelper(layoutManager));
-            } else {
-                out[0] = 0;
-            }
-            if (layoutManager.canScrollVertically()) {
-                out[1] = distanceToStart(targetView, getVerticalHelper(layoutManager));
-            } else {
-                out[1] = 0;
-            }
-            return out;
-        }
-
-        @Override
-        public View findSnapView(RecyclerView.LayoutManager layoutManager) {
-            if (layoutManager instanceof LinearLayoutManager) {
-                if (layoutManager.canScrollHorizontally()) {
-                    return findStartView(layoutManager, getHorizontalHelper(layoutManager));
-                } else {
-                    return findStartView(layoutManager, getVerticalHelper(layoutManager));
-                }
-            }
-            return super.findSnapView(layoutManager);
-        }
-
-        private int distanceToStart(View targetView, androidx.recyclerview.widget.OrientationHelper helper) {
-            return helper.getDecoratedStart(targetView) - helper.getStartAfterPadding();
-        }
-
-        private View findStartView(RecyclerView.LayoutManager layoutManager,
-                                   androidx.recyclerview.widget.OrientationHelper helper) {
-            int childCount = layoutManager.getChildCount();
-            if (childCount == 0) {
-                return null;
-            }
-            View closestChild = null;
-            int startest = Integer.MAX_VALUE;
-
-            for (int i = 0; i < childCount; i++) {
-                final View child = layoutManager.getChildAt(i);
-                int childStart = helper.getDecoratedStart(child);
-                int distance = Math.abs(childStart - helper.getStartAfterPadding());
-
-                if (distance < startest) {
-                    startest = distance;
-                    closestChild = child;
-                }
-            }
-            return closestChild;
-        }
-
-        private androidx.recyclerview.widget.OrientationHelper getVerticalHelper(RecyclerView.LayoutManager layoutManager) {
-            if (mVerticalHelper == null || mVerticalHelper.getLayoutManager() != layoutManager) {
-                mVerticalHelper = androidx.recyclerview.widget.OrientationHelper.createVerticalHelper(layoutManager);
-            }
-            return mVerticalHelper;
-        }
-
-        private androidx.recyclerview.widget.OrientationHelper getHorizontalHelper(RecyclerView.LayoutManager layoutManager) {
-            if (mHorizontalHelper == null || mHorizontalHelper.getLayoutManager() != layoutManager) {
-                mHorizontalHelper = androidx.recyclerview.widget.OrientationHelper.createHorizontalHelper(layoutManager);
-            }
-            return mHorizontalHelper;
-        }
     }
 }

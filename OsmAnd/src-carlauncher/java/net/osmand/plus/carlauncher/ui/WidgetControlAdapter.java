@@ -1,0 +1,124 @@
+package net.osmand.plus.carlauncher.ui;
+
+import android.graphics.Color;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
+import net.osmand.plus.R;
+import net.osmand.plus.carlauncher.widgets.BaseWidget;
+
+import java.util.Collections;
+import java.util.List;
+
+public class WidgetControlAdapter extends RecyclerView.Adapter<WidgetControlAdapter.ControlViewHolder> {
+
+    public interface OnControlActionListener {
+        void onStartDrag(RecyclerView.ViewHolder viewHolder);
+        void onDeleteClicked(BaseWidget widget, int position);
+    }
+
+    private final List<BaseWidget> widgets;
+    private final OnControlActionListener listener;
+
+    public WidgetControlAdapter(List<BaseWidget> widgets, OnControlActionListener listener) {
+        this.widgets = widgets;
+        this.listener = listener;
+    }
+
+    @NonNull
+    @Override
+    public ControlViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_widget_control_row, parent, false);
+        return new ControlViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ControlViewHolder holder, int position) {
+        BaseWidget widget = widgets.get(position);
+
+        // Name
+        holder.nameText.setText(widget.getName());
+
+        // Size Buttons State
+        updateSizeButtons(holder, widget.getSize());
+
+        // Listeners for Size
+        holder.btnS.setOnClickListener(v -> {
+            widget.setSize(BaseWidget.WidgetSize.SMALL);
+            updateSizeButtons(holder, BaseWidget.WidgetSize.SMALL);
+        });
+        holder.btnM.setOnClickListener(v -> {
+            widget.setSize(BaseWidget.WidgetSize.MEDIUM);
+            updateSizeButtons(holder, BaseWidget.WidgetSize.MEDIUM);
+        });
+        holder.btnL.setOnClickListener(v -> {
+            widget.setSize(BaseWidget.WidgetSize.LARGE);
+            updateSizeButtons(holder, BaseWidget.WidgetSize.LARGE);
+        });
+
+        // Delete
+        holder.btnDelete.setOnClickListener(v -> {
+            if (listener != null) listener.onDeleteClicked(widget, holder.getAdapterPosition());
+        });
+
+        // Drag Handle
+        holder.dragHandle.setOnTouchListener((v, event) -> {
+            if (event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN) {
+                if (listener != null) listener.onStartDrag(holder);
+            }
+            return false;
+        });
+    }
+
+    private void updateSizeButtons(ControlViewHolder holder, BaseWidget.WidgetSize size) {
+        int selectedColor = Color.parseColor("#FF2196F3"); // Blue
+        int unselectedColor = Color.TRANSPARENT;
+        
+        holder.btnS.setBackgroundColor(size == BaseWidget.WidgetSize.SMALL ? selectedColor : unselectedColor);
+        holder.btnM.setBackgroundColor(size == BaseWidget.WidgetSize.MEDIUM ? selectedColor : unselectedColor);
+        holder.btnL.setBackgroundColor(size == BaseWidget.WidgetSize.LARGE ? selectedColor : unselectedColor);
+    }
+
+    @Override
+    public int getItemCount() {
+        return widgets.size();
+    }
+
+    public void onItemMove(int fromPosition, int toPosition) {
+        if (fromPosition < toPosition) {
+            for (int i = fromPosition; i < toPosition; i++) {
+                Collections.swap(widgets, i, i + 1);
+            }
+        } else {
+            for (int i = fromPosition; i > toPosition; i--) {
+                Collections.swap(widgets, i, i - 1);
+            }
+        }
+        notifyItemMoved(fromPosition, toPosition);
+    }
+
+    static class ControlViewHolder extends RecyclerView.ViewHolder {
+        final ImageView dragHandle;
+        final TextView nameText;
+        final Button btnS, btnM, btnL;
+        final ImageView btnDelete;
+
+        public ControlViewHolder(@NonNull View itemView) {
+            super(itemView);
+            dragHandle = itemView.findViewById(R.id.drag_handle);
+            nameText = itemView.findViewById(R.id.widget_name);
+            btnS = itemView.findViewById(R.id.btn_size_s);
+            btnM = itemView.findViewById(R.id.btn_size_m);
+            btnL = itemView.findViewById(R.id.btn_size_l);
+            btnDelete = itemView.findViewById(R.id.btn_delete);
+        }
+    }
+}
