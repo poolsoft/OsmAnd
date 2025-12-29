@@ -56,7 +56,6 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
                 Collections.swap(widgets, i, i - 1);
             }
         }
-        }
         notifyItemMoved(fromPosition, toPosition);
         // DB update now handled in Fragment onDragEnd (clearView)
     }
