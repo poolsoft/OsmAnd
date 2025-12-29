@@ -216,6 +216,14 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
     }
 
     @Override
+    public int getItemViewType(int position) {
+        if (position == widgets.size()) {
+            return VIEW_TYPE_ADD;
+        }
+        return VIEW_TYPE_WIDGET;
+    }
+
+    @Override
     public int getItemCount() {
         return widgets.size() + 1; // +1 for Add Button
     }
