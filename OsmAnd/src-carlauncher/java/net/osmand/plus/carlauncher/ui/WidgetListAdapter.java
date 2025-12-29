@@ -129,14 +129,6 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         }
 
-        }
-
-        // Long Press handled by ItemTouchHelper for Drag & Drop
-        // holder.itemView.setOnLongClickListener... REMOVED
-    }
-
-        // Long Press handled by ItemTouchHelper for Drag & Drop
-        // holder.itemView.setOnLongClickListener... REMOVED
     }
 
     @Override
