@@ -126,9 +126,72 @@ public class WidgetPanelFragment extends Fragment {
         
         root.addView(menuBtn, params);
         
-        menuBtn.setOnClickListener(v -> {
-            showWidgetControlDialog();
         });
+    }
+
+    private void showWidgetControlDialog() {
+        WidgetControlDialog dialog = new WidgetControlDialog();
+        dialog.setWidgetManager(widgetManager);
+        dialog.setOnDismissCallback(this::applyWidgetsToView);
+        dialog.show(getParentFragmentManager(), "WidgetControl");
+    }
+
+    private void showAddWidgetDialog() {
+        java.util.List<net.osmand.plus.carlauncher.widgets.WidgetRegistry.WidgetEntry> widgets = 
+            net.osmand.plus.carlauncher.widgets.WidgetRegistry.getAvailableWidgets();
+            
+        final String[] displayNames = new String[widgets.size()];
+        final String[] typeKeys = new String[widgets.size()];
+        
+        for (int i = 0; i < widgets.size(); i++) {
+            displayNames[i] = widgets.get(i).displayName;
+            typeKeys[i] = widgets.get(i).typeId;
+        }
+
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
+        builder.setTitle("Widget Ekle");
+        builder.setItems(displayNames, (dialog, which) -> {
+            String selectedType = typeKeys[which];
+            showWidgetSizeDialog(selectedType);
+        });
+        
+        builder.show();
+    }
+
+    private void showWidgetSizeDialog(String type) {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
+        builder.setTitle("Boyut Seçiniz");
+        
+        final String[] sizes = {"Küçük (Standart)", "Orta (Geniş)", "Büyük (Tam)"};
+        
+        builder.setItems(sizes, (dialog, which) -> {
+            BaseWidget.WidgetSize size = BaseWidget.WidgetSize.SMALL;
+            switch (which) {
+                case 0: size = BaseWidget.WidgetSize.SMALL; break;
+                case 1: size = BaseWidget.WidgetSize.MEDIUM; break;
+                case 2: size = BaseWidget.WidgetSize.LARGE; break;
+            }
+            addNewWidget(type, size);
+        });
+        
+        builder.show();
+    }
+    
+    private void addNewWidget(String type, BaseWidget.WidgetSize size) {
+        BaseWidget widget = net.osmand.plus.carlauncher.widgets.WidgetRegistry.createWidget(getContext(), app, type);
+        if (widget != null) {
+            widget.setSize(size);
+            try {
+                java.lang.reflect.Field idField = BaseWidget.class.getDeclaredField("id");
+                idField.setAccessible(true);
+                idField.set(widget, type + "_" + System.currentTimeMillis());
+            } catch (Exception e) {
+                // Ignore
+            }
+            
+            widgetManager.addWidget(widget);
+            applyWidgetsToView();
+        }
     }
 
     // ... (skipping some parts)
