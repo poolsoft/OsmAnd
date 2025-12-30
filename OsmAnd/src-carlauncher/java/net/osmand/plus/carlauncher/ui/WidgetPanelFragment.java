@@ -110,7 +110,6 @@ public class WidgetPanelFragment extends Fragment {
     }
 
     private void setupMenuButton(ViewGroup root) {
-        // ... (unchanged)
         android.widget.ImageView menuBtn = new android.widget.ImageView(getContext());
         menuBtn.setImageResource(android.R.drawable.ic_menu_more);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
@@ -126,6 +125,8 @@ public class WidgetPanelFragment extends Fragment {
         
         root.addView(menuBtn, params);
         
+        menuBtn.setOnClickListener(v -> {
+            showWidgetControlDialog();
         });
     }
 
