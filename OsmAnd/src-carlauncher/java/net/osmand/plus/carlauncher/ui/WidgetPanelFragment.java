@@ -90,7 +90,6 @@ public class WidgetPanelFragment extends Fragment {
 
     // --- MODE 0: LIST LAYOUT (UNIT BASED) ---
     private void initListLayout(ViewGroup root) {
-        // ... (lines 135-161 unchanged)
         boolean isPortrait = getResources()
                 .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
 
@@ -127,6 +126,7 @@ public class WidgetPanelFragment extends Fragment {
             }
         });
 
+        applyWidgetsToView(); // Initial Load
         root.addView(listRecyclerView);
     }
 
