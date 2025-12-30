@@ -45,7 +45,7 @@ public class WidgetControlAdapter extends RecyclerView.Adapter<WidgetControlAdap
         BaseWidget widget = widgets.get(position);
 
         // Name
-        holder.nameText.setText(widget.getName());
+        holder.nameText.setText(widget.getTitle());
 
         // Size Buttons State
         updateSizeButtons(holder, widget.getSize());

@@ -116,7 +116,7 @@ public class WidgetPanelFragment extends Fragment {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             menuBtn.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
         }
-        menuBtn.setBackgroundResourceId(android.R.drawable.dialog_holo_dark_frame);
+        menuBtn.setBackgroundResource(android.R.drawable.dialog_holo_dark_frame);
         menuBtn.setPadding(16, 16, 16, 16);
         
         android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
