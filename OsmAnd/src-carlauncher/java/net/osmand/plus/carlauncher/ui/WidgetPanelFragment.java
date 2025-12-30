@@ -65,7 +65,28 @@ public class WidgetPanelFragment extends Fragment {
         }
     }
 
-    // ... (skipping unchanged parts)
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        FrameLayout mainFrame = new FrameLayout(getContext());
+        mainFrame.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        
+        // Background for panel
+        mainFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_panel_modern); 
+        
+        rootContent = mainFrame;
+        
+        initListLayout(mainFrame);
+        setupMenuButton(mainFrame);
+        
+        return mainFrame;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        rootContent = null;
+    }
 
     // --- MODE 0: LIST LAYOUT (UNIT BASED) ---
     private void initListLayout(ViewGroup root) {
@@ -195,8 +216,6 @@ public class WidgetPanelFragment extends Fragment {
         }
     }
 
-    // ... (skipping some parts)
-    
     private void applyWidgetsToView() {
         if (listRecyclerView != null) {
             // List Mode (RecyclerView)
