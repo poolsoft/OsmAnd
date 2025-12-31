@@ -24,7 +24,7 @@ public class DirectionWidget extends BaseWidget implements OsmAndLocationProvide
     private final OsmandApplication app;
 
     public DirectionWidget(@NonNull Context context, @NonNull OsmandApplication app) {
-        super(context, "direction", "Yon");
+        super(context, "compass", "Yon");
         this.app = app;
         this.order = 2;
     }
