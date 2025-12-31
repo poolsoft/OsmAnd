@@ -51,7 +51,12 @@ public class WidgetPanelFragment extends Fragment {
     private BroadcastReceiver modeChangeReceiver;
     
     private ViewGroup rootContent;
-    private int currentUnitSize = 0;
+    private View slidingContainer; // The container that moves
+    private android.widget.ImageButton handleBtn;
+    private View widgetContentFrame; // The frame holding widgets
+    
+    private boolean isPanelOpen = true;
+    private int contentWidth = 0;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -70,16 +75,68 @@ public class WidgetPanelFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         FrameLayout mainFrame = new FrameLayout(getContext());
         mainFrame.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        // mainFrame is transparent, just touches
         
-        // Background for panel
-        mainFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_panel_modern); 
+        // Sliding Container (Horizontal: Handle + Content)
+        LinearLayout slideLayout = new LinearLayout(getContext());
+        slideLayout.setOrientation(LinearLayout.HORIZONTAL);
+        slideLayout.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT, android.view.Gravity.END));
+        
+        slidingContainer = slideLayout;
+        
+        // 1. Handle Button
+        handleBtn = new android.widget.ImageButton(getContext());
+        handleBtn.setImageResource(net.osmand.plus.R.drawable.ic_chevron_left);
+        handleBtn.setRotation(180f); // Point Right initially (Open) -> User provided image suggests Left closes it? 
+        // Logic: 
+        // If Open: Icon should indicate 'Close' (Chevron Right >) or just a bar. 
+        // User Image: Chevron pointing Left << (on the left edge).
+        // Let's stick to standard: If Open, show Chevron Right (Close). If Closed, show Chevron Left (Open).
+        // But user provided image has `<<` on a panel that is OPEN. So `<<` means "Slide Left" (Open more? or Close?).
+        // Let's implement toggle logic and we can swap icon rotation easily.
+        
+        handleBtn.setBackgroundResource(net.osmand.plus.R.drawable.bg_drawer_handle);
+        handleBtn.setPadding(0, 40, 0, 40); // Vertical elongated
+        
+        LinearLayout.LayoutParams handleParams = new LinearLayout.LayoutParams(60, 200); // Fixed size handle
+        handleParams.gravity = android.view.Gravity.CENTER_VERTICAL;
+        slideLayout.addView(handleBtn, handleParams);
+        
+        handleBtn.setOnClickListener(v -> togglePanel());
+        
+        // 2. Widget Content Frame
+        FrameLayout contentFrame = new FrameLayout(getContext());
+        contentFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_panel_modern);
+        contentFrame.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        
+        widgetContentFrame = contentFrame;
+        slideLayout.addView(contentFrame);
+        
+        mainFrame.addView(slideLayout);
         
         rootContent = mainFrame;
         
-        initListLayout(mainFrame);
-        setupMenuButton(mainFrame);
+        initListLayout(contentFrame);
+        setupMenuButton(contentFrame);
         
         return mainFrame;
+    }
+    
+    private void togglePanel() {
+        if (slidingContainer == null || widgetContentFrame == null) return;
+        
+        final int targetX = isPanelOpen ? widgetContentFrame.getWidth() : 0;
+        
+        android.animation.ObjectAnimator animator = android.animation.ObjectAnimator.ofFloat(
+                slidingContainer, "translationX", targetX);
+        animator.setDuration(300);
+        animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        animator.start();
+        
+        isPanelOpen = !isPanelOpen;
+        
+        // Rotate Icon
+        handleBtn.animate().rotation(isPanelOpen ? 180f : 0f).setDuration(300).start();
     }
 
     @Override
@@ -111,10 +168,46 @@ public class WidgetPanelFragment extends Fragment {
             @Override
             public void onGlobalLayout() {
                 if (listRecyclerView.getMeasuredHeight() > 0 && listRecyclerView.getMeasuredWidth() > 0) {
+                     // Wait, now Width might be 0 initially if WRAP_CONTENT?
+                     // No, Parent is WRAP_CONTENT, but Recycler is MATCH. 
+                     // We need to set a fixed width for the ContentFrame based on UnitSize logic, 
+                     // OR let the Recycler measure itself?
+                     // Previous logic: unitSize = MeasuredWidth / 2.
+                     // If we wrap content, it might shrink.
+                     // We should determine desired width.
+                     // Portrait: 1/2 Screen? Landscape: 1/6 Screen Height?
+                     // Let's use DisplayMetrics to set fixed size for the panel.
+                     
+                    android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
+                    int screenWidth = metrics.widthPixels;
+                    int screenHeight = metrics.heightPixels;
+                    
+                    int panelWidth;
+                     if (isPortrait) {
+                         panelWidth = screenWidth / 2;
+                     } else {
+                         // Landscape: Panel takes ~1/3 width conventionally or based on unit height
+                        // Current logic was: unitSize = height / 6. 
+                        // If we want specific width, let's say 40% of screen.
+                        panelWidth = (int) (screenHeight * (2.5f / 3f)); // Rough guess for existing look
+                        // Better: Use the calculated UnitSize logic.
+                     }
+                     
+                     // Force ContentFrame width if it's too small
+                     if (widgetContentFrame.getLayoutParams().width == ViewGroup.LayoutParams.WRAP_CONTENT) {
+                          // Adjust logic to keep existing behavior
+                          // Current logic relied on Container being MATCH_PARENT (Right Panel).
+                          // We should probably set it to a fixed width like 300-350dp or calculation.
+                          // Let's set it to 340dp for now as a safe default for car screens.
+                          int desiredWidth = (int) (340 * metrics.density);
+                          widgetContentFrame.getLayoutParams().width = desiredWidth;
+                          widgetContentFrame.requestLayout();
+                     }
+                    
                     listRecyclerView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                     
                     if (isPortrait) {
-                        currentUnitSize = listRecyclerView.getMeasuredWidth() / 2;
+                        currentUnitSize = widgetContentFrame.getLayoutParams().width; 
                     } else {
                         currentUnitSize = listRecyclerView.getMeasuredHeight() / 6;
                     }
