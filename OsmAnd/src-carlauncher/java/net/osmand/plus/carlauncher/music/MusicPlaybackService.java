@@ -119,7 +119,7 @@ public class MusicPlaybackService extends Service {
 
         builder.setContentTitle(track.getTitle())
                 .setContentText(track.getArtist())
-                .setSmallIcon(R.drawable.ic_music_note) 
+                .setSmallIcon(R.drawable.ic_music_play) 
                 .setLargeIcon((Bitmap) null)
                 .setContentIntent(pContent)
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
