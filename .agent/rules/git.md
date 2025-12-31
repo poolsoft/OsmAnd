@@ -2,4 +2,4 @@
 trigger: always_on
 ---
 
-1. bittikten sonra push et.
+AndroidManifest yerine AndroidManifest-carlauncher.xml ile işlemleri yap.

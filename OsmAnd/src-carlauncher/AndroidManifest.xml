@@ -6,8 +6,6 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>
 
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-
     <!-- Car Launcher Specific Application Attributes -->
     <application
         android:resizeableActivity="true"
@@ -21,11 +19,6 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
-
-        <service android:name="net.osmand.plus.carlauncher.music.MusicPlaybackService"
-                 android:exported="false"
-                 android:foregroundServiceType="mediaPlayback" />
-
         <activity android:name="net.osmand.plus.carlauncher.antenna.AntennaAlignmentActivity"
                   android:label="Antenna Alignment"
                   android:theme="@android:style/Theme.NoTitleBar.Fullscreen"

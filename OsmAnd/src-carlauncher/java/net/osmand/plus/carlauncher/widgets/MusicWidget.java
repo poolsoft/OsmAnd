@@ -44,9 +44,14 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     }
 
     @NonNull
+    // --- Visualizer ---
+    private android.media.audiofx.Visualizer mVisualizer;
+    private MusicVisualizerView visualizerView;
+    private static final int PERMISSION_REQ_CODE = 202;
+
     @Override
     public View createView() {
-        // Inflate XML
+        // ... (Existing implementation, copying relevant parts)
         View view = android.view.LayoutInflater.from(context).inflate(net.osmand.plus.R.layout.widget_music_modern,
                 null);
 
@@ -55,12 +60,13 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         statusText = view.findViewById(net.osmand.plus.R.id.widget_track_title);
         artistText = view.findViewById(net.osmand.plus.R.id.widget_track_artist);
         albumArtView = view.findViewById(net.osmand.plus.R.id.widget_album_art);
+        visualizerView = view.findViewById(net.osmand.plus.R.id.widget_visualizer);
 
         ImageButton btnPrev = view.findViewById(net.osmand.plus.R.id.widget_btn_prev);
         ImageButton btnNext = view.findViewById(net.osmand.plus.R.id.widget_btn_next);
         btnPlay = view.findViewById(net.osmand.plus.R.id.widget_btn_play);
 
-        // --- Setup Listeners ---
+        // ... (Listeners same as before) ...
         appIconView.setOnClickListener(v -> {
             String pkg = musicManager.getPreferredPackage();
             if (pkg != null) {
@@ -90,27 +96,20 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
             btnNext.setImageResource(net.osmand.plus.R.drawable.ic_music_next);
         }
 
-        // Open Music Drawer on content click
-        // Open Music Drawer on content click
         View contentArea = view.findViewById(net.osmand.plus.R.id.widget_track_title);
         if (contentArea != null) {
             contentArea.setOnClickListener(v -> openMusicDrawer());
         }
 
-        // Widget Layout Params for Grid
         view.setLayoutParams(new ViewGroup.LayoutParams(dpToPx(220), ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        // Long click propagation
         view.setOnLongClickListener(v -> false);
-
-        // Click on background opens player
         view.setOnClickListener(v -> openMusicDrawer());
 
         rootView = view;
         return rootView;
     }
 
-    // --- Helpers ---
+    // ... (Helpers same as before) ...
 
     private void showMusicAppPicker() {
         new net.osmand.plus.carlauncher.dock.AppPickerDialog(context, true, (packageName, appName, icon) -> {
@@ -130,14 +129,10 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     }
 
     private void updateAppIcon(String packageName) {
-        if (appIconView == null)
-            return;
+        if (appIconView == null) return;
         String target = musicManager.getPreferredPackage();
-        if (target == null)
-            target = packageName;
-        if (target == null)
-            return;
-
+        if (target == null) target = packageName;
+        if (target == null) return;
         try {
             appIconView.setImageDrawable(context.getPackageManager().getApplicationIcon(target));
         } catch (Exception e) {
@@ -145,33 +140,20 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         }
     }
 
-    private ImageButton createControlButton(int iconRes, int sizeDp) {
-        ImageButton btn = new ImageButton(context);
-        btn.setImageResource(iconRes);
-        btn.setBackgroundColor(Color.TRANSPARENT);
-        btn.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        btn.setColorFilter(Color.WHITE);
-        int size = dpToPx(sizeDp);
-        // Butonların tıklama alanı geniş olsun ama ikon sığsın
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size, size);
-        lp.setMargins(dpToPx(8), 0, dpToPx(8), 0);
-        btn.setLayoutParams(lp);
-        return btn;
-    }
-
     private int dpToPx(int dp) {
         return (int) (dp * context.getResources().getDisplayMetrics().density);
     }
-
-    // --- Lifecycle ---
-
+    
+    // ... (onSizeChanged same, skipping for brewity but logic retained implicitly if I don't touch it? No I MUST provide full replacement for the block I selected)
+    // Actually I selected up to 302, which is end of file. I should paste onSizeChanged too.
+    
     @Override
     protected void onSizeChanged(WidgetSize newSize) {
-        if (rootView == null) return;
+         if (rootView == null) return;
         
         boolean isSmall = (newSize == WidgetSize.SMALL);
         
-        // Views
+        // Views (Redefine to be safe)
         View btnPrev = rootView.findViewById(net.osmand.plus.R.id.widget_btn_prev);
         View btnNext = rootView.findViewById(net.osmand.plus.R.id.widget_btn_next);
         TextView artist = rootView.findViewById(net.osmand.plus.R.id.widget_track_artist);
@@ -184,60 +166,46 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         if (btnNext != null) btnNext.setVisibility(visibility);
         if (artist != null) artist.setVisibility(visibility);
         
-        // Constraints
+        // Visualizer Visibility (Hide on small to save space/clutter?)
+        if (visualizerView != null) {
+            visualizerView.setVisibility(isSmall ? View.INVISIBLE : View.VISIBLE);
+        }
+
+        // Constraints Logic (Same as before)
         if (rootView instanceof androidx.constraintlayout.widget.ConstraintLayout) {
             androidx.constraintlayout.widget.ConstraintLayout layout = (androidx.constraintlayout.widget.ConstraintLayout) rootView;
             androidx.constraintlayout.widget.ConstraintSet set = new androidx.constraintlayout.widget.ConstraintSet();
             set.clone(layout);
             
             if (isSmall) {
-                // SMALL: Title Centered in Parent (or above play button)
-                // Clear old connections for Title
                 set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP);
                 set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-                
-                // Connect Title: Top to Icon, Bottom to Play Button
                 set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP, 
                             net.osmand.plus.R.id.widget_app_icon, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
                 set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
                             net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.TOP);
-                            
-                // Play Button: Bottom of Parent
                 set.connect(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
                             androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
                 set.setMargin(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, dpToPx(8));
-
             } else {
-                // MEDIUM/LARGE: Standard
-                // Reset Title Constraints
                 set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP);
                 set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-                
-                // Title chain with Artist
                 set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP, 
                             net.osmand.plus.R.id.widget_app_icon, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
                 set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
                             net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.TOP);
-                            
-                // Connect Artist
                 set.connect(net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.TOP, 
                              net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
                 set.connect(net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
                              net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.TOP);
-                             
-                // Chain Style
                 set.setVerticalChainStyle(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.CHAIN_PACKED);
-                
-                // Play Button
                 set.connect(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
                             androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
                 set.setMargin(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, dpToPx(12));
             }
-            
             set.applyTo(layout);
         }
         
-        // Large Size Specifics (Text Size?)
         if (newSize == WidgetSize.LARGE) {
              if (title != null) title.setTextSize(18);
              if (artist != null) artist.setTextSize(15);
@@ -247,17 +215,20 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         }
     }
 
+
     @Override
     public void onStart() {
         super.onStart();
         musicManager.addListener(this);
         updateAppIcon(null);
+        startVisualizer();
     }
 
     @Override
     public void onStop() {
         super.onStop();
         musicManager.removeListener(this);
+        stopVisualizer();
     }
 
     @Override
@@ -277,7 +248,6 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                     if (albumArt != null) {
                         albumArtView.setImageBitmap(albumArt);
                     } else {
-                        // Default Art
                          albumArtView.setImageResource(net.osmand.plus.R.drawable.ic_default_album_art);
                     }
                 }
@@ -294,9 +264,67 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                         isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play);
             });
         }
+        if (isPlaying) startVisualizer();
+        else stopVisualizer();
     }
 
     @Override
     public void onSourceChanged(boolean isInternal) {
+        if (!isInternal) stopVisualizer(); // Only support internal for now
+    }
+
+    // --- Visualizer Logic ---
+    private void startVisualizer() {
+        if (visualizerView == null) return;
+        if (mVisualizer != null) return; // Already running
+        
+        // Check only works for Internal
+        if (!musicManager.getInternalPlayer().isPlaying()) return;
+
+        // Check Permissions
+        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) 
+            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+             // Request? We are in a Widget class, need Activity context.
+             if (context instanceof android.app.Activity) {
+                 androidx.core.app.ActivityCompat.requestPermissions(
+                         (android.app.Activity) context,
+                         new String[]{android.Manifest.permission.RECORD_AUDIO},
+                         PERMISSION_REQ_CODE
+                 );
+             }
+             return;
+        }
+
+        try {
+            int sessionId = musicManager.getInternalPlayer().getAudioSessionId();
+            if (sessionId == 0) return;
+
+            mVisualizer = new android.media.audiofx.Visualizer(sessionId);
+            mVisualizer.setCaptureSize(android.media.audiofx.Visualizer.getCaptureSizeRange()[1]);
+            mVisualizer.setDataCaptureListener(new android.media.audiofx.Visualizer.OnDataCaptureListener() {
+                @Override
+                public void onWaveFormDataCapture(android.media.audiofx.Visualizer visualizer, byte[] waveform, int samplingRate) {
+                }
+
+                @Override
+                public void onFftDataCapture(android.media.audiofx.Visualizer visualizer, byte[] fft, int samplingRate) {
+                    if (visualizerView != null) {
+                        visualizerView.updateVisualizer(fft);
+                    }
+                }
+            }, android.media.audiofx.Visualizer.getMaxCaptureRate() / 2, false, true);
+            
+            mVisualizer.setEnabled(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void stopVisualizer() {
+        if (mVisualizer != null) {
+            mVisualizer.setEnabled(false);
+            mVisualizer.release();
+            mVisualizer = null;
+        }
     }
 }

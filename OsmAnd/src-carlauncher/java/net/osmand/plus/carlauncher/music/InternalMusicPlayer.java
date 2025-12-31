@@ -267,6 +267,13 @@ public class InternalMusicPlayer {
         }
     }
 
+    public int getAudioSessionId() {
+        if (mediaPlayer != null) {
+            return mediaPlayer.getAudioSessionId();
+        }
+        return 0;
+    }
+
     // --- Persistence (Auto-Resume) ---
     private static final String PREF_NAME = "InternalMusicPlayer";
     private static final String PREF_KEY_INDEX = "last_index";
