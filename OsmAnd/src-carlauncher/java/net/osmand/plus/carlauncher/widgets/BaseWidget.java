@@ -108,6 +108,15 @@ public abstract class BaseWidget {
 
     public void setSize(WidgetSize size) {
         this.size = size;
+        onSizeChanged(size);
+    }
+    
+    /**
+     * Widget boyutu degistiginde cagrilir.
+     * Override edilerek widget icerigi guncellenebilir.
+     */
+    protected void onSizeChanged(WidgetSize newSize) {
+        // Default impl
     }
 
     @Nullable

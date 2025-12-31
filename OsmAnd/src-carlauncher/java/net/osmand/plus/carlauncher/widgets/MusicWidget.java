@@ -166,6 +166,31 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     // --- Lifecycle ---
 
     @Override
+    protected void onSizeChanged(WidgetSize newSize) {
+        if (rootView == null) return;
+        
+        // SMALL: Compact (Play/Pause + Status Marquee). Hide Previous/Next, Artist, AlbumArt
+        // MEDIUM: Standard (AlbumArt, Title, Artist, Controls).
+        // LARGE: Expanded (Same as Medium for now, potentially more controls)
+        
+        boolean isSmall = (newSize == WidgetSize.SMALL);
+        
+        ImageButton btnPrev = rootView.findViewById(net.osmand.plus.R.id.widget_btn_prev);
+        ImageButton btnNext = rootView.findViewById(net.osmand.plus.R.id.widget_btn_next);
+        TextView artist = rootView.findViewById(net.osmand.plus.R.id.widget_track_artist);
+        ImageView albumArt = rootView.findViewById(net.osmand.plus.R.id.widget_album_art);
+        
+        int visibility = isSmall ? View.GONE : View.VISIBLE;
+        
+        if (btnPrev != null) btnPrev.setVisibility(visibility);
+        if (btnNext != null) btnNext.setVisibility(visibility);
+        if (artist != null) artist.setVisibility(visibility);
+        if (albumArt != null) albumArt.setVisibility(visibility);
+        
+        // Adjust params if needed (e.g. constraints)
+    }
+
+    @Override
     public void onStart() {
         super.onStart();
         musicManager.addListener(this);
@@ -187,14 +212,17 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         if (rootView != null) {
             rootView.post(() -> {
                 if (statusText != null)
-                    statusText.setText(title != null ? title : "Muzik Secin");
+                    statusText.setText(title != null ? title : "Müzik Seçin");
                 if (artistText != null)
                     artistText.setText(artist != null ? artist : "");
 
-                if (albumArt != null) {
-                    albumArtView.setImageBitmap(albumArt);
-                } else {
-                    albumArtView.setImageResource(0);
+                if (albumArtView != null) {
+                    if (albumArt != null) {
+                        albumArtView.setImageBitmap(albumArt);
+                    } else {
+                        // Clear image or placeholder
+                         albumArtView.setImageResource(android.R.drawable.ic_menu_gallery);
+                    }
                 }
                 updateAppIcon(packageName);
             });

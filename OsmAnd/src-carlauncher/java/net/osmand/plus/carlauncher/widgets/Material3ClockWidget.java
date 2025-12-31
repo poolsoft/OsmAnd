@@ -23,10 +23,12 @@ public class Material3ClockWidget extends BaseWidget {
 
     private TextView tvHourFirst, tvHourSecond;
     private TextView tvMinFirst, tvMinSecond;
+    private TextView tvDate;
     private android.graphics.Typeface clockTypeface;
 
     private final SimpleDateFormat hourFormat;
     private final SimpleDateFormat minuteFormat;
+    private final SimpleDateFormat dateFormat;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private Runnable updateRunnable;
 
@@ -34,12 +36,13 @@ public class Material3ClockWidget extends BaseWidget {
         super(context, "clock_material3", "Saat (M3)");
         this.hourFormat = new SimpleDateFormat("HH", Locale.getDefault());
         this.minuteFormat = new SimpleDateFormat("mm", Locale.getDefault());
+         // E.g. "Pazartesi, 30 Aralık"
+        this.dateFormat = new SimpleDateFormat("EEEE, d MMMM", Locale.getDefault());
         this.order = 0; // Top position
     }
 
     public Material3ClockWidget(@NonNull Context context, OsmandApplication app) {
         this(context);
-        // app param is unused but required for WidgetFactory signature
     }
 
     @Override
@@ -50,6 +53,7 @@ public class Material3ClockWidget extends BaseWidget {
         tvHourSecond = view.findViewById(net.osmand.plus.R.id.hour_digit_2);
         tvMinFirst = view.findViewById(net.osmand.plus.R.id.min_digit_1);
         tvMinSecond = view.findViewById(net.osmand.plus.R.id.min_digit_2);
+        tvDate = view.findViewById(net.osmand.plus.R.id.clock_date_text);
 
         try {
             clockTypeface = android.graphics.Typeface.createFromAsset(context.getAssets(),
@@ -59,18 +63,28 @@ public class Material3ClockWidget extends BaseWidget {
             for (TextView tv : textViews) {
                 if (tv != null) {
                     tv.setTypeface(clockTypeface);
-                    // Auto-size configuration: Min 20sp, Max 100sp, Step 2sp
                     androidx.core.widget.TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
                             tv, 20, 100, 2, android.util.TypedValue.COMPLEX_UNIT_SP);
                 }
             }
         } catch (Exception e) {
-            // Fallback to default
         }
 
         rootView = view;
         updateUI();
         return rootView;
+    }
+    
+    @Override
+    protected void onSizeChanged(WidgetSize newSize) {
+        if (tvDate == null) return;
+        
+        // Show date only on MEDIUM and LARGE
+        if (newSize == WidgetSize.MEDIUM || newSize == WidgetSize.LARGE) {
+            tvDate.setVisibility(View.VISIBLE);
+        } else {
+            tvDate.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -91,8 +105,7 @@ public class Material3ClockWidget extends BaseWidget {
     }
 
     private void updateUI() {
-        if (tvHourFirst == null || tvHourSecond == null || tvMinFirst == null || tvMinSecond == null)
-            return;
+        if (tvHourFirst == null) return;
 
         Date now = new Date();
         String hours = hourFormat.format(now);
@@ -105,6 +118,10 @@ public class Material3ClockWidget extends BaseWidget {
         if (minutes.length() >= 2) {
             tvMinFirst.setText(String.valueOf(minutes.charAt(0)));
             tvMinSecond.setText(String.valueOf(minutes.charAt(1)));
+        }
+        
+        if (tvDate != null) {
+            tvDate.setText(dateFormat.format(now));
         }
     }
 

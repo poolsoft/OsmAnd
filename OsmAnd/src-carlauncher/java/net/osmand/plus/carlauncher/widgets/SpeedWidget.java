@@ -179,7 +179,13 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
                 }
 
                 limitText.setText(limitStr);
-                limitContainer.setVisibility(View.VISIBLE);
+                
+                // Show only if NOT small
+                if (size != WidgetSize.SMALL) {
+                    limitContainer.setVisibility(View.VISIBLE);
+                } else {
+                     limitContainer.setVisibility(View.GONE);
+                }
 
                 // Speed Limit Warning Logic
                 // Tolerance: +2 km/h (~0.55 m/s) buffer
@@ -225,6 +231,29 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
             return routingHelper.getCurrentMaxSpeed();
         }
         return 0;
+    }
+
+    @Override
+    protected void onSizeChanged(WidgetSize newSize) {
+        if (rootView == null) return;
+        
+        // Logic:
+        // SMALL: Hide Limit, Show Speed
+        // MEDIUM: Show Limit, Show Speed
+        // LARGE: Show Limit, Show Speed (Same as M for now, can add trip info later)
+        
+        boolean showLimit = (newSize == WidgetSize.MEDIUM || newSize == WidgetSize.LARGE);
+        
+        if (limitContainer != null) {
+            // Only toggle visibility if we have a valid limit to show, BUT force GONE if size is SMALL
+            if (!showLimit) {
+                limitContainer.setVisibility(View.GONE);
+            } else {
+                 // Visibility logic is handled in updateMaxSpeed based on data
+                 // Force update to re-check
+                 // We don't have location here, next update will fix it.
+            }
+        }
     }
 
     @Override
