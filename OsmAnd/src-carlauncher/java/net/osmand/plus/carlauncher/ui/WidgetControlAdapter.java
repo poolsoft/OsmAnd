@@ -79,12 +79,25 @@ public class WidgetControlAdapter extends RecyclerView.Adapter<WidgetControlAdap
     }
 
     private void updateSizeButtons(ControlViewHolder holder, BaseWidget.WidgetSize size) {
-        int selectedColor = Color.parseColor("#FF2196F3"); // Blue
-        int unselectedColor = Color.TRANSPARENT;
+        int selectedBg = Color.parseColor("#FF2196F3"); // Blue
+        int unselectedBg = Color.TRANSPARENT;
+        int selectedTextColor = Color.WHITE;
+        int unselectedTextColor = Color.parseColor("#AAAAAA");
         
-        holder.btnS.setBackgroundColor(size == BaseWidget.WidgetSize.SMALL ? selectedColor : unselectedColor);
-        holder.btnM.setBackgroundColor(size == BaseWidget.WidgetSize.MEDIUM ? selectedColor : unselectedColor);
-        holder.btnL.setBackgroundColor(size == BaseWidget.WidgetSize.LARGE ? selectedColor : unselectedColor);
+        // Small
+        boolean isSmall = (size == BaseWidget.WidgetSize.SMALL);
+        holder.btnS.setBackgroundColor(isSmall ? selectedBg : unselectedBg);
+        holder.btnS.setTextColor(isSmall ? selectedTextColor : unselectedTextColor);
+        
+        // Medium
+        boolean isMedium = (size == BaseWidget.WidgetSize.MEDIUM);
+        holder.btnM.setBackgroundColor(isMedium ? selectedBg : unselectedBg);
+        holder.btnM.setTextColor(isMedium ? selectedTextColor : unselectedTextColor);
+
+        // Large
+        boolean isLarge = (size == BaseWidget.WidgetSize.LARGE);
+        holder.btnL.setBackgroundColor(isLarge ? selectedBg : unselectedBg);
+        holder.btnL.setTextColor(isLarge ? selectedTextColor : unselectedTextColor);
     }
 
     @Override
@@ -108,7 +121,7 @@ public class WidgetControlAdapter extends RecyclerView.Adapter<WidgetControlAdap
     static class ControlViewHolder extends RecyclerView.ViewHolder {
         final ImageView dragHandle;
         final TextView nameText;
-        final Button btnS, btnM, btnL;
+        final TextView btnS, btnM, btnL;
         final ImageView btnDelete;
 
         public ControlViewHolder(@NonNull View itemView) {

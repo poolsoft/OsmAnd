@@ -135,8 +135,10 @@ public class WidgetPanelFragment extends Fragment {
         menuBtn.setImageResource(android.R.drawable.ic_menu_more);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             menuBtn.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
+            menuBtn.setBackgroundResource(android.R.drawable.item_background_borderless_material_dark); // Ripple
+        } else {
+             menuBtn.setBackgroundColor(0); // Transparent
         }
-        menuBtn.setBackgroundResource(android.R.drawable.dialog_holo_dark_frame);
         menuBtn.setPadding(16, 16, 16, 16);
         
         android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(

@@ -121,6 +121,11 @@ public class WidgetControlDialog extends DialogFragment {
         // Buttons
         view.findViewById(R.id.btn_add_new).setOnClickListener(v -> showAddWidgetDialog());
         view.findViewById(R.id.btn_save_close).setOnClickListener(v -> saveAndClose());
+        
+        View closeBtn = view.findViewById(R.id.btn_close_dialog);
+        if (closeBtn != null) {
+            closeBtn.setOnClickListener(v -> dismiss());
+        }
     }
     
     private ItemTouchHelper touchHelper;
