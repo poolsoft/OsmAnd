@@ -170,9 +170,92 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         if (btnShuffle != null) btnShuffle.setImageResource(net.osmand.plus.R.drawable.ic_music_shuffle);
         if (btnRepeat != null) btnRepeat.setImageResource(net.osmand.plus.R.drawable.ic_music_repeat);
         if (btnClose != null) btnClose.setImageResource(net.osmand.plus.R.drawable.ic_music_close);
-        // if (btnPlaylist != null) btnPlaylist.setImageResource(net.osmand.plus.R.drawable.ic_music_playlist); 
+        
+        // Find Visualizer
+        visualizerView = root.findViewById(net.osmand.plus.R.id.player_visualizer);
 
         return root;
+    }
+
+    // --- Visualizer ---
+    private net.osmand.plus.carlauncher.widgets.MusicVisualizerView visualizerView;
+    private android.media.audiofx.Visualizer mVisualizer;
+
+    private void startVisualizer() {
+        if (visualizerView == null) return;
+        if (mVisualizer != null) return; // Already running
+        if (musicManager == null || musicManager.getInternalPlayer() == null) return;
+        
+        if (!musicManager.getInternalPlayer().isPlaying()) return;
+
+        // Permission Check
+        if (getContext() == null || androidx.core.content.ContextCompat.checkSelfPermission(getContext(), 
+             android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+             // We can request permission here if needed, but let's avoid blocking start
+             // Maybe show small toast or just ignore?
+             // Since we already requested READ_AUDIO, maybe we should have requested RECORD_AUDIO too?
+             // Let's add it to permission request logic if missing.
+             return;
+        }
+
+        try {
+            int sessionId = musicManager.getInternalPlayer().getAudioSessionId();
+            if (sessionId == 0) return;
+
+            mVisualizer = new android.media.audiofx.Visualizer(sessionId);
+            mVisualizer.setCaptureSize(android.media.audiofx.Visualizer.getCaptureSizeRange()[1]);
+            mVisualizer.setDataCaptureListener(new android.media.audiofx.Visualizer.OnDataCaptureListener() {
+                @Override
+                public void onWaveFormDataCapture(android.media.audiofx.Visualizer visualizer, byte[] waveform, int samplingRate) {
+                }
+
+                @Override
+                public void onFftDataCapture(android.media.audiofx.Visualizer visualizer, byte[] fft, int samplingRate) {
+                    if (visualizerView != null) {
+                        visualizerView.updateVisualizer(fft);
+                    }
+                }
+            }, android.media.audiofx.Visualizer.getMaxCaptureRate() / 2, false, true);
+            
+            mVisualizer.setEnabled(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void stopVisualizer() {
+        if (mVisualizer != null) {
+            mVisualizer.setEnabled(false);
+            mVisualizer.release();
+            mVisualizer = null;
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (musicManager != null) {
+            musicManager.addListener(this);
+            // Update UI state
+            updateModeUI(); 
+            // Check play state for visualizer
+            if (musicManager.getInternalPlayer().isPlaying()) {
+                // Check perms again
+                if (getContext() != null && androidx.core.content.ContextCompat.checkSelfPermission(getContext(), 
+                     android.Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                     startVisualizer();
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (musicManager != null) {
+            musicManager.removeListener(this);
+        }
+        stopVisualizer();
     }
 
     private void setupListeners() {
@@ -420,20 +503,27 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     }
 
     private void checkPermissionsAndLoadTracks() {
+        List<String> perms = new ArrayList<>();
+        
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            if (getContext().checkSelfPermission(
-                    android.Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[] { android.Manifest.permission.READ_MEDIA_AUDIO }, 100);
-            } else {
-                loadAllTracks();
-            }
+             if (getContext().checkSelfPermission(android.Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                 perms.add(android.Manifest.permission.READ_MEDIA_AUDIO);
+             }
         } else {
-            if (getContext().checkSelfPermission(
-                    android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[] { android.Manifest.permission.READ_EXTERNAL_STORAGE }, 100);
-            } else {
-                loadAllTracks();
-            }
+             if (getContext().checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                 perms.add(android.Manifest.permission.READ_EXTERNAL_STORAGE);
+             }
+        }
+        
+        if (getContext().checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            perms.add(android.Manifest.permission.RECORD_AUDIO);
+        }
+
+        if (!perms.isEmpty()) {
+            requestPermissions(perms.toArray(new String[0]), 100);
+        } else {
+            loadAllTracks();
+            startVisualizer(); // Try starting if music is playing
         }
     }
 
@@ -979,6 +1069,10 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     adapter.updateCurrentTrack(path, isPlaying);
                 }
             }
+            
+            // Visualizer Control
+            if (isPlaying) startVisualizer();
+            else stopVisualizer();
         });
     }
 

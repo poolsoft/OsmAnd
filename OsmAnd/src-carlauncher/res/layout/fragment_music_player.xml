@@ -39,6 +39,14 @@
                 android:layout_height="match_parent"
                 android:background="@drawable/bg_music_player_overlay_gradient"/>
 
+            <!-- 2.5 Visualizer (Above BG/Overlay, Behind Content) -->
+            <net.osmand.plus.carlauncher.widgets.MusicVisualizerView
+                android:id="@+id/player_visualizer"
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:layout_gravity="bottom"
+                android:alpha="0.6" />
+
             <!-- 3. Content -->
             <LinearLayout
                 android:layout_width="match_parent"
