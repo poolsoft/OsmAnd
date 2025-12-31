@@ -288,10 +288,13 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
     // --- Internal Player Callbacks ---
 
+    // --- Internal Player Callbacks ---
+
     @Override
     public void onTrackChanged(MusicRepository.AudioTrack track) {
         if (!useExternal()) {
             notifyTrackChanged();
+            updateNotificationService();
         }
     }
 
@@ -300,12 +303,52 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         isInternalPlaying = isPlaying;
         if (!useExternal()) {
             notifyStateChanged();
+            updateNotificationService();
+        } else {
+             // If external takes over, internal notification should probably stop or pause?
+             // If we switch to external, internal pauses automatically (see updateActiveController).
+             // But valid to ensure service updates.
         }
     }
 
     @Override
     public void onCompletion() {
         // Internal bittiğinde yapılacaklar
+        // Maybe close service if playlist ended?
+        // But player usually loops or goes to next.
+        updateNotificationService();
+    }
+    
+    private void updateNotificationService() {
+        // Only managing notification for INTERNAL player.
+        // External players manage their own notifications.
+        
+        Intent intent = new Intent(context, MusicPlaybackService.class);
+        
+        if (internalPlayer.isPlaying() || (internalPlayer.getCurrentTrack() != null && isInternalPlaying)) {
+             intent.setAction(MusicPlaybackService.ACTION_UPDATE);
+             // Start Service
+             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                 context.startForegroundService(intent);
+             } else {
+                 context.startService(intent);
+             }
+        } else {
+            // Not playing. 
+            // If just paused, we might want to keep notification for a while (to resume).
+            // Logic: ACTION_UPDATE will update notification to "Paused" state.
+            // If stopped fully or app closing, ACTION_CLOSE.
+            // For now, let's keep it alive on Pause (so user can resume).
+            // But if user explicitly closed app?
+            // Let's send UPDATE. The Service handles self-stop if needed or user clicks X.
+             intent.setAction(MusicPlaybackService.ACTION_UPDATE);
+             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                 context.startForegroundService(intent);
+             } else {
+                 context.startService(intent);
+             }
+        }
+        
     }
 
     // --- UI Notifications ---
