@@ -169,25 +169,82 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     protected void onSizeChanged(WidgetSize newSize) {
         if (rootView == null) return;
         
-        // SMALL: Compact (Play/Pause + Status Marquee). Hide Previous/Next, Artist, AlbumArt
-        // MEDIUM: Standard (AlbumArt, Title, Artist, Controls).
-        // LARGE: Expanded (Same as Medium for now, potentially more controls)
-        
         boolean isSmall = (newSize == WidgetSize.SMALL);
         
-        ImageButton btnPrev = rootView.findViewById(net.osmand.plus.R.id.widget_btn_prev);
-        ImageButton btnNext = rootView.findViewById(net.osmand.plus.R.id.widget_btn_next);
+        // Views
+        View btnPrev = rootView.findViewById(net.osmand.plus.R.id.widget_btn_prev);
+        View btnNext = rootView.findViewById(net.osmand.plus.R.id.widget_btn_next);
         TextView artist = rootView.findViewById(net.osmand.plus.R.id.widget_track_artist);
-        ImageView albumArt = rootView.findViewById(net.osmand.plus.R.id.widget_album_art);
-        
+        TextView title = rootView.findViewById(net.osmand.plus.R.id.widget_track_title);
+        View btnPlay = rootView.findViewById(net.osmand.plus.R.id.widget_btn_play);
+
+        // Visibility
         int visibility = isSmall ? View.GONE : View.VISIBLE;
-        
         if (btnPrev != null) btnPrev.setVisibility(visibility);
         if (btnNext != null) btnNext.setVisibility(visibility);
         if (artist != null) artist.setVisibility(visibility);
-        if (albumArt != null) albumArt.setVisibility(visibility);
         
-        // Adjust params if needed (e.g. constraints)
+        // Constraints
+        if (rootView instanceof androidx.constraintlayout.widget.ConstraintLayout) {
+            androidx.constraintlayout.widget.ConstraintLayout layout = (androidx.constraintlayout.widget.ConstraintLayout) rootView;
+            androidx.constraintlayout.widget.ConstraintSet set = new androidx.constraintlayout.widget.ConstraintSet();
+            set.clone(layout);
+            
+            if (isSmall) {
+                // SMALL: Title Centered in Parent (or above play button)
+                // Clear old connections for Title
+                set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP);
+                set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                
+                // Connect Title: Top to Icon, Bottom to Play Button
+                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP, 
+                            net.osmand.plus.R.id.widget_app_icon, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
+                            net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.TOP);
+                            
+                // Play Button: Bottom of Parent
+                set.connect(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
+                            androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                set.setMargin(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, dpToPx(8));
+
+            } else {
+                // MEDIUM/LARGE: Standard
+                // Reset Title Constraints
+                set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP);
+                set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                
+                // Title chain with Artist
+                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP, 
+                            net.osmand.plus.R.id.widget_app_icon, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
+                            net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.TOP);
+                            
+                // Connect Artist
+                set.connect(net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.TOP, 
+                             net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                set.connect(net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
+                             net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.TOP);
+                             
+                // Chain Style
+                set.setVerticalChainStyle(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.CHAIN_PACKED);
+                
+                // Play Button
+                set.connect(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
+                            androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                set.setMargin(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, dpToPx(12));
+            }
+            
+            set.applyTo(layout);
+        }
+        
+        // Large Size Specifics (Text Size?)
+        if (newSize == WidgetSize.LARGE) {
+             if (title != null) title.setTextSize(18);
+             if (artist != null) artist.setTextSize(15);
+        } else {
+             if (title != null) title.setTextSize(16);
+             if (artist != null) artist.setTextSize(13);
+        }
     }
 
     @Override
