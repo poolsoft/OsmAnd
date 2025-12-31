@@ -57,6 +57,7 @@ public class WidgetPanelFragment extends Fragment {
     
     private boolean isPanelOpen = true;
     private int contentWidth = 0;
+    private int currentUnitSize = 0;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {

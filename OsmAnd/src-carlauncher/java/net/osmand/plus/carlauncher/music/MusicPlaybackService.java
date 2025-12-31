@@ -12,7 +12,7 @@ import android.os.Build;
 import android.os.IBinder;
 
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
+
 
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
@@ -110,46 +110,58 @@ public class MusicPlaybackService extends Service {
         PendingIntent pContent = PendingIntent.getActivity(this, 0, contentIntent, PendingIntent.FLAG_IMMUTABLE);
 
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle(track.getTitle())
-                .setContentText(track.getArtist())
-                .setSmallIcon(R.drawable.ic_music_note) // Ensure this exists or use generic
-                .setLargeIcon(null) // Todo: Load Album Art
-                .setContentIntent(pContent)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setOnlyAlertOnce(true)
-                .setDeleteIntent(pClose)
-                // Add Media Style
-                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                        .setShowActionsInCompactView(0, 1, 2) // Indices of actions
-                        .setMediaSession(null)) // Pass session token if integrating MediaSession
-                .addAction(R.drawable.ic_action_center_widget, "Prev", pPrev) // Need icons
-                .addAction(isPlaying ? R.drawable.ic_action_video_dark : R.drawable.ic_action_play_dark, "Play/Pause", pPlayPause)
-                .addAction(R.drawable.ic_action_center_widget, "Next", pNext) // Reusing icons temporarily if specific ones missing
-                .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Close", pClose);
-
-        // Icon Fixes:
-        // Use R.drawable for existing icons.
-        // Play: R.drawable.ic_play_arrow (if exists) or android.R.drawable.
-        // We used custom buttons in widget. Let's use android defaults for safety or project icons.
-        // Project has: ic_play_dark, ic_pause_dark? Widget used resource IDs directly.
-        // Let's rely on standard Android icons for notification actions to be safe, or use what we saw in widget xmls?
-        // Widget uses `widget_btn_play` etc. which are ImageButtons.
-        
-        // Let's try to use standard android drawable for notification actions to ensure they appear
-        builder.mActions.clear();
-        builder.addAction(android.R.drawable.ic_media_previous, "Prev", pPrev);
-        if (isPlaying) {
-             builder.addAction(android.R.drawable.ic_media_pause, "Pause", pPlayPause);
+        Notification.Builder builder;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            builder = new Notification.Builder(this, CHANNEL_ID);
         } else {
-             builder.addAction(android.R.drawable.ic_media_play, "Play", pPlayPause);
+            builder = new Notification.Builder(this);
         }
-        builder.addAction(android.R.drawable.ic_media_next, "Next", pNext);
-        builder.addAction(android.R.drawable.ic_menu_close_clear_cancel, "Close", pClose);
-        
-        // Update MediaStyle indices
-        builder.setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                        .setShowActionsInCompactView(0, 1, 2));
+
+        builder.setContentTitle(track.getTitle())
+                .setContentText(track.getArtist())
+                .setSmallIcon(R.drawable.ic_music_note) 
+                .setLargeIcon((Bitmap) null)
+                .setContentIntent(pContent)
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setOnlyAlertOnce(true)
+                .setDeleteIntent(pClose);
+
+        // Media Style
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            builder.setStyle(new Notification.MediaStyle()
+                    .setShowActionsInCompactView(0, 1, 2)
+                    .setMediaSession(null));
+        }
+
+        // Actions
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            builder.addAction(new Notification.Action.Builder(
+                    android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_media_previous), "Prev", pPrev).build());
+            
+            if (isPlaying) {
+                builder.addAction(new Notification.Action.Builder(
+                     android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_media_pause), "Pause", pPlayPause).build());
+            } else {
+                builder.addAction(new Notification.Action.Builder(
+                     android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_media_play), "Play", pPlayPause).build());
+            }
+
+            builder.addAction(new Notification.Action.Builder(
+                    android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_media_next), "Next", pNext).build());
+                    
+            builder.addAction(new Notification.Action.Builder(
+                    android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_menu_close_clear_cancel), "Close", pClose).build());
+        } else {
+            // Deprecated way for older APIs (though MinSDK is likely higher)
+            builder.addAction(android.R.drawable.ic_media_previous, "Prev", pPrev);
+            if (isPlaying) {
+                 builder.addAction(android.R.drawable.ic_media_pause, "Pause", pPlayPause);
+            } else {
+                 builder.addAction(android.R.drawable.ic_media_play, "Play", pPlayPause);
+            }
+            builder.addAction(android.R.drawable.ic_media_next, "Next", pNext);
+            builder.addAction(android.R.drawable.ic_menu_close_clear_cancel, "Close", pClose);
+        }
 
         startForeground(NOTIFICATION_ID, builder.build());
     }
