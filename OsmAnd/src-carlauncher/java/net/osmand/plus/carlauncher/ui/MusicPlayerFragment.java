@@ -229,6 +229,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             mVisualizer.release();
             mVisualizer = null;
         }
+        if (visualizerView != null) {
+            visualizerView.clear();
+        }
     }
 
     @Override

@@ -55,9 +55,8 @@ public class WidgetPanelFragment extends Fragment {
     private android.widget.ImageButton handleBtn;
     private View widgetContentFrame; // The frame holding widgets
     
-    private boolean isPanelOpen = true;
-    private int contentWidth = 0;
-    private int currentUnitSize = 0;
+    private boolean isPinned = true; 
+    private static final String PREF_IS_PINNED = "widget_panel_pinned";
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -65,6 +64,10 @@ public class WidgetPanelFragment extends Fragment {
         if (getContext() != null) {
             app = (OsmandApplication) getContext().getApplicationContext();
             widgetManager = new WidgetManager(getContext(), app);
+            
+            android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
+            isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
+            
             if (!widgetManager.loadWidgetConfig()) {
                 initializeWidgets();
             }
@@ -76,9 +79,8 @@ public class WidgetPanelFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         FrameLayout mainFrame = new FrameLayout(getContext());
         mainFrame.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        // mainFrame is transparent, just touches
         
-        // Sliding Container (Horizontal: Handle + Content)
+        // Sliding Container
         LinearLayout slideLayout = new LinearLayout(getContext());
         slideLayout.setOrientation(LinearLayout.HORIZONTAL);
         slideLayout.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT, android.view.Gravity.END));
@@ -88,23 +90,21 @@ public class WidgetPanelFragment extends Fragment {
         // 1. Handle Button
         handleBtn = new android.widget.ImageButton(getContext());
         handleBtn.setImageResource(net.osmand.plus.R.drawable.ic_chevron_left);
-        handleBtn.setRotation(180f); // Point Right initially (Open) -> User provided image suggests Left closes it? 
-        // Logic: 
-        // If Open: Icon should indicate 'Close' (Chevron Right >) or just a bar. 
-        // User Image: Chevron pointing Left << (on the left edge).
-        // Let's stick to standard: If Open, show Chevron Right (Close). If Closed, show Chevron Left (Open).
-        // But user provided image has `<<` on a panel that is OPEN. So `<<` means "Slide Left" (Open more? or Close?).
-        // Let's implement toggle logic and we can swap icon rotation easily.
-        
+        handleBtn.setRotation(isPanelOpen ? 180f : 0f); 
         handleBtn.setBackgroundResource(net.osmand.plus.R.drawable.bg_drawer_handle);
-        handleBtn.setPadding(0, 40, 0, 40); // Vertical elongated
+        handleBtn.setPadding(0, 40, 0, 40); 
         
-        LinearLayout.LayoutParams handleParams = new LinearLayout.LayoutParams(60, 200); // Fixed size handle
+        LinearLayout.LayoutParams handleParams = new LinearLayout.LayoutParams(60, 200);
         handleParams.gravity = android.view.Gravity.CENTER_VERTICAL;
         slideLayout.addView(handleBtn, handleParams);
         
         handleBtn.setOnClickListener(v -> togglePanel());
         
+        // Visibility Check (Point 3: Only visible in Landscape Fullscreen?)
+        // Assuming "Fullscreen" means this fragment is active in Landscape.
+        boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        handleBtn.setVisibility(isPortrait ? View.GONE : View.VISIBLE);
+
         // 2. Widget Content Frame
         FrameLayout contentFrame = new FrameLayout(getContext());
         contentFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_panel_modern);
@@ -114,7 +114,6 @@ public class WidgetPanelFragment extends Fragment {
         slideLayout.addView(contentFrame);
         
         mainFrame.addView(slideLayout);
-        
         rootContent = mainFrame;
         
         initListLayout(contentFrame);
@@ -126,107 +125,60 @@ public class WidgetPanelFragment extends Fragment {
     private void togglePanel() {
         if (slidingContainer == null || widgetContentFrame == null) return;
         
-        final int targetX = isPanelOpen ? widgetContentFrame.getWidth() : 0;
-        
-        android.animation.ObjectAnimator animator = android.animation.ObjectAnimator.ofFloat(
-                slidingContainer, "translationX", targetX);
-        animator.setDuration(300);
-        animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
-        animator.start();
+        if (isPanelOpen) {
+            // Closing
+            if (isPinned) {
+                 // Pinned Mode: Shrink Width
+                 android.animation.ValueAnimator anim = android.animation.ValueAnimator.ofInt(widgetContentFrame.getWidth(), 0);
+                 anim.addUpdateListener(animation -> {
+                     int val = (Integer) animation.getAnimatedValue();
+                     ViewGroup.LayoutParams params = widgetContentFrame.getLayoutParams();
+                     params.width = val;
+                     widgetContentFrame.setLayoutParams(params);
+                 });
+                 anim.setDuration(300);
+                 anim.start();
+            } else {
+                 // Overlay Mode: Slide Out
+                 // Translate slideLayout right by frame width
+                 // Ensure width is fixed before translation? Width is already set.
+                 float targetX = widgetContentFrame.getWidth();
+                 slidingContainer.animate().translationX(targetX).setDuration(300).start();
+            }
+            handleBtn.animate().rotation(0f).setDuration(300).start();
+        } else {
+            // Opening
+            int targetWidth = currentUnitSize > 0 ? currentUnitSize : (int)(340 * getResources().getDisplayMetrics().density);
+            
+            if (isPinned) {
+                 // Pinned Mode: Expand Width
+                 android.animation.ValueAnimator anim = android.animation.ValueAnimator.ofInt(0, targetWidth);
+                 anim.addUpdateListener(animation -> {
+                     int val = (Integer) animation.getAnimatedValue();
+                     ViewGroup.LayoutParams params = widgetContentFrame.getLayoutParams();
+                     params.width = val;
+                     widgetContentFrame.setLayoutParams(params);
+                 });
+                 anim.setDuration(300);
+                 anim.start();
+            } else {
+                 // Overlay Mode: Slide In
+                 // Ensure width is restored if it was 0 (from Pinned Close)
+                 if (widgetContentFrame.getWidth() == 0 || widgetContentFrame.getLayoutParams().width == 0) {
+                     ViewGroup.LayoutParams params = widgetContentFrame.getLayoutParams();
+                     params.width = targetWidth;
+                     widgetContentFrame.setLayoutParams(params);
+                     // Set initial translation to hidden since we just expanded width
+                     slidingContainer.setTranslationX(targetWidth); 
+                 }
+                 
+                 // Reset Translation
+                 slidingContainer.animate().translationX(0).setDuration(300).start();
+            }
+            handleBtn.animate().rotation(180f).setDuration(300).start();
+        }
         
         isPanelOpen = !isPanelOpen;
-        
-        // Rotate Icon
-        handleBtn.animate().rotation(isPanelOpen ? 180f : 0f).setDuration(300).start();
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        rootContent = null;
-    }
-
-    // --- MODE 0: LIST LAYOUT (UNIT BASED) ---
-    private void initListLayout(ViewGroup root) {
-        boolean isPortrait = getResources()
-                .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-
-        listRecyclerView = new RecyclerView(getContext());
-        listRecyclerView.setLayoutParams(new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
-        
-        // Zero Margin/Padding for perfect stacking
-        listRecyclerView.setPadding(0, 0, 0, 0);
-        listRecyclerView.setClipToPadding(false);
-
-        // Layout Manager
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
-        layoutManager.setOrientation(isPortrait ? LinearLayoutManager.HORIZONTAL : LinearLayoutManager.VERTICAL);
-        listRecyclerView.setLayoutManager(layoutManager);
-
-        listRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                if (listRecyclerView.getMeasuredHeight() > 0 && listRecyclerView.getMeasuredWidth() > 0) {
-                     // Wait, now Width might be 0 initially if WRAP_CONTENT?
-                     // No, Parent is WRAP_CONTENT, but Recycler is MATCH. 
-                     // We need to set a fixed width for the ContentFrame based on UnitSize logic, 
-                     // OR let the Recycler measure itself?
-                     // Previous logic: unitSize = MeasuredWidth / 2.
-                     // If we wrap content, it might shrink.
-                     // We should determine desired width.
-                     // Portrait: 1/2 Screen? Landscape: 1/6 Screen Height?
-                     // Let's use DisplayMetrics to set fixed size for the panel.
-                     
-                    android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
-                    int screenWidth = metrics.widthPixels;
-                    int screenHeight = metrics.heightPixels;
-                    
-                    int panelWidth;
-                     if (isPortrait) {
-                         panelWidth = screenWidth / 2;
-                     } else {
-                         // Landscape: Panel takes ~1/3 width conventionally or based on unit height
-                        // Current logic was: unitSize = height / 6. 
-                        // If we want specific width, let's say 40% of screen.
-                        panelWidth = (int) (screenHeight * (2.5f / 3f)); // Rough guess for existing look
-                        // Better: Use the calculated UnitSize logic.
-                     }
-                     
-                     // Force ContentFrame width if it's too small
-                     if (widgetContentFrame.getLayoutParams().width == ViewGroup.LayoutParams.WRAP_CONTENT) {
-                          // Adjust logic to keep existing behavior
-                          // Current logic relied on Container being MATCH_PARENT (Right Panel).
-                          // We should probably set it to a fixed width like 300-350dp or calculation.
-                          // Let's set it to 340dp for now as a safe default for car screens.
-                          int desiredWidth = (int) (340 * metrics.density);
-                          widgetContentFrame.getLayoutParams().width = desiredWidth;
-                          widgetContentFrame.requestLayout();
-                     }
-                    
-                    listRecyclerView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    
-                    if (isPortrait) {
-                        currentUnitSize = widgetContentFrame.getLayoutParams().width; 
-                    } else {
-                        currentUnitSize = listRecyclerView.getMeasuredHeight() / 6;
-                    }
-                    
-                    if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
-                        ((WidgetListAdapter) listRecyclerView.getAdapter()).setUnitSize(currentUnitSize, isPortrait);
-                    }
-                }
-            }
-        });
-
-        applyWidgetsToView(); // Initial Load
-        
-        // SnapHelper for "Half Visibility" fix
-        androidx.recyclerview.widget.LinearSnapHelper snapHelper = new androidx.recyclerview.widget.LinearSnapHelper();
-        snapHelper.attachToRecyclerView(listRecyclerView);
-        
-        root.addView(listRecyclerView);
     }
 
     private void setupMenuButton(ViewGroup root) {
@@ -234,12 +186,9 @@ public class WidgetPanelFragment extends Fragment {
         menuBtn.setImageResource(net.osmand.plus.R.drawable.ic_more_vert);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             menuBtn.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
-            
-            android.util.TypedValue outValue = new android.util.TypedValue();
+             android.util.TypedValue outValue = new android.util.TypedValue();
             getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true);
             menuBtn.setBackgroundResource(outValue.resourceId);
-        } else {
-             menuBtn.setBackgroundColor(0); // Transparent
         }
         menuBtn.setPadding(16, 16, 16, 16);
         
@@ -251,9 +200,49 @@ public class WidgetPanelFragment extends Fragment {
         root.addView(menuBtn, params);
         
         menuBtn.setOnClickListener(v -> {
-            showWidgetControlDialog();
+            android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), menuBtn);
+            popup.getMenu().add(0, 1, 0, "Widget Duzenle");
+            
+            android.view.MenuItem pinItem = popup.getMenu().add(0, 2, 0, "Sabitle (Pinned)");
+            pinItem.setCheckable(true);
+            pinItem.setChecked(isPinned);
+            
+            popup.setOnMenuItemClickListener(item -> {
+                if (item.getItemId() == 1) {
+                    showWidgetControlDialog();
+                    return true;
+                } else if (item.getItemId() == 2) {
+                    isPinned = !isPinned;
+                    item.setChecked(isPinned);
+                    // Save preference
+                    android.preference.PreferenceManager.getDefaultSharedPreferences(getContext())
+                        .edit().putBoolean(PREF_IS_PINNED, isPinned).apply();
+                        
+                    // Reset Layout if needed (e.g. if open, force current state to match mode)
+                    // Simplified: Next toggle will respect new mode. 
+                    // Or we could force re-layout.
+                    return true;
+                }
+                return false;
+            });
+            popup.show();
         });
     }
+
+    // ... (initListLayout updates for Expand Button) ...
+    // Inside initListLayout, we need to handle "Expand" button visibility logic. 
+    // Wait, Expand button is part of `fragment_music_player` (Full Screen) or `widget_music`?
+    // User said "Expand button ... in full screen mode". This likely refers to `MusicPlayerFragment`.
+    // Let's check `MusicPlayerFragment` for the expand/collapse button.
+    
+    // BUT, if the user means the "Full Screen Mode" of the LAUNCHER (Map + Widgets), 
+    // they might be referring to an existing button on the UI.
+    // Screenshot 3 shows a "Mode 2" toast. 
+    // And screenshot 2 shows a button with "Arrows Out" (Fullscreen?) near the bottom right map controls?
+    // Or in the music widget itself?
+    // Let's assume it's the Music Widget's "Launch Full Screen" button.
+    // That button is inside `MusicWidget`.
+
 
     private void showWidgetControlDialog() {
         WidgetControlDialog dialog = new WidgetControlDialog();

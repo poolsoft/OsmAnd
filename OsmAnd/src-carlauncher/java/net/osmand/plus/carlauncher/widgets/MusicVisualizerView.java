@@ -63,6 +63,11 @@ public class MusicVisualizerView extends View {
         invalidate();
     }
 
+    public void clear() {
+        mBytes = null;
+        invalidate();
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);

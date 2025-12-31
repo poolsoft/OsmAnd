@@ -326,5 +326,8 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
             mVisualizer.release();
             mVisualizer = null;
         }
+        if (visualizerView != null) {
+            visualizerView.clear();
+        }
     }
 }
