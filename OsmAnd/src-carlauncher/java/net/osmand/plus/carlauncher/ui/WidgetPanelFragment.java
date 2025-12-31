@@ -127,12 +127,17 @@ public class WidgetPanelFragment extends Fragment {
         });
 
         applyWidgetsToView(); // Initial Load
+        
+        // SnapHelper for "Half Visibility" fix
+        androidx.recyclerview.widget.LinearSnapHelper snapHelper = new androidx.recyclerview.widget.LinearSnapHelper();
+        snapHelper.attachToRecyclerView(listRecyclerView);
+        
         root.addView(listRecyclerView);
     }
 
     private void setupMenuButton(ViewGroup root) {
         android.widget.ImageView menuBtn = new android.widget.ImageView(getContext());
-        menuBtn.setImageResource(android.R.drawable.ic_menu_more);
+        menuBtn.setImageResource(net.osmand.plus.R.drawable.ic_more_vert);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             menuBtn.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
             

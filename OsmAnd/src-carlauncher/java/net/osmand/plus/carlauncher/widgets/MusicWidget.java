@@ -220,8 +220,8 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                     if (albumArt != null) {
                         albumArtView.setImageBitmap(albumArt);
                     } else {
-                        // Clear image or placeholder
-                         albumArtView.setImageResource(android.R.drawable.ic_menu_gallery);
+                        // Default Art
+                         albumArtView.setImageResource(net.osmand.plus.R.drawable.ic_default_album_art);
                     }
                 }
                 updateAppIcon(packageName);
