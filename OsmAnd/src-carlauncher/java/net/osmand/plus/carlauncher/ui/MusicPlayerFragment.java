@@ -49,24 +49,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
     // ...
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (musicManager != null) {
-            musicManager.addListener(this);
-            musicManager.addVisualizerListener(this); // Centralized Visualizer
-            updateModeUI(); 
-        }
-    }
+    // Duplcates removed
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        if (musicManager != null) {
-            musicManager.removeListener(this);
-            musicManager.removeVisualizerListener(this);
-        }
-    }
 
     private MusicManager musicManager;
     private PlaylistManager playlistManager;
@@ -1047,8 +1031,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             }
             
             // Visualizer Control
-            if (isPlaying) startVisualizer();
-            else stopVisualizer();
+            // Centralized in MusicManager
         });
     }
 
