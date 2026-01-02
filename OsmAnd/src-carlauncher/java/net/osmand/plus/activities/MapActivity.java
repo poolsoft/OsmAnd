@@ -429,7 +429,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		if (widgetHandle != null) {
 		    boolean isPortrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
 		    widgetHandle.setVisibility(isPortrait ? View.GONE : View.VISIBLE);
-		    widgetHandle.setOnClickListener(v -> toggleWidgetPanel());
+		    widgetHandle.bringToFront(); // Force Top Z-Order
+		    
+		    widgetHandle.setOnClickListener(v -> {
+		        android.widget.Toast.makeText(this, "Handle Clicked!", android.widget.Toast.LENGTH_SHORT).show();
+		        toggleWidgetPanel();
+		    });
 		}
 		
 		applyWidgetPanelState();
