@@ -20,20 +20,20 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import net.osmand.plus.OsmandApplication;
-import net.osmand.plus.carlauncher.widgets.BaseWidget;
 import net.osmand.plus.carlauncher.music.MusicManager;
 
 /**
  * Modern Muzik Widget.
  * MusicManager ile entegre calisir.
  */
-public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListener {
+public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListener, MusicManager.MusicVisualizerListener {
 
     private TextView statusText;
     private TextView artistText;
     private ImageButton btnPlay;
     private ImageView albumArtView;
     private ImageView appIconView;
+    private MusicVisualizerView visualizerView;
 
     private final MusicManager musicManager;
 
@@ -43,17 +43,9 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         this.order = 3;
     }
 
-    @NonNull
-    // --- Visualizer ---
-    private android.media.audiofx.Visualizer mVisualizer;
-    private MusicVisualizerView visualizerView;
-    private static final int PERMISSION_REQ_CODE = 202;
-
     @Override
     public View createView() {
-        // ... (Existing implementation, copying relevant parts)
-        View view = android.view.LayoutInflater.from(context).inflate(net.osmand.plus.R.layout.widget_music_modern,
-                null);
+        View view = android.view.LayoutInflater.from(context).inflate(net.osmand.plus.R.layout.widget_music_modern, null);
 
         // --- Bind Views ---
         appIconView = view.findViewById(net.osmand.plus.R.id.widget_app_icon);
@@ -66,7 +58,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         ImageButton btnNext = view.findViewById(net.osmand.plus.R.id.widget_btn_next);
         btnPlay = view.findViewById(net.osmand.plus.R.id.widget_btn_play);
 
-        // ... (Listeners same as before) ...
+        // --- Listeners ---
         appIconView.setOnClickListener(v -> {
             String pkg = musicManager.getPreferredPackage();
             if (pkg != null) {
@@ -109,8 +101,6 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         return rootView;
     }
 
-    // ... (Helpers same as before) ...
-
     private void showMusicAppPicker() {
         new net.osmand.plus.carlauncher.dock.AppPickerDialog(context, true, (packageName, appName, icon) -> {
             musicManager.setPreferredPackage(packageName);
@@ -143,17 +133,14 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     private int dpToPx(int dp) {
         return (int) (dp * context.getResources().getDisplayMetrics().density);
     }
-    
-    // ... (onSizeChanged same, skipping for brewity but logic retained implicitly if I don't touch it? No I MUST provide full replacement for the block I selected)
-    // Actually I selected up to 302, which is end of file. I should paste onSizeChanged too.
-    
+
     @Override
     protected void onSizeChanged(WidgetSize newSize) {
-         if (rootView == null) return;
-        
+        if (rootView == null) return;
+
         boolean isSmall = (newSize == WidgetSize.SMALL);
-        
-        // Views (Redefine to be safe)
+
+        // Views
         View btnPrev = rootView.findViewById(net.osmand.plus.R.id.widget_btn_prev);
         View btnNext = rootView.findViewById(net.osmand.plus.R.id.widget_btn_next);
         TextView artist = rootView.findViewById(net.osmand.plus.R.id.widget_track_artist);
@@ -165,60 +152,61 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         if (btnPrev != null) btnPrev.setVisibility(visibility);
         if (btnNext != null) btnNext.setVisibility(visibility);
         if (artist != null) artist.setVisibility(visibility);
-        
-        // Visualizer Visibility (Hide on small to save space/clutter?)
+
+        // Visualizer Visibility
         if (visualizerView != null) {
             visualizerView.setVisibility(isSmall ? View.INVISIBLE : View.VISIBLE);
         }
 
-        // Constraints Logic (Same as before)
+        // Constraints Logic
         if (rootView instanceof androidx.constraintlayout.widget.ConstraintLayout) {
             androidx.constraintlayout.widget.ConstraintLayout layout = (androidx.constraintlayout.widget.ConstraintLayout) rootView;
             androidx.constraintlayout.widget.ConstraintSet set = new androidx.constraintlayout.widget.ConstraintSet();
             set.clone(layout);
-            
+
             if (isSmall) {
                 set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP);
                 set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP, 
-                            net.osmand.plus.R.id.widget_app_icon, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
-                            net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.TOP);
-                set.connect(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
-                            androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP,
+                        net.osmand.plus.R.id.widget_app_icon, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM,
+                        net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.TOP);
+                set.connect(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM,
+                        androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
                 set.setMargin(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, dpToPx(8));
             } else {
                 set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP);
                 set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP, 
-                            net.osmand.plus.R.id.widget_app_icon, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
-                            net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.TOP);
-                set.connect(net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.TOP, 
-                             net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-                set.connect(net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
-                             net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.TOP);
+                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP,
+                        net.osmand.plus.R.id.widget_app_icon, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM,
+                        net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.TOP);
+                set.connect(net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.TOP,
+                        net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                set.connect(net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.BOTTOM,
+                        net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.TOP);
                 set.setVerticalChainStyle(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.CHAIN_PACKED);
-                set.connect(net.osmand.plus.R.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, dpToPx(12));
+                set.connect(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM,
+                        androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                set.setMargin(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, dpToPx(12));
             }
             set.applyTo(layout);
         }
-        
+
         if (newSize == WidgetSize.LARGE) {
-             if (title != null) title.setTextSize(18);
-             if (artist != null) artist.setTextSize(15);
+            if (title != null) title.setTextSize(18);
+            if (artist != null) artist.setTextSize(15);
         } else {
-             if (title != null) title.setTextSize(16);
-             if (artist != null) artist.setTextSize(13);
+            if (title != null) title.setTextSize(16);
+            if (artist != null) artist.setTextSize(13);
         }
     }
-
 
     @Override
     public void onStart() {
         super.onStart();
         musicManager.addListener(this);
-        musicManager.addVisualizerListener(this); // Listen for FFT
+        musicManager.addVisualizerListener(this);
         updateAppIcon(null);
     }
 
@@ -226,7 +214,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     public void onStop() {
         super.onStop();
         musicManager.removeListener(this);
-        musicManager.removeVisualizerListener(this); // Stop listening
+        musicManager.removeVisualizerListener(this);
     }
 
     @Override
@@ -246,7 +234,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                     if (albumArt != null) {
                         albumArtView.setImageBitmap(albumArt);
                     } else {
-                         albumArtView.setImageResource(net.osmand.plus.R.drawable.ic_default_album_art);
+                        albumArtView.setImageResource(net.osmand.plus.R.drawable.ic_default_album_art);
                     }
                 }
                 updateAppIcon(packageName);
@@ -266,13 +254,14 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
 
     @Override
     public void onSourceChanged(boolean isInternal) {
-        
-        // Allow external via Session 0 or Internal via specific session
-        int sessionId = 0;
-            mVisualizer = null;
-        }
+        // Handled by MusicManager centralization
+    }
+    
+    // --- Music Visualizer Listener ---
+    @Override
+    public void onFftDataCapture(byte[] fft) {
         if (visualizerView != null) {
-            visualizerView.clear();
+            visualizerView.updateVisualizer(fft);
         }
     }
 }
