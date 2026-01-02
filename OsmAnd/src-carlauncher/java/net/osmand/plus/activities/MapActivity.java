@@ -531,13 +531,20 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 	}
 	
-	public void toggleWidgetPanel() {
-	    isWidgetPanelOpen = !isWidgetPanelOpen;
-	    if (isWidgetPanelOpen && layoutMode == 1) {
-	        // Only force Normal Mode if we are in "No Widgets" mode (1)
-            // Mode 2 (Full Screen) is allowed to show panel
-	        layoutMode = 0; 
+	public void toggleLayoutMode() {
+	    // Cycle: 0 (Normal) -> 2 (Full Screen) -> 0
+	    if (layoutMode == 0) {
+	        layoutMode = 2;
+	    } else {
+	        layoutMode = 0;
 	    }
+	    
+	    AppDockFragment dock = getAppDockFragment();
+	    if (dock != null) {
+	        dock.updateLayoutIcon(layoutMode);
+	    }
+	    
+	    isWidgetPanelOpen = !isWidgetPanelOpen;
 	    applyWidgetPanelState();
 	}
 	
@@ -557,13 +564,18 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         androidx.constraintlayout.widget.ConstraintSet constraintSet = new androidx.constraintlayout.widget.ConstraintSet();
         constraintSet.clone(rootLayout);
         
-        // MODE 0 (Normal) and MODE 2 (Full Screen) both support Widget Panel
-        // We no longer strictly enforce "No Widgets" for Mode 1 as user requested removal.
+        // MODE 0: NORMAL or MODE 2: FULLSCREEN (with Drawer)
         // If layoutMode is somehow 1, we treat it as closed panel or force change.
         
         // MODE 0: NORMAL or MODE 2: FULLSCREEN (with Drawer)
         if (isPortrait) {
-            // PORTRAIT: Safe Mode
+            // PORTRAIT: Safe Mode - Widgets always visible at bottom or depending on open state if we wanted
+            // Currently treated as always visible in portrait based on prior logic, or we can toggle it?
+            // User requested "Portrait -> Horizontal", implying the list is horizontal.
+            // If we want the panel to be toggleable in portrait too, we should respect isWidgetPanelOpen.
+            // But let's stick to the previous "Always Visible" behavior for Portrait unless requested otherwise.
+            // Wait, previous code had `constraintSet.setVisibility(R.id.widget_panel, View.VISIBLE);` unconditionally.
+            
             constraintSet.setVisibility(R.id.widget_panel, View.VISIBLE);
             if (widgetHandle != null) constraintSet.setVisibility(R.id.widget_handle, View.GONE);
             

@@ -67,7 +67,7 @@ public class WidgetPanelFragment extends Fragment {
         listRecyclerView.setPadding(0, 0, 0, 0); 
         
         boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), isPortrait ? RecyclerView.VERTICAL : RecyclerView.VERTICAL, false);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), isPortrait ? LinearLayoutManager.HORIZONTAL : LinearLayoutManager.VERTICAL, false);
         listRecyclerView.setLayoutManager(layoutManager);
         
         root.addView(listRecyclerView);
@@ -200,7 +200,10 @@ public class WidgetPanelFragment extends Fragment {
     private void showWidgetControlDialog() {
         WidgetControlDialog dialog = new WidgetControlDialog();
         dialog.setWidgetManager(widgetManager);
-        dialog.setOnDismissCallback(this::applyWidgetsToView);
+        dialog.setOnDismissCallback(() -> {
+            widgetManager.saveWidgetConfig();
+            applyWidgetsToView();
+        });
         dialog.show(getParentFragmentManager(), "WidgetControl");
     }
 

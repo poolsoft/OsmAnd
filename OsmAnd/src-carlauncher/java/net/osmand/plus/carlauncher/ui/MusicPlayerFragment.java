@@ -45,7 +45,28 @@ import java.util.Locale;
  * Modern Muzik Player Fragment.
  * Iki mod destekler: Harici uygulama kontrolu ve Dahili calma.
  */
-public class MusicPlayerFragment extends Fragment implements MusicManager.MusicUIListener {
+public class MusicPlayerFragment extends Fragment implements MusicManager.MusicUIListener, MusicManager.MusicVisualizerListener {
+
+    // ...
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (musicManager != null) {
+            musicManager.addListener(this);
+            musicManager.addVisualizerListener(this); // Centralized Visualizer
+            updateModeUI(); 
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (musicManager != null) {
+            musicManager.removeListener(this);
+            musicManager.removeVisualizerListener(this);
+        }
+    }
 
     private MusicManager musicManager;
     private PlaylistManager playlistManager;
@@ -177,60 +198,13 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         return root;
     }
 
-    // --- Visualizer ---
+    // --- Visualizer (Centralized) ---
     private net.osmand.plus.carlauncher.widgets.MusicVisualizerView visualizerView;
-    private android.media.audiofx.Visualizer mVisualizer;
 
-    private void startVisualizer() {
-        if (visualizerView == null) return;
-        if (mVisualizer != null) return; // Already running
-        if (musicManager == null || musicManager.getInternalPlayer() == null) return;
-        
-        if (!musicManager.getInternalPlayer().isPlaying()) return;
-
-        // Permission Check
-        if (getContext() == null || androidx.core.content.ContextCompat.checkSelfPermission(getContext(), 
-             android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-             // We can request permission here if needed, but let's avoid blocking start
-             // Maybe show small toast or just ignore?
-             // Since we already requested READ_AUDIO, maybe we should have requested RECORD_AUDIO too?
-             // Let's add it to permission request logic if missing.
-             return;
-        }
-
-        try {
-            int sessionId = musicManager.getInternalPlayer().getAudioSessionId();
-            if (sessionId == 0) return;
-
-            mVisualizer = new android.media.audiofx.Visualizer(sessionId);
-            mVisualizer.setCaptureSize(android.media.audiofx.Visualizer.getCaptureSizeRange()[1]);
-            mVisualizer.setDataCaptureListener(new android.media.audiofx.Visualizer.OnDataCaptureListener() {
-                @Override
-                public void onWaveFormDataCapture(android.media.audiofx.Visualizer visualizer, byte[] waveform, int samplingRate) {
-                }
-
-                @Override
-                public void onFftDataCapture(android.media.audiofx.Visualizer visualizer, byte[] fft, int samplingRate) {
-                    if (visualizerView != null) {
-                        visualizerView.updateVisualizer(fft);
-                    }
-                }
-            }, android.media.audiofx.Visualizer.getMaxCaptureRate() / 2, false, true);
-            
-            mVisualizer.setEnabled(true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void stopVisualizer() {
-        if (mVisualizer != null) {
-            mVisualizer.setEnabled(false);
-            mVisualizer.release();
-            mVisualizer = null;
-        }
+    @Override
+    public void onFftDataCapture(byte[] fft) {
         if (visualizerView != null) {
-            visualizerView.clear();
+            visualizerView.updateVisualizer(fft);
         }
     }
 
@@ -526,7 +500,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             requestPermissions(perms.toArray(new String[0]), 100);
         } else {
             loadAllTracks();
-            startVisualizer(); // Try starting if music is playing
         }
     }
 
