@@ -296,7 +296,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 
 		// CarLauncher: Direkt activity_car_launcher layout'unu set et
-		setupCarLauncherUI();
+		// setupCarLauncherUI(); // Removed duplicate call (Already called in onCreate)
 
 		// DEBUG: Verify CarLauncher Activity
 		//android.widget.Toast.makeText(this, "CarLauncher MapActivity Active!", android.widget.Toast.LENGTH_LONG).show();
