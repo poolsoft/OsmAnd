@@ -614,7 +614,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                 constraintSet.setVisibility(R.id.widget_panel, View.VISIBLE);
                 
                 if (widgetHandle != null) {
-                    constraintSet.setRotation(R.id.widget_handle, 180f);
+                    // Update Icon: Forward (>) for Open state
                     constraintSet.connect(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.END, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.START);
                     constraintSet.clear(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.START);
                 }
@@ -625,10 +625,10 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                      constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
                 }
                 
-                // Ensure Panel is attached to End
+                // Ensure Panel is attached to End and Dock
                 constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
                 constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP);
-                constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
                 
                 constraintSet.applyTo(rootLayout);
 
@@ -636,7 +636,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                 widgetPanel.setVisibility(View.VISIBLE);
                 if (widgetHandle != null) {
                     widgetHandle.setVisibility(View.VISIBLE);
-                    widgetHandle.setRotation(180f);
+                    widgetHandle.setRotation(0f);
+                    widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_action_arrow_forward_16);
                 }
 
             } else {
@@ -644,7 +645,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                 constraintSet.setVisibility(R.id.widget_panel, View.GONE);
                 
                 if (widgetHandle != null) {
-                    constraintSet.setRotation(R.id.widget_handle, 0f);
+                    // Update Icon: Back (<) for Closed state
                     constraintSet.connect(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
                     constraintSet.clear(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.START);
                 }
@@ -658,13 +659,15 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                 widgetPanel.setVisibility(View.GONE);
                 if (widgetHandle != null) { 
                     widgetHandle.setVisibility(View.VISIBLE);
-                    widgetHandle.setRotation(0f);
+                    widgetHandle.setRotation(0f); // Reset Rotation
+                    widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_arrow_back); // <
                 }
             }
-            // Map Bottom
-            // Note: This was outside in previous code, need to apply it before applyTo inside branches?
-            // Actually previous code applied it outside. I moved applyTo inside branches to enable Force Update.
-            // Constraints are cumulative in the set.
+            // Map Bottom Fix: Connect to Dock Top
+            constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
+            
+            // Re-apply to ensure map fix is active if it wasn't
+            constraintSet.applyTo(rootLayout);
         }
     }
 

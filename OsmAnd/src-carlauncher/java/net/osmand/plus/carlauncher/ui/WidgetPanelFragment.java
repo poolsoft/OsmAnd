@@ -76,8 +76,16 @@ public class WidgetPanelFragment extends Fragment {
         listRecyclerView.post(() -> {
              if (getView() != null) {
                  // In this drawer implementation, width is fixed or 0.
-                 // We can use a reasonable default or measure.
-                 currentUnitSize = isPortrait ? getView().getWidth() : 350; 
+                 // Use a reasonable density-aware default for Landscape Unit Height (for Stack Mode).
+                 // 85dp roughly matches desired single-stack item height.
+                 int defaultUnitDp = 85;
+                 int defaultUnitPx = (int) android.util.TypedValue.applyDimension(
+                     android.util.TypedValue.COMPLEX_UNIT_DIP, 
+                     defaultUnitDp, 
+                     getResources().getDisplayMetrics()
+                 );
+                 
+                 currentUnitSize = isPortrait ? getView().getWidth() : defaultUnitPx; 
                  applyWidgetsToView();
              }
         });
