@@ -548,7 +548,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         boolean isPortrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
         
         android.util.Log.d("CarLauncher", "applyWidgetPanelState: Open=" + isWidgetPanelOpen + ", Pinned=" + isPinned + ", Portrait=" + isPortrait);
-        android.widget.Toast.makeText(this, "State: " + (isWidgetPanelOpen ? "OPEN" : "CLOSED"), android.widget.Toast.LENGTH_SHORT).show();
+        // android.widget.Toast.makeText(this, "State: " + (isWidgetPanelOpen ? "OPEN" : "CLOSED"), android.widget.Toast.LENGTH_SHORT).show();
         
         androidx.transition.TransitionManager.beginDelayedTransition(rootLayout);
         
@@ -558,8 +558,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         // MODE 1 (No Widgets) or MODE 2 (Fullscreen) -> Force Close
         if (layoutMode != 0) {
             android.util.Log.d("CarLauncher", "Force Close due to LayoutMode: " + layoutMode);
-            widgetPanel.setVisibility(View.GONE);
-            if (widgetHandle != null) widgetHandle.setVisibility(View.GONE);
+            constraintSet.setVisibility(R.id.widget_panel, View.GONE);
+            if (widgetHandle != null) constraintSet.setVisibility(R.id.widget_handle, View.GONE);
             
             // Map Full Screen
             constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
@@ -582,8 +582,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         // MODE 0: NORMAL
         if (isPortrait) {
             // PORTRAIT: Safe Mode
-            widgetPanel.setVisibility(View.VISIBLE);
-            if (widgetHandle != null) widgetHandle.setVisibility(View.GONE);
+            constraintSet.setVisibility(R.id.widget_panel, View.VISIBLE);
+            if (widgetHandle != null) constraintSet.setVisibility(R.id.widget_handle, View.GONE);
             
             constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
             constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP);
@@ -592,34 +592,40 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
             
         } else {
             // LANDSCAPE: Drawer Logic
-            if (widgetHandle != null) widgetHandle.setVisibility(View.VISIBLE);
+            if (widgetHandle != null) constraintSet.setVisibility(R.id.widget_handle, View.VISIBLE);
             
             if (isWidgetPanelOpen) {
                 android.util.Log.d("CarLauncher", "Applied Landscape OPEN Constraints");
-                widgetPanel.setVisibility(View.VISIBLE);
+                constraintSet.setVisibility(R.id.widget_panel, View.VISIBLE);
+                
                 if (widgetHandle != null) {
-                    widgetHandle.setRotation(180f);
+                    constraintSet.setRotation(R.id.widget_handle, 180f);
                     constraintSet.connect(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.END, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.START);
                     constraintSet.clear(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.START);
                 }
 
                 if (isPinned) {
-                    constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.START);
+                     constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.START);
                 } else {
-                    constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+                     constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
                 }
                 
-                // Ensure Panel is attached to End
+                // Ensure Panel is attached to End. Explicitly set vertical constraints too just in case.
                 constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+                constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP);
+                constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
                 
             } else {
                 android.util.Log.d("CarLauncher", "Applied Landscape CLOSED Constraints");
-                widgetPanel.setVisibility(View.GONE);
+                constraintSet.setVisibility(R.id.widget_panel, View.GONE);
+                
                 if (widgetHandle != null) {
-                    widgetHandle.setRotation(0f);
+                    constraintSet.setRotation(R.id.widget_handle, 0f);
                     constraintSet.connect(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
                     constraintSet.clear(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.START);
                 }
+                
+                // Map Full Screen
                 constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
             }
             
