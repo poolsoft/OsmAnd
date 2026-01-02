@@ -64,10 +64,6 @@ jobs:
     - name: Patch memory requirements
       working-directory: ./android
       run: printf "\norg.gradle.jvmargs=-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8\n" >> gradle.properties
-
-    - name: Set Version Suffix
-      working-directory: ./android
-      run: echo "APK_VERSION_SUFFIX=-$(git log -n 1 --format='%h')" >> $GITHUB_ENV
     - name: Build with Gradle
       working-directory: ./android
       run: ./gradlew assembleNightlyFreeLegacyFatDebug --console=plain --no-daemon 2>&1 | grep -iE 'error|exception|fail'
