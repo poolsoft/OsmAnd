@@ -197,16 +197,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         super.onResume();
         if (musicManager != null) {
             musicManager.addListener(this);
+            musicManager.addVisualizerListener(this); // Centralized Visualizer
             // Update UI state
             updateModeUI(); 
-            // Check play state for visualizer
-            if (musicManager.getInternalPlayer().isPlaying()) {
-                // Check perms again
-                if (getContext() != null && androidx.core.content.ContextCompat.checkSelfPermission(getContext(), 
-                     android.Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                     startVisualizer();
-                }
-            }
         }
     }
 
@@ -215,8 +208,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         super.onPause();
         if (musicManager != null) {
             musicManager.removeListener(this);
+            musicManager.removeVisualizerListener(this);
         }
-        stopVisualizer();
     }
 
     private void setupListeners() {
