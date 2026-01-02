@@ -205,10 +205,14 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	private androidx.constraintlayout.widget.ConstraintLayout rootLayout;
 	private android.widget.FrameLayout mapContainer;
 	private android.widget.FrameLayout widgetPanel;
+	private android.widget.ImageButton widgetHandle; 
 	private android.widget.FrameLayout appDock;
 	private android.widget.FrameLayout appDrawerContainer;
 	private android.widget.ImageButton btnFullscreenExit;
 	private View mainLayoutRoot; // main.xml root reference
+
+    private boolean isWidgetPanelOpen = true;
+    private static final String PREF_IS_PINNED = "widget_panel_pinned";
 
 	// Layout Mode: 0 = Normal, 1 = No Widgets, 2 = Full Screen
 	private int layoutMode = 0;
@@ -414,9 +418,18 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		rootLayout = findViewById(R.id.root_layout);
 		mapContainer = findViewById(R.id.map_container);
 		widgetPanel = findViewById(R.id.widget_panel);
+		widgetHandle = findViewById(R.id.widget_handle);
 		appDock = findViewById(R.id.app_dock);
 		appDrawerContainer = findViewById(R.id.app_drawer_container);
 		btnFullscreenExit = findViewById(R.id.btn_fullscreen_exit);
+		
+		if (widgetHandle != null) {
+		    boolean isPortrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
+		    widgetHandle.setVisibility(isPortrait ? View.GONE : View.VISIBLE);
+		    widgetHandle.setOnClickListener(v -> toggleWidgetPanel());
+		}
+		
+		applyWidgetPanelState();
 
 		if (btnFullscreenExit != null) {
             // Drag & Click Logic (Ephemeral Position)
@@ -509,6 +522,94 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 					.commitAllowingStateLoss();
 		}
 	}
+	
+	public void toggleWidgetPanel() {
+	    isWidgetPanelOpen = !isWidgetPanelOpen;
+	    applyWidgetPanelState();
+	}
+	
+	public void updateWidgetPanelMode() {
+	    applyWidgetPanelState();
+	}
+
+    private void applyWidgetPanelState() {
+        if (rootLayout == null || widgetPanel == null) return;
+        
+        android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
+        boolean isPortrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
+        
+        androidx.transition.TransitionManager.beginDelayedTransition(rootLayout);
+        
+        androidx.constraintlayout.widget.ConstraintSet constraintSet = new androidx.constraintlayout.widget.ConstraintSet();
+        constraintSet.clone(rootLayout);
+        
+        // MODE 1 (No Widgets) or MODE 2 (Fullscreen) -> Force Close
+        if (layoutMode != 0) {
+            widgetPanel.setVisibility(View.GONE);
+            if (widgetHandle != null) widgetHandle.setVisibility(View.GONE);
+            
+            // Map Full Screen
+            constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+            
+            // Handle Portrait Map Bottom
+            if (isPortrait) {
+                if (layoutMode == 2) { // Full Screen
+                     constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                } else { // No Widgets (Dock Visible)
+                     constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
+                }
+            } else {
+                 constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+            }
+            
+            constraintSet.applyTo(rootLayout);
+            return;
+        }
+
+        // MODE 0: NORMAL
+        if (isPortrait) {
+            // PORTRAIT: Safe Mode
+            widgetPanel.setVisibility(View.VISIBLE);
+            if (widgetHandle != null) widgetHandle.setVisibility(View.GONE);
+            
+            constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+            constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP);
+            constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+            
+        } else {
+            // LANDSCAPE: Drawer Logic
+            if (widgetHandle != null) widgetHandle.setVisibility(View.VISIBLE);
+            
+            if (isWidgetPanelOpen) {
+                widgetPanel.setVisibility(View.VISIBLE);
+                if (widgetHandle != null) {
+                    widgetHandle.setRotation(180f);
+                    constraintSet.connect(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.END, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.START);
+                    constraintSet.clear(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.START);
+                }
+
+                if (isPinned) {
+                    constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.START);
+                } else {
+                    constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+                }
+            } else {
+                widgetPanel.setVisibility(View.GONE);
+                if (widgetHandle != null) {
+                    widgetHandle.setRotation(0f);
+                    constraintSet.connect(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+                    constraintSet.clear(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.START);
+                }
+                constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+            }
+            
+            // Map Bottom
+            constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+        }
+        
+        constraintSet.applyTo(rootLayout);
+    }
 
 	@Override
 	public void onLayoutToggle() {
@@ -518,26 +619,25 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 
 	private void updateLayoutMode() {
+		// Delegate Widget Panel Visibility & Constraints to helper
+		applyWidgetPanelState();
+		
 		switch (layoutMode) {
 			case 0: // Normal
-				if (widgetPanel != null) widgetPanel.setVisibility(View.VISIBLE);
 				if (appDock != null) appDock.setVisibility(View.VISIBLE);
 				if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.GONE);
 				break;
 			case 1: // No Widgets
-				if (widgetPanel != null) widgetPanel.setVisibility(View.GONE);
 				if (appDock != null) appDock.setVisibility(View.VISIBLE);
 				if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.GONE);
 				break;
 			case 2: // Full Screen
-				if (widgetPanel != null) widgetPanel.setVisibility(View.GONE);
 				if (appDock != null) appDock.setVisibility(View.GONE);
 				if (btnFullscreenExit != null) {
                     btnFullscreenExit.setVisibility(View.VISIBLE);
-                    android.widget.Toast.makeText(this, "Mode 2: Full Screen (Button VISIBLE)", android.widget.Toast.LENGTH_SHORT).show();
-                    android.util.Log.d("OsmAndCar", "Btn Pos: " + btnFullscreenExit.getX() + "," + btnFullscreenExit.getY());
+                    // android.widget.Toast.makeText(this, "Mode 2: Full Screen (Button VISIBLE)", android.widget.Toast.LENGTH_SHORT).show();
                 } else {
-                    android.widget.Toast.makeText(this, "Mode 2: But NULL!", android.widget.Toast.LENGTH_SHORT).show();
+                    // android.widget.Toast.makeText(this, "Mode 2: But NULL!", android.widget.Toast.LENGTH_SHORT).show();
                 }
 				break;
 		}

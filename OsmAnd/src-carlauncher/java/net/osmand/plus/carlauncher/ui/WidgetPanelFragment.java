@@ -77,108 +77,25 @@ public class WidgetPanelFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        FrameLayout mainFrame = new FrameLayout(getContext());
-        mainFrame.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        // V8: Clean Content Frame (No internal handle, no sliding container)
+        // Activity handles sliding/drawer via ConstraintLayout.
         
-        // Sliding Container
-        LinearLayout slideLayout = new LinearLayout(getContext());
-        slideLayout.setOrientation(LinearLayout.HORIZONTAL);
-        slideLayout.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT, android.view.Gravity.END));
-        
-        slidingContainer = slideLayout;
-        
-        // 1. Handle Button
-        handleBtn = new android.widget.ImageButton(getContext());
-        handleBtn.setImageResource(net.osmand.plus.R.drawable.ic_chevron_left);
-        handleBtn.setRotation(isPanelOpen ? 180f : 0f); 
-        handleBtn.setBackgroundResource(net.osmand.plus.R.drawable.bg_drawer_handle);
-        handleBtn.setPadding(0, 40, 0, 40); 
-        
-        LinearLayout.LayoutParams handleParams = new LinearLayout.LayoutParams(60, 200);
-        handleParams.gravity = android.view.Gravity.CENTER_VERTICAL;
-        slideLayout.addView(handleBtn, handleParams);
-        
-        handleBtn.setOnClickListener(v -> togglePanel());
-        
-        // Visibility Check (Point 3: Only visible in Landscape Fullscreen?)
-        // Assuming "Fullscreen" means this fragment is active in Landscape.
-        boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-        handleBtn.setVisibility(isPortrait ? View.GONE : View.VISIBLE);
-
-        // 2. Widget Content Frame
         FrameLayout contentFrame = new FrameLayout(getContext());
         contentFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_panel_modern);
-        contentFrame.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        contentFrame.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         
         widgetContentFrame = contentFrame;
-        slideLayout.addView(contentFrame);
-        
-        mainFrame.addView(slideLayout);
-        rootContent = mainFrame;
+        rootContent = contentFrame;
         
         initListLayout(contentFrame);
         setupMenuButton(contentFrame);
         
-        return mainFrame;
+        return contentFrame;
     }
     
-    private void togglePanel() {
-        if (slidingContainer == null || widgetContentFrame == null) return;
-        
-        if (isPanelOpen) {
-            // Closing
-            if (isPinned) {
-                 // Pinned Mode: Shrink Width
-                 android.animation.ValueAnimator anim = android.animation.ValueAnimator.ofInt(widgetContentFrame.getWidth(), 0);
-                 anim.addUpdateListener(animation -> {
-                     int val = (Integer) animation.getAnimatedValue();
-                     ViewGroup.LayoutParams params = widgetContentFrame.getLayoutParams();
-                     params.width = val;
-                     widgetContentFrame.setLayoutParams(params);
-                 });
-                 anim.setDuration(300);
-                 anim.start();
-            } else {
-                 // Overlay Mode: Slide Out
-                 // Translate slideLayout right by frame width
-                 // Ensure width is fixed before translation? Width is already set.
-                 float targetX = widgetContentFrame.getWidth();
-                 slidingContainer.animate().translationX(targetX).setDuration(300).start();
-            }
-            handleBtn.animate().rotation(0f).setDuration(300).start();
-        } else {
-            // Opening
-            int targetWidth = currentUnitSize > 0 ? currentUnitSize : (int)(340 * getResources().getDisplayMetrics().density);
-            
-            if (isPinned) {
-                 // Pinned Mode: Expand Width
-                 android.animation.ValueAnimator anim = android.animation.ValueAnimator.ofInt(0, targetWidth);
-                 anim.addUpdateListener(animation -> {
-                     int val = (Integer) animation.getAnimatedValue();
-                     ViewGroup.LayoutParams params = widgetContentFrame.getLayoutParams();
-                     params.width = val;
-                     widgetContentFrame.setLayoutParams(params);
-                 });
-                 anim.setDuration(300);
-                 anim.start();
-            } else {
-                 // Overlay Mode: Slide In
-                 // Ensure width is restored if it was 0 (from Pinned Close)
-                 if (widgetContentFrame.getWidth() == 0 || widgetContentFrame.getLayoutParams().width == 0) {
-                     ViewGroup.LayoutParams params = widgetContentFrame.getLayoutParams();
-                     params.width = targetWidth;
-                     widgetContentFrame.setLayoutParams(params);
-                     // Set initial translation to hidden since we just expanded width
-                     slidingContainer.setTranslationX(targetWidth); 
-                 }
-                 
-                 // Reset Translation
-                 slidingContainer.animate().translationX(0).setDuration(300).start();
-            }
-            handleBtn.animate().rotation(180f).setDuration(300).start();
-        }
-        
-        isPanelOpen = !isPanelOpen;
+    // Internal Toggle removed - Handled by MapActivity
+    public void onPanelStateChanged(boolean isOpen) {
+        // Optional: Update internal state if needed
     }
 
     private void setupMenuButton(ViewGroup root) {
@@ -195,7 +112,7 @@ public class WidgetPanelFragment extends Fragment {
         android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
              ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         params.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
-        params.setMargins(16, 16, 16, 16);
+        params.setMargins(4, 4, 4, 4);
         
         root.addView(menuBtn, params);
         
@@ -218,9 +135,10 @@ public class WidgetPanelFragment extends Fragment {
                     android.preference.PreferenceManager.getDefaultSharedPreferences(getContext())
                         .edit().putBoolean(PREF_IS_PINNED, isPinned).apply();
                         
-                    // Reset Layout if needed (e.g. if open, force current state to match mode)
-                    // Simplified: Next toggle will respect new mode. 
-                    // Or we could force re-layout.
+                    // Notify Activity to update Layout
+                    if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                        ((net.osmand.plus.activities.MapActivity) getActivity()).updateWidgetPanelMode();
+                    }
                     return true;
                 }
                 return false;
