@@ -199,6 +199,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 }
             }
             notifyStateChanged();
+            updateVisualizerState();
         }
 
         @Override
@@ -309,6 +310,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
              // If we switch to external, internal pauses automatically (see updateActiveController).
              // But valid to ensure service updates.
         }
+        updateVisualizerState();
     }
 
     @Override
@@ -416,8 +418,104 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             PlaybackState state = activeExternalController.getPlaybackState();
             boolean playing = state != null && state.getState() == PlaybackState.STATE_PLAYING;
             l.onPlaybackStateChanged(playing);
-        } else {
             l.onPlaybackStateChanged(internalPlayer.isPlaying());
         }
     }
+    
+    // Trigger Visualizer State Update
+    private void checkVisualizerState() {
+        if (isPlaying()) {
+            if (!visualizerListeners.isEmpty()) startVisualizer();
+        } else {
+            stopVisualizer();
+        }
+    }
+    // --- Visualizer Centralization ---
+
+    private android.media.audiofx.Visualizer mVisualizer;
+    public interface MusicVisualizerListener {
+        void onFftDataCapture(byte[] fft);
+    }
+    private final List<MusicVisualizerListener> visualizerListeners = new CopyOnWriteArrayList<>();
+
+    public void addVisualizerListener(MusicVisualizerListener listener) {
+        visualizerListeners.add(listener);
+        if (isPlaying()) {
+            startVisualizer();
+        }
+    }
+
+    public void removeVisualizerListener(MusicVisualizerListener listener) {
+        visualizerListeners.remove(listener);
+        if (visualizerListeners.isEmpty()) {
+            stopVisualizer();
+        }
+    }
+
+    private void startVisualizer() {
+        if (mVisualizer != null) return;
+        
+        // 1. Check Permissions
+        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) 
+            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+             Log.w(TAG, "RECORD_AUDIO permission missing for Visualizer.");
+             return;
+        }
+
+        try {
+            // 2. Determine Session ID
+            int sessionId = 0; // Global Mix (External)
+            if (internalPlayer.isPlaying()) {
+                sessionId = internalPlayer.getAudioSessionId();
+            }
+            
+            // 3. Create Visualizer
+            mVisualizer = new android.media.audiofx.Visualizer(sessionId);
+            mVisualizer.setCaptureSize(android.media.audiofx.Visualizer.getCaptureSizeRange()[1]);
+            mVisualizer.setDataCaptureListener(new android.media.audiofx.Visualizer.OnDataCaptureListener() {
+                @Override
+                public void onWaveFormDataCapture(android.media.audiofx.Visualizer visualizer, byte[] waveform, int samplingRate) {
+                }
+
+                @Override
+                public void onFftDataCapture(android.media.audiofx.Visualizer visualizer, byte[] fft, int samplingRate) {
+                    for (MusicVisualizerListener l : visualizerListeners) {
+                         l.onFftDataCapture(fft);
+                    }
+                }
+            }, android.media.audiofx.Visualizer.getMaxCaptureRate() / 2, false, true);
+            
+            mVisualizer.setEnabled(true);
+            Log.d(TAG, "Visualizer Started. Session: " + sessionId);
+
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to start Visualizer", e);
+            stopVisualizer();
+        }
+    }
+
+    private void stopVisualizer() {
+        if (mVisualizer != null) {
+            mVisualizer.setEnabled(false);
+            mVisualizer.release();
+            mVisualizer = null;
+            Log.d(TAG, "Visualizer Stopped");
+        }
+    }
+
+    private boolean isPlaying() {
+        return internalPlayer.isPlaying() || (activeExternalController != null && 
+               activeExternalController.getPlaybackState() != null && 
+               activeExternalController.getPlaybackState().getState() == PlaybackState.STATE_PLAYING);
+    }
+
+    // Update Visualizer State based on Playback
+    private void updateVisualizerState() {
+        if (isPlaying() && !visualizerListeners.isEmpty()) {
+            startVisualizer();
+        } else {
+            stopVisualizer();
+        }
+    }
+
 }

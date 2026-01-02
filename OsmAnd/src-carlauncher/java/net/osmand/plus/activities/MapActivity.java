@@ -553,39 +553,15 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         boolean isPortrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
         
         android.util.Log.d("CarLauncher", "applyWidgetPanelState: Open=" + isWidgetPanelOpen + ", Pinned=" + isPinned + ", Portrait=" + isPortrait + ", Mode=" + layoutMode);
-        android.widget.Toast.makeText(this, "State: " + (isWidgetPanelOpen ? "OPEN" : "CLOSED") + " Mode: " + layoutMode, android.widget.Toast.LENGTH_SHORT).show();
-        
-        // androidx.transition.TransitionManager.beginDelayedTransition(rootLayout); // DISABLED FOR DEBUG
         
         androidx.constraintlayout.widget.ConstraintSet constraintSet = new androidx.constraintlayout.widget.ConstraintSet();
         constraintSet.clone(rootLayout);
         
-        // MODE 1 (No Widgets) -> Force Close
-        // Mode 2 (Full Screen) -> Allowed
-        if (layoutMode == 1) {
-            android.util.Log.d("CarLauncher", "Force Close due to LayoutMode: " + layoutMode);
-            constraintSet.setVisibility(R.id.widget_panel, View.GONE);
-            if (widgetHandle != null) constraintSet.setVisibility(R.id.widget_handle, View.GONE);
-            
-            // Map Full Screen
-            constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
-            
-            // Handle Portrait Map Bottom
-            if (isPortrait) {
-                 constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
-            } else {
-                 constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-            }
-            
-            constraintSet.applyTo(rootLayout);
-            
-            widgetPanel.setVisibility(View.GONE);
-            if (widgetHandle != null) widgetHandle.setVisibility(View.GONE);
-            
-            return;
-        }
-
-        // MODE 0: NORMAL
+        // MODE 0 (Normal) and MODE 2 (Full Screen) both support Widget Panel
+        // We no longer strictly enforce "No Widgets" for Mode 1 as user requested removal.
+        // If layoutMode is somehow 1, we treat it as closed panel or force change.
+        
+        // MODE 0: NORMAL or MODE 2: FULLSCREEN (with Drawer)
         if (isPortrait) {
             // PORTRAIT: Safe Mode
             constraintSet.setVisibility(R.id.widget_panel, View.VISIBLE);
@@ -594,7 +570,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
             constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
             constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP);
             constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-            android.util.Log.d("CarLauncher", "Applied Portrait Constraints");
             
             constraintSet.applyTo(rootLayout);
             

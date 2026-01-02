@@ -199,9 +199,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                 set.connect(net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
                              net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.TOP);
                 set.setVerticalChainStyle(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.CHAIN_PACKED);
-                set.connect(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 
-                            androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-                set.setMargin(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, dpToPx(12));
+                set.connect(net.osmand.plus.R.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, dpToPx(12));
             }
             set.applyTo(layout);
         }
@@ -220,33 +218,15 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     public void onStart() {
         super.onStart();
         musicManager.addListener(this);
+        musicManager.addVisualizerListener(this); // Listen for FFT
         updateAppIcon(null);
-        
-        // Auto-Start Visualizer if anything is playing (Internal or External/Global)
-        // We rely on MusicManager to know if internal is playing.
-        // For external/global, we check Audio Manager if possible, or just force start if we think it's playing.
-        // Actually, just trying to startVisualizer() handles the session logic.
-        // We should check if we *should* be playing.
-        if (musicManager.getInternalPlayer().isPlaying()) {
-            startVisualizer();
-        } else {
-           // Even if internal not playing, maybe external is?
-           // We'll try to start it anyway if we have reason to believe.
-           // But normally we wait for onPlaybackStateChanged.
-           // For now, let's just ensure we respect the current perceived state.
-           if (musicManager.getInternalPlayer().isPlaying()) {
-               startVisualizer(); 
-           }
-           // Trigger a state update check manually?
-           // musicManager.updatePlaybackState(); // If such method existed.
-        }
     }
 
     @Override
     public void onStop() {
         super.onStop();
         musicManager.removeListener(this);
-        stopVisualizer();
+        musicManager.removeVisualizerListener(this); // Stop listening
     }
 
     @Override
@@ -270,9 +250,6 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                     }
                 }
                 updateAppIcon(packageName);
-                
-                // Track changed usually means playing -> Ensure visualizer
-                if (musicManager.getInternalPlayer().isPlaying()) startVisualizer();
             });
         }
     }
@@ -285,83 +262,13 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                         isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play);
             });
         }
-        if (isPlaying) {
-            startVisualizer();
-        } else {
-            stopVisualizer();
-        }
     }
 
     @Override
     public void onSourceChanged(boolean isInternal) {
-        // Source changed. Restart Visualizer to catch correct session.
-        stopVisualizer();
-        if (musicManager.getInternalPlayer().isPlaying()) {
-            startVisualizer();
-        }
-    }
-
-    // --- Visualizer Logic ---
-    private void startVisualizer() {
-        if (visualizerView == null) return;
-        if (mVisualizer != null) return; // Already running
         
         // Allow external via Session 0 or Internal via specific session
         int sessionId = 0;
-        
-        if (musicManager.getInternalPlayer().isPlaying()) {
-             sessionId = musicManager.getInternalPlayer().getAudioSessionId();
-        } else {
-             // External player (Global Mix)
-             // Note: Session 0 requires RECORD_AUDIO permission (already checked below)
-             sessionId = 0;
-        }
-
-        // Check Permissions
-        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) 
-            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-             // API 23+ Run-time Check (Activity contest required for dialog)
-             if (context instanceof android.app.Activity) {
-                 androidx.core.app.ActivityCompat.requestPermissions(
-                         (android.app.Activity) context,
-                         new String[]{android.Manifest.permission.RECORD_AUDIO},
-                         PERMISSION_REQ_CODE
-                 );
-             }
-             return;
-        }
-
-        try {
-            mVisualizer = new android.media.audiofx.Visualizer(sessionId);
-            mVisualizer.setCaptureSize(android.media.audiofx.Visualizer.getCaptureSizeRange()[1]);
-            mVisualizer.setDataCaptureListener(new android.media.audiofx.Visualizer.OnDataCaptureListener() {
-                @Override
-                public void onWaveFormDataCapture(android.media.audiofx.Visualizer visualizer, byte[] waveform, int samplingRate) {
-                }
-
-                @Override
-                public void onFftDataCapture(android.media.audiofx.Visualizer visualizer, byte[] fft, int samplingRate) {
-                    if (visualizerView != null) {
-                        visualizerView.updateVisualizer(fft);
-                    }
-                }
-            }, android.media.audiofx.Visualizer.getMaxCaptureRate() / 2, false, true);
-            
-            mVisualizer.setEnabled(true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            // Fallback: If session 0 fails or system prevents it, try to clear
-            if (mVisualizer != null) {
-                mVisualizer.release();
-                mVisualizer = null;
-            }
-        }
-    }
-
-    private void stopVisualizer() {
-        if (mVisualizer != null) {
-            mVisualizer.setEnabled(false);
-            mVisualizer.release();
             mVisualizer = null;
         }
         if (visualizerView != null) {
