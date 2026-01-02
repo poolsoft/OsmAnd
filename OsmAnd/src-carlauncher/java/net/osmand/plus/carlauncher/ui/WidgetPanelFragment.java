@@ -57,6 +57,33 @@ public class WidgetPanelFragment extends Fragment {
     
     private boolean isPinned = true; 
     private static final String PREF_IS_PINNED = "widget_panel_pinned";
+    private int currentUnitSize = 0;
+
+    private void initListLayout(ViewGroup root) {
+        listRecyclerView = new RecyclerView(getContext());
+        listRecyclerView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        listRecyclerView.setClipToPadding(false);
+        // Bottom padding avoids overlap with bottom elements regarding of orientation
+        listRecyclerView.setPadding(0, 0, 0, 200); 
+        
+        boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), isPortrait ? RecyclerView.VERTICAL : RecyclerView.VERTICAL, false);
+        listRecyclerView.setLayoutManager(layoutManager);
+        
+        root.addView(listRecyclerView);
+        
+        // Initial Calculation
+        listRecyclerView.post(() -> {
+             if (getView() != null) {
+                 // In this drawer implementation, width is fixed or 0.
+                 // We can use a reasonable default or measure.
+                 currentUnitSize = isPortrait ? getView().getWidth() : 350; 
+                 applyWidgetsToView();
+             }
+        });
+        
+        applyWidgetsToView();
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
