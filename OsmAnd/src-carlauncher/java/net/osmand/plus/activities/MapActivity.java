@@ -554,7 +554,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         android.util.Log.d("CarLauncher", "applyWidgetPanelState: Open=" + isWidgetPanelOpen + ", Pinned=" + isPinned + ", Portrait=" + isPortrait + ", Mode=" + layoutMode);
         android.widget.Toast.makeText(this, "State: " + (isWidgetPanelOpen ? "OPEN" : "CLOSED") + " Mode: " + layoutMode, android.widget.Toast.LENGTH_SHORT).show();
         
-        androidx.transition.TransitionManager.beginDelayedTransition(rootLayout);
+        // androidx.transition.TransitionManager.beginDelayedTransition(rootLayout); // DISABLED FOR DEBUG
         
         androidx.constraintlayout.widget.ConstraintSet constraintSet = new androidx.constraintlayout.widget.ConstraintSet();
         constraintSet.clone(rootLayout);
@@ -580,6 +580,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
             }
             
             constraintSet.applyTo(rootLayout);
+            
+            // FORCE UPDATE
+            widgetPanel.setVisibility(View.GONE);
+            if (widgetHandle != null) widgetHandle.setVisibility(View.GONE);
+            
             return;
         }
 
@@ -593,6 +598,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
             constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP);
             constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
             android.util.Log.d("CarLauncher", "Applied Portrait Constraints");
+            
+            constraintSet.applyTo(rootLayout);
+            
+            // FORCE UPDATE
+            widgetPanel.setVisibility(View.VISIBLE);
+            if (widgetHandle != null) widgetHandle.setVisibility(View.GONE);
             
         } else {
             // LANDSCAPE: Drawer Logic
@@ -614,11 +625,20 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                      constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
                 }
                 
-                // Ensure Panel is attached to End. Explicitly set vertical constraints too just in case.
+                // Ensure Panel is attached to End
                 constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
                 constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP);
                 constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
                 
+                constraintSet.applyTo(rootLayout);
+
+                // FORCE UPDATE
+                widgetPanel.setVisibility(View.VISIBLE);
+                if (widgetHandle != null) {
+                    widgetHandle.setVisibility(View.VISIBLE);
+                    widgetHandle.setRotation(180f);
+                }
+
             } else {
                 android.util.Log.d("CarLauncher", "Applied Landscape CLOSED Constraints");
                 constraintSet.setVisibility(R.id.widget_panel, View.GONE);
@@ -631,13 +651,21 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                 
                 // Map Full Screen
                 constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+                
+                constraintSet.applyTo(rootLayout);
+
+                // FORCE UPDATE
+                widgetPanel.setVisibility(View.GONE);
+                if (widgetHandle != null) { 
+                    widgetHandle.setVisibility(View.VISIBLE);
+                    widgetHandle.setRotation(0f);
+                }
             }
-            
             // Map Bottom
-            constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+            // Note: This was outside in previous code, need to apply it before applyTo inside branches?
+            // Actually previous code applied it outside. I moved applyTo inside branches to enable Force Update.
+            // Constraints are cumulative in the set.
         }
-        
-        constraintSet.applyTo(rootLayout);
     }
 
 	@Override
