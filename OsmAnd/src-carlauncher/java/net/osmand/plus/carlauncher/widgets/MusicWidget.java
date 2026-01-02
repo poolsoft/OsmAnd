@@ -270,7 +270,10 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
 
     @Override
     public void onSourceChanged(boolean isInternal) {
-        if (!isInternal) stopVisualizer(); // Only support internal for now
+        // Visualizer should work for both if possible. Don't stop it here.
+        // If switching source, maybe restart visualizer to catch new session?
+        stopVisualizer();
+        startVisualizer();
     }
 
     // --- Visualizer Logic ---
@@ -278,13 +281,21 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         if (visualizerView == null) return;
         if (mVisualizer != null) return; // Already running
         
-        // Check only works for Internal
-        if (!musicManager.getInternalPlayer().isPlaying()) return;
+        // Allow external via Session 0 or Internal via specific session
+        int sessionId = 0;
+        
+        if (musicManager.getInternalPlayer().isPlaying()) {
+             sessionId = musicManager.getInternalPlayer().getAudioSessionId();
+        } else {
+             // External player (Global Mix)
+             // Note: Session 0 requires RECORD_AUDIO permission (already checked below)
+             sessionId = 0;
+        }
 
         // Check Permissions
         if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) 
             != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-             // Request? We are in a Widget class, need Activity context.
+             // API 23+ Run-time Check (Activity contest required for dialog)
              if (context instanceof android.app.Activity) {
                  androidx.core.app.ActivityCompat.requestPermissions(
                          (android.app.Activity) context,
@@ -296,9 +307,6 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         }
 
         try {
-            int sessionId = musicManager.getInternalPlayer().getAudioSessionId();
-            if (sessionId == 0) return;
-
             mVisualizer = new android.media.audiofx.Visualizer(sessionId);
             mVisualizer.setCaptureSize(android.media.audiofx.Visualizer.getCaptureSizeRange()[1]);
             mVisualizer.setDataCaptureListener(new android.media.audiofx.Visualizer.OnDataCaptureListener() {
@@ -317,6 +325,11 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
             mVisualizer.setEnabled(true);
         } catch (Exception e) {
             e.printStackTrace();
+            // Fallback: If session 0 fails or system prevents it, try to clear
+            if (mVisualizer != null) {
+                mVisualizer.release();
+                mVisualizer = null;
+            }
         }
     }
 
