@@ -533,6 +533,10 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	
 	public void toggleWidgetPanel() {
 	    isWidgetPanelOpen = !isWidgetPanelOpen;
+	    if (isWidgetPanelOpen && layoutMode != 0) {
+	        // Force Normal Mode if user explicitly opens panel
+	        layoutMode = 0; 
+	    }
 	    applyWidgetPanelState();
 	}
 	
@@ -547,8 +551,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         boolean isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
         boolean isPortrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
         
-        android.util.Log.d("CarLauncher", "applyWidgetPanelState: Open=" + isWidgetPanelOpen + ", Pinned=" + isPinned + ", Portrait=" + isPortrait);
-        // android.widget.Toast.makeText(this, "State: " + (isWidgetPanelOpen ? "OPEN" : "CLOSED"), android.widget.Toast.LENGTH_SHORT).show();
+        android.util.Log.d("CarLauncher", "applyWidgetPanelState: Open=" + isWidgetPanelOpen + ", Pinned=" + isPinned + ", Portrait=" + isPortrait + ", Mode=" + layoutMode);
+        android.widget.Toast.makeText(this, "State: " + (isWidgetPanelOpen ? "OPEN" : "CLOSED") + " Mode: " + layoutMode, android.widget.Toast.LENGTH_SHORT).show();
         
         androidx.transition.TransitionManager.beginDelayedTransition(rootLayout);
         
