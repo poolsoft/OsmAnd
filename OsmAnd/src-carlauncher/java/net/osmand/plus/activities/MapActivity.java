@@ -433,7 +433,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		    
 		    widgetHandle.setOnClickListener(v -> {
 		        android.widget.Toast.makeText(this, "Handle Clicked!", android.widget.Toast.LENGTH_SHORT).show();
-		        toggleWidgetPanel();
+		        toggleLayoutMode();
 		    });
 		}
 		
@@ -546,6 +546,14 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	    
 	    isWidgetPanelOpen = !isWidgetPanelOpen;
 	    applyWidgetPanelState();
+	}
+	
+	private net.osmand.plus.carlauncher.ui.AppDockFragment getAppDockFragment() {
+	    androidx.fragment.app.Fragment f = getSupportFragmentManager().findFragmentByTag("app_dock");
+	    if (f instanceof net.osmand.plus.carlauncher.ui.AppDockFragment) {
+	        return (net.osmand.plus.carlauncher.ui.AppDockFragment) f;
+	    }
+	    return null;
 	}
 	
 	public void updateWidgetPanelMode() {
