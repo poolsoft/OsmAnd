@@ -254,14 +254,14 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-	    // V8: Initialize Car Launcher UI first
-	    setupCarLauncherUI();
-	    
 		long time = System.currentTimeMillis();
 		app.applyTheme(this);
 		supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
 		setRequestedOrientation(AndroidUiHelper.getScreenOrientation(this));
 		super.onCreate(savedInstanceState);
+        
+        // V8: Initialize Car Launcher UI AFTER window setup
+	    setupCarLauncherUI();
 
 
 		// Car Launcher Specific Header
