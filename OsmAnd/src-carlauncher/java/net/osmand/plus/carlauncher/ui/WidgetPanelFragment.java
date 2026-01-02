@@ -64,7 +64,7 @@ public class WidgetPanelFragment extends Fragment {
         listRecyclerView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         listRecyclerView.setClipToPadding(false);
         // Bottom padding avoids overlap with bottom elements regarding of orientation
-        listRecyclerView.setPadding(0, 0, 0, 200); 
+        listRecyclerView.setPadding(0, 0, 0, 0); 
         
         boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), isPortrait ? RecyclerView.VERTICAL : RecyclerView.VERTICAL, false);

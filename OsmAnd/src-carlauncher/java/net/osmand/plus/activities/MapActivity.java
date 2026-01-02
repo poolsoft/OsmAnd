@@ -533,8 +533,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	
 	public void toggleWidgetPanel() {
 	    isWidgetPanelOpen = !isWidgetPanelOpen;
-	    if (isWidgetPanelOpen && layoutMode != 0) {
-	        // Force Normal Mode if user explicitly opens panel
+	    if (isWidgetPanelOpen && layoutMode == 1) {
+	        // Only force Normal Mode if we are in "No Widgets" mode (1)
+            // Mode 2 (Full Screen) is allowed to show panel
 	        layoutMode = 0; 
 	    }
 	    applyWidgetPanelState();
@@ -559,8 +560,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         androidx.constraintlayout.widget.ConstraintSet constraintSet = new androidx.constraintlayout.widget.ConstraintSet();
         constraintSet.clone(rootLayout);
         
-        // MODE 1 (No Widgets) or MODE 2 (Fullscreen) -> Force Close
-        if (layoutMode != 0) {
+        // MODE 1 (No Widgets) -> Force Close
+        // Mode 2 (Full Screen) -> Allowed
+        if (layoutMode == 1) {
             android.util.Log.d("CarLauncher", "Force Close due to LayoutMode: " + layoutMode);
             constraintSet.setVisibility(R.id.widget_panel, View.GONE);
             if (widgetHandle != null) constraintSet.setVisibility(R.id.widget_handle, View.GONE);
@@ -570,18 +572,13 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
             
             // Handle Portrait Map Bottom
             if (isPortrait) {
-                if (layoutMode == 2) { // Full Screen
-                     constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-                } else { // No Widgets (Dock Visible)
-                     constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
-                }
+                 constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
             } else {
                  constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
             }
             
             constraintSet.applyTo(rootLayout);
             
-            // FORCE UPDATE
             widgetPanel.setVisibility(View.GONE);
             if (widgetHandle != null) widgetHandle.setVisibility(View.GONE);
             
@@ -636,8 +633,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                 widgetPanel.setVisibility(View.VISIBLE);
                 if (widgetHandle != null) {
                     widgetHandle.setVisibility(View.VISIBLE);
-                    widgetHandle.setRotation(0f);
-                    widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_action_arrow_forward_16);
+                    widgetHandle.setRotation(0f); // Reset Rotation
+                    widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_chevron_right); // > (Modern)
                 }
 
             } else {
@@ -660,7 +657,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                 if (widgetHandle != null) { 
                     widgetHandle.setVisibility(View.VISIBLE);
                     widgetHandle.setRotation(0f); // Reset Rotation
-                    widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_arrow_back); // <
+                    widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_chevron_left); // < (Modern)
                 }
             }
             // Map Bottom Fix: Connect to Dock Top

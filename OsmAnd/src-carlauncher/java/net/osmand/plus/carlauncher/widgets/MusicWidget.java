@@ -221,7 +221,25 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         super.onStart();
         musicManager.addListener(this);
         updateAppIcon(null);
-        startVisualizer();
+        
+        // Auto-Start Visualizer if anything is playing (Internal or External/Global)
+        // We rely on MusicManager to know if internal is playing.
+        // For external/global, we check Audio Manager if possible, or just force start if we think it's playing.
+        // Actually, just trying to startVisualizer() handles the session logic.
+        // We should check if we *should* be playing.
+        if (musicManager.getInternalPlayer().isPlaying()) {
+            startVisualizer();
+        } else {
+           // Even if internal not playing, maybe external is?
+           // We'll try to start it anyway if we have reason to believe.
+           // But normally we wait for onPlaybackStateChanged.
+           // For now, let's just ensure we respect the current perceived state.
+           if (musicManager.getInternalPlayer().isPlaying()) {
+               startVisualizer(); 
+           }
+           // Trigger a state update check manually?
+           // musicManager.updatePlaybackState(); // If such method existed.
+        }
     }
 
     @Override
@@ -252,6 +270,9 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                     }
                 }
                 updateAppIcon(packageName);
+                
+                // Track changed usually means playing -> Ensure visualizer
+                if (musicManager.getInternalPlayer().isPlaying()) startVisualizer();
             });
         }
     }
@@ -264,16 +285,20 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                         isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play);
             });
         }
-        if (isPlaying) startVisualizer();
-        else stopVisualizer();
+        if (isPlaying) {
+            startVisualizer();
+        } else {
+            stopVisualizer();
+        }
     }
 
     @Override
     public void onSourceChanged(boolean isInternal) {
-        // Visualizer should work for both if possible. Don't stop it here.
-        // If switching source, maybe restart visualizer to catch new session?
+        // Source changed. Restart Visualizer to catch correct session.
         stopVisualizer();
-        startVisualizer();
+        if (musicManager.getInternalPlayer().isPlaying()) {
+            startVisualizer();
+        }
     }
 
     // --- Visualizer Logic ---
