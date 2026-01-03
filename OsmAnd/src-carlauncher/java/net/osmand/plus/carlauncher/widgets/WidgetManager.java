@@ -285,9 +285,16 @@ public class WidgetManager {
 
         String[] ids = savedConfig.split(",");
         List<BaseWidget> restoredWidgets = new ArrayList<>();
+        java.util.Set<String> processingIds = new java.util.HashSet<>();
         
         for (String id : ids) {
             if (id.isEmpty()) continue;
+            
+            // Clean-up: If ID already processed in this session, skip it (Dedupe)
+            if (processingIds.contains(id)) {
+                 continue;
+            }
+            processingIds.add(id);
             
             // Try to find existing (default) widget
             BaseWidget widget = findWidgetById(id);
