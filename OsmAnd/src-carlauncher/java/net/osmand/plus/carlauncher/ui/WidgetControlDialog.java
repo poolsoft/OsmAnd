@@ -216,6 +216,8 @@ public class WidgetControlDialog extends DialogFragment {
         widgetManager.updateVisibleOrder(editingList);
         
         // Save Density Pref
+        if (slotSpinner != null && getContext() != null) {
+            Integer selected = (Integer) slotSpinner.getSelectedItem();
             if (selected != null) {
                 android.preference.PreferenceManager.getDefaultSharedPreferences(getContext())
                         .edit().putInt("widget_slot_count", selected).apply();
