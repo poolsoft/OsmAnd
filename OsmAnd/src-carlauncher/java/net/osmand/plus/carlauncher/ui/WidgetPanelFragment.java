@@ -87,6 +87,7 @@ public class WidgetPanelFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        android.util.Log.d("WidgetDebug", "WidgetPanelFragment.onCreate");
         if (getContext() != null) {
             app = (OsmandApplication) getContext().getApplicationContext();
             widgetManager = new WidgetManager(getContext(), app);
@@ -95,10 +96,25 @@ public class WidgetPanelFragment extends Fragment {
             isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
             
             if (!widgetManager.loadWidgetConfig()) {
+                android.util.Log.d("WidgetDebug", "loadWidgetConfig returned false. Initializing defaults.");
                 initializeWidgets();
+                // Save immediately so next time we find it
+                widgetManager.saveWidgetConfig();
+            } else {
+                 android.util.Log.d("WidgetDebug", "loadWidgetConfig returned true. Loaded saved widgets.");
             }
         }
     }
+
+    // ...
+
+    /**
+     * Widget'lari initialize et.
+     */
+    private void initializeWidgets() {
+        android.util.Log.d("WidgetDebug", "initializeWidgets called!");
+        if (widgetManager == null || app == null)
+            return;
 
     @Nullable
     @Override
@@ -425,6 +441,7 @@ public class WidgetPanelFragment extends Fragment {
      * Widget'lari initialize et.
      */
     private void initializeWidgets() {
+        android.util.Log.d("WidgetDebug", "initializeWidgets called!");
         if (widgetManager == null || app == null)
             return;
 
