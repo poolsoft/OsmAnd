@@ -79,4 +79,17 @@ public class WidgetRegistry {
         }
         return null;
     }
+
+    /**
+     * Yeni (benzersiz) bir widget ornegi olusturur.
+     * ID'si: type_timestamp formatinda olur.
+     */
+    public static BaseWidget createUniqueWidget(Context context, OsmandApplication app, String typeId) {
+        BaseWidget widget = createWidget(context, app, typeId);
+        if (widget != null) {
+            String uniqueId = typeId + "_" + System.currentTimeMillis();
+            widget.setId(uniqueId);
+        }
+        return widget;
+    }
 }
