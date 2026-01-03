@@ -115,6 +115,7 @@ public class WidgetPanelFragment extends Fragment {
         android.util.Log.d("WidgetDebug", "initializeWidgets called!");
         if (widgetManager == null || app == null)
             return;
+    }
 
     @Nullable
     @Override
