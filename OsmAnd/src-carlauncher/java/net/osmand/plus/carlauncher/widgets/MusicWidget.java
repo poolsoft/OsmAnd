@@ -98,6 +98,8 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         view.setOnClickListener(v -> openMusicDrawer());
 
         rootView = view;
+        // Important: Force apply size constraints now that view is created
+        onSizeChanged(this.size);
         return rootView;
     }
 
