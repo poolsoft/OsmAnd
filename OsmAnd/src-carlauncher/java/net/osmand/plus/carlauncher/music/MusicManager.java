@@ -226,7 +226,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 // Determine component name for listener (required for getActiveSessions)
                 // Using null often works for all, or use 'componentName' from constructor if saved.
                 // Re-running updateActiveController logic manually:
-                List<MediaController> controllers = manager.getActiveSessions(componentName);
+                List<MediaController> controllers = manager.getActiveSessions(null);
                 updateActiveController(controllers);
             } catch (Exception e) {
                  android.util.Log.e(TAG, "Failed to refresh sessions in togglePlayPause", e);
