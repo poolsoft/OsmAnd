@@ -316,11 +316,7 @@ public class WidgetManager {
         for (String id : ids) {
             if (id.isEmpty()) continue;
             
-            // Clean-up: If ID already processed in this session, skip it (Dedupe)
-            if (processingIds.contains(id)) {
-                 continue;
-            }
-            processingIds.add(id);
+            // (Deduplication moved to creation logic)
             
             // Try to find existing (default) widget
             BaseWidget widget = findWidgetById(id);
@@ -328,20 +324,38 @@ public class WidgetManager {
             // If not found, try to create it (Dynamic Widget)
             if (widget == null) {
                 // ID format: type OR type_timestamp
-                // Extract type
                 String type = id.split("_")[0];
-                widget = WidgetRegistry.createWidget(context, app, type);
-                if (widget != null) {
-                    // Restore ID hack to match saved ID
-                     try {
-                        java.lang.reflect.Field idField = BaseWidget.class.getDeclaredField("id");
-                        idField.setAccessible(true);
-                        idField.set(widget, id);
-                    } catch (Exception e) {
-                        // Fail silently
+                
+                // DATA HEALING: If this ID was already processed, it's a DUPLICATE in the config.
+                // We must recover it as a NEW unique widget.
+                if (processingIds.contains(id)) {
+                    android.util.Log.w("WidgetDebug", "Heal: Duplicate ID found: " + id + ". Creating new instance.");
+                    widget = WidgetRegistry.createUniqueWidget(context, app, type); // Generates new ID
+                    // Note: We cannot restore settings for this one effectively since keys clash, 
+                    // but we save the instance.
+                } else {
+                    // Normal Creation
+                    widget = WidgetRegistry.createWidget(context, app, type);
+                    if (widget != null) {
+                         try {
+                             // Restore ID hack
+                            java.lang.reflect.Field idField = BaseWidget.class.getDeclaredField("id");
+                            idField.setAccessible(true);
+                            idField.set(widget, id);
+                        } catch (Exception e) {}
                     }
                 }
+            } else {
+                 if (processingIds.contains(id)) {
+                     // Existing Default Widget is duplicated? This shouldn't happen normally for Singletons,
+                     // but if it does, we can't clone the Singleton (like SpeedWidget).
+                     // We skip duplicates of Singletons.
+                     continue;
+                 }
             }
+            
+            if (widget != null) {
+                processingIds.add(widget.getId()); // Add the FINAL id (handles healed ones)
             
             if (widget != null) {
                 // Restore Properties

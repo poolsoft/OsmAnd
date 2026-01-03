@@ -45,7 +45,15 @@ public class WidgetControlAdapter extends RecyclerView.Adapter<WidgetControlAdap
         BaseWidget widget = widgets.get(position);
 
         // Name
-        holder.nameText.setText(widget.getTitle());
+        // Name with ID for validation
+        String dispName = widget.getTitle();
+        if (widget.getId().contains("_")) {
+             // Show short hash for unique widgets
+             String hash = widget.getId().substring(widget.getId().lastIndexOf("_") + 1);
+             if (hash.length() > 4) hash = hash.substring(hash.length() - 4);
+             dispName += " #" + hash;
+        }
+        holder.nameText.setText(dispName);
 
         // Size Buttons State
         updateSizeButtons(holder, widget.getSize());
