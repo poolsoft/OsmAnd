@@ -126,6 +126,34 @@ public class WidgetControlDialog extends DialogFragment {
         if (closeBtn != null) {
             closeBtn.setOnClickListener(v -> dismiss());
         }
+
+        // Setup Density Spinner
+        setupDensitySpinner(view);
+    }
+    
+    private android.widget.Spinner slotSpinner;
+    
+    private void setupDensitySpinner(View root) {
+        slotSpinner = root.findViewById(R.id.spinner_slot_count);
+        if (slotSpinner == null) return;
+        
+        final Integer[] items = new Integer[]{3, 4, 5, 6};
+        android.widget.ArrayAdapter<Integer> spinnerAdapter = new android.widget.ArrayAdapter<>(
+                getContext(), android.R.layout.simple_spinner_item, items);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        slotSpinner.setAdapter(spinnerAdapter);
+        
+        // Load Pref
+        android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
+        int savedSlots = prefs.getInt("widget_slot_count", 3);
+        
+        // Find index
+        for (int i = 0; i < items.length; i++) {
+            if (items[i] == savedSlots) {
+                slotSpinner.setSelection(i);
+                break;
+            }
+        }
     }
     
     private ItemTouchHelper touchHelper;
@@ -161,6 +189,15 @@ public class WidgetControlDialog extends DialogFragment {
     private void saveAndClose() {
         // Push changes to Manager
         widgetManager.updateVisibleOrder(editingList);
+        
+        // Save Density Pref
+        if (slotSpinner != null && getContext() != null) {
+            Integer selected = (Integer) slotSpinner.getSelectedItem();
+            if (selected != null) {
+                android.preference.PreferenceManager.getDefaultSharedPreferences(getContext())
+                        .edit().putInt("widget_slot_count", selected).apply();
+            }
+        }
         
         dismiss();
         if (onDismissCallback != null) {

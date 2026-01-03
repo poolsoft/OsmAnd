@@ -432,7 +432,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		    widgetHandle.bringToFront(); // Force Top Z-Order
 		    
 		    widgetHandle.setOnClickListener(v -> {
-		        android.widget.Toast.makeText(this, "Handle Clicked!", android.widget.Toast.LENGTH_SHORT).show();
+		        //android.widget.Toast.makeText(this, "Handle Clicked!", android.widget.Toast.LENGTH_SHORT).show();
 		        toggleLayoutMode();
 		    });
 		}

@@ -44,6 +44,31 @@
         android:padding="4dp"
         android:scrollbars="vertical" />
 
+    <!-- Density Control -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingTop="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ekrana Sığacak Sayı:"
+            android:textColor="#AAAAAA"
+            android:textSize="14sp"
+            android:paddingEnd="12dp" />
+
+        <Spinner
+            android:id="@+id/spinner_slot_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#FFFFFF"
+            android:minWidth="100dp" />
+
+    </LinearLayout>
+
     <!-- Footer Actions -->
     <LinearLayout
         android:layout_width="match_parent"

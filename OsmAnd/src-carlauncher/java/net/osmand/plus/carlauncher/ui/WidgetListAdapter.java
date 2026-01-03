@@ -96,9 +96,9 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
                 
                 BaseWidget w = widgets.get(position);
                 switch (w.getSize()) {
-                    case SMALL: multiplier = 2; break; 
-                    case MEDIUM: multiplier = 3; break; 
-                    case LARGE: multiplier = 6; break; 
+                    case SMALL: multiplier = 1; break; 
+                    case MEDIUM: multiplier = 2; break; 
+                    case LARGE: multiplier = 3; break; 
                 }
                 
                 params.height = (unitSize * multiplier) - marginTotal;
