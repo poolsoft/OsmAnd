@@ -303,23 +303,12 @@ public class WidgetPanelFragment extends Fragment {
         if (isPortrait) {
              // Portrait: Vertical Stack (Horizontal Scroll) -> Unit = Width / Slots?
              // No, Portrait is "Horizontal List", so Unit is Width.
-             // Actually, usually in horizontal scroll, "Unit" is the width of one item.
-             // User requested "3 Small items visible".
-             // So Unit = ScreenWidth / 3 ?
-             // Current logic: currentUnitSize = getView().getWidth().
-             // Let's keep Portrait as "1 Page Width" for now unless user wants split.
-             // Wait, previous logic was `currentUnitSize = isPortrait ? getView().getWidth() : defaultUnitPx`.
-             // If we want dynamic slotting in Portrait, we should use similar logic.
-             // But for now let's focus on Landscape (Vertical Stack) as per request.
              
              // Check preference
-             android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
              int slots = prefs.getInt("widget_slot_count", 3);
              
              // Portrait Mode (Horizontal List):
-             // If we want multiple items on screen, we divide Width by Slots.
              currentUnitSize = getView() != null ? (getView().getWidth() / slots) : 0;
-             // If 0, fallback?
              if (currentUnitSize == 0 && getView() != null) currentUnitSize = getView().getWidth();
              
         } else {
@@ -327,14 +316,11 @@ public class WidgetPanelFragment extends Fragment {
              int height = listRecyclerView.getHeight();
              if (height == 0 && getView() != null) height = getView().getHeight();
              
-             android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
              int slots = prefs.getInt("widget_slot_count", 3);
              
              if (height > 0) {
                  currentUnitSize = height / slots;
              } else {
-                 // Fallback if height not ready (e.g. 85dp * scale?)
-                 // Use 85dp as base for 3 slots ~ 255dp height.
                  currentUnitSize = (int) android.util.TypedValue.applyDimension(
                      android.util.TypedValue.COMPLEX_UNIT_DIP, 
                      85, 
