@@ -47,13 +47,22 @@ public class WidgetManager {
      * Widget ekle.
      */
     public void addWidget(@NonNull BaseWidget widget) {
+        // Prevent duplicates strictly by ID
+        if (findWidgetById(widget.getId()) != null) {
+             android.util.Log.d("WidgetDebug", "addWidget: Duplicate detected, skipping " + widget.getId());
+             return;
+        }
+
         if (!allWidgets.contains(widget)) {
+            android.util.Log.d("WidgetDebug", "addWidget: " + widget.getId());
             allWidgets.add(widget);
             updateVisibleWidgets();
             if (isStarted) {
                 widget.onStart();
             }
             saveWidgetConfig(); // SAVE ON ADD
+        } else {
+             android.util.Log.d("WidgetDebug", "addWidget: Already reference " + widget.getId());
         }
     }
 
