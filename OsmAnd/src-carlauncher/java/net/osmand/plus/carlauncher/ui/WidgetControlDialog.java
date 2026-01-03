@@ -134,7 +134,7 @@ public class WidgetControlDialog extends DialogFragment {
     
     private android.widget.Spinner slotSpinner;
     
-    }
+
 
     private android.widget.Spinner orientationSpinner;
 
