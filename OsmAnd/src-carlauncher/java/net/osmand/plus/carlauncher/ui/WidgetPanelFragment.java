@@ -66,8 +66,21 @@ public class WidgetPanelFragment extends Fragment {
         // Bottom padding avoids overlap with bottom elements regarding of orientation
         listRecyclerView.setPadding(0, 0, 0, 0); 
         
-        boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), isPortrait ? LinearLayoutManager.HORIZONTAL : LinearLayoutManager.VERTICAL, false);
+        android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
+        int orientationPref = prefs.getInt("widget_panel_orientation", 0); // 0=Auto, 1=Horizontal, 2=Vertical
+
+        boolean isSystemPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        boolean isHorizontalLayout;
+        
+        if (orientationPref == 1) {
+            isHorizontalLayout = true; // Force Horizontal
+        } else if (orientationPref == 2) {
+            isHorizontalLayout = false; // Force Vertical
+        } else {
+            isHorizontalLayout = isSystemPortrait; // Auto
+        }
+        
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), isHorizontalLayout ? LinearLayoutManager.HORIZONTAL : LinearLayoutManager.VERTICAL, false);
         listRecyclerView.setLayoutManager(layoutManager);
         
         root.addView(listRecyclerView);
@@ -280,7 +293,12 @@ public class WidgetPanelFragment extends Fragment {
     private void updateUnitSize() {
         if (listRecyclerView == null) return;
         
-        boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
+        int orientationPref = prefs.getInt("widget_panel_orientation", 0); // 0=Auto, 1=Horizontal, 2=Vertical
+        boolean isSystemPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        
+        boolean isPortrait = (orientationPref == 1) || (orientationPref == 0 && isSystemPortrait);
+        if (orientationPref == 2) isPortrait = false;
         
         if (isPortrait) {
              // Portrait: Vertical Stack (Horizontal Scroll) -> Unit = Width / Slots?
@@ -329,8 +347,12 @@ public class WidgetPanelFragment extends Fragment {
     private void applyWidgetsToView() {
         if (listRecyclerView != null) {
             // List Mode (RecyclerView)
-            boolean isPortrait = getResources()
-                    .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+            android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
+            int orientationPref = prefs.getInt("widget_panel_orientation", 0); // 0=Auto, 1=Horizontal, 2=Vertical
+            boolean isSystemPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+            
+            boolean isPortrait = (orientationPref == 1) || (orientationPref == 0 && isSystemPortrait);
+            if (orientationPref == 2) isPortrait = false;
             
             WidgetListAdapter adapter = new WidgetListAdapter(
                 widgetManager.getVisibleWidgets(), 

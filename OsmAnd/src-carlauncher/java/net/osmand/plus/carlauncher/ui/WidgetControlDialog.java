@@ -129,9 +129,33 @@ public class WidgetControlDialog extends DialogFragment {
 
         // Setup Density Spinner
         setupDensitySpinner(view);
+        setupOrientationSpinner(view);
     }
     
     private android.widget.Spinner slotSpinner;
+    
+    }
+
+    private android.widget.Spinner orientationSpinner;
+
+    private void setupOrientationSpinner(View root) {
+        orientationSpinner = root.findViewById(R.id.spinner_orientation);
+        if (orientationSpinner == null) return;
+        
+        final String[] items = new String[]{"Otomatik", "Yatay (Alt Panel)", "Dikey (Sağ Panel)"};
+        android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<>(
+                getContext(), android.R.layout.simple_spinner_item, items);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        orientationSpinner.setAdapter(adapter);
+        
+        // Load Pref
+        android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
+        int savedOrientation = prefs.getInt("widget_panel_orientation", 0); // 0=Auto
+        
+        if (savedOrientation >= 0 && savedOrientation < items.length) {
+            orientationSpinner.setSelection(savedOrientation);
+        }
+    }
     
     private void setupDensitySpinner(View root) {
         slotSpinner = root.findViewById(R.id.spinner_slot_count);
@@ -192,12 +216,17 @@ public class WidgetControlDialog extends DialogFragment {
         widgetManager.updateVisibleOrder(editingList);
         
         // Save Density Pref
-        if (slotSpinner != null && getContext() != null) {
-            Integer selected = (Integer) slotSpinner.getSelectedItem();
             if (selected != null) {
                 android.preference.PreferenceManager.getDefaultSharedPreferences(getContext())
                         .edit().putInt("widget_slot_count", selected).apply();
             }
+        }
+        
+        // Save Orientation Pref
+        if (orientationSpinner != null && getContext() != null) {
+            int selectedIndex = orientationSpinner.getSelectedItemPosition();
+            android.preference.PreferenceManager.getDefaultSharedPreferences(getContext())
+                    .edit().putInt("widget_panel_orientation", selectedIndex).apply();
         }
         
         dismiss();

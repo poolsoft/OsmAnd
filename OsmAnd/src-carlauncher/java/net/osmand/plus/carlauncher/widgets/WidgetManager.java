@@ -356,6 +356,7 @@ public class WidgetManager {
             
             if (widget != null) {
                 processingIds.add(widget.getId()); // Add the FINAL id (handles healed ones)
+            }
             
             if (widget != null) {
                 // Restore Properties
