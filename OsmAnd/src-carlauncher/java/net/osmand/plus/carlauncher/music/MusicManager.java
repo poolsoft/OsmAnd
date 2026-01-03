@@ -445,7 +445,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             PlaybackState state = activeExternalController.getPlaybackState();
             boolean playing = state != null && state.getState() == PlaybackState.STATE_PLAYING;
             l.onPlaybackStateChanged(playing);
-            l.onPlaybackStateChanged(internalPlayer.isPlaying());
+            // Removed conflicting internalPlayer state call which was overriding external state
         }
     }
     

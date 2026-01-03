@@ -172,7 +172,8 @@ public class WidgetControlDialog extends DialogFragment {
 
         builder.setItems(names, (dialog, which) -> {
             WidgetRegistry.WidgetEntry entry = available.get(which);
-            BaseWidget newWidget = entry.creator.create(getContext(), (OsmandApplication) getContext().getApplicationContext());
+            // Use createUniqueWidget to ensure every instance has a unique ID (e.g. music_12345)
+            BaseWidget newWidget = WidgetRegistry.createUniqueWidget(getContext(), (OsmandApplication) getContext().getApplicationContext(), entry.typeId);
             if (newWidget != null) {
                 // Default Size
                 newWidget.setSize(BaseWidget.WidgetSize.SMALL);

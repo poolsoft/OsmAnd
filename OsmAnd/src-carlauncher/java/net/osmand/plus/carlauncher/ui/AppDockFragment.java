@@ -524,7 +524,7 @@ public class AppDockFragment extends Fragment
                     break;
                 case 2: // Full Screen
                     // Button is hidden in parent, but if visible, maybe Exit icon
-                    layoutButton.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+                    layoutButton.setImageResource(net.osmand.plus.R.drawable.ic_action_view_as_list);
                     break;
             }
         });
