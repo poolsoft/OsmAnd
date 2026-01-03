@@ -108,14 +108,7 @@ public class WidgetPanelFragment extends Fragment {
 
     // ...
 
-    /**
-     * Widget'lari initialize et.
-     */
-    private void initializeWidgets() {
-        android.util.Log.d("WidgetDebug", "initializeWidgets called!");
-        if (widgetManager == null || app == null)
-            return;
-    }
+
 
     @Nullable
     @Override
