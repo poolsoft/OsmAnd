@@ -90,18 +90,28 @@ public class WidgetPanelFragment extends Fragment {
         android.util.Log.d("WidgetDebug", "WidgetPanelFragment.onCreate");
         if (getContext() != null) {
             app = (OsmandApplication) getContext().getApplicationContext();
-            widgetManager = new WidgetManager(getContext(), app);
+            
+            // USE SINGLETON
+            widgetManager = WidgetManager.getInstance(getContext());
+            
+            // Update Context (Crucial for Rotation)
+            widgetManager.updateActivityContext(getContext());
             
             android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
             isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
             
-            if (!widgetManager.loadWidgetConfig()) {
-                android.util.Log.d("WidgetDebug", "loadWidgetConfig returned false. Initializing defaults.");
-                initializeWidgets();
-                // Save immediately so next time we find it
-                widgetManager.saveWidgetConfig();
+            // Only Load if NOT Loaded
+            if (!widgetManager.isConfigLoaded()) {
+                if (!widgetManager.loadWidgetConfig()) {
+                    android.util.Log.d("WidgetDebug", "First run: Initializing defaults.");
+                    initializeWidgets();
+                    // Save immediately
+                    widgetManager.saveWidgetConfig();
+                } else {
+                     android.util.Log.d("WidgetDebug", "Loaded saved widgets.");
+                }
             } else {
-                 android.util.Log.d("WidgetDebug", "loadWidgetConfig returned true. Loaded saved widgets.");
+                 android.util.Log.d("WidgetDebug", "Already loaded. Skipping config load.");
             }
         }
     }

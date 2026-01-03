@@ -35,12 +35,38 @@ public class WidgetManager {
     private final List<BaseWidget> allWidgets;
     private final List<BaseWidget> visibleWidgets;
 
-    public WidgetManager(@NonNull Context context, @NonNull OsmandApplication app) {
-        this.context = context;
-        this.app = app;
-        this.prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+    private static WidgetManager instance;
+
+    public static synchronized WidgetManager getInstance(Context context) {
+        if (instance == null) {
+            instance = new WidgetManager(context);
+        }
+        return instance;
+    }
+
+    private WidgetManager(@NonNull Context context) {
+        this.context = context.getApplicationContext(); // Use App Context for storage/prefs
+        this.app = (OsmandApplication) context.getApplicationContext();
+        this.prefs = this.context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         this.allWidgets = new ArrayList<>();
         this.visibleWidgets = new ArrayList<>();
+    }
+
+    private boolean configLoaded = false;
+
+    public boolean isConfigLoaded() {
+        return configLoaded;
+    }
+
+    /**
+     * Update Activity Context for all widgets (Post-Rotation).
+     */
+    public void updateActivityContext(Context activityContext) {
+        for (BaseWidget widget : allWidgets) {
+            widget.setContext(activityContext);
+             // Clear old view so it gets recreated with new context
+            widget.onDestroy(); 
+        }
     }
 
     /**
@@ -336,6 +362,7 @@ public class WidgetManager {
         allWidgets.addAll(restoredWidgets);
         
         updateVisibleWidgets();
+        configLoaded = true;
         return true;
     }
 

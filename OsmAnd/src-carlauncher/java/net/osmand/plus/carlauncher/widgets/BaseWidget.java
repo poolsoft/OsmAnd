@@ -19,6 +19,10 @@ public abstract class BaseWidget {
     protected Context context;
     protected View rootView;
 
+    public void setContext(Context context) {
+        this.context = context;
+    }
+
     public enum WidgetSize {
         SMALL, MEDIUM, LARGE
     }
