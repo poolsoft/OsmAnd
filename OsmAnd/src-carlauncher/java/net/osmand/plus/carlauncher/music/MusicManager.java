@@ -218,18 +218,30 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     // --- Controls (Widget ile uyumlu isimler) ---
 
     public void togglePlayPause() {
-        if (useExternal()) {
-            MediaController.TransportControls controls = activeExternalController.getTransportControls();
+        // Prioritize controlling the ACTIVE external session if it exists
+        if (activeExternalController != null) {
             PlaybackState state = activeExternalController.getPlaybackState();
-            if (state != null && state.getState() == PlaybackState.STATE_PLAYING) {
-                controls.pause();
-            } else {
-                controls.play();
+            boolean isExternalActive = (state != null) && 
+                (state.getState() == PlaybackState.STATE_PLAYING || 
+                 state.getState() == PlaybackState.STATE_BUFFERING);
+
+            if (isExternalActive) {
+                // If it's playing, PAUSE it (Priority 1)
+                activeExternalController.getTransportControls().pause();
+                return;
+            } else if (useExternal()) {
+                // If we are in "External Mode" and it's paused, PLAY it
+                activeExternalController.getTransportControls().play();
+                return;
             }
-        } else if (preferredPackage != null && activeExternalController == null) {
-            // Hiçbir session yoksa tercih edilen uygulamayı başlat
-            startPreferredApplication(preferredPackage);
+        }
+        
+        // If we get here, either External is not active, or we are in Internal Mode
+        if (activeExternalController == null && preferredPackage != null && !internalPlayer.isPlaying()) {
+            // If no session exists but user has a preference, try to launch it
+             startPreferredApplication(preferredPackage);
         } else {
+            // Default to Internal Player
             internalPlayer.playPause();
         }
     }
