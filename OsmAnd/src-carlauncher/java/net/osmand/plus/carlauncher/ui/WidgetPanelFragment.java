@@ -368,6 +368,7 @@ public class WidgetPanelFragment extends Fragment {
         super.onResume();
         if (widgetManager != null) {
             widgetManager.startAllWidgets();
+            applyWidgetsToView(); // Ensure view is refreshed on resume
         }
     }
 
