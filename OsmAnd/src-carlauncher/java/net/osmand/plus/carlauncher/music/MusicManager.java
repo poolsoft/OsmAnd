@@ -297,20 +297,19 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             return false;
         }
 
-        // 2. Harici bir kaynak aktif olarak oynuyorsa, onu kullan
+        // 2. Harici bir kaynak varsa (Çalıyor VEYA Duraklatılmış), onu kullan.
+        // Böylece Spotify durduğunda hemen Dahili'ye düşmeyiz. Resume edebiliriz.
         if (activeExternalController != null) {
-            PlaybackState state = activeExternalController.getPlaybackState();
-            if (state != null && state.getState() == PlaybackState.STATE_PLAYING) {
-                return true;
-            }
+            return true;
         }
 
-        // 3. Kimse oynamıyorsa, tercih edilen pakete göre karar ver
+        // 3. Kimse yoksa (activeExternalController == null), 
+        // tercih edilen paket varsa belki bir gün lazım olur:
         if (preferredPackage != null && !preferredPackage.equals("usage.internal.player")) {
             return true;
         }
 
-        // 4. Varsayılan: Dahili
+        // 4. Hiçbir şey yoksa Dahili varsayılan.
         return false;
     }
 
