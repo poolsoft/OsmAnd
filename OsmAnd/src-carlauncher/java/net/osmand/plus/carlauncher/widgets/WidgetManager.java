@@ -78,7 +78,184 @@ public class WidgetManager {
         }
     }
     
-    // ...
+    /**
+     * Widget siralamasini degistir.
+     */
+    public void moveWidget(int fromIndex, int toIndex) {
+        if (fromIndex < 0 || fromIndex >= allWidgets.size() ||
+                toIndex < 0 || toIndex >= allWidgets.size()) {
+            return;
+        }
+
+        BaseWidget widget = allWidgets.remove(fromIndex);
+        allWidgets.add(toIndex, widget);
+
+        // Update order fields
+        for (int i = 0; i < allWidgets.size(); i++) {
+            allWidgets.get(i).setOrder(i);
+        }
+
+        updateVisibleWidgets();
+        saveWidgetConfig();
+    }
+    
+    /**
+     * Toplu siralama guncelleme (Adapter'dan gelen).
+     */
+    public void updateVisibleOrder(List<BaseWidget> newOrder) {
+        // 1. Update order index
+        for (int i = 0; i < newOrder.size(); i++) {
+             BaseWidget w = newOrder.get(i);
+             w.setOrder(i);
+        }
+        
+        // 2. Reconstruct allWidgets to match visual order + invisible ones
+        List<BaseWidget> newAllWidgets = new ArrayList<>(newOrder);
+        
+        for (BaseWidget w : allWidgets) {
+            if (!newOrder.contains(w)) {
+                newAllWidgets.add(w); // Append invisible ones
+            }
+        }
+        
+        allWidgets.clear();
+        allWidgets.addAll(newAllWidgets);
+        
+        // 3. Sync visibleWidgets
+        visibleWidgets.clear();
+        visibleWidgets.addAll(newOrder);
+        
+        // 4. Save
+        saveWidgetConfig();
+    }
+
+    /**
+     * Gorunur widget'lari guncelle ve sirala.
+     */
+    private void updateVisibleWidgets() {
+        visibleWidgets.clear();
+        for (BaseWidget widget : allWidgets) {
+            if (widget.isVisible()) {
+                visibleWidgets.add(widget);
+            }
+        }
+
+        // Order'a gore sirala
+        Collections.sort(visibleWidgets, new Comparator<BaseWidget>() {
+            @Override
+            public int compare(BaseWidget w1, BaseWidget w2) {
+                return Integer.compare(w1.getOrder(), w2.getOrder());
+            }
+        });
+    }
+
+    /**
+     * Widget'lari container'a ekle.
+     */
+    public void attachWidgetsToContainer(@NonNull ViewGroup container) {
+        container.removeAllViews();
+
+        int margin = dpToPx(4); // Reduced margin
+
+        for (int i = 0; i < visibleWidgets.size(); i++) {
+            BaseWidget widget = visibleWidgets.get(i);
+            View widgetView = widget.getRootView();
+            if (widgetView == null) {
+                widgetView = widget.createView();
+            }
+
+            if (widgetView != null) {
+                // Apply margins consistently to all widgets
+                // Detect Layout Orientation
+                boolean isVertical = true;
+                LinearLayout.LayoutParams params;
+                if (container instanceof LinearLayout) {
+                    isVertical = ((LinearLayout) container).getOrientation() == LinearLayout.VERTICAL;
+                }
+
+                if (isVertical) {
+                    // Vertical (Landscape): Width Fill, Height Wrap
+                    params = new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT);
+                } else {
+                    // Horizontal (Portrait): Width Fixed (~100-130dp), Height Fill
+                    int width = dpToPx(130);
+                    params = new LinearLayout.LayoutParams(
+                            width,
+                            ViewGroup.LayoutParams.MATCH_PARENT);
+                }
+
+                // First widget gets 0 top margin
+                int topMargin = (i == 0) ? 0 : margin;
+                params.setMargins(margin, topMargin, margin, margin);
+                widgetView.setLayoutParams(params);
+
+                container.addView(widgetView);
+            }
+        }
+    }
+
+    private int dpToPx(int dp) {
+        float density = context.getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
+
+    private boolean isStarted = false;
+
+    /**
+     * Tum widget'lari guncelle.
+     */
+    public void updateAllWidgets() {
+        for (BaseWidget widget : visibleWidgets) {
+            if (widget.isStarted()) {
+                widget.update();
+            }
+        }
+    }
+
+    /**
+     * Tum widget'lari baslat.
+     */
+    public void startAllWidgets() {
+        isStarted = true;
+        for (BaseWidget widget : visibleWidgets) {
+            widget.onStart();
+        }
+    }
+
+    /**
+     * Tum widget'lari durdur.
+     */
+    public void stopAllWidgets() {
+        isStarted = false;
+        for (BaseWidget widget : visibleWidgets) {
+            widget.onStop();
+        }
+    }
+
+    /**
+     * Widget config'i kaydet.
+     */
+    public void saveWidgetConfig() {
+        SharedPreferences.Editor editor = prefs.edit();
+        
+        List<String> ids = new ArrayList<>();
+        for (BaseWidget widget : allWidgets) {
+            ids.add(widget.getId());
+            editor.putBoolean("visible_" + widget.getId(), widget.isVisible());
+            editor.putInt("size_" + widget.getId(), widget.getSize().ordinal());
+        }
+        
+        // Join Ids
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < ids.size(); i++) {
+            sb.append(ids.get(i));
+            if (i < ids.size() - 1) sb.append(",");
+        }
+        editor.putString(KEY_WIDGET_CONFIG, sb.toString());
+        editor.apply();
+    }
 
     /**
      * Widget config'i yukle.
