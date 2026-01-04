@@ -809,36 +809,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         showTracks(recentTracks);
     }
 
-    private void showAppPicker() {
-        if (getContext() == null)
-            return;
-        new AppPickerDialog(getContext(), true, (packageName, appName, icon) -> {
-            if ("usage.internal.player".equals(packageName)) {
-                isExternalMode = false;
-                musicManager.setPreferredPackage(null);
-                updateModeUI();
-                if (musicManager.getInternalPlayer() != null) {
-                    musicManager.getInternalPlayer().resumeLastSession();
-                }
-            } else {
-                musicManager.setPreferredPackage(packageName);
-                updateAppIcon();
-                // Launch App
-                try {
-                    android.content.Intent launchIntent = getContext().getPackageManager()
-                            .getLaunchIntentForPackage(packageName);
-                    if (launchIntent != null) {
-                        launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-                        launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT);
-                        startActivity(launchIntent);
-                    }
-                } catch (Exception e) {
-                    // Ignore
-                }
-            }
-        }).show();
-    }
-
     private List<MusicRepository.AudioTrack> getPlaylistTracks(PlaylistManager.Playlist playlist) {
         List<MusicRepository.AudioTrack> result = new ArrayList<>();
         for (String path : playlist.tracks) {
