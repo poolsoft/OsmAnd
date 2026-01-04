@@ -1143,4 +1143,161 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             }
         }
     }
+
+    // --- Smart Player Selector Dialog (NEW) ---
+    
+    private void showAppPicker() {
+        if (getContext() == null) return;
+        
+        // Create Dialog
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
+        builder.setTitle("Müzik Kaynağı Seçin");
+        
+        // Create RecyclerView for player list
+        RecyclerView playerList = new RecyclerView(getContext());
+        playerList.setLayoutManager(new LinearLayoutManager(getContext()));
+        
+        // Create Adapter
+        PlayerSelectorAdapter adapter = new PlayerSelectorAdapter();
+        playerList.setAdapter(adapter);
+        
+        // Set as dialog view
+        builder.setView(playerList);
+        builder.setNegativeButton("Kapat", null);
+        
+        // Show dialog
+        android.app.AlertDialog dialog = builder.create();
+        dialog.show();
+        
+        // Start periodic refresh
+        Handler refreshHandler = new Handler(Looper.getMainLooper());
+        Runnable refreshRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (dialog.isShowing()) {
+                    adapter.updateList();
+                    refreshHandler.postDelayed(this, 2000);
+                }
+            }
+        };
+        refreshHandler.post(refreshRunnable);
+    }
+    
+    /**
+     * Adapter for player selection list
+     */
+    private class PlayerSelectorAdapter extends RecyclerView.Adapter<PlayerSelectorAdapter.PlayerViewHolder> {
+        
+        private List<PlayerItem> items = new ArrayList<>();
+        
+        PlayerSelectorAdapter() {
+            updateList();
+        }
+        
+        void updateList() {
+            items.clear();
+            
+            // 1. Always add Internal Player
+            PlayerItem internal = new PlayerItem();
+            internal.packageName = "usage.internal.player";
+            internal.displayName = "Dahili Player (OsmAnd)";
+            internal.isSelected = "usage.internal.player".equals(musicManager.getPreferredPackage());
+            internal.statusIcon = net.osmand.plus.R.drawable.ic_action_playback_pause;
+            internal.statusText = "";
+            internal.statusColor = 0xFFAAAAAA;
+            items.add(internal);
+            
+            // 2. Add active external sessions
+            List<MusicManager.MediaSessionInfo> sessions = musicManager.getActiveMediaSessions();
+            for (MusicManager.MediaSessionInfo session : sessions) {
+                PlayerItem item = new PlayerItem();
+                item.packageName = session.packageName;
+                item.displayName = session.appName;
+                item.isSelected = session.isActive;
+                item.currentTrack = session.currentTrack;
+                
+                // Status
+                if (session.isPlaying) {
+                    item.statusIcon = net.osmand.plus.R.drawable.ic_action_playback_play;
+                    item.statusText = "Çalıyor";
+                    item.statusColor = 0xFF4CAF50; // Green
+                } else if (session.isPaused) {
+                    item.statusIcon = net.osmand.plus.R.drawable.ic_action_playback_pause;
+                    item.statusText = "Duraklatılmış";
+                    item.statusColor = 0xFFFFC107; // Amber
+                } else {
+                    item.statusIcon = net.osmand.plus.R.drawable.ic_action_playback_stop;
+                    item.statusText = "Durdurulmuş";
+                    item.statusColor = 0xFF9E9E9E; // Grey
+                }
+                
+                items.add(item);
+            }
+            
+            notifyDataSetChanged();
+        }
+        
+        @NonNull
+        @Override
+        public PlayerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext())
+                .inflate(net.osmand.plus.R.layout.item_music_player_row, parent, false);
+            return new PlayerViewHolder(view);
+        }
+        
+        @Override
+        public void onBindViewHolder(@NonNull PlayerViewHolder holder, int position) {
+            PlayerItem item = items.get(position);
+            
+            holder.appName.setText(item.displayName);
+            holder.currentTrack.setText(item.currentTrack != null ? item.currentTrack : "");
+            holder.currentTrack.setVisibility(item.currentTrack != null ? View.VISIBLE : View.GONE);
+            holder.statusIcon.setImageResource(item.statusIcon);
+            holder.statusText.setText(item.statusText);
+            holder.statusText.setTextColor(item.statusColor);
+            
+            // Selection indicator
+            holder.itemView.setBackgroundResource(item.isSelected ? 
+                net.osmand.plus.R.drawable.bg_player_selected : 
+                net.osmand.plus.R.drawable.bg_player_normal);
+            
+            // Click listener
+            holder.itemView.setOnClickListener(v -> {
+                musicManager.forceSetActiveController(item.packageName);
+                updateList(); // Refresh to show new selection
+                updateAppIcon(); // Update main UI
+            });
+        }
+        
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
+        
+        class PlayerViewHolder extends RecyclerView.ViewHolder {
+            ImageView statusIcon;
+            TextView appName, statusText, currentTrack;
+            
+            PlayerViewHolder(@NonNull View itemView) {
+                super(itemView);
+                statusIcon = itemView.findViewById(net.osmand.plus.R.id.status_icon);
+                appName = itemView.findViewById(net.osmand.plus.R.id.app_name);
+                statusText = itemView.findViewById(net.osmand.plus.R.id.status_text);
+                currentTrack = itemView.findViewById(net.osmand.plus.R.id.current_track);
+            }
+        }
+    }
+    
+    /**
+     * Data class for player list items
+     */
+    private static class PlayerItem {
+        String packageName;
+        String displayName;
+        boolean isSelected;
+        String currentTrack;
+        int statusIcon;
+        String statusText;
+        int statusColor;
+    }
 }
