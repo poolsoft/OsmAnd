@@ -57,6 +57,23 @@ public class WidgetManager {
     public boolean isConfigLoaded() {
         return configLoaded;
     }
+    
+    /**
+     * Reset widget lists if config hasn't been loaded yet in this session.
+     * Prevents duplication when singleton persists across Fragment recreations.
+     */
+    public void resetIfNeeded() {
+        if (configLoaded) {
+            android.util.Log.d("WidgetDebug", "Config already loaded, skipping reset.");
+            return;
+        }
+        
+        // Clear everything to start fresh
+        android.util.Log.d("WidgetDebug", "Resetting WidgetManager for new session.");
+        allWidgets.clear();
+        visibleWidgets.clear();
+        isStarted = false;
+    }
 
     /**
      * Update Activity Context for all widgets (Post-Rotation).

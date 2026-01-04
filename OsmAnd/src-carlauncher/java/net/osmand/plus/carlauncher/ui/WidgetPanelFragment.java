@@ -110,6 +110,9 @@ public class WidgetPanelFragment extends Fragment {
             // Update Context (Crucial for Rotation)
             widgetManager.updateActivityContext(getContext());
             
+            // CRITICAL FIX: Reset if this is a new session (prevents duplication)
+            widgetManager.resetIfNeeded();
+            
             android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
             isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
             
