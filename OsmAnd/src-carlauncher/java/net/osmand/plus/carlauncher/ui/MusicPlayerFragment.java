@@ -1202,7 +1202,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             internal.packageName = "usage.internal.player";
             internal.displayName = "Dahili Player (OsmAnd)";
             internal.isSelected = "usage.internal.player".equals(musicManager.getPreferredPackage());
-            internal.statusIcon = net.osmand.plus.R.drawable.ic_music_pause;
+            internal.statusIcon = net.osmand.plus.R.drawable.ic_pause;
             internal.statusText = "";
             internal.statusColor = 0xFFAAAAAA;
             items.add(internal);
@@ -1218,15 +1218,15 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 
                 // Status
                 if (session.isPlaying) {
-                    item.statusIcon = net.osmand.plus.R.drawable.ic_music_play;
+                    item.statusIcon = net.osmand.plus.R.drawable.ic_action_play_dark;
                     item.statusText = "Çalıyor";
                     item.statusColor = 0xFF4CAF50; // Green
                 } else if (session.isPaused) {
-                    item.statusIcon = net.osmand.plus.R.drawable.ic_music_pause;
+                    item.statusIcon = net.osmand.plus.R.drawable.ic_pause;
                     item.statusText = "Duraklatılmış";
                     item.statusColor = 0xFFFFC107; // Amber
                 } else {
-                    item.statusIcon = net.osmand.plus.R.drawable.ic_music_pause;
+                    item.statusIcon = net.osmand.plus.R.drawable.ic_action_stop;
                     item.statusText = "Durdurulmuş";
                     item.statusColor = 0xFF9E9E9E; // Grey
                 }
