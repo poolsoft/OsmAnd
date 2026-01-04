@@ -252,12 +252,28 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         }
         
         // If we get here, either External is not active, or we are in Internal Mode
-        if (activeExternalController == null && preferredPackage != null && !internalPlayer.isPlaying()) {
-            // If no session exists but user has a preference, try to launch it
-             startPreferredApplication(preferredPackage);
+        if (activeExternalController == null) {
+             // If Internal Player has a track loaded, assume user wants to RESUME it
+             if (internalPlayer.getCurrentTrack() != null) {
+                 internalPlayer.playPause();
+             } else if (preferredPackage != null && !preferredPackage.equals("usage.internal.player")) {
+                 // Nothing loaded internally, try to launch preferred app
+                 startPreferredApplication(preferredPackage);
+             } else {
+                 // Default
+                 internalPlayer.playPause();
+             }
         } else {
-            // Default to Internal Player
-            internalPlayer.playPause();
+             // Should verify useExternal logic again effectively here or above?
+             // The code above handles activeExternalController != null cases mostly.
+             // But if activeExternalController is NOT null but not "active" (e.g. stopped),
+             // the code above (Line 237) handles PAUSE if playing, or PLAY if useExternal() is true.
+             
+             // If we fell through here with activeExternalController != null, it means:
+             // External exists but is NOT playing/buffering.
+             // AND useExternal() returned false (meaning Internal is Playing!).
+             // In that case, we should control Internal.
+             internalPlayer.playPause();
         }
     }
 
