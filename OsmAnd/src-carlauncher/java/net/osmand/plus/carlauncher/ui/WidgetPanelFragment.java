@@ -107,27 +107,20 @@ public class WidgetPanelFragment extends Fragment {
             // USE SINGLETON
             widgetManager = WidgetManager.getInstance(getContext());
             
-            // Update Context (Crucial for Rotation)
-            widgetManager.updateActivityContext(getContext());
+            // CRITICAL FIX: Force reset FIRST to clear old widgets from singleton
+            widgetManager.forceResetForNewSession();
             
-            // CRITICAL FIX: Reset if this is a new session (prevents duplication)
-            widgetManager.resetIfNeeded();
+            // Update Context AFTER reset (so we don't update old widgets)
+            widgetManager.updateActivityContext(getContext());
             
             android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
             isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
             
-            // Only Load if NOT Loaded
-            if (!widgetManager.isConfigLoaded()) {
-                if (!widgetManager.loadWidgetConfig()) {
-                    android.util.Log.d("WidgetDebug", "First run: Initializing defaults.");
-                    //initializeWidgets();
-                    // Save immediately
-                    //widgetManager.saveWidgetConfig();
-                } else {
-                     android.util.Log.d("WidgetDebug", "Loaded saved widgets.");
-                }
+            // Load config from file (fresh start guaranteed)
+            if (!widgetManager.loadWidgetConfig()) {
+                android.util.Log.d("WidgetDebug", "No saved config, starting empty.");
             } else {
-                 android.util.Log.d("WidgetDebug", "Already loaded. Skipping config load.");
+                android.util.Log.d("WidgetDebug", "Loaded saved widgets.");
             }
         }
     }

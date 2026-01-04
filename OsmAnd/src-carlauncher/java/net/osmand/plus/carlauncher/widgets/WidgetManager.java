@@ -59,20 +59,16 @@ public class WidgetManager {
     }
     
     /**
-     * Reset widget lists if config hasn't been loaded yet in this session.
-     * Prevents duplication when singleton persists across Fragment recreations.
+     * Force reset for new Fragment session.
+     * Clears all widget lists and config flag to ensure clean state.
+     * This prevents duplication when singleton persists across app "restarts".
      */
-    public void resetIfNeeded() {
-        if (configLoaded) {
-            android.util.Log.d("WidgetDebug", "Config already loaded, skipping reset.");
-            return;
-        }
-        
-        // Clear everything to start fresh
-        android.util.Log.d("WidgetDebug", "Resetting WidgetManager for new session.");
+    public void forceResetForNewSession() {
+        android.util.Log.d("WidgetDebug", "Force reset for new Fragment session.");
         allWidgets.clear();
         visibleWidgets.clear();
         isStarted = false;
+        configLoaded = false; // CRITICAL: Reset flag so config can be reloaded
     }
 
     /**
