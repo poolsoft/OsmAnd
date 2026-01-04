@@ -193,6 +193,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         public void onPlaybackStateChanged(@Nullable PlaybackState state) {
             boolean isExternalPlaying = state != null && state.getState() == PlaybackState.STATE_PLAYING;
             if (isExternalPlaying) {
+                lastActiveSource = MusicSource.EXTERNAL; // Mark External as source
                 // Harici kaynak çalmaya başlarsa dahiliyi durdur
                 if (internalPlayer.isPlaying()) {
                     internalPlayer.pause();
@@ -215,17 +216,22 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         }
     };
 
+    private enum MusicSource {
+        INTERNAL,
+        EXTERNAL
+    }
+    
+    private MusicSource lastActiveSource = MusicSource.INTERNAL; // Default
+
     // --- Controls (Widget ile uyumlu isimler) ---
 
     public void togglePlayPause() {
-        // V15: Refresh active sessions to ensure we don't miss Spotify
-        // Assume context is available (it is activeExternalController based)
+        // V16: "Last Active Wins" Strategy
+        
+        // 1. Refresh External Sessions
         MediaSessionManager manager = (MediaSessionManager) context.getSystemService(Context.MEDIA_SESSION_SERVICE);
         if (manager != null) {
             try {
-                // Determine component name for listener (required for getActiveSessions)
-                // Using null often works for all, or use 'componentName' from constructor if saved.
-                // Re-running updateActiveController logic manually:
                 List<MediaController> controllers = manager.getActiveSessions(null);
                 updateActiveController(controllers);
             } catch (Exception e) {
@@ -233,47 +239,50 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             }
         }
         
-        // Prioritize controlling the ACTIVE external session if it exists
-        if (activeExternalController != null) {
-            PlaybackState state = activeExternalController.getPlaybackState();
-            boolean isExternalActive = (state != null) && 
-                (state.getState() == PlaybackState.STATE_PLAYING || 
-                 state.getState() == PlaybackState.STATE_BUFFERING);
-
-            if (isExternalActive) {
-                // If it's playing, PAUSE it (Priority 1)
-                activeExternalController.getTransportControls().pause();
+        // 2. Decide based on Last Active Source
+        if (lastActiveSource == MusicSource.EXTERNAL) {
+            if (activeExternalController != null) {
+                // External was last active, try to toggle it
+                // It handles both Play and Pause
+                PlaybackState state = activeExternalController.getPlaybackState();
+                if (state != null && state.getState() == PlaybackState.STATE_PLAYING) {
+                    activeExternalController.getTransportControls().pause();
+                } else {
+                    activeExternalController.getTransportControls().play();
+                }
                 return;
-            } else if (useExternal()) {
-                // If we are in "External Mode" and it's paused, PLAY it
-                activeExternalController.getTransportControls().play();
-                return;
+            } else {
+                // External was last, but now it's gone (Session killed).
+                // Fallback: If Internal has track, switch to Internal.
+                // Else: Try to launch preferred app.
+                if (internalPlayer.getCurrentTrack() != null) {
+                    lastActiveSource = MusicSource.INTERNAL; // Switch context
+                    internalPlayer.playPause();
+                    return;
+                } else if (preferredPackage != null && !preferredPackage.equals("usage.internal.player")) {
+                     startPreferredApplication(preferredPackage);
+                     return;
+                }
             }
-        }
+        } 
         
-        // If we get here, either External is not active, or we are in Internal Mode
-        if (activeExternalController == null) {
-             // If Internal Player has a track loaded, assume user wants to RESUME it
-             if (internalPlayer.getCurrentTrack() != null) {
-                 internalPlayer.playPause();
-             } else if (preferredPackage != null && !preferredPackage.equals("usage.internal.player")) {
-                 // Nothing loaded internally, try to launch preferred app
-                 startPreferredApplication(preferredPackage);
-             } else {
-                 // Default
-                 internalPlayer.playPause();
-             }
-        } else {
-             // Should verify useExternal logic again effectively here or above?
-             // The code above handles activeExternalController != null cases mostly.
-             // But if activeExternalController is NOT null but not "active" (e.g. stopped),
-             // the code above (Line 237) handles PAUSE if playing, or PLAY if useExternal() is true.
-             
-             // If we fell through here with activeExternalController != null, it means:
-             // External exists but is NOT playing/buffering.
-             // AND useExternal() returned false (meaning Internal is Playing!).
-             // In that case, we should control Internal.
-             internalPlayer.playPause();
+        // 3. If Last Source is INTERNAL (or External failed above)
+        if (lastActiveSource == MusicSource.INTERNAL) {
+            if (internalPlayer.getCurrentTrack() != null) {
+                internalPlayer.playPause();
+            } else {
+                // Internal has nothing.
+                // If External is available (paused in background), switch to it.
+                if (activeExternalController != null) {
+                    lastActiveSource = MusicSource.EXTERNAL;
+                    activeExternalController.getTransportControls().play();
+                } else if (preferredPackage != null && !preferredPackage.equals("usage.internal.player")) {
+                    startPreferredApplication(preferredPackage);
+                } else {
+                    // Nothing at all. Trigger internal to likely show "Select Music"
+                    internalPlayer.playPause();
+                }
+            }
         }
     }
 
@@ -344,6 +353,10 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     @Override
     public void onPlaybackStateChanged(boolean isPlaying) {
         isInternalPlaying = isPlaying;
+        if (isPlaying) {
+             lastActiveSource = MusicSource.INTERNAL; // Mark Internal as source
+        }
+        
         if (!useExternal()) {
             notifyStateChanged();
             updateNotificationService();
