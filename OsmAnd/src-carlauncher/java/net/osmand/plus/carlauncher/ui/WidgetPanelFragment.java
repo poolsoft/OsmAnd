@@ -117,9 +117,9 @@ public class WidgetPanelFragment extends Fragment {
             if (!widgetManager.isConfigLoaded()) {
                 if (!widgetManager.loadWidgetConfig()) {
                     android.util.Log.d("WidgetDebug", "First run: Initializing defaults.");
-                    initializeWidgets();
+                    //initializeWidgets();
                     // Save immediately
-                    widgetManager.saveWidgetConfig();
+                    //widgetManager.saveWidgetConfig();
                 } else {
                      android.util.Log.d("WidgetDebug", "Loaded saved widgets.");
                 }
@@ -128,9 +128,6 @@ public class WidgetPanelFragment extends Fragment {
             }
         }
     }
-
-    // ...
-
 
 
     @Nullable
