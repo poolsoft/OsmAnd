@@ -3,6 +3,8 @@ package net.osmand.plus.carlauncher.music;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
 import android.media.session.MediaSessionManager;
@@ -13,6 +15,7 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -572,6 +575,120 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             startVisualizer();
         } else {
             stopVisualizer();
+        }
+    }
+
+    // --- Smart Player Selector (NEW) ---
+    
+    /**
+     * Data class for media session info (used by player selector UI)
+     */
+    public static class MediaSessionInfo {
+        public String packageName;
+        public String appName;
+        public boolean isPlaying;
+        public boolean isPaused;
+        public String currentTrack;
+        public boolean isActive; // Is this the currently controlled session?
+    }
+    
+    /**
+     * Get all active media sessions (for player selection UI)
+     */
+    public List<MediaSessionInfo> getActiveMediaSessions() {
+        List<MediaSessionInfo> sessions = new ArrayList<>();
+        
+        if (mediaSessionManager != null) {
+            try {
+                ComponentName listener = new ComponentName(context, 
+                    "net.osmand.plus.carlauncher.MediaNotificationListener");
+                List<MediaController> controllers = mediaSessionManager.getActiveSessions(listener);
+                
+                for (MediaController controller : controllers) {
+                    String packageName = controller.getPackageName();
+                    String appName = getAppName(packageName);
+                    PlaybackState state = controller.getPlaybackState();
+                    MediaMetadata metadata = controller.getMetadata();
+                    
+                    // Create info object
+                    MediaSessionInfo info = new MediaSessionInfo();
+                    info.packageName = packageName;
+                    info.appName = appName;
+                    info.isPlaying = (state != null && state.getState() == PlaybackState.STATE_PLAYING);
+                    info.isPaused = (state != null && state.getState() == PlaybackState.STATE_PAUSED);
+                    info.currentTrack = metadata != null ? 
+                        metadata.getString(MediaMetadata.METADATA_KEY_TITLE) : null;
+                    info.isActive = (controller == activeExternalController);
+                    
+                    sessions.add(info);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to get active sessions", e);
+            }
+        }
+        
+        return sessions;
+    }
+    
+    /**
+     * Force set a specific package as active controller
+     */
+    public void forceSetActiveController(String packageName) {
+        if (packageName.equals("usage.internal.player")) {
+            // Switch to internal
+            if (activeExternalController != null) {
+                activeExternalController.unregisterCallback(externalCallback);
+                activeExternalController = null;
+            }
+            lastActiveSource = MusicSource.INTERNAL;
+            setPreferredPackage(packageName);
+            notifyTrackChanged();
+            notifyStateChanged();
+            return;
+        }
+        
+        // Find and set external controller
+        if (mediaSessionManager != null) {
+            try {
+                ComponentName listener = new ComponentName(context, 
+                    "net.osmand.plus.carlauncher.MediaNotificationListener");
+                List<MediaController> controllers = mediaSessionManager.getActiveSessions(listener);
+                
+                for (MediaController controller : controllers) {
+                    if (controller.getPackageName().equals(packageName)) {
+                        // Unregister old
+                        if (activeExternalController != null) {
+                            activeExternalController.unregisterCallback(externalCallback);
+                        }
+                        
+                        // Set new
+                        activeExternalController = controller;
+                        activeExternalController.registerCallback(externalCallback);
+                        lastActiveSource = MusicSource.EXTERNAL;
+                        setPreferredPackage(packageName);
+                        
+                        // Update UI
+                        externalCallback.onMetadataChanged(controller.getMetadata());
+                        externalCallback.onPlaybackStateChanged(controller.getPlaybackState());
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to force set controller", e);
+            }
+        }
+    }
+    
+    /**
+     * Helper: Get app name from package
+     */
+    private String getAppName(String packageName) {
+        try {
+            PackageManager pm = context.getPackageManager();
+            ApplicationInfo info = pm.getApplicationInfo(packageName, 0);
+            return pm.getApplicationLabel(info).toString();
+        } catch (Exception e) {
+            return packageName;
         }
     }
 
