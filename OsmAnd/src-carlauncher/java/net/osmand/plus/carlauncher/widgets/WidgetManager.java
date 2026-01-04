@@ -147,9 +147,6 @@ public class WidgetManager {
         saveWidgetConfig();
     }
     
-    /**
-     * Toplu siralama guncelleme (Adapter'dan gelen).
-     */
     public void updateVisibleOrder(List<BaseWidget> newOrder) {
         // 1. Update order index
         for (int i = 0; i < newOrder.size(); i++) {
@@ -157,19 +154,13 @@ public class WidgetManager {
              w.setOrder(i);
         }
         
-        // 2. Reconstruct allWidgets to match visual order + invisible ones
-        List<BaseWidget> newAllWidgets = new ArrayList<>(newOrder);
-        
-        for (BaseWidget w : allWidgets) {
-            if (!newOrder.contains(w)) {
-                newAllWidgets.add(w); // Append invisible ones
-            }
-        }
-        
+        // 2. FIXED: Simply replace allWidgets with newOrder
+        //    Dialog's editingList is the single source of truth
+        //    Deleted widgets should NOT be preserved as "invisible"
         allWidgets.clear();
-        allWidgets.addAll(newAllWidgets);
+        allWidgets.addAll(newOrder);
         
-        // 3. Sync visibleWidgets
+        // 3. Sync visibleWidgets (all widgets in newOrder are visible by definition)
         visibleWidgets.clear();
         visibleWidgets.addAll(newOrder);
         
