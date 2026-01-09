@@ -107,6 +107,45 @@ public class CarLauncherSettings {
     public void setAutoPlayMusicEnabled(boolean enabled) {
         prefs.edit().putBoolean(KEY_AUTO_PLAY_MUSIC, enabled).apply();
     }
+    
+    // --- Weather Settings ---
+    private static final String KEY_WEATHER_ENABLED = "car_launcher_weather_enabled";
+    
+    public boolean isWeatherEnabled() {
+        return prefs.getBoolean(KEY_WEATHER_ENABLED, true);
+    }
+    
+    public void setWeatherEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_WEATHER_ENABLED, enabled).apply();
+    }
+
+    // --- Auto Launch Settings ---
+    public static final String KEY_AUTOLAUNCH_ENABLE_PREFIX = "autolaunch_enable_";
+    public static final String KEY_AUTOLAUNCH_PKG_PREFIX = "autolaunch_pkg_";
+    public static final String KEY_AUTOLAUNCH_NAME_PREFIX = "autolaunch_name_";
+
+    public boolean isAutoLaunchEnabled(int slot) {
+        return prefs.getBoolean(KEY_AUTOLAUNCH_ENABLE_PREFIX + slot, false);
+    }
+    
+    public void setAutoLaunchEnabled(int slot, boolean enabled) {
+        prefs.edit().putBoolean(KEY_AUTOLAUNCH_ENABLE_PREFIX + slot, enabled).apply();
+    }
+
+    public String getAutoLaunchPackage(int slot) {
+        return prefs.getString(KEY_AUTOLAUNCH_PKG_PREFIX + slot, null);
+    }
+    
+    public String getAutoLaunchAppName(int slot) {
+        return prefs.getString(KEY_AUTOLAUNCH_NAME_PREFIX + slot, "Seçilmedi");
+    }
+
+    public void setAutoLaunchApp(int slot, String pkg, String name) {
+        prefs.edit()
+             .putString(KEY_AUTOLAUNCH_PKG_PREFIX + slot, pkg)
+             .putString(KEY_AUTOLAUNCH_NAME_PREFIX + slot, name)
+             .apply();
+    }
 
     // --- Dock Settings ---
 

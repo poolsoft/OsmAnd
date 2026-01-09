@@ -36,6 +36,16 @@ public class WidgetManager {
     private final List<BaseWidget> visibleWidgets;
 
     private static WidgetManager instance;
+    
+    private boolean hasAutoLaunched = false;
+
+    public boolean isHasAutoLaunched() {
+        return hasAutoLaunched;
+    }
+
+    public void setHasAutoLaunched(boolean hasAutoLaunched) {
+        this.hasAutoLaunched = hasAutoLaunched;
+    }
 
     public static synchronized WidgetManager getInstance(Context context) {
         if (instance == null) {

@@ -7,14 +7,11 @@ import android.content.pm.ResolveInfo;
 import android.media.audiofx.AudioEffect;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.FrameLayout;
-import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -25,8 +22,11 @@ import androidx.preference.SeekBarPreference;
 import androidx.preference.SwitchPreferenceCompat;
 
 import net.osmand.plus.R;
+import net.osmand.plus.carlauncher.AutoLaunchManager;
 import net.osmand.plus.carlauncher.CarLauncherSettings;
+import net.osmand.plus.carlauncher.LauncherBackupManager;
 import net.osmand.plus.carlauncher.dock.AppDockManager;
+import net.osmand.plus.carlauncher.dock.AppPickerDialog;
 import net.osmand.plus.carlauncher.music.MusicManager;
 
 import java.util.ArrayList;
@@ -53,6 +53,8 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
 
         setupAppearancePrefs();
         setupMusicPrefs();
+        setupAutoLaunchPrefs();
+        setupBackupPrefs();
         setupDockPrefs();
         setupAboutPrefs();
     }
@@ -113,7 +115,6 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // Clean up old logic if any remains
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -135,15 +136,11 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         SwitchPreferenceCompat themePref = findPreference(CarLauncherSettings.KEY_DARK_THEME);
         if (themePref != null) {
             themePref.setOnPreferenceChangeListener((preference, newValue) -> {
-                boolean dark = (Boolean) newValue;
-                // Tema degisikligi icin activity restart gerekebilir
                 Toast.makeText(getContext(), "Tema degisikligi uygulamanin yeniden baslatilmasini gerektirir",
                         Toast.LENGTH_SHORT).show();
                 return true;
             });
         }
-
-
 
         // Widget Display Mode
         androidx.preference.ListPreference displayModePref = findPreference(CarLauncherSettings.KEY_WIDGET_DISPLAY_MODE);
@@ -151,7 +148,6 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             displayModePref.setEntries(new CharSequence[]{"Liste (Varsayılan)", "Sayfalı (Carousel)"});
             displayModePref.setEntryValues(new CharSequence[]{"0", "1"});
             displayModePref.setOnPreferenceChangeListener((preference, newValue) -> {
-                // Explicitly save the value immediately to handle race condition with BroadcastReceiver
                 CarLauncherSettings settings = new CarLauncherSettings(getContext());
                 try {
                     settings.setWidgetDisplayMode(Integer.parseInt((String) newValue));
@@ -159,11 +155,9 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                     settings.setWidgetDisplayMode(0);
                 }
 
-                // Restart required message
                 Toast.makeText(getContext(), "Görünüm değişikliği için widget paneli yenilenecek",
                         Toast.LENGTH_SHORT).show();
                 
-                // Trigger refresh if attached to activity
                  if (getActivity() != null) {
                     Intent intent = new Intent("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
                     getActivity().sendBroadcast(intent);
@@ -176,7 +170,9 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         Preference widgetPref = findPreference("car_launcher_widget_manager");
         if (widgetPref != null) {
             widgetPref.setOnPreferenceClickListener(preference -> {
-                openWidgetManager();
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Widget ayarlari ust panelde duzenlenir", Toast.LENGTH_SHORT).show();
+                }
                 return true;
             });
         }
@@ -191,14 +187,6 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         } else {
             window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        }
-    }
-
-    private void openWidgetManager() {
-        // Widget Settings Dialog - requires WidgetManager from WidgetPanelFragment
-        // For now, show a message since WidgetManager is not accessible here
-        if (getContext() != null) {
-            Toast.makeText(getContext(), "Widget ayarlari ust panelde duzenlenir", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -246,70 +234,15 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     }
 
     private void showMusicAppPicker() {
-        if (getContext() == null)
-            return;
-
-        // Find installed music apps
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_APP_MUSIC);
-        PackageManager pm = getContext().getPackageManager();
-        List<ResolveInfo> apps = pm.queryIntentActivities(intent, 0);
-
-        List<String> names = new ArrayList<>();
-        List<String> packages = new ArrayList<>();
-
-        // Add internal option
-        names.add("Dahili Player");
-        packages.add("internal");
-
-        for (ResolveInfo ri : apps) {
-            String name = ri.loadLabel(pm).toString();
-            String pkg = ri.activityInfo.packageName;
-            if (!packages.contains(pkg)) {
-                names.add(name);
-                packages.add(pkg);
-            }
-        }
-
-        // Also check for popular music apps
-        String[] popularApps = {
-                "com.spotify.music",
-                "com.google.android.apps.youtube.music",
-                "com.amazon.mp3",
-                "com.apple.android.music",
-                "deezer.android.app"
-        };
-
-        for (String pkg : popularApps) {
-            if (!packages.contains(pkg)) {
-                try {
-                    String name = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString();
-                    names.add(name);
-                    packages.add(pkg);
-                } catch (PackageManager.NameNotFoundException ignored) {
-                }
-            }
-        }
-
-        String[] nameArray = names.toArray(new String[0]);
-        new AlertDialog.Builder(getContext())
-                .setTitle("Müzik Uygulaması Seçin")
-                .setItems(nameArray, (dialog, which) -> {
-                    String selectedPkg = packages.get(which);
-                    settings.setMusicApp(selectedPkg);
-
-                    // Update MusicManager
-                    MusicManager musicManager = MusicManager.getInstance(getContext());
-                    musicManager.setPreferredPackage("internal".equals(selectedPkg) ? null : selectedPkg);
-
-                    // Update summary
-                    Preference pref = findPreference(CarLauncherSettings.KEY_MUSIC_APP);
-                    if (pref != null) {
-                        updateMusicAppSummary(pref);
-                    }
-                })
-                .setNegativeButton("Iptal", null)
-                .show();
+        if (getContext() == null) return;
+        new AppPickerDialog(getContext(), true, (packageName, name, icon) -> {
+            settings.setMusicApp(packageName);
+            MusicManager musicManager = MusicManager.getInstance(getContext());
+            musicManager.setPreferredPackage("internal".equals(packageName) ? null : packageName);
+            
+            Preference pref = findPreference(CarLauncherSettings.KEY_MUSIC_APP);
+            if (pref != null) updateMusicAppSummary(pref);
+        }).show();
     }
 
     private void openEqualizer() {
@@ -328,7 +261,6 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     // ═══════════════════════════════════════════════════════════════
 
     private void setupDockPrefs() {
-        // Max Shortcuts
         SeekBarPreference maxShortcutsPref = findPreference(CarLauncherSettings.KEY_MAX_SHORTCUTS);
         if (maxShortcutsPref != null) {
             maxShortcutsPref.setOnPreferenceChangeListener((preference, newValue) -> {
@@ -340,7 +272,6 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             });
         }
 
-        // Reset Dock
         Preference resetPref = findPreference("car_launcher_reset_dock");
         if (resetPref != null) {
             resetPref.setOnPreferenceClickListener(preference -> {
@@ -351,31 +282,115 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     }
 
     private void confirmResetDock() {
-        if (getContext() == null)
-            return;
-
+        if (getContext() == null) return;
         new AlertDialog.Builder(getContext())
                 .setTitle("Dock'u Sıfırla")
                 .setMessage("Tüm uygulama kısayolları silinecek. Emin misiniz?")
-                .setPositiveButton("Sıfırla", (dialog, which) -> {
-                    resetDock();
-                })
+                .setPositiveButton("Sıfırla", (dialog, which) -> resetDock())
                 .setNegativeButton("Iptal", null)
                 .show();
     }
 
     private void resetDock() {
-        if (getContext() == null)
-            return;
-
+        if (getContext() == null) return;
         AppDockManager dockManager = new AppDockManager(getContext());
         dockManager.clearAllShortcuts();
-
-        // Send broadcast to refresh dock
         Intent intent = new Intent("net.osmand.carlauncher.DOCK_UPDATED");
         getContext().sendBroadcast(intent);
-
         Toast.makeText(getContext(), "Dock sıfırlandı", Toast.LENGTH_SHORT).show();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // OTOMATİK BAŞLATMA
+    // ═══════════════════════════════════════════════════════════════
+
+    private void setupAutoLaunchPrefs() {
+        bindAutoLaunchSlot(1);
+        bindAutoLaunchSlot(2);
+        bindAutoLaunchSlot(3);
+    }
+
+    private void bindAutoLaunchSlot(int slot) {
+        String key = CarLauncherSettings.KEY_AUTOLAUNCH_ENABLE_PREFIX + slot;
+        SwitchPreferenceCompat pref = findPreference(key);
+        if (pref != null) {
+            String appName = settings.getAutoLaunchAppName(slot);
+            if (settings.getAutoLaunchPackage(slot) != null) {
+                pref.setSummary(appName);
+            } else {
+                pref.setSummary("Seçmek için metne tıklayın");
+            }
+
+            pref.setOnPreferenceClickListener(preference -> {
+                if (getContext() == null) return true;
+                
+                new AppPickerDialog(getContext(), false, (packageName, name, icon) -> {
+                    settings.setAutoLaunchApp(slot, packageName, name);
+                    pref.setSummary(name);
+                    // Force Enable
+                    settings.setAutoLaunchEnabled(slot, true);
+                    pref.setChecked(true);
+                }).show();
+                
+                return true; // Consume click event -> Handled by dialog
+            });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // YEDEKLEME
+    // ═══════════════════════════════════════════════════════════════
+
+    private static final int RC_BACKUP_EXPORT = 101;
+    private static final int RC_BACKUP_IMPORT = 102;
+
+    private void setupBackupPrefs() {
+        Preference exportPref = findPreference("action_backup_export");
+        if (exportPref != null) {
+            exportPref.setOnPreferenceClickListener(preference -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("application/json");
+                    intent.putExtra(Intent.EXTRA_TITLE, "CarLauncher_Backup_" + System.currentTimeMillis() + ".json");
+                    startActivityForResult(intent, RC_BACKUP_EXPORT);
+                } catch (Exception e) {
+                    Toast.makeText(getContext(), "Dosya oluşturulamadı", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            });
+        }
+
+        Preference importPref = findPreference("action_backup_import");
+        if (importPref != null) {
+            importPref.setOnPreferenceClickListener(preference -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("application/json"); 
+                    startActivityForResult(intent, RC_BACKUP_IMPORT);
+                } catch (Exception e) {
+                    Toast.makeText(getContext(), "Dosya seçici açılamadı", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            });
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == android.app.Activity.RESULT_OK && data != null && data.getData() != null) {
+            Uri uri = data.getData();
+            if (requestCode == RC_BACKUP_EXPORT) {
+                LauncherBackupManager.exportBackup(getContext(), uri);
+            } else if (requestCode == RC_BACKUP_IMPORT) {
+                LauncherBackupManager.restoreBackup(getContext(), uri);
+                getPreferenceScreen().removeAll();
+                onCreatePreferences(null, getPreferenceScreen().getKey());
+                Toast.makeText(getContext(), "Ayarlar yenilendi", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -383,7 +398,6 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     // ═══════════════════════════════════════════════════════════════
 
     private void setupAboutPrefs() {
-        // Version
         Preference versionPref = findPreference("car_launcher_version");
         if (versionPref != null) {
             try {
@@ -395,7 +409,6 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             }
         }
 
-        // GitHub
         Preference githubPref = findPreference("car_launcher_github");
         if (githubPref != null) {
             githubPref.setOnPreferenceClickListener(preference -> {

@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.viewpager2.widget.ViewPager2;
 import android.widget.Toast;
 
@@ -33,6 +34,7 @@ import net.osmand.plus.carlauncher.widgets.NavigationWidget;
 import net.osmand.plus.carlauncher.widgets.OBDWidget;
 import net.osmand.plus.carlauncher.widgets.SpeedWidget;
 import net.osmand.plus.carlauncher.widgets.WidgetManager;
+import net.osmand.plus.carlauncher.AutoLaunchManager;
 import net.osmand.plus.plugins.PluginsHelper;
 import net.osmand.plus.plugins.odb.VehicleMetricsPlugin;
 
@@ -58,6 +60,7 @@ public class WidgetPanelFragment extends Fragment {
     private boolean isPinned = true; 
     private static final String PREF_IS_PINNED = "widget_panel_pinned";
     private int currentUnitSize = 0;
+    private PagerSnapHelper snapHelper;
 
     private void initListLayout(ViewGroup root) {
         listRecyclerView = new RecyclerView(getContext());
@@ -366,6 +369,23 @@ public class WidgetPanelFragment extends Fragment {
             
             listRecyclerView.setAdapter(adapter);
             
+            // Handle Display Mode (List vs Paged)
+            CarLauncherSettings settings = new CarLauncherSettings(getContext());
+            int displayMode = settings.getWidgetDisplayMode(); // 0=List, 1=Paged
+            
+            if (snapHelper == null) {
+                snapHelper = new PagerSnapHelper();
+            }
+            
+            // Clear existing snap helper logic by re-attaching or clearing?
+            // PagerSnapHelper doesn't have detach(). Use attachToRecyclerView(null).
+            snapHelper.attachToRecyclerView(null); 
+            
+            if (displayMode == 1) {
+                // Paged Mode -> Enable Snap
+                snapHelper.attachToRecyclerView(listRecyclerView);
+            }
+            
             // ... (ItemTouchHelper code continues)
             
             // Drag & Drop
@@ -428,9 +448,32 @@ public class WidgetPanelFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+
+        // Auto Launch Logic
+        if (getContext() != null) {
+            WidgetManager wm = WidgetManager.getInstance(getContext());
+            if (!wm.isHasAutoLaunched()) {
+                wm.setHasAutoLaunched(true);
+                new AutoLaunchManager(getContext()).execute();
+            }
+        }
         if (widgetManager != null) {
             widgetManager.startAllWidgets();
             applyWidgetsToView(); // Ensure view is refreshed on resume
+        }
+        
+        // Register Mode Change Receiver
+        modeChangeReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if ("net.osmand.carlauncher.WIDGET_MODE_CHANGED".equals(intent.getAction())) {
+                    applyWidgetsToView();
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
+        if (getContext() != null) {
+            getContext().registerReceiver(modeChangeReceiver, filter);
         }
     }
 
@@ -439,6 +482,15 @@ public class WidgetPanelFragment extends Fragment {
         super.onPause();
         if (widgetManager != null) {
             widgetManager.stopAllWidgets();
+        }
+        
+        if (modeChangeReceiver != null && getContext() != null) {
+            try {
+                getContext().unregisterReceiver(modeChangeReceiver);
+            } catch (Exception e) {
+                // Ignore
+            }
+            modeChangeReceiver = null;
         }
     }
 

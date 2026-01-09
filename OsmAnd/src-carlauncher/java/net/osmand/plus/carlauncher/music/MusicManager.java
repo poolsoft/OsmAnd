@@ -61,7 +61,9 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         repository.scanMusic((tracks, folders) -> {
             Log.d(TAG, "Scan complete: " + tracks.size() + " tracks");
             if (!tracks.isEmpty()) {
-                internalPlayer.setPlaylist(tracks, 0);
+                // Initialize playlist but DO NOT auto play yet
+                // internalPlayer uses autoPlay=false here
+                internalPlayer.setPlaylist(tracks, 0, false);
                 
                 // Auto Play Check
                 net.osmand.plus.carlauncher.CarLauncherSettings settings = 

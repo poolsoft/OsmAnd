@@ -72,6 +72,76 @@
     </androidx.preference.PreferenceCategory>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- HAVA DURUMU AYARLARI -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <androidx.preference.PreferenceCategory
+        android:key="category_weather"
+        android:title="⛅ Hava Durumu"
+        android:iconSpaceReserved="false">
+
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="car_launcher_weather_enabled"
+            android:title="Hava Durumu Servisi"
+            android:summary="Saat widget'ında hava durumu gösterimi"
+            android:defaultValue="true"
+            android:iconSpaceReserved="false" />
+
+    </androidx.preference.PreferenceCategory>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- OTOMATİK BAŞLATMA -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <androidx.preference.PreferenceCategory
+        android:key="category_autolaunch"
+        android:title="🚀 Otomatik Başlatma"
+        android:iconSpaceReserved="false">
+
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="autolaunch_enable_1"
+            android:title="Uygulama 1"
+            android:summary="Seçmek için metne tıklayın"
+            android:defaultValue="false"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="autolaunch_enable_2"
+            android:title="Uygulama 2"
+            android:summary="Seçmek için metne tıklayın"
+            android:defaultValue="false"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="autolaunch_enable_3"
+            android:title="Uygulama 3"
+            android:summary="Seçmek için metne tıklayın"
+            android:defaultValue="false"
+            android:iconSpaceReserved="false" />
+
+    </androidx.preference.PreferenceCategory>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- YEDEKLEME -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <androidx.preference.PreferenceCategory
+        android:key="category_backup"
+        android:title="💾 Yedekle ve Geri Yükle"
+        android:iconSpaceReserved="false">
+
+        <androidx.preference.Preference
+            android:key="action_backup_export"
+            android:title="Ayarları Dışa Aktar"
+            android:summary="Widget düzenini ve ayarları dosyaya kaydet"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.Preference
+            android:key="action_backup_import"
+            android:title="Ayarları Geri Yükle"
+            android:summary="Dosyadan geri yükle"
+            android:iconSpaceReserved="false" />
+
+    </androidx.preference.PreferenceCategory>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- DOCK AYARLARI -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <androidx.preference.PreferenceCategory

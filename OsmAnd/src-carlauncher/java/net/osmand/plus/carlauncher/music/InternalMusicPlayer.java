@@ -35,6 +35,7 @@ public class InternalMusicPlayer {
     private int currentIndex = -1;
     private boolean isPrepared = false;
     private boolean playOnFocusGain = false; // Focus geri geldiğinde çalmaya devam etsin mi?
+    private boolean autoPlayOnPrepared = true; // Hazır olunca otomatik oynat
     private PlaybackListener listener;
 
     public InternalMusicPlayer(Context context) {
@@ -94,8 +95,10 @@ public class InternalMusicPlayer {
 
         mediaPlayer.setOnPreparedListener(mp -> {
             isPrepared = true;
-            // Hazır olunca çal (ancak önce Focus iste)
-            play();
+            // Hazır olunca çal (EĞER isteniyorsa)
+            if (autoPlayOnPrepared) {
+                play();
+            }
         });
 
         mediaPlayer.setOnCompletionListener(mp -> {
@@ -115,15 +118,23 @@ public class InternalMusicPlayer {
     }
 
     public void setPlaylist(List<MusicRepository.AudioTrack> tracks, int startIndex) {
+        setPlaylist(tracks, startIndex, true); // Default: auto play
+    }
+
+    public void setPlaylist(List<MusicRepository.AudioTrack> tracks, int startIndex, boolean autoPlay) {
         if (tracks == null || tracks.isEmpty())
             return;
         this.playlist = new ArrayList<>(tracks);
         if (startIndex >= 0 && startIndex < playlist.size()) {
-            playTrack(startIndex);
+            playTrack(startIndex, autoPlay);
         }
     }
 
     private void playTrack(int index) {
+        playTrack(index, true);
+    }
+
+    private void playTrack(int index, boolean autoPlay) {
         if (index < 0 || index >= playlist.size())
             return;
 
@@ -134,6 +145,7 @@ public class InternalMusicPlayer {
 
         currentIndex = index;
         MusicRepository.AudioTrack track = playlist.get(index);
+        this.autoPlayOnPrepared = autoPlay;
 
         try {
             mediaPlayer.reset();

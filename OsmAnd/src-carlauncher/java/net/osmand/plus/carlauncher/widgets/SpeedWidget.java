@@ -5,30 +5,41 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 
 import net.osmand.Location;
 import net.osmand.plus.OsmAndLocationProvider;
 import net.osmand.plus.OsmandApplication;
-import net.osmand.plus.utils.OsmAndFormatter;
+import net.osmand.plus.carlauncher.widgets.view.AnalogSpeedometerView;
 import net.osmand.plus.utils.FormattedValue;
+import net.osmand.plus.utils.OsmAndFormatter;
 import net.osmand.binary.RouteDataObject;
 import net.osmand.plus.routing.RoutingHelper;
 
 /**
- * Hız widget - Anlık hızı ve Hız Limitini gosterir.
+ * Hız widget - S/M/L destegi.
+ * S: Hız
+ * M: Hız + Limit
+ * L: Analog Hız
  */
 public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.OsmAndLocationListener {
 
-    private TextView speedText;
-    private TextView unitText; // Birim (km/h)
-    private TextView limitText; // Hız Limiti
-    private LinearLayout limitContainer; // Limiti gizleyip asmak icin
     private final OsmandApplication app;
+    
+    // Containers
+    private FrameLayout rootFrame;
+    private View digitalView;
+    private AnalogSpeedometerView analogView;
+
+    // Digital UI
+    private TextView speedText;
+    private TextView limitText;
+    private LinearLayout limitContainer;
 
     public SpeedWidget(@NonNull Context context, @NonNull OsmandApplication app) {
         super(context, "speed", "Hiz");
@@ -39,187 +50,215 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
     @NonNull
     @Override
     public View createView() {
-        // Modern Kart Yapisi (FrameLayout)
-        android.widget.FrameLayout rootFrame = new android.widget.FrameLayout(context);
-        rootFrame.setPadding(0, 0, 0, 0); // No extra padding
-
-        // Arka Plan (XML Kaynagi)
+        rootFrame = new FrameLayout(context);
         rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_modern);
+        rootFrame.setPadding(0, 0, 0, 0);
 
-        // Ana Icerik (Horizontal: Limit - Hiz)
-        LinearLayout contentLayout = new LinearLayout(context);
-        contentLayout.setOrientation(LinearLayout.HORIZONTAL);
-        contentLayout.setGravity(Gravity.CENTER);
-        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT);
-        contentLayout.setLayoutParams(params);
+        // Default Layout
+        setupDigitalLayout(rootFrame);
 
-        // --- SOL: Hız Limiti ---
-        limitContainer = new LinearLayout(context);
-        limitContainer.setOrientation(LinearLayout.VERTICAL);
-        limitContainer.setGravity(Gravity.CENTER);
-        limitContainer.setVisibility(View.GONE); // Baslangicta gizli
-        limitContainer.setPadding(0, 0, dpToPx(16), 0); // Sagdan bosluk
-
-        limitText = new TextView(context);
-        limitText.setBackgroundResource(net.osmand.plus.R.drawable.bg_speed_limit);
-        limitText.setTextColor(Color.BLACK); // Beyaz uzerine siyah
-        limitText.setTextSize(22);
-        limitText.setTypeface(Typeface.DEFAULT_BOLD);
-        limitText.setGravity(Gravity.CENTER);
-        limitText.setText("50");
-        limitText.setIncludeFontPadding(false);
-
-        // Daire boyutu icin layout params
-        int size = dpToPx(48);
-        LinearLayout.LayoutParams limitParams = new LinearLayout.LayoutParams(size, size);
-        limitContainer.addView(limitText, limitParams);
-
-        contentLayout.addView(limitContainer);
-
-        // --- SAG: Mevcut Hız ve Birim (Vertical) ---
-        LinearLayout speedContainer = new LinearLayout(context);
-        speedContainer.setOrientation(LinearLayout.VERTICAL);
-        speedContainer.setGravity(Gravity.CENTER);
-
-        // Hız Değeri
-        speedText = new TextView(context);
-        speedText.setTextColor(Color.parseColor("#6582c1ff")); // Beyaz (Daha net)
-        speedText.setTextSize(64); // Larger for 7-segment
-        speedText.setGravity(Gravity.CENTER);
-        speedText.setText("--");
-        speedText.setIncludeFontPadding(false);
-        // Auto-resize for Speed (Min 24sp, Max 80sp)
-        androidx.core.widget.TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
-                speedText, 24, 80, 2, android.util.TypedValue.COMPLEX_UNIT_SP);
-
-        try {
-            // Typeface digitalFont = Typeface.createFromAsset(context.getAssets(),
-            // "fonts/curved-seven-segment.ttf");
-            Typeface digitalFont = Typeface.createFromAsset(context.getAssets(), "fonts/Cross Boxed.ttf");
-            speedText.setTypeface(digitalFont);
-        } catch (Exception e) {
-            speedText.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        }
-
-        speedContainer.addView(speedText);
-
-        // Alignments - Make it compact
-        limitContainer.setPadding(0, 0, dpToPx(8), 0);
-        speedText.setTextSize(64); // Reduced from 68
-        
-        // Removed Unit Text as per user request
-        contentLayout.addView(speedContainer); // Add speed container back!
-
-        // Reduce vertical space by centering tightly
-        contentLayout.setGravity(Gravity.CENTER);
-        
-        rootFrame.addView(contentLayout);
         rootView = rootFrame;
         return rootView;
     }
 
-    private int dpToPx(int dp) {
-        float density = context.getResources().getDisplayMetrics().density;
-        return Math.round(dp * density);
+    private void setupDigitalLayout(ViewGroup root) {
+        root.removeAllViews();
+        analogView = null;
+
+        LinearLayout contentLayout = new LinearLayout(context);
+        contentLayout.setOrientation(LinearLayout.HORIZONTAL);
+        contentLayout.setGravity(Gravity.CENTER);
+        contentLayout.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+
+        // --- Limit (Left) ---
+        limitContainer = new LinearLayout(context);
+        limitContainer.setOrientation(LinearLayout.VERTICAL);
+        limitContainer.setGravity(Gravity.CENTER);
+        limitContainer.setVisibility(View.GONE);
+        limitContainer.setPadding(0, 0, dpToPx(16), 0);
+
+        limitText = new TextView(context);
+        limitText.setBackgroundResource(net.osmand.plus.R.drawable.bg_speed_limit);
+        limitText.setTextColor(Color.BLACK);
+        limitText.setTextSize(22);
+        limitText.setTypeface(Typeface.DEFAULT_BOLD);
+        limitText.setGravity(Gravity.CENTER);
+        limitText.setText("--");
+        
+        int size = dpToPx(48);
+        limitContainer.addView(limitText, new LinearLayout.LayoutParams(size, size));
+        contentLayout.addView(limitContainer);
+
+        // --- Speed (Right) ---
+        LinearLayout speedContainer = new LinearLayout(context);
+        speedContainer.setOrientation(LinearLayout.VERTICAL);
+        speedContainer.setGravity(Gravity.CENTER);
+
+        speedText = new TextView(context);
+        speedText.setTextColor(Color.parseColor("#6582c1ff"));
+        speedText.setTextSize(64);
+        speedText.setGravity(Gravity.CENTER);
+        speedText.setText("--");
+        speedText.setIncludeFontPadding(false);
+        try {
+            Typeface digitalFont = Typeface.createFromAsset(context.getAssets(), "fonts/Cross Boxed.ttf");
+            speedText.setTypeface(digitalFont);
+        } catch (Exception e) {
+            speedText.setTypeface(Typeface.DEFAULT_BOLD);
+        }
+        
+        speedContainer.addView(speedText);
+        contentLayout.addView(speedContainer); // Re-add speed container
+
+        root.addView(contentLayout);
+        digitalView = contentLayout;
+        
+        // Re-apply size logic if needed
+        applyDigitalVisibility();
+    }
+
+    private void setupAnalogLayout(ViewGroup root) {
+        root.removeAllViews();
+        digitalView = null;
+        limitContainer = null;
+        limitText = null;
+        speedText = null;
+
+        analogView = new AnalogSpeedometerView(context);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        int margin = dpToPx(8);
+        params.setMargins(margin, margin, margin, margin);
+        analogView.setLayoutParams(params);
+
+        root.addView(analogView);
+    }
+
+    private void applyDigitalVisibility() {
+        if (limitContainer != null) {
+            if (size == WidgetSize.SMALL) {
+                limitContainer.setVisibility(View.GONE);
+            } else {
+                // Visibility set by updateMaxSpeed
+            }
+        }
     }
 
     @Override
-    public void update() {
-        // Konum guncellemesi ile otomatik cagrilir
+    protected void onSizeChanged(WidgetSize newSize) {
+        if (rootFrame == null) return;
+
+        if (newSize == WidgetSize.LARGE) {
+            setupAnalogLayout(rootFrame);
+        } else {
+            // If switching from Analog -> Digital, rebuild
+            if (digitalView == null) {
+                setupDigitalLayout(rootFrame);
+            }
+            // Logic for S vs M (Limit visibility)
+            applyDigitalVisibility();
+        }
+        
+        // Trigger update to refresh data on new views
+        updateLocation(app.getLocationProvider().getLastKnownLocation());
     }
+
+    @Override
+    public void update() {}
 
     @Override
     public void updateLocation(Location location) {
-        if (location == null)
-            return;
+        if (location == null) return;
 
         float currentSpeed = 0;
-        // 1. Mevcut Hız ve Birim
-        if (speedText != null) {
-            String speedStr = "--";
-            String unitStr = "";
-
-            if (location.hasSpeed()) {
-                currentSpeed = location.getSpeed();
-                FormattedValue formatted = OsmAndFormatter.getFormattedSpeedValue(currentSpeed, app);
-                speedStr = formatted.value;
-                unitStr = formatted.unit;
-            }
-
-            final String finalSpeed = speedStr;
-            final String finalUnit = unitStr;
-
-            speedText.post(() -> {
-                speedText.setText(finalSpeed);
-            });
+        if (location.hasSpeed()) {
+            currentSpeed = location.getSpeed();
         }
 
-        // 2. Hız Limiti ve Uyarı
+        // 1. Digital View Update
+        if (speedText != null) {
+             FormattedValue formatted = OsmAndFormatter.getFormattedSpeedValue(currentSpeed, app);
+             final String val = formatted.value;
+             speedText.post(() -> speedText.setText(val));
+        }
+
+        // 2. Analog View Update
+        if (analogView != null) {
+             // Convert m/s to km/h roughly for display (View expects value)
+             // OsmAndFormatter handles units, but View needs raw float.
+             // Assuming km/h preference for simplicity or use app settings?
+             // App settings is better.
+             // OsmAndFormatter.getFormattedSpeed(speed, app) returns string.
+             // Accessing settings: app.getSettings().METRIC_SYSTEM...
+             // For now, let's use a rough m/s * 3.6 conversion for Analog
+             // Ideally we pass unit type to View.
+             float kmh = currentSpeed * 3.6f;
+             analogView.setSpeed(kmh);
+        }
+
+        // 3. Limit Update
         updateMaxSpeed(location, currentSpeed);
     }
-
+    
     private void updateMaxSpeed(Location location, float currentSpeed) {
-        if (limitText == null || limitContainer == null)
-            return;
+        float maxSpeed = getMaxSpeed(location); // in m/s
 
-        float maxSpeed = getMaxSpeed(location);
+        // Digital Logic
+        if (limitText != null && limitContainer != null) {
+             if (size == WidgetSize.SMALL) {
+                 limitContainer.setVisibility(View.GONE);
+             } else {
+                 if (maxSpeed > 0 && maxSpeed != RouteDataObject.NONE_MAX_SPEED) {
+                     limitContainer.setVisibility(View.VISIBLE);
+                     FormattedValue formatted = OsmAndFormatter.getFormattedSpeedValue(maxSpeed, app);
+                     
+                     // Clean string ("50 km/h" -> "50")
+                     String limitStr = formatted.value;
+                     try { limitStr = limitStr.split(" ")[0]; } catch(Exception e){}
+                     
+                     limitText.setText(limitStr);
+                     
+                     // Warning
+                     float tolerance = 0.55f;
+                     if (currentSpeed > (maxSpeed + tolerance)) {
+                        // Warning Style
+                        android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+                        gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+                        gd.setColor(Color.parseColor("#CCFF0000"));
+                        gd.setStroke(dpToPx(4), Color.RED);
+                        limitText.setBackground(gd);
+                        limitText.setTextColor(Color.WHITE);
+                     } else {
+                         limitText.setBackgroundResource(net.osmand.plus.R.drawable.bg_speed_limit);
+                         limitText.setTextColor(Color.BLACK);
+                     }
 
-        limitText.post(() -> {
-            if (maxSpeed > 0 && maxSpeed != RouteDataObject.NONE_MAX_SPEED) {
-                FormattedValue formatted = OsmAndFormatter.getFormattedSpeedValue(maxSpeed, app);
-                // Sadece sayiyi al (km/h olmadan)
-                String limitStr = formatted.value;
-                try {
-                    String[] parts = limitStr.trim().split(" ");
-                    if (parts.length > 0)
-                        limitStr = parts[0];
-                } catch (Exception e) {
-                }
-
-                limitText.setText(limitStr);
-                
-                // Show only if NOT small
-                if (size != WidgetSize.SMALL) {
-                    limitContainer.setVisibility(View.VISIBLE);
-                } else {
+                 } else {
                      limitContainer.setVisibility(View.GONE);
-                }
-
-                // Speed Limit Warning Logic
-                // Tolerance: +2 km/h (~0.55 m/s) buffer
-                float tolerance = 0.55f;
-                if (currentSpeed > (maxSpeed + tolerance)) {
-                    // Warning: Red Circle, White Text
-                    android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
-                    gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-                    gd.setColor(Color.parseColor("#CCFF0000")); // Semi-transparent Red
-                    gd.setStroke(dpToPx(4), Color.RED);
-                    limitText.setBackground(gd);
-                    limitText.setTextColor(Color.WHITE);
-                } else {
-                    // Normal
-                    limitText.setBackgroundResource(net.osmand.plus.R.drawable.bg_speed_limit);
-                    limitText.setTextColor(Color.BLACK);
-                }
-
+                 }
+             }
+        }
+        
+        // Analog Logic
+        if (analogView != null) {
+            if (maxSpeed > 0 && maxSpeed != RouteDataObject.NONE_MAX_SPEED) {
+                analogView.setSpeedLimit(maxSpeed * 3.6f);
             } else {
-                limitContainer.setVisibility(View.GONE);
+                analogView.setSpeedLimit(0);
             }
-        });
+        }
     }
 
     private float getMaxSpeed(Location location) {
         RoutingHelper routingHelper = app.getRoutingHelper();
-        if (routingHelper == null)
-            return 0;
-
-        // Logic from MaxSpeedWidget
+        if (routingHelper == null) return 0;
+        
         if ((!routingHelper.isFollowingMode()
                 || routingHelper.isDeviatedFromRoute()
                 || (routingHelper.getCurrentGPXRoute() != null && !routingHelper.isCurrentGPXRouteV2()))) {
-            // MapViewLinkedToLocation kontrolu yerine direkt locationProvider'dan bakalim
             if (app.getLocationProvider() != null) {
                 RouteDataObject routeObject = app.getLocationProvider().getLastKnownRouteSegment();
                 if (routeObject != null) {
@@ -233,42 +272,20 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         return 0;
     }
 
-    @Override
-    protected void onSizeChanged(WidgetSize newSize) {
-        if (rootView == null) return;
-        
-        // Logic:
-        // SMALL: Hide Limit, Show Speed
-        // MEDIUM: Show Limit, Show Speed
-        // LARGE: Show Limit, Show Speed (Same as M for now, can add trip info later)
-        
-        boolean showLimit = (newSize == WidgetSize.MEDIUM || newSize == WidgetSize.LARGE);
-        
-        if (limitContainer != null) {
-            // Only toggle visibility if we have a valid limit to show, BUT force GONE if size is SMALL
-            if (!showLimit) {
-                limitContainer.setVisibility(View.GONE);
-            } else {
-                 // Visibility logic is handled in updateMaxSpeed based on data
-                 // Force update to re-check
-                 // We don't have location here, next update will fix it.
-            }
-        }
+    private int dpToPx(int dp) {
+        float density = context.getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
-
+    
     @Override
     public void onStart() {
         super.onStart();
-        if (app != null) {
-            app.getLocationProvider().addLocationListener(this);
-        }
+        if (app != null) app.getLocationProvider().addLocationListener(this);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        if (app != null) {
-            app.getLocationProvider().removeLocationListener(this);
-        }
+        if (app != null) app.getLocationProvider().removeLocationListener(this);
     }
 }

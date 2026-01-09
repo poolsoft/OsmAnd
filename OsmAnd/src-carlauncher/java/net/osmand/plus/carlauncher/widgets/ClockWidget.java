@@ -8,121 +8,271 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
+import net.osmand.plus.OsmandApplication;
+import net.osmand.plus.carlauncher.widgets.view.ModernAnalogClockView;
+import net.osmand.plus.carlauncher.widgets.weather.WeatherManager;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class ClockWidget extends BaseWidget {
+/**
+ * Gelişmiş Saat Widget'ı.
+ * S: Dijital Saat + Tarih
+ * M: Dijital Saat + Tarih + Hava Durumu
+ * L: Analog Saat + Tarih
+ */
+public class ClockWidget extends BaseWidget implements WeatherManager.WeatherListener {
 
+    // UI Elements
+    private FrameLayout rootFrame;
+    private View digitalView; // S & M
+    private ModernAnalogClockView analogClockView; // L
+
+    // Digital Elements
     private TextView clockText;
     private TextView dateText;
+    
+    // Weather Elements (M Only)
+    private LinearLayout weatherContainer;
+    private ImageView weatherIcon;
+    private TextView tempText;
+
+    // Helper
     private SimpleDateFormat timeFormat;
     private SimpleDateFormat dateFormat;
     private Runnable updateRunnable;
+    private WeatherManager weatherManager;
+    private WeatherManager.WeatherData lastWeatherData;
 
     public ClockWidget(@NonNull Context context) {
-        super(context, "classic_clock", "Klasik Saat");
-        this.timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        this.dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
-        this.order = 0;
+        super(context, "smart_clock", "Akıllı Saat");
+        init();
     }
 
-    public ClockWidget(@NonNull Context context, net.osmand.plus.OsmandApplication app) {
+    public ClockWidget(@NonNull Context context, OsmandApplication app) {
         this(context);
+    }
+
+    private void init() {
+        this.timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        this.dateFormat = new SimpleDateFormat("EEE, d MMM", Locale.getDefault());
+        this.order = 0;
+        this.weatherManager = WeatherManager.getInstance(context);
     }
 
     @NonNull
     @Override
     public View createView() {
-        // Modern Kart Yapisi (FrameLayout)
-        FrameLayout rootFrame = new FrameLayout(context);
-
-        // Kart Boyutlandirmasi (Android Auto benzeri)
-        // Genislik ve yukseklik parent tarafindan belirlenecek ama padding verelim
+        rootFrame = new FrameLayout(context);
+        rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_modern);
         rootFrame.setPadding(0, 0, 0, 0);
 
-        // Arka Plan (XML Kaynagi)
-        rootFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_widget_modern);
+        // Initial Layout (Default S)
+        setupDigitalLayout(rootFrame);
 
-        // Icerik Konteyneri (Dikey)
-        LinearLayout contentLayout = new LinearLayout(context);
-        contentLayout.setOrientation(LinearLayout.VERTICAL);
-        contentLayout.setGravity(Gravity.CENTER);
+        rootView = rootFrame;
+        return rootView;
+    }
+
+    // --- Layout Builders ---
+
+    private void setupDigitalLayout(ViewGroup root) {
+        root.removeAllViews();
+        analogClockView = null; // Clear analog ref
+
+        // Main Container (Horizontal for M, Vertical for S fallback)
+        LinearLayout mainLayout = new LinearLayout(context);
+        mainLayout.setOrientation(LinearLayout.HORIZONTAL); // Default Horizontal, adjust later
+        mainLayout.setGravity(Gravity.CENTER);
+        
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT);
-        params.setMargins(4, 4, 4, 4); // Icerik kenar boslugu
-        contentLayout.setLayoutParams(params);
+        mainLayout.setLayoutParams(params);
 
-        // --- IKON ---
-        // Kaldirildi
+        // -- LEFT: Time & Date --
+        LinearLayout timeContainer = new LinearLayout(context);
+        timeContainer.setOrientation(LinearLayout.VERTICAL);
+        timeContainer.setGravity(Gravity.CENTER);
+        timeContainer.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f)); // Weight 1
 
-        // --- SAAT ---
         clockText = new TextView(context);
         clockText.setTextColor(Color.WHITE);
-        clockText.setTextSize(60); // Increase size for 7-segment readability
+        clockText.setTextSize(52);
         clockText.setGravity(Gravity.CENTER);
         clockText.setIncludeFontPadding(false);
-
         try {
             Typeface digitalFont = Typeface.createFromAsset(context.getAssets(), "fonts/curved-seven-segment.ttf");
             clockText.setTypeface(digitalFont);
         } catch (Exception e) {
-            // Fallback
-            clockText.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+            clockText.setTypeface(Typeface.DEFAULT_BOLD);
         }
+        timeContainer.addView(clockText);
 
-        contentLayout.addView(clockText);
-
-        // --- TARIH ---
         dateText = new TextView(context);
-        dateText.setTextColor(Color.parseColor("#AAAAAA")); // Gri
-        dateText.setTextSize(16);
+        dateText.setTextColor(Color.LTGRAY);
+        dateText.setTextSize(14);
         dateText.setGravity(Gravity.CENTER);
-        dateText.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
-        // textCaps = true yapilabilir ama Java'da gerek yok, formatter halleder.
-        contentLayout.addView(dateText);
+        timeContainer.addView(dateText);
 
-        rootFrame.addView(contentLayout);
+        mainLayout.addView(timeContainer);
 
-        rootView = rootFrame;
-        update();
+        // -- RIGHT: Weather (Initially GONE) --
+        weatherContainer = new LinearLayout(context);
+        weatherContainer.setOrientation(LinearLayout.VERTICAL);
+        weatherContainer.setGravity(Gravity.CENTER);
+        weatherContainer.setVisibility(View.GONE);
+        weatherContainer.setLayoutParams(new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.8f)); // Weight 0.8
 
-        return rootView;
+        weatherIcon = new ImageView(context);
+        int iconSize = dpToPx(48);
+        weatherIcon.setLayoutParams(new LinearLayout.LayoutParams(iconSize, iconSize));
+        weatherContainer.addView(weatherIcon);
+
+        tempText = new TextView(context);
+        tempText.setTextColor(Color.WHITE);
+        tempText.setTextSize(24);
+        tempText.setTypeface(Typeface.DEFAULT_BOLD);
+        tempText.setGravity(Gravity.CENTER);
+        weatherContainer.addView(tempText);
+
+        mainLayout.addView(weatherContainer);
+
+        root.addView(mainLayout);
+        digitalView = mainLayout;
+    }
+
+    private void setupAnalogLayout(ViewGroup root) {
+        root.removeAllViews();
+        digitalView = null;
+
+        // Analog Clock View
+        analogClockView = new ModernAnalogClockView(context);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        int margin = dpToPx(8);
+        params.setMargins(margin, margin, margin, margin);
+        analogClockView.setLayoutParams(params);
+        
+        root.addView(analogClockView);
+
+        // Date Overlay for Analog
+        dateText = new TextView(context);
+        dateText.setTextColor(Color.WHITE);
+        dateText.setTextSize(14);
+        FrameLayout.LayoutParams dateParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        dateParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        dateParams.setMargins(0, 0, 0, dpToPx(16));
+        dateText.setLayoutParams(dateParams);
+        
+        root.addView(dateText);
+    }
+
+    // --- Logic ---
+
+    @Override
+    protected void onSizeChanged(WidgetSize newSize) {
+        if (rootFrame == null) return;
+
+        if (newSize == WidgetSize.LARGE) {
+            setupAnalogLayout(rootFrame);
+        } else {
+            setupDigitalLayout(rootFrame);
+            // S vs M logic handled in update() or here
+            if (newSize == WidgetSize.MEDIUM) {
+                // Try to show weather if data exists
+                 if (weatherContainer != null) {
+                     // Visibility logic handled in updateWeatherUI
+                 }
+            } else {
+                // SMALL -> Hide weather force
+                if (weatherContainer != null) weatherContainer.setVisibility(View.GONE);
+            }
+        }
+        update(); // Refresh content
+        
+        // Trigger weather update if M
+        if (newSize == WidgetSize.MEDIUM && weatherManager.getCachedWeather() != null) {
+             onWeatherUpdated(weatherManager.getCachedWeather());
+        }
     }
 
     @Override
     public void update() {
-        if (clockText != null) {
-
-            String currentTime = timeFormat.format(new Date());
-            clockText.setText(currentTime);
-
-            String currentDate = dateFormat.format(new Date());
-            dateText.setText(currentDate);
-
-            // Fade animasyonu
-            AlphaAnimation anim = new AlphaAnimation(0.7f, 1.0f);
-            anim.setDuration(300);
-            clockText.startAnimation(anim);
-            dateText.startAnimation(anim);
+        if (analogClockView != null) {
+            // Analog Mode: Only update date
+             if (dateText != null) {
+                 dateText.setText(dateFormat.format(new Date()));
+             }
+        } else if (clockText != null) {
+            // Digital Mode
+            clockText.setText(timeFormat.format(new Date()));
+            if (dateText != null) {
+                dateText.setText(dateFormat.format(new Date()));
+            }
         }
+    }
+
+    @Override
+    public void onWeatherUpdated(WeatherManager.WeatherData data) {
+        lastWeatherData = data;
+        
+        if (size == WidgetSize.MEDIUM && weatherContainer != null && data != null && !data.isStale) {
+            rootFrame.post(() -> {
+                weatherContainer.setVisibility(View.VISIBLE);
+                
+                // Temp
+                tempText.setText(String.format(Locale.getDefault(), "%.1f°", data.temp));
+                
+                // Icon
+                String iconName = data.getIconName();
+                int resId = context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
+                if (resId != 0) {
+                    weatherIcon.setImageResource(resId);
+                } else {
+                    // Fallback using identifier check failed?
+                    // Maybe we are in a library module? No, app module.
+                    // Fallback to cloudy found in R? We can't access R.drawable.ic_weather_cloudy safely if not generated R.
+                    // We rely on getIdentifier. If 0, hide icon?
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onWeatherError(String error) {
+        // Fallback or ignore
     }
 
     @Override
     public void onStart() {
         super.onStart();
+        weatherManager.addListener(this);
         startUpdating();
+        
+        // Initial setup check
+        if (lastWeatherData == null) {
+            lastWeatherData = weatherManager.getCachedWeather();
+            if (lastWeatherData != null) onWeatherUpdated(lastWeatherData);
+        }
     }
 
     @Override
     public void onStop() {
         super.onStop();
+        weatherManager.removeListener(this);
         stopUpdating();
     }
 
@@ -146,5 +296,10 @@ public class ClockWidget extends BaseWidget {
             rootView.removeCallbacks(updateRunnable);
             updateRunnable = null;
         }
+    }
+    
+    private int dpToPx(int dp) {
+        float density = context.getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 }
