@@ -188,6 +188,17 @@ public class CarLauncherSettings {
         prefs.edit().putBoolean("car_launcher_enabled", enabled).apply();
     }
 
+    // --- PiP Settings ---
+    private static final String KEY_ENABLE_PIP = "car_launcher_enable_pip";
+
+    public boolean isPipEnabled() {
+        return prefs.getBoolean(KEY_ENABLE_PIP, false); // Default false, user must enable
+    }
+
+    public void setPipEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_ENABLE_PIP, enabled).apply();
+    }
+
     // --- Utility ---
 
     public SharedPreferences getPrefs() {

@@ -2197,7 +2197,57 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	public boolean isTopToolbarActive() {
 		MapInfoLayer mapInfoLayer = getMapLayers().getMapInfoLayer();
 		return mapInfoLayer.hasTopToolbar();
-	}
+	    // --- Car Launcher PiP Logic ---
+
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(this);
+        if (settings.isPipEnabled()) {
+             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // Enter PiP Mode
+                try {
+                    android.app.PictureInPictureParams params = new android.app.PictureInPictureParams.Builder()
+                        //.setAspectRatio(new Rational(16, 9)) // Optional
+                        .build();
+                    enterPictureInPictureMode(params);
+                } catch (Exception e) {
+                    LOG.error("Failed to enter PiP mode", e);
+                }
+             }
+        }
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+        
+        if (isInPictureInPictureMode) {
+            // HIDE UI ELEMENTS
+            if (widgetPanel != null) widgetPanel.setVisibility(View.GONE);
+            if (appDock != null) appDock.setVisibility(View.GONE);
+            if (appDrawerContainer != null) appDrawerContainer.setVisibility(View.GONE);
+            if (widgetHandle != null) widgetHandle.setVisibility(View.GONE);
+            if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.GONE);
+            
+            // Adjust Map Container to Full Screen (remove constraints if needed, but GONE widgets naturally expand map)
+            // Constraints are relative to WidgetPanel, so valid reference but GONE view might be problematic if referenced?
+            // ConstraintLayout treats GONE views as size 0. That's perfect for layout expansion.
+            
+        } else {
+            // SHOW UI ELEMENTS (Restore State)
+            if (widgetPanel != null && isWidgetPanelOpen) {
+                 // Check portrait/landscape logic
+                 applyWidgetPanelState();
+            }
+            if (appDock != null) appDock.setVisibility(View.VISIBLE);
+            // Don't restore AppDrawer automatically
+            if (btnFullscreenExit != null && layoutMode == 2) btnFullscreenExit.setVisibility(View.VISIBLE);
+            
+            applyWidgetPanelState(); // Force re-layout
+        }
+    }
+}
 
 	public TopToolbarController getTopToolbarController(@NonNull TopToolbarControllerType type) {
 		MapInfoLayer mapInfoLayer = getMapLayers().getMapInfoLayer();

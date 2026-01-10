@@ -43,6 +43,23 @@
     </androidx.preference.PreferenceCategory>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- MİNİ PENCERE (PiP) -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <androidx.preference.PreferenceCategory
+        android:key="category_pip"
+        android:title="🖼️ Mini Pencere (PiP)"
+        android:iconSpaceReserved="false">
+
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="car_launcher_enable_pip"
+            android:title="Mini Pencere Modu"
+            android:summary="Ana ekrana dönüldüğünde haritayı küçült"
+            android:defaultValue="false"
+            android:iconSpaceReserved="false" />
+
+    </androidx.preference.PreferenceCategory>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- EKRAN DÜZENİ (SLOT AYARLARI) -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <androidx.preference.PreferenceCategory
