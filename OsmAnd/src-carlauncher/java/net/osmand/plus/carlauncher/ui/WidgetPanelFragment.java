@@ -14,36 +14,21 @@ import android.widget.ScrollView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.PagerSnapHelper;
-import androidx.viewpager2.widget.ViewPager2;
-import android.widget.Toast;
-
-
-import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.tabs.TabLayoutMediator;
-
-import net.osmand.plus.OsmandApplication;
-import net.osmand.plus.carlauncher.CarLauncherSettings;
-import net.osmand.plus.carlauncher.widgets.BaseWidget;
-import net.osmand.plus.carlauncher.widgets.DirectionWidget;
-import net.osmand.plus.carlauncher.widgets.MusicWidget;
-import net.osmand.plus.carlauncher.widgets.NavigationWidget;
-import net.osmand.plus.carlauncher.widgets.OBDWidget;
-import net.osmand.plus.carlauncher.widgets.SpeedWidget;
-import net.osmand.plus.carlauncher.widgets.WidgetManager;
-import net.osmand.plus.carlauncher.AutoLaunchManager;
-import net.osmand.plus.plugins.PluginsHelper;
-import net.osmand.plus.plugins.odb.VehicleMetricsPlugin;
+import net.osmand.plus.carlauncher.widgets.WeatherWidget;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 /**
  * Widget paneli fragment.
  * Widget'lari gosterir ve yonetir.
  * List (Scroll) ve Paged (ViewPager) modlarini destekler.
  */
-public class WidgetPanelFragment extends Fragment {
+public class WidgetPanelFragment extends Fragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     public static final String TAG = "WidgetPanelFragment";
 
@@ -83,7 +68,37 @@ public class WidgetPanelFragment extends Fragment {
             isHorizontalLayout = isSystemPortrait; // Auto
         }
         
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), isHorizontalLayout ? LinearLayoutManager.HORIZONTAL : LinearLayoutManager.VERTICAL, false);
+        // Initialize with default span count of 1, will be updated dynamically
+        final GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 1);
+        layoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+            @Override
+            public int getSpanSize(int position) {
+                if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
+                    WidgetListAdapter adapter = (WidgetListAdapter) listRecyclerView.getAdapter();
+                    // Check bounds and type
+                    if (position >= 0 && position < adapter.getItemCount()) {
+                         // ItemType 1 is Add Button (if exists) -> Full Width
+                         if (adapter.getItemViewType(position) == 1) return layoutManager.getSpanCount();
+                         
+                         // Check Widget Size
+                         try {
+                             // Reflection or specific method if not public
+                             // Assuming adapter has getWidgetAt
+                             BaseWidget widget = adapter.getWidgetAt(position);
+                             if (widget != null) {
+                                 BaseWidget.WidgetSize size = widget.getWidgetSize();
+                                 if (size == BaseWidget.WidgetSize.LARGE) return layoutManager.getSpanCount();
+                                 if (size == BaseWidget.WidgetSize.MEDIUM) return 2; // Fixed 2 spans for Medium
+                             }
+                         } catch (Exception e) {
+                             // Ignore
+                         }
+                    }
+                }
+                return 1;
+            }
+        });
+        
         listRecyclerView.setLayoutManager(layoutManager);
         
         root.addView(listRecyclerView);
@@ -91,8 +106,7 @@ public class WidgetPanelFragment extends Fragment {
          // Initial Calculation
          listRecyclerView.post(() -> {
               if (getView() != null) {
-                  // Dynamic Unit Size Calculation (V13)
-                  updateUnitSize();
+                  updateSpanCount(); // Dynamic Span Count
                   applyWidgetsToView();
               }
          });
@@ -449,6 +463,12 @@ public class WidgetPanelFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
+        // Register Preference Listener
+        if (getContext() != null) {
+            PreferenceManager.getDefaultSharedPreferences(getContext())
+                    .registerOnSharedPreferenceChangeListener(this);
+        }
+
         // Auto Launch Logic
         if (getContext() != null) {
             WidgetManager wm = WidgetManager.getInstance(getContext());
@@ -468,6 +488,7 @@ public class WidgetPanelFragment extends Fragment {
             public void onReceive(Context context, Intent intent) {
                 if ("net.osmand.carlauncher.WIDGET_MODE_CHANGED".equals(intent.getAction())) {
                     applyWidgetsToView();
+                    updateSpanCount(); // Ensure span count is correct
                 }
             }
         };
@@ -484,6 +505,13 @@ public class WidgetPanelFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
+        
+        // Unregister Preference Listener
+        if (getContext() != null) {
+            PreferenceManager.getDefaultSharedPreferences(getContext())
+                    .unregisterOnSharedPreferenceChangeListener(this);
+        }
+
         if (widgetManager != null) {
             widgetManager.stopAllWidgets();
         }
@@ -531,6 +559,9 @@ public class WidgetPanelFragment extends Fragment {
         // Muzik widget
         widgetManager.addWidget(new MusicWidget(getContext(), app));
 
+        // Hava Durumu Widget
+        widgetManager.addWidget(new WeatherWidget(getContext(), app));
+
         // OBD Widget
         VehicleMetricsPlugin obdPlugin = PluginsHelper
                 .getPlugin(VehicleMetricsPlugin.class);
@@ -541,5 +572,38 @@ public class WidgetPanelFragment extends Fragment {
 
     public WidgetManager getWidgetManager() {
         return widgetManager;
+    }
+
+    private void updateSpanCount() {
+        if (listRecyclerView == null || !(listRecyclerView.getLayoutManager() instanceof GridLayoutManager)) return;
+        
+        CarLauncherSettings settings = new CarLauncherSettings(getContext());
+        int orientation = getResources().getConfiguration().orientation;
+        int slots;
+        if (orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+            slots = settings.getLandscapeSlotCount();
+        } else {
+            slots = settings.getPortraitSlotCount();
+        }
+        
+        GridLayoutManager glm = (GridLayoutManager) listRecyclerView.getLayoutManager();
+        if (glm.getSpanCount() != slots) {
+            glm.setSpanCount(slots);
+            if (listRecyclerView.getAdapter() != null) {
+                listRecyclerView.getAdapter().notifyDataSetChanged();
+            }
+        }
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (CarLauncherSettings.KEY_WIDGET_SLOTS_PORTRAIT.equals(key) || 
+            CarLauncherSettings.KEY_WIDGET_SLOTS_LANDSCAPE.equals(key)) {
+            updateSpanCount();
+        } else if (CarLauncherSettings.KEY_WIDGET_DISPLAY_MODE.equals(key)) {
+            // Restart or Refresh
+            // For now, span count update might be enough if grid logic handles it
+            updateSpanCount();
+        }
     }
 }

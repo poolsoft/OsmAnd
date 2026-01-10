@@ -56,6 +56,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         setupAutoLaunchPrefs();
         setupBackupPrefs();
         setupDockPrefs();
+        setupWeatherPrefs();
         setupAboutPrefs();
     }
 

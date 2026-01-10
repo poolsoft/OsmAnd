@@ -70,6 +70,22 @@ public class CarLauncherSettings {
         prefs.edit().putString(KEY_WIDGET_DISPLAY_MODE, String.valueOf(mode)).apply();
     }
 
+    public int getPortraitSlotCount() {
+        return prefs.getInt(KEY_WIDGET_SLOTS_PORTRAIT, 3);
+    }
+
+    public void setPortraitSlotCount(int count) {
+        prefs.edit().putInt(KEY_WIDGET_SLOTS_PORTRAIT, count).apply();
+    }
+
+    public int getLandscapeSlotCount() {
+        return prefs.getInt(KEY_WIDGET_SLOTS_LANDSCAPE, 5);
+    }
+
+    public void setLandscapeSlotCount(int count) {
+        prefs.edit().putInt(KEY_WIDGET_SLOTS_LANDSCAPE, count).apply();
+    }
+
     // --- Appearance Settings ---
 
     public boolean isStatusBarVisible() {

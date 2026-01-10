@@ -43,6 +43,36 @@
     </androidx.preference.PreferenceCategory>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- EKRAN DÜZENİ (SLOT AYARLARI) -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <androidx.preference.PreferenceCategory
+        android:key="category_layout"
+        android:title="📐 Ekran Düzeni"
+        android:iconSpaceReserved="false">
+
+        <androidx.preference.SeekBarPreference
+            android:key="widget_slots_portrait"
+            android:title="Dikey Slot Sayısı"
+            android:summary="Dikey modda yan yana widget sayısı"
+            android:defaultValue="3"
+            android:max="5"
+            app:min="2"
+            app:showSeekBarValue="true"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.SeekBarPreference
+            android:key="widget_slots_landscape"
+            android:title="Yatay Slot Sayısı"
+            android:summary="Yatay modda yan yana widget sayısı"
+            android:defaultValue="5"
+            android:max="8"
+            app:min="3"
+            app:showSeekBarValue="true"
+            android:iconSpaceReserved="false" />
+
+    </androidx.preference.PreferenceCategory>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- MÜZİK AYARLARI -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <androidx.preference.PreferenceCategory
@@ -84,6 +114,12 @@
             android:title="Hava Durumu Servisi"
             android:summary="Saat widget'ında hava durumu gösterimi"
             android:defaultValue="true"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.Preference
+            android:key="weather_update_now"
+            android:title="Verileri Şimdi Güncelle"
+            android:summary="Hava durumu verisini manuel olarak yeniler"
             android:iconSpaceReserved="false" />
 
     </androidx.preference.PreferenceCategory>

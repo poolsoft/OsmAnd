@@ -106,6 +106,14 @@ public class WeatherManager {
         }
     }
 
+    public void refresh() {
+        double lat = getDouble(prefs, KEY_LAST_LAT, 0);
+        double lon = getDouble(prefs, KEY_LAST_LON, 0);
+        if (lat != 0 && lon != 0) {
+            fetchWeather(lat, lon);
+        }
+    }
+
     /**
      * API'den hava durumu verisi ceker.
      */
@@ -158,11 +166,29 @@ public class WeatherManager {
             data.temp = current.getDouble("temperature_2m");
             data.weatherCode = current.getInt("weather_code");
             
-            // Daily High/Low (Index 0 is today)
+            // Daily Forecast (5 Days)
             JSONObject daily = json.getJSONObject("daily");
             if (daily != null) {
-                data.maxTemp = daily.getJSONArray("temperature_2m_max").getDouble(0);
-                data.minTemp = daily.getJSONArray("temperature_2m_min").getDouble(0);
+                org.json.JSONArray maxTemps = daily.getJSONArray("temperature_2m_max");
+                org.json.JSONArray minTemps = daily.getJSONArray("temperature_2m_min");
+                org.json.JSONArray codes = daily.getJSONArray("weather_code");
+                org.json.JSONArray dates = daily.getJSONArray("time");
+                
+                data.forecast = new ArrayList<>();
+                for (int i = 0; i < Math.min(maxTemps.length(), 5); i++) {
+                    DailyForecast day = new DailyForecast();
+                    day.maxTemp = maxTemps.getDouble(i);
+                    day.minTemp = minTemps.getDouble(i);
+                    day.weatherCode = codes.getInt(i);
+                    day.date = dates.getString(i); // ISO format YYYY-MM-DD
+                    data.forecast.add(day);
+                }
+                
+                // Set today's highs/lows from index 0
+                if (!data.forecast.isEmpty()) {
+                    data.maxTemp = data.forecast.get(0).maxTemp;
+                    data.minTemp = data.forecast.get(0).minTemp;
+                }
             }
             
             data.timestamp = timestamp;
@@ -242,29 +268,47 @@ public class WeatherManager {
         public double maxTemp;
         public double minTemp;
         public int weatherCode;
+        public List<DailyForecast> forecast; 
+        
         public long timestamp;
         public boolean isStale;
 
         public String getIconName() {
-            // WMO Code Mapping
-            // 0: Clear sky
-            // 1, 2, 3: Mainly clear, partly cloudy, and overcast
-            // 45, 48: Fog
-            // 51-55: Drizzle
-            // 61-65: Rain
-            // 71-77: Snow
-            // 80-82: Rain showers
-            // 95-99: Thunderstorm
-            
-            if (weatherCode == 0) return "ic_weather_clear";
-            if (weatherCode >= 1 && weatherCode <= 3) return "ic_weather_cloudy";
-            if (weatherCode >= 45 && weatherCode <= 48) return "ic_weather_cloudy"; // Fog -> Cloudy
-            if (weatherCode >= 51 && weatherCode <= 67) return "ic_weather_rain";
-            if (weatherCode >= 71 && weatherCode <= 77) return "ic_weather_rain"; // Snow -> Rain (Temp)
-            if (weatherCode >= 80 && weatherCode <= 82) return "ic_weather_rain";
-            if (weatherCode >= 95) return "ic_weather_rain"; // Storm -> Rain (Temp)
-            
-            return "ic_weather_cloudy"; // Default fallback
+            return getWeatherIconName(weatherCode);
         }
+    }
+    
+    public static class DailyForecast {
+        public double maxTemp;
+        public double minTemp;
+        public int weatherCode;
+        public String date;
+        
+        public String getIconName() {
+            return WeatherData.getWeatherIconName(weatherCode);
+        }
+    }
+    
+    // Helper needed inside WeatherData or static utility
+    private static String getWeatherIconName(int code) {
+        // WMO Code Mapping
+        // 0: Clear sky
+        // 1, 2, 3: Mainly clear, partly cloudy, and overcast
+        // 45, 48: Fog
+        // 51-55: Drizzle
+        // 61-65: Rain
+        // 71-77: Snow
+        // 80-82: Rain showers
+        // 95-99: Thunderstorm
+        
+        if (code == 0) return "ic_weather_clear";
+        if (code >= 1 && code <= 3) return "ic_weather_cloudy";
+        if (code >= 45 && code <= 48) return "ic_weather_cloudy"; // Fog -> Cloudy
+        if (code >= 51 && code <= 67) return "ic_weather_rain";
+        if (code >= 71 && code <= 77) return "ic_weather_rain"; // Snow -> Rain (Temp)
+        if (code >= 80 && code <= 82) return "ic_weather_rain";
+        if (code >= 95) return "ic_weather_rain"; // Storm -> Rain (Temp)
+        
+        return "ic_weather_cloudy"; // Default fallback
     }
 }
