@@ -57,11 +57,9 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             menuBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    showWidgetControlDialog();
+                    showPopupMenu(v);
                 }
             });
-            // Fallback icon if needed, but let's assume XML has it or we can set it here
-            // ((android.widget.ImageButton)menuBtn).setImageResource(net.osmand.plus.R.drawable.ic_overflow_menu_white);
         }
 
         widgetManager = WidgetManager.getInstance(getContext());
@@ -80,6 +78,48 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         });
         
         return root;
+    }
+    
+    private void showPopupMenu(View view) {
+        androidx.appcompat.widget.PopupMenu popup = new androidx.appcompat.widget.PopupMenu(getContext(), view);
+        
+        // Add Menu Items
+        final android.view.MenuItem itemPin = popup.getMenu().add(0, 1, 0, "Sabitle");
+        itemPin.setCheckable(true);
+        
+        // Load current Pin state
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        boolean isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
+        itemPin.setChecked(isPinned);
+        
+        popup.getMenu().add(0, 2, 1, "Widget Ekle");
+        
+        popup.setOnMenuItemClickListener(new androidx.appcompat.widget.PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(android.view.MenuItem item) {
+                switch (item.getItemId()) {
+                    case 1: // Pin Toggle
+                        boolean newState = !item.isChecked();
+                        item.setChecked(newState);
+                        PreferenceManager.getDefaultSharedPreferences(getContext())
+                            .edit()
+                            .putBoolean(PREF_IS_PINNED, newState)
+                            .apply();
+                        
+                        // Notify Activity to re-layout if needed
+                        if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                            ((net.osmand.plus.activities.MapActivity) getActivity()).updateWidgetPanelMode();
+                        }
+                        return true;
+                        
+                    case 2: // Add Widget
+                        showWidgetControlDialog();
+                        return true;
+                }
+                return false;
+            }
+        });
+        popup.show();
     }
 
     private void updateLayoutConfiguration() {
