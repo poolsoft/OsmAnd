@@ -45,81 +45,129 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     private static final String PREF_IS_PINNED = "widget_panel_pinned";
     private int currentUnitSize = 0;
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getContext() != null) {
+            app = (OsmandApplication) getContext().getApplicationContext();
+            widgetManager = WidgetManager.getInstance(getContext());
+            widgetManager.forceResetForNewSession(); // Clean start
+            widgetManager.updateActivityContext(getContext());
+            
+            android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
+            isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
+            
+            if (!widgetManager.loadWidgetConfig()) {
+                initializeWidgets(); // Load default if empty
+            }
+        }
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View root = inflater.inflate(net.osmand.plus.R.layout.fragment_widget_panel, container, false);
-        
-        listRecyclerView = root.findViewById(net.osmand.plus.R.id.widget_recycler_view);
-        android.view.View menuBtn = root.findViewById(net.osmand.plus.R.id.btn_widget_menu);
-        
-        if (menuBtn != null) {
-            menuBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    showPopupMenu(v);
-                }
-            });
+        FrameLayout contentFrame = new FrameLayout(getContext());
+        // Bg might be null if resource missing, using a safe fallback or attempting resource
+        try {
+             contentFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_panel_modern);
+        } catch (Exception e) {
+             contentFrame.setBackgroundColor(0xFF111111);
         }
-
-        widgetManager = WidgetManager.getInstance(getContext());
         
-        // Ensure LayoutManager is set before updating config
-        listRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
+        contentFrame.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         
-        listRecyclerView.post(new Runnable() {
-            @Override
-            public void run() {
-                 if (getView() != null) {
-                     updateLayoutConfiguration();
-                     applyWidgetsToView();
-                 }
-            }
-        });
+        widgetContentFrame = contentFrame;
+        rootContent = contentFrame;
         
-        return root;
+        initListLayout(contentFrame);
+        setupMenuButton(contentFrame);
+        
+        return contentFrame;
     }
     
-    private void showPopupMenu(View view) {
-        androidx.appcompat.widget.PopupMenu popup = new androidx.appcompat.widget.PopupMenu(getContext(), view);
+    private void initListLayout(ViewGroup root) {
+        listRecyclerView = new RecyclerView(getContext());
+        listRecyclerView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        listRecyclerView.setId(net.osmand.plus.R.id.widget_recycler_view); // Keep ID if useful or remove
+        listRecyclerView.setClipToPadding(false);
+        // Padding for menu button overlap
+        int paddingTop = (int) android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 48, getResources().getDisplayMetrics());
+        listRecyclerView.setPadding(0, paddingTop, 0, 0); 
         
-        // Add Menu Items
-        final android.view.MenuItem itemPin = popup.getMenu().add(0, 1, 0, "Sabitle");
-        itemPin.setCheckable(true);
+        // Initial Layout Manager (Grid)
+        listRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
+        root.addView(listRecyclerView);
         
-        // Load current Pin state
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-        boolean isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
-        itemPin.setChecked(isPinned);
+        listRecyclerView.post(() -> {
+              if (getView() != null) {
+                  updateLayoutConfiguration(); 
+                  applyWidgetsToView();
+              }
+         });
+         
+        // Initial apply (will be refreshed by post)
+    }
+
+    private void setupMenuButton(ViewGroup root) {
+        android.widget.ImageView menuBtn = new android.widget.ImageView(getContext());
+        menuBtn.setImageResource(net.osmand.plus.R.drawable.ic_overflow_menu_white); // Use known working icon
         
-        popup.getMenu().add(0, 2, 1, "Widget Ekle");
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            menuBtn.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
+            android.util.TypedValue outValue = new android.util.TypedValue();
+            getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true);
+            menuBtn.setBackgroundResource(outValue.resourceId);
+        }
         
-        popup.setOnMenuItemClickListener(new androidx.appcompat.widget.PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(android.view.MenuItem item) {
-                switch (item.getItemId()) {
-                    case 1: // Pin Toggle
-                        boolean newState = !item.isChecked();
-                        item.setChecked(newState);
-                        PreferenceManager.getDefaultSharedPreferences(getContext())
-                            .edit()
-                            .putBoolean(PREF_IS_PINNED, newState)
-                            .apply();
-                        
-                        // Notify Activity to re-layout if needed
-                        if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
-                            ((net.osmand.plus.activities.MapActivity) getActivity()).updateWidgetPanelMode();
-                        }
-                        return true;
-                        
-                    case 2: // Add Widget
-                        showWidgetControlDialog();
-                        return true;
+        int p = (int) android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 16, getResources().getDisplayMetrics());
+        menuBtn.setPadding(p, p, p, p);
+        
+        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
+             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
+        int m = (int) android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics());
+        params.setMargins(m, m, m, m);
+        
+        root.addView(menuBtn, params);
+        
+        menuBtn.setOnClickListener(v -> {
+            android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), menuBtn);
+            popup.getMenu().add(0, 1, 0, "Widget Duzenle");
+            android.view.MenuItem pinItem = popup.getMenu().add(0, 2, 0, "Sabitle (Pinned)");
+            pinItem.setCheckable(true);
+            
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+            isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
+            pinItem.setChecked(isPinned);
+            
+            popup.setOnMenuItemClickListener(item -> {
+                if (item.getItemId() == 1) {
+                    showWidgetControlDialog();
+                    return true;
+                } else if (item.getItemId() == 2) {
+                    isPinned = !isPinned;
+                    item.setChecked(isPinned);
+                    android.preference.PreferenceManager.getDefaultSharedPreferences(getContext())
+                        .edit().putBoolean(PREF_IS_PINNED, isPinned).apply();
+                    if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                        ((net.osmand.plus.activities.MapActivity) getActivity()).updateWidgetPanelMode();
+                    }
+                    return true;
                 }
                 return false;
-            }
+            });
+            popup.show();
         });
-        popup.show();
+    }
+
+    private void showWidgetControlDialog() {
+        WidgetControlDialog dialog = new WidgetControlDialog();
+        dialog.setWidgetManager(widgetManager);
+        dialog.setOnDismissCallback(() -> {
+            updateLayoutConfiguration();
+            applyWidgetsToView();
+        });
+        dialog.show(getChildFragmentManager(), "WidgetControlDialog");
     }
 
     private void updateLayoutConfiguration() {
