@@ -192,20 +192,31 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         if (listRecyclerView == null || !(listRecyclerView.getLayoutManager() instanceof GridLayoutManager)) return;
         
         CarLauncherSettings settings = new CarLauncherSettings(getContext());
-        int orientation = getResources().getConfiguration().orientation;
-        boolean isSystemPortrait = orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        int systemOrientation = getResources().getConfiguration().orientation;
+        boolean isSystemPortrait = systemOrientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
         
         int slots;
-        int scrollDir;
+        int orientationPref; // 0=Auto, 1=Horizontal, 2=Vertical
         
         if (isSystemPortrait) {
             slots = settings.getPortraitSlotCount();
-            scrollDir = settings.getPortraitScrollDirection();
+            orientationPref = settings.getPortraitScrollDirection();
         } else {
             slots = settings.getLandscapeSlotCount();
-            scrollDir = settings.getLandscapeScrollDirection();
+            orientationPref = settings.getLandscapeScrollDirection();
         }
         
+        // Resolve Target Scroll Direction (Horizontal/Vertical)
+        boolean isHorizontalScroll;
+        if (orientationPref == 1) {
+            isHorizontalScroll = true; // Force Horizontal
+        } else if (orientationPref == 2) {
+            isHorizontalScroll = false; // Force Vertical
+        } else {
+            // Auto (0): Portrait -> Horizontal (Bottom), Landscape -> Vertical (Right)
+            isHorizontalScroll = isSystemPortrait; 
+        }
+
         GridLayoutManager glm = (GridLayoutManager) listRecyclerView.getLayoutManager();
         boolean changed = false;
         
@@ -214,7 +225,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             changed = true;
         }
         
-        int targetOrientation = (scrollDir == 0) ? GridLayoutManager.HORIZONTAL : GridLayoutManager.VERTICAL;
+        int targetOrientation = isHorizontalScroll ? GridLayoutManager.HORIZONTAL : GridLayoutManager.VERTICAL;
         if (glm.getOrientation() != targetOrientation) {
             glm.setOrientation(targetOrientation);
             changed = true;
@@ -231,20 +242,28 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         if (listRecyclerView == null) return;
         
         CarLauncherSettings settings = new CarLauncherSettings(getContext());
-        boolean isSystemPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        int systemOrientation = getResources().getConfiguration().orientation;
+        boolean isSystemPortrait = systemOrientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
         
-        int scrollDir;
         int slots;
+        int orientationPref;
         
         if (isSystemPortrait) {
-            scrollDir = settings.getPortraitScrollDirection();
             slots = settings.getPortraitSlotCount();
+            orientationPref = settings.getPortraitScrollDirection();
         } else {
-            scrollDir = settings.getLandscapeScrollDirection();
             slots = settings.getLandscapeSlotCount();
+            orientationPref = settings.getLandscapeScrollDirection();
         }
 
-        boolean isHorizontalScroll = (scrollDir == 0);
+        boolean isHorizontalScroll;
+        if (orientationPref == 1) {
+            isHorizontalScroll = true;
+        } else if (orientationPref == 2) {
+            isHorizontalScroll = false;
+        } else {
+            isHorizontalScroll = isSystemPortrait;
+        }
         
         if (isHorizontalScroll) {
              // Horizontal Scroll: Width is flexible
@@ -269,10 +288,17 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     private void applyWidgetsToView() {
         if (listRecyclerView != null) {
             CarLauncherSettings settings = new CarLauncherSettings(getContext());
-            boolean isSystemPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+            int systemOrientation = getResources().getConfiguration().orientation;
+            boolean isSystemPortrait = systemOrientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
             
-            int scrollDir = isSystemPortrait ? settings.getPortraitScrollDirection() : settings.getLandscapeScrollDirection();
-            boolean isHorizontalScroll = (scrollDir == 0);
+            int orientationPref = isSystemPortrait ? settings.getPortraitScrollDirection() : settings.getLandscapeScrollDirection();
+            
+            boolean isHorizontalScroll;
+            if (orientationPref == 1) isHorizontalScroll = true;
+            else if (orientationPref == 2) isHorizontalScroll = false;
+            else isHorizontalScroll = isSystemPortrait;
+            
+            boolean isHorizontalScrollFinal = isHorizontalScroll; // Final for anon class
             
             WidgetListAdapter adapter = new WidgetListAdapter(
                 widgetManager.getVisibleWidgets(), 
