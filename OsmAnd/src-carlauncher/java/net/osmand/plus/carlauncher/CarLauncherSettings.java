@@ -19,6 +19,14 @@ public class CarLauncherSettings {
     private static final String KEY_WIDGET_VISIBILITY_PREFIX = "widget_visible_";
     public static final String KEY_WIDGET_DISPLAY_MODE = "widget_display_mode"; // 0: List, 1: Paged
 
+    // Grid Slot Keys (NEW) - v2 to force reset defaults and support separate modes
+    public static final String KEY_WIDGET_SLOTS_PORTRAIT = "widget_slot_count_portrait_v2";
+    public static final String KEY_WIDGET_SLOTS_LANDSCAPE = "widget_slot_count_landscape_v2";
+    
+    // Grid Scroll (Panel Orientation) Keys (NEW) - v2
+    public static final String KEY_WIDGET_SCROLL_PORTRAIT = "widget_scroll_portrait_v2";
+    public static final String KEY_WIDGET_SCROLL_LANDSCAPE = "widget_scroll_landscape_v2";
+
     // Appearance Keys
     public static final String KEY_STATUS_BAR = "car_launcher_status_bar";
     public static final String KEY_DARK_THEME = "car_launcher_dark_theme";
@@ -68,6 +76,37 @@ public class CarLauncherSettings {
 
     public void setWidgetDisplayMode(int mode) {
         prefs.edit().putString(KEY_WIDGET_DISPLAY_MODE, String.valueOf(mode)).apply();
+    }
+
+    // --- Grid Slot Settings ---
+    public int getPortraitSlotCount() {
+        return prefs.getInt(KEY_WIDGET_SLOTS_PORTRAIT, 1); // Default 1 (Single Row)
+    }
+
+    public void setPortraitSlotCount(int count) {
+        prefs.edit().putInt(KEY_WIDGET_SLOTS_PORTRAIT, count).apply();
+    }
+    
+    public int getLandscapeSlotCount() {
+        return prefs.getInt(KEY_WIDGET_SLOTS_LANDSCAPE, 1); // Default 1 (Single Column for Right Panel)
+    }
+    
+    public void setLandscapeSlotCount(int count) {
+        prefs.edit().putInt(KEY_WIDGET_SLOTS_LANDSCAPE, count).apply();
+    }
+    
+    // --- Grid Scroll Settings (Panel Orientation) ---
+    // 0 = Horizontal (Row), 1 = Vertical (Column)
+    public int getPortraitScrollDirection() {
+        try {
+            return Integer.parseInt(prefs.getString(KEY_WIDGET_SCROLL_PORTRAIT, "0")); // Default Horizontal (Bottom Panel)
+        } catch (Exception e) { return 0; }
+    }
+    
+    public int getLandscapeScrollDirection() {
+        try {
+            return Integer.parseInt(prefs.getString(KEY_WIDGET_SCROLL_LANDSCAPE, "1")); // Default Vertical (Right Panel)
+        } catch (Exception e) { return 1; }
     }
 
     // --- Appearance Settings ---

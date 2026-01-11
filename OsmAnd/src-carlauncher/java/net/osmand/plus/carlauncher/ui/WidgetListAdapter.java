@@ -23,19 +23,24 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
     }
 
     private final List<BaseWidget> widgets;
-    private final boolean isPortrait;
-    private final OnWidgetActionListener actionListener;
-    
-    private int unitSize = 0; // The height of 1 unit (Screen / 6)
+    private boolean isHorizontalScroll; // Replaces isPortrait
 
-    public WidgetListAdapter(List<BaseWidget> widgets, boolean isPortrait, OnWidgetActionListener actionListener) {
+    public WidgetListAdapter(List<BaseWidget> widgets, boolean isHorizontalScroll, OnWidgetActionListener actionListener) {
         this.widgets = widgets;
-        this.isPortrait = isPortrait;
+        this.isHorizontalScroll = isHorizontalScroll;
         this.actionListener = actionListener;
     }
 
-    public void setUnitSize(int unitSize, boolean isPortrait) {
+    public BaseWidget getWidgetAt(int position) {
+        if (position >= 0 && position < widgets.size()) {
+            return widgets.get(position);
+        }
+        return null;
+    }
+
+    public void setUnitSize(int unitSize, boolean isHorizontalScroll) {
         this.unitSize = unitSize;
+        this.isHorizontalScroll = isHorizontalScroll;
         notifyDataSetChanged();
     }
     
@@ -86,12 +91,12 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
             // Set Margins
             params.setMargins(margin, margin, margin, margin);
 
-            if (isPortrait) {
-                // Portrait: Horizontal Scroll, Width is Dynamic (Unit), Height is Full
+            if (isHorizontalScroll) {
+                // Horizontal Scroll (e.g. Portrait Bottom): Width is Dynamic, Height is Full
                 params.width = unitSize - marginTotal; 
                 params.height = ViewGroup.LayoutParams.MATCH_PARENT;
             } else {
-                // Landscape: Vertical Scroll, Height is Dynamic, Width is Full
+                // Vertical Scroll (e.g. Landscape Right): Height is Dynamic, Width is Full
                 int multiplier = 2; // Default Small
                 
                 BaseWidget w = widgets.get(position);

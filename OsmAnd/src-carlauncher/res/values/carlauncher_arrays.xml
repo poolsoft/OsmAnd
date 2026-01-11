@@ -8,4 +8,12 @@
         <item>launcher</item>
         <item>navigation</item>
     </string-array>
+    <string-array name="widget_orientation_entries">
+        <item>Yatay (Satır)</item>
+        <item>Dikey (Sütun)</item>
+    </string-array>
+    <string-array name="widget_orientation_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
 </resources>
