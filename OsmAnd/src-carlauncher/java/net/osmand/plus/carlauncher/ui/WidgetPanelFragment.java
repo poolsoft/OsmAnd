@@ -45,57 +45,42 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     private static final String PREF_IS_PINNED = "widget_panel_pinned";
     private int currentUnitSize = 0;
 
-    private void initListLayout(ViewGroup root) {
-        listRecyclerView = new RecyclerView(getContext());
-        listRecyclerView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        listRecyclerView.setClipToPadding(false);
-        listRecyclerView.setPadding(0, 0, 0, 0); 
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View root = inflater.inflate(net.osmand.plus.R.layout.fragment_widget_panel, container, false);
         
-        CarLauncherSettings settings = new CarLauncherSettings(getContext());
-        boolean isSystemPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        listRecyclerView = root.findViewById(net.osmand.plus.R.id.widget_recycler_view);
+        android.view.View menuBtn = root.findViewById(net.osmand.plus.R.id.btn_widget_menu);
         
-        // Rule: Portrait -> Horizontal Scroll (0), Landscape -> Vertical Scroll (1)
-        int scrollDir = isSystemPortrait ? 0 : 1;
-        
-        int spanCount = 1; // Initial dummy
-        final GridLayoutManager layoutManager = new GridLayoutManager(getContext(), spanCount, 
-                                                                    scrollDir == 0 ? GridLayoutManager.HORIZONTAL : GridLayoutManager.VERTICAL, 
-                                                                    false);
-                                                                    
-        layoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
-            @Override
-            public int getSpanSize(int position) {
-                if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
-                    WidgetListAdapter adapter = (WidgetListAdapter) listRecyclerView.getAdapter();
-                    if (position >= 0 && position < adapter.getItemCount()) {
-                         try {
-                             BaseWidget widget = adapter.getWidgetAt(position);
-                             if (widget != null) {
-                                 BaseWidget.WidgetSize size = widget.getSize();
-                                 if (size == BaseWidget.WidgetSize.LARGE) return layoutManager.getSpanCount();
-                                 if (size == BaseWidget.WidgetSize.MEDIUM) return layoutManager.getSpanCount() > 1 ? 2 : 1;
-                             }
-                         } catch (Exception e) { }
-                    }
+        if (menuBtn != null) {
+            menuBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showWidgetControlDialog();
                 }
-                return 1;
+            });
+            // Fallback icon if needed, but let's assume XML has it or we can set it here
+            // ((android.widget.ImageButton)menuBtn).setImageResource(net.osmand.plus.R.drawable.ic_overflow_menu_white);
+        }
+
+        widgetManager = WidgetManager.getInstance(getContext());
+        
+        // Ensure LayoutManager is set before updating config
+        listRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
+        
+        listRecyclerView.post(new Runnable() {
+            @Override
+            public void run() {
+                 if (getView() != null) {
+                     updateLayoutConfiguration();
+                     applyWidgetsToView();
+                 }
             }
         });
         
-        listRecyclerView.setLayoutManager(layoutManager);
-        root.addView(listRecyclerView);
-        
-         listRecyclerView.post(() -> {
-              if (getView() != null) {
-                  updateLayoutConfiguration(); 
-                  applyWidgetsToView();
-              }
-         });
-        
-        applyWidgetsToView();
+        return root;
     }
-
-    // ... (onCreate, onCreateView, setupMenuButton, showWidgetControlDialog are unchanged) ...
 
     private void updateLayoutConfiguration() {
         if (listRecyclerView == null || !(listRecyclerView.getLayoutManager() instanceof GridLayoutManager)) return;

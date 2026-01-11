@@ -69,7 +69,7 @@
         android:layout_height="0dp"
         android:background="@android:color/transparent"
         android:visibility="gone"
-        android:paddingTop="32dp"
+        android:paddingTop="2dp"
         android:elevation="20dp"
         android:clickable="true"
         android:focusable="true"
