@@ -24,6 +24,8 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
 
     private final List<BaseWidget> widgets;
     private boolean isHorizontalScroll; // Replaces isPortrait
+    private final OnWidgetActionListener actionListener;
+    private int unitSize = 0;
 
     public WidgetListAdapter(List<BaseWidget> widgets, boolean isHorizontalScroll, OnWidgetActionListener actionListener) {
         this.widgets = widgets;
