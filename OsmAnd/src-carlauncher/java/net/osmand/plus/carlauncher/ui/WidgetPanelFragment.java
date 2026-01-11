@@ -276,6 +276,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.AntennaWidget(getContext(), app));
         }
         
+        widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.WeatherWidget(getContext(), app));
         widgetManager.addWidget(new NavigationWidget(getContext(), app));
         widgetManager.addWidget(new MusicWidget(getContext(), app));
         
