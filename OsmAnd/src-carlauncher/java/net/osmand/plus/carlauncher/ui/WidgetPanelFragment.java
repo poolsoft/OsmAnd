@@ -116,8 +116,25 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         
         menuBtn.setOnClickListener(v -> {
             android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), menuBtn);
+            
+            // 1. Edit Widgets
             popup.getMenu().add(0, 1, 0, "Widget Duzenle");
-            android.view.MenuItem pinItem = popup.getMenu().add(0, 2, 0, "Sabitle (Pinned)");
+            
+            // 2. Layout Mode Submenu
+            android.view.Menu layoutMenu = popup.getMenu().addSubMenu(0, 3, 1, "Görünüm");
+            android.view.MenuItem itemClassic = layoutMenu.add(0, 31, 0, "Klasik (Liste)");
+            android.view.MenuItem itemMetro = layoutMenu.add(0, 32, 1, "Metro (Izgara)");
+            
+            itemClassic.setCheckable(true);
+            itemMetro.setCheckable(true);
+            
+            CarLauncherSettings settings = new CarLauncherSettings(getContext());
+            boolean isMetro = settings.isMetroMode();
+            if (isMetro) itemMetro.setChecked(true);
+            else itemClassic.setChecked(true);
+            
+            // 3. Pin Toggle
+            android.view.MenuItem pinItem = popup.getMenu().add(0, 2, 2, "Sabitle (Pinned)");
             pinItem.setCheckable(true);
             
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
@@ -125,16 +142,31 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             pinItem.setChecked(isPinned);
             
             popup.setOnMenuItemClickListener(item -> {
-                if (item.getItemId() == 1) {
+                int id = item.getItemId();
+                if (id == 1) { // Edit
                     showWidgetControlDialog();
                     return true;
-                } else if (item.getItemId() == 2) {
+                } else if (id == 2) { // Pin
                     isPinned = !isPinned;
                     item.setChecked(isPinned);
                     android.preference.PreferenceManager.getDefaultSharedPreferences(getContext())
                         .edit().putBoolean(PREF_IS_PINNED, isPinned).apply();
                     if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
                         ((net.osmand.plus.activities.MapActivity) getActivity()).updateWidgetPanelMode();
+                    }
+                    return true;
+                } else if (id == 31) { // Classic
+                    if (settings.isMetroMode()) {
+                        settings.setMetroMode(false);
+                        updateLayoutConfiguration();
+                        applyWidgetsToView();
+                    }
+                    return true;
+                } else if (id == 32) { // Metro
+                    if (!settings.isMetroMode()) {
+                        settings.setMetroMode(true);
+                        updateLayoutConfiguration();
+                        applyWidgetsToView();
                     }
                     return true;
                 }
