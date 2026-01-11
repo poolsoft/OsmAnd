@@ -40,23 +40,13 @@
 
         <androidx.preference.SeekBarPreference
             android:key="widget_slot_count_portrait_v2"
-            android:title="Widget Sayısı (Dikey Mod)"
-            android:summary="Ekrana sığacak widget sayısı (Varsayılan: 3)"
+            android:title="Widget Sayısı (Ekrana Sığacak)"
+            android:summary="Dikey ekranda kaç widget görünecek (Varsayılan: 3)"
             android:defaultValue="3"
             android:max="6"
             app:min="1"
             app:showSeekBarValue="true"
             android:iconSpaceReserved="false" />
-
-        <androidx.preference.ListPreference
-            android:key="widget_scroll_portrait_v2"
-            android:title="Panel Yönü (Dikey Mod)"
-            android:summary="%s"
-            android:entries="@array/widget_orientation_entries"
-            android:entryValues="@array/widget_orientation_values"
-            android:defaultValue="0" 
-            android:iconSpaceReserved="false" />
-            <!-- Default 0 = Horizontal (Row) for Portrait Bottom Panel -->
 
     </androidx.preference.PreferenceCategory>
 
@@ -67,23 +57,13 @@
 
         <androidx.preference.SeekBarPreference
             android:key="widget_slot_count_landscape_v2"
-            android:title="Widget Sayısı (Yatay Mod)"
-            android:summary="Ekrana sığacak widget sayısı (Varsayılan: 3)"
+            android:title="Widget Sayısı (Ekrana Sığacak)"
+            android:summary="Yatay ekranda kaç widget görünecek (Varsayılan: 3)"
             android:defaultValue="3"
             android:max="6"
             app:min="1"
             app:showSeekBarValue="true"
             android:iconSpaceReserved="false" />
-
-        <androidx.preference.ListPreference
-            android:key="widget_scroll_landscape_v2"
-            android:title="Panel Yönü (Yatay Mod)"
-            android:summary="%s"
-            android:entries="@array/widget_orientation_entries"
-            android:entryValues="@array/widget_orientation_values"
-            android:defaultValue="1"
-            android:iconSpaceReserved="false" />
-            <!-- Default 1 = Vertical (Column) for Landscape Right Panel -->
 
     </androidx.preference.PreferenceCategory>
 

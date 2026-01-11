@@ -23,10 +23,6 @@ public class CarLauncherSettings {
     public static final String KEY_WIDGET_SLOTS_PORTRAIT = "widget_slot_count_portrait_v2";
     public static final String KEY_WIDGET_SLOTS_LANDSCAPE = "widget_slot_count_landscape_v2";
     
-    // Grid Scroll (Panel Orientation) Keys (NEW) - v2
-    public static final String KEY_WIDGET_SCROLL_PORTRAIT = "widget_scroll_portrait_v2";
-    public static final String KEY_WIDGET_SCROLL_LANDSCAPE = "widget_scroll_landscape_v2";
-
     // Appearance Keys
     public static final String KEY_STATUS_BAR = "car_launcher_status_bar";
     public static final String KEY_DARK_THEME = "car_launcher_dark_theme";
@@ -93,20 +89,6 @@ public class CarLauncherSettings {
     
     public void setLandscapeSlotCount(int count) {
         prefs.edit().putInt(KEY_WIDGET_SLOTS_LANDSCAPE, count).apply();
-    }
-    
-    // --- Grid Scroll Settings (Panel Orientation) ---
-    // 0 = Horizontal (Row), 1 = Vertical (Column)
-    public int getPortraitScrollDirection() {
-        try {
-            return Integer.parseInt(prefs.getString(KEY_WIDGET_SCROLL_PORTRAIT, "0")); // Default Horizontal (Bottom Panel)
-        } catch (Exception e) { return 0; }
-    }
-    
-    public int getLandscapeScrollDirection() {
-        try {
-            return Integer.parseInt(prefs.getString(KEY_WIDGET_SCROLL_LANDSCAPE, "1")); // Default Vertical (Right Panel)
-        } catch (Exception e) { return 1; }
     }
 
     // --- Appearance Settings ---
