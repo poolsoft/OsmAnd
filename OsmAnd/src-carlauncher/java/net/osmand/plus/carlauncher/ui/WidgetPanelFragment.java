@@ -232,7 +232,20 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             touchHelper.attachToRecyclerView(listRecyclerView);
         }
     }
-    
+
+    private void showWidgetControlDialog() {
+        WidgetControlDialog dialog = new WidgetControlDialog();
+        dialog.setWidgetManager(widgetManager);
+        dialog.setOnDismissCallback(new Runnable() {
+            @Override
+            public void run() {
+                // Refresh Panel when dialog closes (Order/Add/Remove)
+                applyWidgetsToView();
+            }
+        });
+        dialog.show(getChildFragmentManager(), "WidgetControlDialog");
+    }
+
     @Override
     public void onResume() {
         super.onResume();
