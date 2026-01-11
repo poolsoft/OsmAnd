@@ -103,17 +103,20 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         CarLauncherSettings settings = new CarLauncherSettings(getContext());
         int systemOrientation = getResources().getConfiguration().orientation;
         boolean isSystemPortrait = systemOrientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-        
-        int slots;
-        
-        if (isSystemPortrait) {
-            slots = settings.getPortraitSlotCount();
-        } else {
-            slots = settings.getLandscapeSlotCount();
-        }
-        
-        // Rule: Portrait -> Horizontal Scroll (isSystemPortrait=true)
         boolean isHorizontalScroll = isSystemPortrait;
+        
+        boolean isMetro = settings.isMetroMode();
+        int slots;
+
+        if (isMetro) {
+            slots = 4; // Metro Mode: Fixed 4-column Grid
+        } else {
+             if (isSystemPortrait) {
+                slots = settings.getPortraitSlotCount();
+            } else {
+                slots = settings.getLandscapeSlotCount();
+            }
+        }
 
         GridLayoutManager glm = (GridLayoutManager) listRecyclerView.getLayoutManager();
         boolean changed = false;
@@ -129,6 +132,31 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             changed = true;
         }
         
+        // Custom Span Lookup for Metro Mode
+        if (isMetro) {
+            glm.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+                @Override
+                public int getSpanSize(int position) {
+                    if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
+                        WidgetListAdapter adapter = (WidgetListAdapter) listRecyclerView.getAdapter();
+                        if (position < adapter.getItemCount()) {
+                            net.osmand.plus.carlauncher.widgets.BaseWidget w = adapter.getWidgetAt(position);
+                            if (w != null) {
+                                switch (w.getSize()) {
+                                    case MEDIUM: return 2; // 2x1 (Wide)
+                                    case LARGE: return 2;  // 2x2 (Big)
+                                    default: return 1;     // 1x1 (Small)
+                                }
+                            }
+                        }
+                    }
+                    return 1;
+                }
+            });
+        } else {
+            glm.setSpanSizeLookup(new GridLayoutManager.DefaultSpanSizeLookup());
+        }
+
         if (changed && listRecyclerView.getAdapter() != null) {
             listRecyclerView.getAdapter().notifyDataSetChanged();
         }
@@ -140,36 +168,54 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         if (listRecyclerView == null) return;
         
         CarLauncherSettings settings = new CarLauncherSettings(getContext());
+        boolean isMetro = settings.isMetroMode();
+        
         int systemOrientation = getResources().getConfiguration().orientation;
         boolean isSystemPortrait = systemOrientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-        
-        int slots;
-        
-        if (isSystemPortrait) {
-            slots = settings.getPortraitSlotCount();
-        } else {
-            slots = settings.getLandscapeSlotCount();
-        }
-
         boolean isHorizontalScroll = isSystemPortrait;
         
+        // Recalculate slots locally for unit math
+        int slots;
+        if (isMetro) {
+            slots = 4;
+        } else {
+             if (isSystemPortrait) slots = settings.getPortraitSlotCount();
+             else slots = settings.getLandscapeSlotCount();
+        }
+        if (slots <= 0) slots = 1;
+
         if (isHorizontalScroll) {
              // Horizontal Scroll: Width is flexible
              int width = getView() != null ? getView().getWidth() : 0;
              if (width > 0) {
-                 if (slots > 0) currentUnitSize = width / slots;
+                 currentUnitSize = width / slots;
              }
         } else {
-             // Vertical Scroll: Height is flexible
-             int height = listRecyclerView.getHeight();
-             if (height == 0 && getView() != null) height = getView().getHeight();
-             
-             if (height > 0) {
-                 if (slots > 0) currentUnitSize = height / slots;
+             // Vertical Scroll (Landscape)
+             if (isMetro) {
+                 // Metro Vertical: Unit should be based on WIDTH to form squares
+                 // Total Width / Slots (4) = Unit Width
+                 int width = getView() != null ? getView().getWidth() : 0;
+                 if (width > 0) {
+                     currentUnitSize = width / slots;
+                 }
              } else {
-                  currentUnitSize = (int) android.util.TypedValue.applyDimension(
-                     android.util.TypedValue.COMPLEX_UNIT_DIP, 85, getResources().getDisplayMetrics());
+                 // Classic Vertical: Unit based on HEIGHT (List style)
+                 int height = listRecyclerView.getHeight();
+                 if (height == 0 && getView() != null) height = getView().getHeight();
+                 
+                 if (height > 0) {
+                     currentUnitSize = height / slots;
+                 } else {
+                      currentUnitSize = (int) android.util.TypedValue.applyDimension(
+                         android.util.TypedValue.COMPLEX_UNIT_DIP, 85, getResources().getDisplayMetrics());
+                 }
              }
+        }
+        
+        if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
+            ((WidgetListAdapter) listRecyclerView.getAdapter()).setMetroMode(isMetro);
+            ((WidgetListAdapter) listRecyclerView.getAdapter()).setUnitSize(currentUnitSize, isHorizontalScroll);
         }
     }
     

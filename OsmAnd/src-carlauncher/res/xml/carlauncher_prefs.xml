@@ -30,6 +30,15 @@
             android:title="Widget Sıralaması"
             android:summary="Sürükle bırak ile düzenle"
             android:iconSpaceReserved="false" />
+            
+        <androidx.preference.ListPreference
+            android:key="widget_layout_mode_v2"
+            android:title="Widget Görünüm Modu"
+            android:summary="%s"
+            android:entries="@array/widget_layout_mode_entries"
+            android:entryValues="@array/widget_layout_mode_values"
+            android:defaultValue="classic"
+            android:iconSpaceReserved="false" />
 
     </androidx.preference.PreferenceCategory>
 

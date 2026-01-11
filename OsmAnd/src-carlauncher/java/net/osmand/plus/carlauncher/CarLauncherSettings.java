@@ -25,6 +25,9 @@ public class CarLauncherSettings {
     
     // Panel Resize Key
     public static final String KEY_WIDGET_PANEL_WIDTH_PERCENT = "widget_panel_width_percent";
+    
+    // Layout Mode (Classic/Metro)
+    public static final String KEY_WIDGET_LAYOUT_MODE = "widget_layout_mode_v2";
 
     // Appearance Keys
     public static final String KEY_STATUS_BAR = "car_launcher_status_bar";
@@ -100,6 +103,14 @@ public class CarLauncherSettings {
     
     public void setWidgetPanelWidthPercent(float percent) {
         prefs.edit().putFloat(KEY_WIDGET_PANEL_WIDTH_PERCENT, percent).apply();
+    }
+    
+    public boolean isMetroMode() {
+        return "metro".equals(prefs.getString(KEY_WIDGET_LAYOUT_MODE, "classic"));
+    }
+    
+    public void setMetroMode(boolean isMetro) {
+        prefs.edit().putString(KEY_WIDGET_LAYOUT_MODE, isMetro ? "metro" : "classic").apply();
     }
 
     // --- Appearance Settings ---

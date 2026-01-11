@@ -24,6 +24,7 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
 
     private final List<BaseWidget> widgets;
     private boolean isHorizontalScroll; // Replaces isPortrait
+    private boolean isMetroMode = false;
     private final OnWidgetActionListener actionListener;
     private int unitSize = 0;
 
@@ -43,6 +44,11 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
     public void setUnitSize(int unitSize, boolean isHorizontalScroll) {
         this.unitSize = unitSize;
         this.isHorizontalScroll = isHorizontalScroll;
+        notifyDataSetChanged();
+    }
+    
+    public void setMetroMode(boolean isMetro) {
+        this.isMetroMode = isMetro;
         notifyDataSetChanged();
     }
     
@@ -93,23 +99,49 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
             // Set Margins
             params.setMargins(margin, margin, margin, margin);
 
-            if (isHorizontalScroll) {
-                // Horizontal Scroll (e.g. Portrait Bottom): Width is Dynamic, Height is Full
-                params.width = unitSize - marginTotal; 
-                params.height = ViewGroup.LayoutParams.MATCH_PARENT;
-            } else {
-                // Vertical Scroll (e.g. Landscape Right): Height is Dynamic, Width is Full
-                int multiplier = 2; // Default Small
+            BaseWidget w = widgets.get(position);
+
+            if (isMetroMode) {
+                // METRO MODE: Tile Logic
+                // UnitSize is the side length of 1x1 tile.
+                // Small: 1x1
+                // Medium: 2x1 (Wide)
+                // Large: 2x2 (Big Square)
                 
-                BaseWidget w = widgets.get(position);
+                int widthMult = 1;
+                int heightMult = 1;
+                
                 switch (w.getSize()) {
-                    case SMALL: multiplier = 1; break; 
-                    case MEDIUM: multiplier = 2; break; 
-                    case LARGE: multiplier = 3; break; 
+                    case MEDIUM: widthMult = 2; heightMult = 1; break;
+                    case LARGE:  widthMult = 2; heightMult = 2; break;
+                    case SMALL: default: widthMult = 1; heightMult = 1; break;
                 }
                 
-                params.height = (unitSize * multiplier) - marginTotal;
-                params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                params.width = (unitSize * widthMult) - marginTotal;
+                params.height = (unitSize * heightMult) - marginTotal;
+                
+            } else {
+                // CLASSIC MODE
+                if (isHorizontalScroll) {
+                    // Horizontal Scroll (e.g. Portrait Bottom): Width is Dynamic, Height is Full
+                    params.width = unitSize - marginTotal; 
+                    params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                } else {
+                    // Vertical Scroll (e.g. Landscape Right): Height is Dynamic, Width is Full
+                    int multiplier = 2; // Default Small (?)
+                    // Wait, previous logic:
+                    // Small = 1x height? Logic below said:
+                    // case SMALL: multiplier=1; 
+                    
+                    switch (w.getSize()) {
+                        case SMALL: multiplier = 1; break; 
+                        case MEDIUM: multiplier = 2; break; 
+                        case LARGE: multiplier = 3; break; 
+                    }
+                    
+                    params.height = (unitSize * multiplier) - marginTotal;
+                    params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                }
             }
             
             holder.itemView.setLayoutParams(params);
