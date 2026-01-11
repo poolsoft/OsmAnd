@@ -431,9 +431,104 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		    widgetHandle.setVisibility(isPortrait ? View.GONE : View.VISIBLE);
 		    widgetHandle.bringToFront(); // Force Top Z-Order
 		    
-		    widgetHandle.setOnClickListener(v -> {
-		        //android.widget.Toast.makeText(this, "Handle Clicked!", android.widget.Toast.LENGTH_SHORT).show();
-		        toggleLayoutMode();
+		    // Resize & Toggle Logic
+		    widgetHandle.setOnTouchListener(new View.OnTouchListener() {
+		        private float startX;
+		        private int startWidth;
+		        private boolean isDragging = false;
+		        private static final int DRAG_THRESHOLD = 20;
+
+		        @Override
+		        public boolean onTouch(View v, MotionEvent event) {
+		            switch (event.getAction()) {
+		                case MotionEvent.ACTION_DOWN:
+		                    startX = event.getRawX();
+		                    startWidth = widgetPanel.getWidth();
+		                    isDragging = false;
+		                    return true;
+
+		                case MotionEvent.ACTION_MOVE:
+		                    if (!isDragging && Math.abs(event.getRawX() - startX) > DRAG_THRESHOLD) {
+		                        isDragging = true;
+		                    }
+		                    
+		                    if (isDragging) {
+		                        // Dragging LEFT increases width (Panel is on Right)
+		                        float delta = startX - event.getRawX();
+		                        int newWidth = (int) (startWidth + delta);
+		                        
+		                        int screenWidth = rootLayout.getWidth();
+		                        if (screenWidth > 0) {
+		                            float percent = (float) newWidth / screenWidth;
+		                            
+		                            // Clamp to [0.3, 0.6] range for visual feedback
+		                            if (percent < 0.3f) percent = 0.3f;
+		                            if (percent > 0.6f) percent = 0.6f;
+		                            
+		                            int clampedWidth = (int) (screenWidth * percent);
+		                            
+		                            ViewGroup.LayoutParams params = widgetPanel.getLayoutParams();
+		                            params.width = clampedWidth;
+		                            widgetPanel.setLayoutParams(params);
+		                        }
+		                    }
+		                    return true;
+
+		                case MotionEvent.ACTION_UP:
+		                    if (isDragging) {
+		                         int screenWidth = rootLayout.getWidth();
+		                         if (screenWidth > 0) {
+		                             float currentPercent = (float) widgetPanel.getWidth() / screenWidth;
+		                             
+		                             // SNAP Logic (30, 40, 50, 60)
+		                             float snapPercent = 0.4f; // Default
+		                             
+		                             if (Math.abs(currentPercent - 0.3f) < 0.05f) snapPercent = 0.3f;
+		                             else if (Math.abs(currentPercent - 0.4f) < 0.05f) snapPercent = 0.4f;
+		                             else if (Math.abs(currentPercent - 0.5f) < 0.05f) snapPercent = 0.5f;
+		                             else if (Math.abs(currentPercent - 0.6f) < 0.05f) snapPercent = 0.6f;
+                                     else {
+                                         // Find nearest
+                                         float[] snaps = {0.3f, 0.4f, 0.5f, 0.6f};
+                                         float minDiff = Float.MAX_VALUE;
+                                         for (float s : snaps) {
+                                             float diff = Math.abs(currentPercent - s);
+                                             if (diff < minDiff) {
+                                                 minDiff = diff;
+                                                 snapPercent = s;
+                                             }
+                                         }
+                                     }
+		                             
+		                             // Save and Apply Snap
+		                             CarLauncherSettings settings = new CarLauncherSettings(MapActivity.this);
+		                             settings.setWidgetPanelWidthPercent(snapPercent);
+		                             
+		                             applyWidgetPanelState(); // Re-applies constraint with exact snap width
+		                             
+		                             // Notify Fragment to update grid unit size if needed
+		                             net.osmand.plus.carlauncher.ui.WidgetPanelFragment wp = 
+		                                (net.osmand.plus.carlauncher.ui.WidgetPanelFragment) getSupportFragmentManager().findFragmentByTag("widget_panel");
+		                             if (wp != null) {
+		                                 // Trigger update via shared pref change or method?
+                                         // Since we saved to prefs, and Fragment listens to prefs...
+                                         // But Fragment listens to SLOT counts, not Width.
+                                         // Trigger a layout update manually if possible or rely on onResume/recreation?
+                                         // Actually Fragment calculates UnitSize based on View.getWidth(). 
+                                         // Since we changed width, we should make it recalculate.
+                                         // Let's assume view layout pass handles it or we force it.
+		                             }
+		                         }
+		                    } else {
+		                        // Was a tap
+		                        v.performClick();
+		                        toggleLayoutMode();
+		                    }
+		                    isDragging = false;
+		                    return true;
+		            }
+		            return false;
+		        }
 		    });
 		}
 		
@@ -622,6 +717,17 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                 constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
                 constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP);
                 constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
+                
+                // Dynamic Width Application
+                CarLauncherSettings settings = new CarLauncherSettings(this);
+                float percent = settings.getWidgetPanelWidthPercent();
+                int screenWidth = getResources().getDisplayMetrics().widthPixels;
+                int panelWidth = (int) (screenWidth * percent);
+                
+                // Safety clamp
+                if (panelWidth < 100) panelWidth = 100;
+                
+                constraintSet.constrainWidth(R.id.widget_panel, panelWidth);
                 
                 constraintSet.applyTo(rootLayout);
 

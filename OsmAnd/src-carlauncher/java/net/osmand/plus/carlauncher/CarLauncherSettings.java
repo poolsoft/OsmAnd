@@ -23,6 +23,9 @@ public class CarLauncherSettings {
     public static final String KEY_WIDGET_SLOTS_PORTRAIT = "widget_slot_count_portrait_v2";
     public static final String KEY_WIDGET_SLOTS_LANDSCAPE = "widget_slot_count_landscape_v2";
     
+    // Panel Resize Key
+    public static final String KEY_WIDGET_PANEL_WIDTH_PERCENT = "widget_panel_width_percent";
+
     // Appearance Keys
     public static final String KEY_STATUS_BAR = "car_launcher_status_bar";
     public static final String KEY_DARK_THEME = "car_launcher_dark_theme";
@@ -89,6 +92,14 @@ public class CarLauncherSettings {
     
     public void setLandscapeSlotCount(int count) {
         prefs.edit().putInt(KEY_WIDGET_SLOTS_LANDSCAPE, count).apply();
+    }
+    
+    public float getWidgetPanelWidthPercent() {
+        return prefs.getFloat(KEY_WIDGET_PANEL_WIDTH_PERCENT, 0.4f); // Default 40%
+    }
+    
+    public void setWidgetPanelWidthPercent(float percent) {
+        prefs.edit().putFloat(KEY_WIDGET_PANEL_WIDTH_PERCENT, percent).apply();
     }
 
     // --- Appearance Settings ---
