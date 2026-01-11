@@ -80,7 +80,7 @@ public class CarLauncherSettings {
 
     // --- Grid Slot Settings ---
     public int getPortraitSlotCount() {
-        return prefs.getInt(KEY_WIDGET_SLOTS_PORTRAIT, 1); // Default 1 (Single Row)
+        return prefs.getInt(KEY_WIDGET_SLOTS_PORTRAIT, 3); // Default 3 (Standard Density)
     }
 
     public void setPortraitSlotCount(int count) {
@@ -88,7 +88,7 @@ public class CarLauncherSettings {
     }
     
     public int getLandscapeSlotCount() {
-        return prefs.getInt(KEY_WIDGET_SLOTS_LANDSCAPE, 1); // Default 1 (Single Column for Right Panel)
+        return prefs.getInt(KEY_WIDGET_SLOTS_LANDSCAPE, 3); // Default 3
     }
     
     public void setLandscapeSlotCount(int count) {

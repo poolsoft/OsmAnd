@@ -41,8 +41,8 @@
         <androidx.preference.SeekBarPreference
             android:key="widget_slot_count_portrait_v2"
             android:title="Widget Sayısı (Dikey Mod)"
-            android:summary="Ekrana sığacak widget sayısı (Varsayılan: 1)"
-            android:defaultValue="1"
+            android:summary="Ekrana sığacak widget sayısı (Varsayılan: 3)"
+            android:defaultValue="3"
             android:max="6"
             app:min="1"
             app:showSeekBarValue="true"
@@ -68,8 +68,8 @@
         <androidx.preference.SeekBarPreference
             android:key="widget_slot_count_landscape_v2"
             android:title="Widget Sayısı (Yatay Mod)"
-            android:summary="Ekrana sığacak widget sayısı (Varsayılan: 1)"
-            android:defaultValue="1"
+            android:summary="Ekrana sığacak widget sayısı (Varsayılan: 3)"
+            android:defaultValue="3"
             android:max="6"
             app:min="1"
             app:showSeekBarValue="true"
