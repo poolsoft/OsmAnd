@@ -66,69 +66,53 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        FrameLayout contentFrame = new FrameLayout(getContext());
-        // Bg might be null if resource missing, using a safe fallback or attempting resource
+        // XML Layout Implementation (Engineering Recommendation)
+        View root;
         try {
-             contentFrame.setBackgroundResource(net.osmand.plus.R.drawable.bg_panel_modern);
+            root = inflater.inflate(net.osmand.plus.R.layout.fragment_widget_panel, container, false);
         } catch (Exception e) {
-             contentFrame.setBackgroundColor(0xFF111111);
+            // Fallback if XML missing in rare case
+            return createProgrammaticView();
         }
+
+        listRecyclerView = root.findViewById(net.osmand.plus.R.id.widget_recycler_view);
+        View menuBtn = root.findViewById(net.osmand.plus.R.id.btn_widget_menu);
         
-        contentFrame.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        widgetContentFrame = root;
+        rootContent = (ViewGroup) root;
+
+        initListLayout();
+        setupMenuButton(menuBtn);
         
-        widgetContentFrame = contentFrame;
-        rootContent = contentFrame;
-        
-        initListLayout(contentFrame);
-        setupMenuButton(contentFrame);
-        
-        return contentFrame;
+        return root;
     }
     
-    private void initListLayout(ViewGroup root) {
+    // Fallback Method (just in case)
+    private View createProgrammaticView() {
+        FrameLayout contentFrame = new FrameLayout(getContext());
+        contentFrame.setBackgroundColor(0xFF111111);
         listRecyclerView = new RecyclerView(getContext());
-        listRecyclerView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        listRecyclerView.setId(net.osmand.plus.R.id.widget_recycler_view); // Keep ID if useful or remove
-        listRecyclerView.setClipToPadding(false);
-        // Padding for menu button overlap
-        int paddingTop = (int) android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 48, getResources().getDisplayMetrics());
-        listRecyclerView.setPadding(0, paddingTop, 0, 0); 
+        contentFrame.addView(listRecyclerView);
+        return contentFrame;
+    }
+
+    private void initListLayout() {
+        if (listRecyclerView == null) return;
         
-        // Initial Layout Manager (Grid)
+        // Layout Manager (Grid)
         listRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
-        root.addView(listRecyclerView);
         
+        // Post configuration update
         listRecyclerView.post(() -> {
               if (getView() != null) {
                   updateLayoutConfiguration(); 
                   applyWidgetsToView();
               }
          });
-         
-        // Initial apply (will be refreshed by post)
     }
 
-    private void setupMenuButton(ViewGroup root) {
-        android.widget.ImageView menuBtn = new android.widget.ImageView(getContext());
-        menuBtn.setImageResource(net.osmand.plus.R.drawable.ic_overflow_menu_white); // Use known working icon
-        
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            menuBtn.setImageTintList(android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
-            android.util.TypedValue outValue = new android.util.TypedValue();
-            getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true);
-            menuBtn.setBackgroundResource(outValue.resourceId);
-        }
-        
-        int p = (int) android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 16, getResources().getDisplayMetrics());
-        menuBtn.setPadding(p, p, p, p);
-        
-        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(
-             ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
-        int m = (int) android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics());
-        params.setMargins(m, m, m, m);
-        
-        root.addView(menuBtn, params);
+    private void setupMenuButton(View menuBtn) {
+        if (menuBtn == null) return;
         
         menuBtn.setOnClickListener(v -> {
             android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), menuBtn);
