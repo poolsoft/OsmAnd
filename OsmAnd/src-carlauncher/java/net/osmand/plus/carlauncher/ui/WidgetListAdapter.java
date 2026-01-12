@@ -73,9 +73,6 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
 
     @Override
     public int getItemViewType(int position) {
-        if (position == widgets.size()) {
-            return VIEW_TYPE_ADD;
-        }
         return VIEW_TYPE_WIDGET;
     }
 
@@ -104,23 +101,18 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
         }
         params.setMargins(margin, margin, margin, margin);
 
-        boolean isAddButton = getItemViewType(position) == VIEW_TYPE_ADD;
-        
         if (unitSize > 0) {
              if (isMetroMode) {
                 // METRO MODE
                 int widthMult = 1;
                 int heightMult = 1;
                 
-                if (!isAddButton) {
-                    BaseWidget w = widgets.get(position);
-                    switch (w.getSize()) {
-                        case MEDIUM: widthMult = 2; heightMult = 1; break;
-                        case LARGE:  widthMult = 2; heightMult = 2; break;
-                        default: widthMult = 1; heightMult = 1; break;
-                    }
+                BaseWidget w = widgets.get(position);
+                switch (w.getSize()) {
+                    case MEDIUM: widthMult = 2; heightMult = 1; break;
+                    case LARGE:  widthMult = 2; heightMult = 2; break;
+                    default: widthMult = 1; heightMult = 1; break;
                 }
-                // Add Button is always 1x1
                 
                 params.width = (unitSize * widthMult) - marginTotal;
                 params.height = (unitSize * heightMult) - marginTotal;
@@ -132,20 +124,14 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
                     params.height = ViewGroup.LayoutParams.MATCH_PARENT;
                 } else {
                      int multiplier = 1;
-                     if (!isAddButton) { // Add button always 1x in Classic Vertical
-                         // Wait, Classic Vertical (Landscape) -> Height varies? 
-                         // Before we used Multiplier logic for widget size
-                         // Let's stick to simple 1x for Add Button
-                         multiplier = 1; // Simplify Add Button
-                         
-                         // For Widgets:
-                         BaseWidget w = widgets.get(position);
-                         switch (w.getSize()) {
-                            case MEDIUM: multiplier = 2; break; 
-                            case LARGE: multiplier = 3; break; 
-                            default: multiplier = 1; break;
-                        }
-                     }
+                     // Classic Vertical (Landscape) typically 1x height
+                     BaseWidget w = widgets.get(position);
+                     switch (w.getSize()) {
+                        case MEDIUM: multiplier = 2; break; 
+                        case LARGE: multiplier = 3; break; 
+                        default: multiplier = 1; break;
+                    }
+                     
                      params.height = (unitSize * multiplier) - marginTotal;
                      params.width = ViewGroup.LayoutParams.MATCH_PARENT;
                 }
@@ -156,48 +142,27 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
         // --- 2. Content Binding ---
         holder.container.removeAllViews();
         
-        if (isAddButton) {
-            // Create Add Button View
-            ImageView iv = new ImageView(holder.itemView.getContext());
-            iv.setImageResource(net.osmand.plus.R.drawable.ic_action_plus); // Standard Plus Icon
-            iv.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-            iv.setBackgroundColor(0x80000000); // Semi-transparent black background
-            
-            // Padding
-            int p = dpToPx(holder.itemView.getContext(), 16);
-            iv.setPadding(p, p, p, p);
-            
-            holder.container.addView(iv, new FrameLayout.LayoutParams(
+        // Bind Widget
+        BaseWidget widget = widgets.get(position);
+        View widgetView = widget.getRootView();
+        if (widgetView == null) widgetView = widget.createView();
+        
+        if (widgetView != null) {
+            if (widgetView.getParent() != null) ((ViewGroup)widgetView.getParent()).removeView(widgetView);
+            holder.container.addView(widgetView, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            
-            holder.itemView.setOnClickListener(v -> {
-                if (actionListener != null) actionListener.onAddWidgetClicked();
-            });
-            holder.itemView.setOnLongClickListener(null);
-            
-        } else {
-            // Bind Widget
-            BaseWidget widget = widgets.get(position);
-            View widgetView = widget.getRootView();
-            if (widgetView == null) widgetView = widget.createView();
-            
-            if (widgetView != null) {
-                if (widgetView.getParent() != null) ((ViewGroup)widgetView.getParent()).removeView(widgetView);
-                holder.container.addView(widgetView, new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            }
-            
-            holder.itemView.setOnClickListener(null); // Widgets handle their own clicks usually or we can add edit mode
-            holder.itemView.setOnLongClickListener(v -> {
-                if (actionListener != null) actionListener.onWidgetLongClicked(v, widget);
-                return true;
-            });
         }
+        
+        holder.itemView.setOnClickListener(null); 
+        holder.itemView.setOnLongClickListener(v -> {
+            if (actionListener != null) actionListener.onWidgetLongClicked(v, widget);
+            return true;
+        });
     }
 
     @Override
     public int getItemCount() {
-        return widgets.size() + 1; // +1 for Add Button 
+        return widgets.size();
     }
     
     private int dpToPx(android.content.Context context, int dp) {

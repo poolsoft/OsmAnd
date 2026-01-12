@@ -289,16 +289,11 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                      currentUnitSize = width / slots;
                  }
              } else {
-                 // Classic Vertical: Unit based on HEIGHT (List style)
-                 int height = listRecyclerView.getHeight();
-                 if (height == 0 && getView() != null) height = getView().getHeight();
-                 
-                 if (height > 0) {
-                     currentUnitSize = height / slots;
-                 } else {
-                      currentUnitSize = (int) android.util.TypedValue.applyDimension(
-                         android.util.TypedValue.COMPLEX_UNIT_DIP, 85, getResources().getDisplayMetrics());
-                 }
+                 // Classic Vertical: Unit based on HEIGHT (List style) => Fixed Height item
+                 // Previously we tried to fit N slots, which caused squashing.
+                 // Now we enforce standard height so it scrolls.
+                 currentUnitSize = (int) android.util.TypedValue.applyDimension(
+                      android.util.TypedValue.COMPLEX_UNIT_DIP, 85, getResources().getDisplayMetrics());
              }
         }
         
