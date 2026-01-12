@@ -449,7 +449,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                         isDragging = true; // Treating move as drag
                         // Visual Feedback: Move Mode (Red/Accent)
                         widgetHandle.setColorFilter(0xFFFF4081, android.graphics.PorterDuff.Mode.SRC_IN); 
-                        widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_action_gpx_dark); // Placeholder for "Move" or Keep Check
+                        widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_action_move); // Fixed Icon
                         
                         // Haptic Feedback
                         widgetHandle.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
@@ -698,6 +698,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
     private void applyWidgetPanelState() {
         if (rootLayout == null || widgetPanel == null) return;
         
+        CarLauncherSettings settings = new CarLauncherSettings(this); // Moved to top
         android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
         boolean isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
         boolean isPortrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
@@ -762,7 +763,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                 constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
                 
                 // Dynamic Width Application
-                CarLauncherSettings settings = new CarLauncherSettings(this);
                 float percent = settings.getWidgetPanelWidthPercent();
                 int screenWidth = getResources().getDisplayMetrics().widthPixels;
                 int panelWidth = (int) (screenWidth * percent);
