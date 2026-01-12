@@ -21,6 +21,7 @@ public class WidgetRegistry {
     public static final String TYPE_CLOCK = "clock";
     public static final String TYPE_CLOCK_CLASSIC = "classic";
     public static final String TYPE_ANTENNA = "antenna";
+    public static final String TYPE_WEATHER = "weather";
 
     // Widget Yaratma Arayuzu (Lambda icin)
     public interface WidgetCreator {
@@ -52,6 +53,7 @@ public class WidgetRegistry {
         register(TYPE_CLOCK, "Dijital Saat (M3)", Material3ClockWidget::new);
         register(TYPE_CLOCK_CLASSIC, "Klasik Saat", ClockWidget::new);
         register(TYPE_ANTENNA, "Rakım (Anten)", AntennaWidget::new);
+        register(TYPE_WEATHER, "Hava Durumu", WeatherWidget::new);
     }
 
     /**
