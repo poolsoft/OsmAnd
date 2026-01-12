@@ -154,10 +154,11 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
         }
         
         holder.itemView.setOnClickListener(null); 
-        holder.itemView.setOnLongClickListener(v -> {
-            if (actionListener != null) actionListener.onWidgetLongClicked(v, widget);
-            return true;
-        });
+        holder.itemView.setOnClickListener(null); 
+        // holder.itemView.setOnLongClickListener(v -> {
+        //    if (actionListener != null) actionListener.onWidgetLongClicked(v, widget);
+        //    return true;
+        // });
     }
 
     @Override
