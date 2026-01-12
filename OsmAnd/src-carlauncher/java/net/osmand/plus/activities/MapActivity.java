@@ -108,6 +108,7 @@ import net.osmand.plus.routing.IRouteInformationListener;
 import net.osmand.plus.routing.RouteCalculationProgressListener;
 import net.osmand.plus.routing.RouteService;
 import net.osmand.plus.carlauncher.widgets.weather.WeatherManager;
+import net.osmand.plus.OsmAndLocationProvider;
 import net.osmand.Location;
 import net.osmand.plus.routing.RoutingHelper;
 import net.osmand.plus.routing.TransportRoutingHelper.TransportRouteCalculationProgressCallback;
@@ -1506,13 +1507,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         }
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        if (app != null && app.getLocationProvider() != null && weatherLocationListener != null) {
-            app.getLocationProvider().removeLocationListener(weatherLocationListener);
-        }
-    }
+
 
 
 
@@ -1701,6 +1696,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	protected void onStop() {
 		app.getNotificationHelper().removeNotifications(true);
+        if (app != null && app.getLocationProvider() != null && weatherLocationListener != null) {
+            app.getLocationProvider().removeLocationListener(weatherLocationListener);
+        }
 		if (pendingPause) {
 			onPauseActivity();
 		}
