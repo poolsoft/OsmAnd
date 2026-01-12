@@ -131,4 +131,20 @@ public abstract class BaseWidget {
     public View getRootView() {
         return rootView;
     }
+
+    /**
+     * Widget'in ayarlanabilir olup olmadığını belirtir.
+     * @return Varsayılan olarak false.
+     */
+    public boolean isConfigurable() {
+        return false;
+    }
+
+    /**
+     * Widget ayar ekranını açar.
+     * @param fragmentManager Dialog göstermek için gerekli.
+     */
+    public void openConfig(androidx.fragment.app.FragmentManager fragmentManager) {
+        // Varsayılan boş implementation
+    }
 }

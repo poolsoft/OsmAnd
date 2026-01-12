@@ -79,7 +79,7 @@ public class WidgetControlAdapter extends RecyclerView.Adapter<WidgetControlAdap
         });
 
         // Config
-        if (widget.getId().startsWith("obd") || widget.getId().contains("vehicle")) {
+        if (widget.isConfigurable()) {
             holder.btnConfig.setVisibility(View.VISIBLE);
             holder.btnConfig.setOnClickListener(v -> {
                 if (listener != null) listener.onConfigClicked(widget, holder.getAdapterPosition());

@@ -94,10 +94,8 @@ public class WidgetControlDialog extends DialogFragment {
 
             @Override
             public void onConfigClicked(BaseWidget widget, int position) {
-                if (widget instanceof OBDWidget) {
-                    CarLauncherSettings settings = new CarLauncherSettings(getContext());
-                    VehicleDataConfigDialog dialog = new VehicleDataConfigDialog(widget, settings);
-                    dialog.show(getParentFragmentManager(), "VehicleConfig");
+                if (widget.isConfigurable()) {
+                    widget.openConfig(getParentFragmentManager());
                 }
             }
         });

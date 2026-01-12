@@ -131,6 +131,17 @@ public class OBDWidget extends BaseWidget {
         }
     }
 
+    @Override
+    public boolean isConfigurable() {
+        return true;
+    }
+
+    @Override
+    public void openConfig(androidx.fragment.app.FragmentManager fragmentManager) {
+        net.osmand.plus.carlauncher.ui.VehicleDataConfigDialog dialog = new net.osmand.plus.carlauncher.ui.VehicleDataConfigDialog(this, settings);
+        dialog.show(fragmentManager, "VehicleConfig");
+    }
+
     private void buildDynamicLayout(List<String> items) {
         // Simple Vertical Stack for now, or Split if 2+ items?
         // Let's do:
