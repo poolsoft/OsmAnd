@@ -433,104 +433,143 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		    widgetHandle.bringToFront(); // Force Top Z-Order
 		    
 		    // Resize & Toggle Logic
-		    widgetHandle.setOnTouchListener(new View.OnTouchListener() {
-		        private float startX;
-		        private int startWidth;
-		        private boolean isDragging = false;
-		        private static final int DRAG_THRESHOLD = 20;
+            widgetHandle.setOnTouchListener(new View.OnTouchListener() {
+                private float startX, startY;
+                private int startWidth;
+                private boolean isDragging = false;
+                private boolean isMoveMode = false;
+                private static final int DRAG_THRESHOLD = 20;
+                
+                // Long Press Logic
+                private final android.os.Handler handler = new android.os.Handler();
+                private final Runnable longPressRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        isMoveMode = true;
+                        isDragging = true; // Treating move as drag
+                        // Visual Feedback: Move Mode (Red/Accent)
+                        widgetHandle.setColorFilter(0xFFFF4081, android.graphics.PorterDuff.Mode.SRC_IN); 
+                        widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_action_gpx_dark); // Placeholder for "Move" or Keep Check
+                        
+                        // Haptic Feedback
+                        widgetHandle.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+                    }
+                };
 
-		        @Override
-		        public boolean onTouch(View v, MotionEvent event) {
-		            switch (event.getAction()) {
-		                case MotionEvent.ACTION_DOWN:
-		                    startX = event.getRawX();
-		                    startWidth = widgetPanel.getWidth();
-		                    isDragging = false;
-		                    return true;
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    float rawY = event.getRawY();
+                    int screenHeight = rootLayout.getHeight();
+                    
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            startX = event.getRawX();
+                            startY = rawY;
+                            startWidth = widgetPanel.getWidth();
+                            isDragging = false;
+                            isMoveMode = false;
+                            
+                            // Start Long Press Timer
+                            handler.postDelayed(longPressRunnable, 500);
+                            return true;
 
-		                case MotionEvent.ACTION_MOVE:
-		                    if (!isDragging && Math.abs(event.getRawX() - startX) > DRAG_THRESHOLD) {
-		                        isDragging = true;
-		                    }
-		                    
-		                    if (isDragging) {
-		                        // Dragging LEFT increases width (Panel is on Right)
-		                        float delta = startX - event.getRawX();
-		                        int newWidth = (int) (startWidth + delta);
-		                        
-		                        int screenWidth = rootLayout.getWidth();
-		                        if (screenWidth > 0) {
-		                            float percent = (float) newWidth / screenWidth;
-		                            
-		                            // Clamp to [0.3, 0.6] range for visual feedback
-		                            if (percent < 0.3f) percent = 0.3f;
-		                            if (percent > 0.6f) percent = 0.6f;
-		                            
-		                            int clampedWidth = (int) (screenWidth * percent);
-		                            
-		                            ViewGroup.LayoutParams params = widgetPanel.getLayoutParams();
-		                            params.width = clampedWidth;
-		                            widgetPanel.setLayoutParams(params);
-		                        }
-		                    }
-		                    return true;
+                        case MotionEvent.ACTION_MOVE:
+                             float diffX = Math.abs(event.getRawX() - startX);
+                             float diffY = Math.abs(rawY - startY);
+                             
+                             if (!isDragging) {
+                                 if (diffX > DRAG_THRESHOLD && !isMoveMode) {
+                                     // Horizontal Start -> Resize Mode
+                                     isDragging = true;
+                                     handler.removeCallbacks(longPressRunnable); // Cancel Move Mode
+                                 } else if (isMoveMode) {
+                                     isDragging = true;
+                                 }
+                             }
+                            
+                            if (isDragging) {
+                                if (isMoveMode) {
+                                    // VERTICAL MOVE (Bias Update)
+                                    if (screenHeight > 0) {
+                                        float newBias = rawY / (float) screenHeight;
+                                        if (newBias < 0.1f) newBias = 0.1f;
+                                        if (newBias > 0.9f) newBias = 0.9f;
+                                        
+                                        // Update Constraint Bias directly
+                                        androidx.constraintlayout.widget.ConstraintLayout.LayoutParams params = 
+                                            (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) v.getLayoutParams();
+                                        params.verticalBias = newBias;
+                                        v.setLayoutParams(params);
+                                    }
+                                } else {
+                                    // HORIZONTAL RESIZE (Existing Logic)
+                                    float delta = startX - event.getRawX();
+                                    int newWidth = (int) (startWidth + delta);
+                                    int screenWidth = rootLayout.getWidth();
+                                    
+                                    if (screenWidth > 0) {
+                                        float percent = (float) newWidth / screenWidth;
+                                        if (percent < 0.3f) percent = 0.3f;
+                                        if (percent > 0.6f) percent = 0.6f;
+                                        
+                                        int clampedWidth = (int) (screenWidth * percent);
+                                        ViewGroup.LayoutParams params = widgetPanel.getLayoutParams();
+                                        params.width = clampedWidth;
+                                        widgetPanel.setLayoutParams(params);
+                                    }
+                                }
+                            } else {
+                                // Still waiting for threshold or Long Press
+                                if (diffX > DRAG_THRESHOLD || diffY > DRAG_THRESHOLD) {
+                                     handler.removeCallbacks(longPressRunnable); // Moved too much before long press
+                                }
+                            }
+                            return true;
 
-		                case MotionEvent.ACTION_UP:
-		                    if (isDragging) {
-		                         int screenWidth = rootLayout.getWidth();
-		                         if (screenWidth > 0) {
-		                             float currentPercent = (float) widgetPanel.getWidth() / screenWidth;
-		                             
-		                             // SNAP Logic (30, 40, 50, 60)
-		                             float snapPercent = 0.4f; // Default
-		                             
-		                             if (Math.abs(currentPercent - 0.3f) < 0.05f) snapPercent = 0.3f;
-		                             else if (Math.abs(currentPercent - 0.4f) < 0.05f) snapPercent = 0.4f;
-		                             else if (Math.abs(currentPercent - 0.5f) < 0.05f) snapPercent = 0.5f;
-		                             else if (Math.abs(currentPercent - 0.6f) < 0.05f) snapPercent = 0.6f;
-                                     else {
-                                         // Find nearest
-                                         float[] snaps = {0.3f, 0.4f, 0.5f, 0.6f};
-                                         float minDiff = Float.MAX_VALUE;
-                                         for (float s : snaps) {
-                                             float diff = Math.abs(currentPercent - s);
-                                             if (diff < minDiff) {
-                                                 minDiff = diff;
-                                                 snapPercent = s;
-                                             }
-                                         }
+                        case MotionEvent.ACTION_UP:
+                        case MotionEvent.ACTION_CANCEL:
+                            handler.removeCallbacks(longPressRunnable);
+                            
+                            if (isMoveMode) {
+                                // Save Vertical Bias
+                                androidx.constraintlayout.widget.ConstraintLayout.LayoutParams params = 
+                                    (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) v.getLayoutParams();
+                                CarLauncherSettings settings = new CarLauncherSettings(MapActivity.this);
+                                settings.setWidgetHandleVerticalBias(params.verticalBias);
+                                
+                                // Reset Visuals
+                                widgetHandle.clearColorFilter();
+                                applyWidgetPanelState(); // Restore icon based on open/close state
+                            } else if (isDragging) {
+                                // Save Width (Existing Snap Logic)
+                                int screenWidth = rootLayout.getWidth();
+                                if (screenWidth > 0) {
+                                     float currentPercent = (float) widgetPanel.getWidth() / screenWidth;
+                                     float snapPercent = 0.4f;
+                                     float[] snaps = {0.3f, 0.4f, 0.5f, 0.6f};
+                                     float minDiff = Float.MAX_VALUE;
+                                     for (float s : snaps) {
+                                         float diff = Math.abs(currentPercent - s);
+                                         if (diff < minDiff) { minDiff = diff; snapPercent = s; }
                                      }
-		                             
-		                             // Save and Apply Snap
-		                             CarLauncherSettings settings = new CarLauncherSettings(MapActivity.this);
-		                             settings.setWidgetPanelWidthPercent(snapPercent);
-		                             
-		                             applyWidgetPanelState(); // Re-applies constraint with exact snap width
-		                             
-		                             // Notify Fragment to update grid unit size if needed
-		                             net.osmand.plus.carlauncher.ui.WidgetPanelFragment wp = 
-		                                (net.osmand.plus.carlauncher.ui.WidgetPanelFragment) getSupportFragmentManager().findFragmentByTag("widget_panel");
-		                             if (wp != null) {
-		                                 // Trigger update via shared pref change or method?
-                                         // Since we saved to prefs, and Fragment listens to prefs...
-                                         // But Fragment listens to SLOT counts, not Width.
-                                         // Trigger a layout update manually if possible or rely on onResume/recreation?
-                                         // Actually Fragment calculates UnitSize based on View.getWidth(). 
-                                         // Since we changed width, we should make it recalculate.
-                                         // Let's assume view layout pass handles it or we force it.
-		                             }
-		                         }
-		                    } else {
-		                        // Was a tap
-		                        v.performClick();
-		                        toggleLayoutMode();
-		                    }
-		                    isDragging = false;
-		                    return true;
-		            }
-		            return false;
-		        }
-		    });
+                                     CarLauncherSettings settings = new CarLauncherSettings(MapActivity.this);
+                                     settings.setWidgetPanelWidthPercent(snapPercent);
+                                     applyWidgetPanelState();
+                                 }
+                            } else {
+                                // Tap -> Toggle
+                                v.performClick();
+                                toggleLayoutMode();
+                            }
+                            
+                            isDragging = false;
+                            isMoveMode = false;
+                            widgetHandle.clearColorFilter(); // Ensure reset
+                            return true;
+                    }
+                    return false;
+                }
+            });
 		}
 		
 		applyWidgetPanelState();
@@ -706,6 +745,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                     // Update Icon: Forward (>) for Open state
                     constraintSet.connect(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.END, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.START);
                     constraintSet.clear(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.START);
+                    
+                    // Apply Vertical Bias
+                    constraintSet.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
                 }
 
                 if (isPinned) {
@@ -748,6 +790,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                     // Update Icon: Back (<) for Closed state
                     constraintSet.connect(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
                     constraintSet.clear(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.START);
+                    
+                    // Apply Vertical Bias
+                    constraintSet.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
                 }
                 
                 // Map Full Screen

@@ -104,6 +104,16 @@ public class CarLauncherSettings {
     public void setWidgetPanelWidthPercent(float percent) {
         prefs.edit().putFloat(KEY_WIDGET_PANEL_WIDTH_PERCENT, percent).apply();
     }
+
+    public static final String KEY_WIDGET_HANDLE_VERTICAL_BIAS = "widget_handle_vertical_bias";
+
+    public float getWidgetHandleVerticalBias() {
+        return prefs.getFloat(KEY_WIDGET_HANDLE_VERTICAL_BIAS, 0.5f);
+    }
+    
+    public void setWidgetHandleVerticalBias(float bias) {
+        prefs.edit().putFloat(KEY_WIDGET_HANDLE_VERTICAL_BIAS, bias).apply();
+    }
     
     public boolean isMetroMode() {
         return "metro".equals(prefs.getString(KEY_WIDGET_LAYOUT_MODE, "classic"));
