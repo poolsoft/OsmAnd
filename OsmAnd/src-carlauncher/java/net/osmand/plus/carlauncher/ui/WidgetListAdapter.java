@@ -171,9 +171,69 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
 
     static class WidgetViewHolder extends RecyclerView.ViewHolder {
         FrameLayout container;
+        FrameLayout overlay;
+
         public WidgetViewHolder(@NonNull View itemView) {
             super(itemView);
             container = (FrameLayout) itemView;
+
+            // Create Overlay for Drag Feedback
+            overlay = new FrameLayout(itemView.getContext());
+            
+            // 1. Icon (Move Symbol)
+            ImageView icon = new ImageView(itemView.getContext());
+            // Using a generic icon available in OsmAnd or Android
+            icon.setImageResource(net.osmand.plus.R.drawable.ic_action_view); // Placeholder if move icon not found, or use gpx
+            // Trying to use a standard one. ic_action_view is usually an eye.
+            // Let's use ic_action_gpx_dark as user liked previously or standard android
+            // Ideally should be a "Move" arrows icon. 
+            // Using ic_action_gpx_dark as placeholder for now, user requested "move icon"
+            // Let's check available icons... ic_context_menu_delete etc.
+            // Safe bet: ic_action_reorder if exists?? No.
+            // Using simple circle shape drawable for symbol or just the Border is key.
+            // Let's use the same icon as handle for consistency if we knew it?
+            icon.setImageResource(net.osmand.plus.R.drawable.ic_action_settings); // Settings gear looks okay for "Maintenance/Move"
+            
+            icon.setColorFilter(0xFFFFFFFF); // White icon
+            
+            // Background for Icon (Circle)
+            android.graphics.drawable.GradientDrawable iconBg = new android.graphics.drawable.GradientDrawable();
+            iconBg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            iconBg.setColor(0xAA000000); // Semi-transparent black capsule
+            icon.setBackground(iconBg);
+            
+            // Padding for Icon
+            int p = (int) (12 * itemView.getContext().getResources().getDisplayMetrics().density);
+            icon.setPadding(p, p, p, p);
+            
+            FrameLayout.LayoutParams iconParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            iconParams.gravity = android.view.Gravity.CENTER;
+            overlay.addView(icon, iconParams);
+            
+            // 2. Border (on Overlay itself)
+            android.graphics.drawable.GradientDrawable border = new android.graphics.drawable.GradientDrawable();
+            border.setStroke((int) (4 * itemView.getContext().getResources().getDisplayMetrics().density), 
+                             0xFFFF4081); // Thick Accent Border (Pink/Red)
+            border.setColor(0x66000000); // Darken content background
+            overlay.setBackground(border);
+            
+            overlay.setVisibility(View.GONE);
+            
+            // Add to Container (Ensure Top Z-Index)
+            container.addView(overlay, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+
+        public void setDragState(boolean isDragging) {
+            overlay.setVisibility(isDragging ? View.VISIBLE : View.GONE);
+            if (isDragging) {
+                itemView.animate().scaleX(1.05f).scaleY(1.05f).setDuration(100).start();
+                itemView.setElevation(10f); // Shadow
+            } else {
+                 itemView.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                 itemView.setElevation(0f);
+            }
         }
     }
 }

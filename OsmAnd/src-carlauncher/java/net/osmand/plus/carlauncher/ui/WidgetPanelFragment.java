@@ -358,8 +358,26 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                     return true;
                 }
                 @Override public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {}
+                
+                @Override
+                public void onSelectedChanged(@androidx.annotation.Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
+                    super.onSelectedChanged(viewHolder, actionState);
+                    if (actionState == androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG) {
+                         if (viewHolder instanceof WidgetListAdapter.WidgetViewHolder) {
+                            ((WidgetListAdapter.WidgetViewHolder) viewHolder).setDragState(true);
+                             // Haptic feedback
+                            viewHolder.itemView.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+                        }
+                    }
+                }
+
                 @Override public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
                     super.clearView(recyclerView, viewHolder);
+                    
+                    if (viewHolder instanceof WidgetListAdapter.WidgetViewHolder) {
+                        ((WidgetListAdapter.WidgetViewHolder) viewHolder).setDragState(false);
+                    }
+                    
                     if (recyclerView.getAdapter() instanceof WidgetListAdapter) {
                         WidgetListAdapter adapter = (WidgetListAdapter) recyclerView.getAdapter();
                          if (widgetManager != null) {
