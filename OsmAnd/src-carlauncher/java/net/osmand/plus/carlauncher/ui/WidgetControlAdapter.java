@@ -22,6 +22,7 @@ public class WidgetControlAdapter extends RecyclerView.Adapter<WidgetControlAdap
     public interface OnControlActionListener {
         void onStartDrag(RecyclerView.ViewHolder viewHolder);
         void onDeleteClicked(BaseWidget widget, int position);
+        void onConfigClicked(BaseWidget widget, int position);
     }
 
     private final List<BaseWidget> widgets;
@@ -77,6 +78,16 @@ public class WidgetControlAdapter extends RecyclerView.Adapter<WidgetControlAdap
             if (listener != null) listener.onDeleteClicked(widget, holder.getAdapterPosition());
         });
 
+        // Config
+        if (widget.getType().equals("obd_dashboard") || widget.getType().contains("vehicle")) {
+            holder.btnConfig.setVisibility(View.VISIBLE);
+            holder.btnConfig.setOnClickListener(v -> {
+                if (listener != null) listener.onConfigClicked(widget, holder.getAdapterPosition());
+            });
+        } else {
+            holder.btnConfig.setVisibility(View.GONE);
+        }
+
         // Drag Handle
         holder.dragHandle.setOnTouchListener((v, event) -> {
             if (event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN) {
@@ -130,7 +141,7 @@ public class WidgetControlAdapter extends RecyclerView.Adapter<WidgetControlAdap
         final ImageView dragHandle;
         final TextView nameText;
         final TextView btnS, btnM, btnL;
-        final ImageView btnDelete;
+        final ImageView btnDelete, btnConfig;
 
         public ControlViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -140,6 +151,7 @@ public class WidgetControlAdapter extends RecyclerView.Adapter<WidgetControlAdap
             btnM = itemView.findViewById(R.id.btn_size_m);
             btnL = itemView.findViewById(R.id.btn_size_l);
             btnDelete = itemView.findViewById(R.id.btn_delete);
+            btnConfig = itemView.findViewById(R.id.btn_config);
         }
     }
 }

@@ -1,83 +1,211 @@
 package net.osmand.plus.carlauncher.widgets;
 
 import android.content.Context;
-import android.content.Intent;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
+import net.osmand.plus.carlauncher.CarLauncherSettings;
 import net.osmand.plus.plugins.PluginsHelper;
 import net.osmand.plus.plugins.odb.VehicleMetricsPlugin;
 import net.osmand.shared.obd.OBDDataComputer;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
- * OBD Dashboard Widget.
- * Displays RPM, Coolant Temp, and Battery Voltage.
- * Requires VehicleMetricsPlugin to be enabled.
+ * OBD Dashboard Widget (Dynamic).
+ * Displays selected metrics from VehicleMetricsPlugin.
  */
 public class OBDWidget extends BaseWidget {
 
     private final OsmandApplication app;
     private VehicleMetricsPlugin plugin;
-    private Handler handler = new Handler(Looper.getMainLooper());
+    private final Handler handler = new Handler(Looper.getMainLooper());
     private Runnable updateRunnable;
+    private final CarLauncherSettings settings;
 
-    private TextView rpmText;
-    private TextView tempText;
-    private TextView voltText;
-
-    private OBDDataComputer.OBDComputerWidget rpmComputer;
-    private OBDDataComputer.OBDComputerWidget tempComputer;
-    private OBDDataComputer.OBDComputerWidget voltComputer;
+    // Dynamic Computers & Views
+    private final Map<String, OBDDataComputer.OBDComputerWidget> activeComputers = new HashMap<>();
+    private final Map<String, TextView> valueViews = new HashMap<>();
+    private LinearLayout mainContainer;
 
     public OBDWidget(@NonNull Context context, @NonNull OsmandApplication app) {
         super(context, "obd_dashboard", "Araç Verileri");
         this.app = app;
-        this.order = 2; // Position after Clock and Speed
+        this.settings = new CarLauncherSettings(context);
+        this.order = 2;
     }
 
     @Override
     public View createView() {
+        // Use the existing XML as a base container, but we will manipulate its children
         View view = LayoutInflater.from(context).inflate(R.layout.widget_obd_dashboard, null);
-
-        rpmText = view.findViewById(R.id.obd_rpm_value);
-        tempText = view.findViewById(R.id.obd_temp_value);
-        voltText = view.findViewById(R.id.obd_volt_value);
-
-        // Click to open OBD Settings
+        mainContainer = (LinearLayout) view;
+        
+        // Setup Click Listener (Reconnect/Info)
         view.setOnClickListener(v -> {
             if (plugin != null) {
-                // Open OBD Plugin Info/Settings
-                // We should ideally open OBDDevicesListFragment but that needs support manager
-                // For now, simpler action or just toast if not connected
                 if (!plugin.isConnected()) {
-                    plugin.connectToLastConnectedDevice(1);
-                    android.widget.Toast.makeText(context, "OBD Bağlanıyor...", android.widget.Toast.LENGTH_SHORT).show();
+                   plugin.connectToLastConnectedDevice(1);
+                   Toast.makeText(context, "OBD Bağlanıyor...", Toast.LENGTH_SHORT).show();
                 } else {
-                    android.widget.Toast.makeText(context, "OBD Bağlı: " + plugin.getConnectedDeviceName(), android.widget.Toast.LENGTH_SHORT).show();
+                   Toast.makeText(context, "OBD Bağlı: " + plugin.getConnectedDeviceName(), Toast.LENGTH_SHORT).show();
                 }
+            } else {
+                 Toast.makeText(context, "OBD Eklentisi Aktif Değil", Toast.LENGTH_SHORT).show();
             }
         });
 
         rootView = view;
-        initComputers();
+        updateFromConfig(); // Build UI and Computers
         startUpdate();
         return rootView;
     }
 
-    private void initComputers() {
+    public void updateFromConfig() {
+        String config = settings.getWidgetConfig(getId());
+        if (config == null) config = "rpm,temp,volt"; // Default
+        
+        List<String> items = new ArrayList<>(Arrays.asList(config.split(",")));
+        if (items.isEmpty()) items.add("rpm");
+
+        // Rebuild Layout
+        mainContainer.removeAllViews();
+        valueViews.clear();
+        activeComputers.clear();
+
+        initComputers(items);
+        buildDynamicLayout(items);
+        updateUI();
+    }
+
+    private void initComputers(List<String> items) {
         plugin = PluginsHelper.getPlugin(VehicleMetricsPlugin.class);
         if (plugin != null && plugin.isActive()) {
-            rpmComputer = OBDDataComputer.INSTANCE.registerWidget(OBDDataComputer.OBDTypeWidget.RPM, 0);
-            tempComputer = OBDDataComputer.INSTANCE.registerWidget(OBDDataComputer.OBDTypeWidget.TEMPERATURE_COOLANT, 0);
-            voltComputer = OBDDataComputer.INSTANCE.registerWidget(OBDDataComputer.OBDTypeWidget.BATTERY_VOLTAGE, 0);
+            for (String key : items) {
+                OBDDataComputer.OBDTypeWidget type = getTypeForKey(key);
+                if (type != null) {
+                    activeComputers.put(key, OBDDataComputer.INSTANCE.registerWidget(type, 0));
+                }
+            }
         }
+    }
+
+    private OBDDataComputer.OBDTypeWidget getTypeForKey(String key) {
+        switch (key) {
+            case "rpm": return OBDDataComputer.OBDTypeWidget.RPM;
+            case "speed": return OBDDataComputer.OBDTypeWidget.SPEED;
+            case "temp": return OBDDataComputer.OBDTypeWidget.TEMPERATURE_COOLANT;
+            case "volt": return OBDDataComputer.OBDTypeWidget.BATTERY_VOLTAGE;
+            case "load": return OBDDataComputer.OBDTypeWidget.CALCULATED_ENGINE_LOAD;
+            case "intake": return OBDDataComputer.OBDTypeWidget.TEMPERATURE_INTAKE;
+            default: return null;
+        }
+    }
+    
+    private String getLabelForKey(String key) {
+        switch (key) {
+            case "rpm": return "RPM";
+            case "speed": return "HIZ";
+            case "temp": return "TEMP";
+            case "volt": return "V";
+            case "load": return "YÜK";
+            case "intake": return "GİRİŞ";
+            default: return key.toUpperCase();
+        }
+    }
+
+    private void buildDynamicLayout(List<String> items) {
+        // Simple Vertical Stack for now, or Split if 2+ items?
+        // Let's do:
+        // 1 item: Big Center
+        // 2 items: Vertical Split
+        // 3+ items: Top Big, Bottom Row split
+        
+        if (items.isEmpty()) return;
+
+        if (items.size() == 1) {
+            mainContainer.addView(createItemView(items.get(0), 40, true));
+        } else if (items.size() == 2) {
+             mainContainer.addView(createItemView(items.get(0), 32, true));
+             addDivider();
+             mainContainer.addView(createItemView(items.get(1), 32, true));
+        } else {
+            // First item Big
+            mainContainer.addView(createItemView(items.get(0), 32, true));
+            addDivider();
+            
+            // Rest in a horizontal row (max 3 per row?)
+            LinearLayout row = new LinearLayout(context);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+            
+            for (int i = 1; i < items.size(); i++) {
+                View itemView = createItemView(items.get(i), 16, false);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT);
+                lp.weight = 1;
+                row.addView(itemView, lp);
+            }
+            mainContainer.addView(row);
+        }
+    }
+
+    private void addDivider() {
+        View v = new View(context);
+        v.setBackgroundColor(0x33FFFFFF);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1); // 1px
+        lp.setMargins(0, 8, 0, 8);
+        v.setLayoutParams(lp);
+        mainContainer.addView(v);
+    }
+    
+    private View createItemView(String key, float textSizeSp, boolean matchParent) {
+        LinearLayout layout = new LinearLayout(context);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setGravity(Gravity.CENTER);
+        layout.setPadding(4, 4, 4, 4);
+        
+        TextView val = new TextView(context);
+        val.setText("--");
+        val.setTextColor(Color.WHITE);
+        val.setTextSize(TypedValue.COMPLEX_UNIT_SP, textSizeSp);
+        val.setTypeface(null, android.graphics.Typeface.BOLD);
+        val.setGravity(Gravity.CENTER);
+        
+        TextView label = new TextView(context);
+        label.setText(getLabelForKey(key));
+        label.setTextColor(0xFFAAAAAA); // Light Gray
+        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
+        label.setGravity(Gravity.CENTER);
+        
+        layout.addView(val);
+        layout.addView(label);
+        
+        valueViews.put(key, val);
+        
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                matchParent ? LinearLayout.LayoutParams.MATCH_PARENT : LinearLayout.LayoutParams.WRAP_CONTENT, 
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        if (matchParent) lp.weight = 1;
+        layout.setLayoutParams(lp);
+        
+        return layout;
     }
 
     @Override
@@ -98,7 +226,7 @@ public class OBDWidget extends BaseWidget {
             @Override
             public void run() {
                 updateUI();
-                handler.postDelayed(this, 1000); // Update every second
+                handler.postDelayed(this, 1000);
             }
         };
         handler.post(updateRunnable);
@@ -115,37 +243,32 @@ public class OBDWidget extends BaseWidget {
         if (plugin == null) {
             plugin = PluginsHelper.getPlugin(VehicleMetricsPlugin.class);
         }
-
-        if (plugin == null || !plugin.isActive()) {
-            if (rpmText != null) rpmText.setText("OBD Pasif");
+        
+        if (plugin == null || !plugin.isActive() || !plugin.isConnected()) {
+            for (TextView tv : valueViews.values()) {
+                tv.setText("--");
+            }
+            // Optional: Show status in top view if disconnected
             return;
         }
 
-        if (!plugin.isConnected()) {
-            if (rpmText != null) rpmText.setText("Bağlı Değil");
-            if (tempText != null) tempText.setText("--");
-            if (voltText != null) voltText.setText("--");
-            return;
-        }
-
-        // Fetch Values
-        if (rpmComputer != null && rpmText != null) {
-            rpmText.setText(plugin.getWidgetValue(rpmComputer));
-        }
-
-        if (tempComputer != null && tempText != null) {
-            String tempVal = plugin.getWidgetValue(tempComputer);
-            tempText.setText(tempVal + "°C");
-        }
-
-        if (voltComputer != null && voltText != null) {
-            String voltVal = plugin.getWidgetValue(voltComputer);
-            voltText.setText(voltVal + " V");
+        for (Map.Entry<String, OBDDataComputer.OBDComputerWidget> entry : activeComputers.entrySet()) {
+            String val = plugin.getWidgetValue(entry.getValue());
+            TextView tv = valueViews.get(entry.getKey());
+            if (tv != null) {
+                // Formatting
+                if (entry.getKey().equals("temp") || entry.getKey().equals("intake")) val += "°C";
+                if (entry.getKey().equals("volt")) val += " V";
+                if (entry.getKey().equals("load")) val += " %";
+                
+                tv.setText(val);
+            }
         }
     }
-    
+
     @Override
     public void update() {
-        // Called by Launcher update cycle if needed, but we use internal timer
     }
 }
+
+

@@ -23,6 +23,8 @@ import net.osmand.plus.carlauncher.widgets.WidgetRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.osmand.plus.carlauncher.CarLauncherSettings;
+import net.osmand.plus.carlauncher.widgets.OBDWidget;
 
 public class WidgetControlDialog extends DialogFragment {
 
@@ -88,6 +90,15 @@ public class WidgetControlDialog extends DialogFragment {
             @Override
             public void onStartDrag(RecyclerView.ViewHolder viewHolder) {
                  if (touchHelper != null) touchHelper.startDrag(viewHolder);
+            }
+
+            @Override
+            public void onConfigClicked(BaseWidget widget, int position) {
+                if (widget instanceof OBDWidget) {
+                    CarLauncherSettings settings = new CarLauncherSettings(getContext());
+                    VehicleDataConfigDialog dialog = new VehicleDataConfigDialog(widget, settings);
+                    dialog.show(getParentFragmentManager(), "VehicleConfig");
+                }
             }
         });
         recyclerView.setAdapter(adapter);

@@ -227,6 +227,17 @@ public class CarLauncherSettings {
 
     // --- Utility ---
 
+    // --- Generic Widget Config ---
+    private static final String KEY_WIDGET_CONFIG_PREFIX = "widget_config_";
+
+    public String getWidgetConfig(String widgetId) {
+        return prefs.getString(KEY_WIDGET_CONFIG_PREFIX + widgetId, null);
+    }
+
+    public void setWidgetConfig(String widgetId, String config) {
+        prefs.edit().putString(KEY_WIDGET_CONFIG_PREFIX + widgetId, config).apply();
+    }
+
     public SharedPreferences getPrefs() {
         return prefs;
     }

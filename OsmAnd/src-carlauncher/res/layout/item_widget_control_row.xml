@@ -92,6 +92,18 @@
             android:background="?android:attr/selectableItemBackground"/>
     </LinearLayout>
 
+    <ImageView
+        android:id="@+id/btn_config"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@android:drawable/ic_menu_manage"
+        android:scaleType="centerInside"
+        android:tint="#FFFFFF"
+        android:contentDescription="Ayarlar"
+        android:layout_marginStart="8dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:visibility="gone"/>
+
     <!-- Delete Button -->
     <ImageView
         android:id="@+id/btn_delete"
