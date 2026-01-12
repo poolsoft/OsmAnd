@@ -107,6 +107,8 @@ import net.osmand.plus.routepreparationmenu.MapRouteInfoMenu;
 import net.osmand.plus.routing.IRouteInformationListener;
 import net.osmand.plus.routing.RouteCalculationProgressListener;
 import net.osmand.plus.routing.RouteService;
+import net.osmand.plus.carlauncher.widgets.weather.WeatherManager;
+import net.osmand.Location;
 import net.osmand.plus.routing.RoutingHelper;
 import net.osmand.plus.routing.TransportRoutingHelper.TransportRouteCalculationProgressCallback;
 import net.osmand.plus.search.ShowQuickSearchMode;
@@ -161,6 +163,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	public static final String INTENT_KEY_PARENT_MAP_ACTIVITY = "intent_parent_map_activity_key";
 	public static final String INTENT_PARAMS = "intent_prarams";
+    
+    // Weather Listener
+    private net.osmand.plus.LocationProvider.LocationListener weatherLocationListener;
 
 	private static final int ZOOM_LABEL_DISPLAY = 16;
 	private static final int MAX_ZOOM_OUT_STEPS = 2;
@@ -1483,7 +1488,31 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		extendedMapActivity.onResume(this);
 
 		getMapView().getAnimatedDraggingThread().toggleAnimations();
+        
+        // --- Weather Widget Integration ---
+        if (weatherLocationListener == null) {
+            weatherLocationListener = new net.osmand.plus.LocationProvider.LocationListener() {
+                @Override
+                public void updateLocation(net.osmand.Location location) {
+                     WeatherManager.getInstance(app).updateLocation(location);
+                }
+            };
+        }
+        if (app.getLocationProvider() != null) {
+            app.getLocationProvider().addLocationListener(weatherLocationListener);
+            // Initial Update
+            net.osmand.Location loc = app.getLocationProvider().getLastKnownLocation();
+            if (loc != null) WeatherManager.getInstance(app).updateLocation(loc);
+        }
 	}
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (app != null && app.getLocationProvider() != null && weatherLocationListener != null) {
+            app.getLocationProvider().removeLocationListener(weatherLocationListener);
+        }
+    }
 
 	@Override
 	public void onTopResumedActivityChanged(boolean isTopResumedActivity) {
