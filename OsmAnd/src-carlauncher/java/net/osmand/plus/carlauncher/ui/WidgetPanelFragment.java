@@ -200,6 +200,8 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         if (isMetro) {
             slots = 4; // Metro Mode: Fixed 4-column Grid
         } else {
+             // CLASSIC Mode: Slots determines "Items Per Screen" for sizing, NOT columns.
+             // Columns should always be 1 (List).
              if (isSystemPortrait) {
                 slots = settings.getPortraitSlotCount();
             } else {
@@ -210,8 +212,11 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         GridLayoutManager glm = (GridLayoutManager) listRecyclerView.getLayoutManager();
         boolean changed = false;
         
-        if (glm.getSpanCount() != slots) {
-            glm.setSpanCount(slots);
+        // Determine actual Span Count for Layout Manager
+        int targetSpanCount = isMetro ? 4 : 1; 
+        
+        if (glm.getSpanCount() != targetSpanCount) {
+            glm.setSpanCount(targetSpanCount);
             changed = true;
         }
         
@@ -289,11 +294,16 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                      currentUnitSize = width / slots;
                  }
              } else {
-                 // Classic Vertical: Unit based on HEIGHT (List style) => Fixed Height item
-                 // Previously we tried to fit N slots, which caused squashing.
-                 // Now we enforce standard height so it scrolls.
-                 currentUnitSize = (int) android.util.TypedValue.applyDimension(
-                      android.util.TypedValue.COMPLEX_UNIT_DIP, 85, getResources().getDisplayMetrics());
+                 // Classic Vertical: Unit based on HEIGHT (List style)
+                 int height = listRecyclerView.getHeight();
+                 if (height == 0 && getView() != null) height = getView().getHeight();
+                 
+                 if (height > 0) {
+                     currentUnitSize = height / slots;
+                 } else {
+                      currentUnitSize = (int) android.util.TypedValue.applyDimension(
+                         android.util.TypedValue.COMPLEX_UNIT_DIP, 85, getResources().getDisplayMetrics());
+                 }
              }
         }
         
