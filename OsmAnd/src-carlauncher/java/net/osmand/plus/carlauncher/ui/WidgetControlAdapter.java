@@ -79,7 +79,7 @@ public class WidgetControlAdapter extends RecyclerView.Adapter<WidgetControlAdap
         });
 
         // Config
-        if (widget.getType().equals("obd_dashboard") || widget.getType().contains("vehicle")) {
+        if (widget.getId().equals("obd_dashboard") || widget.getId().contains("vehicle")) {
             holder.btnConfig.setVisibility(View.VISIBLE);
             holder.btnConfig.setOnClickListener(v -> {
                 if (listener != null) listener.onConfigClicked(widget, holder.getAdapterPosition());
@@ -138,10 +138,10 @@ public class WidgetControlAdapter extends RecyclerView.Adapter<WidgetControlAdap
     }
 
     static class ControlViewHolder extends RecyclerView.ViewHolder {
-        final ImageView dragHandle;
-        final TextView nameText;
-        final TextView btnS, btnM, btnL;
-        final ImageView btnDelete, btnConfig;
+        public final ImageView dragHandle;
+        public final TextView nameText;
+        public final TextView btnS, btnM, btnL;
+        public final ImageView btnDelete, btnConfig;
 
         public ControlViewHolder(@NonNull View itemView) {
             super(itemView);

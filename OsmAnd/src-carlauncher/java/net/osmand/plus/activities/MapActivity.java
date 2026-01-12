@@ -165,7 +165,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	public static final String INTENT_PARAMS = "intent_prarams";
     
     // Weather Listener
-    private net.osmand.plus.LocationProvider.LocationListener weatherLocationListener;
+    private OsmAndLocationProvider.OsmAndLocationListener weatherLocationListener;
 
 	private static final int ZOOM_LABEL_DISPLAY = 16;
 	private static final int MAX_ZOOM_OUT_STEPS = 2;
@@ -1491,7 +1491,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         
         // --- Weather Widget Integration ---
         if (weatherLocationListener == null) {
-            weatherLocationListener = new net.osmand.plus.LocationProvider.LocationListener() {
+            weatherLocationListener = new OsmAndLocationProvider.OsmAndLocationListener() {
                 @Override
                 public void updateLocation(net.osmand.Location location) {
                      WeatherManager.getInstance(app).updateLocation(location);
@@ -1504,15 +1504,17 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
             net.osmand.Location loc = app.getLocationProvider().getLastKnownLocation();
             if (loc != null) WeatherManager.getInstance(app).updateLocation(loc);
         }
-	}
+    }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onStop() {
+        super.onStop();
         if (app != null && app.getLocationProvider() != null && weatherLocationListener != null) {
             app.getLocationProvider().removeLocationListener(weatherLocationListener);
         }
     }
+
+
 
 	@Override
 	public void onTopResumedActivityChanged(boolean isTopResumedActivity) {
