@@ -152,6 +152,18 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         }
     }
 
+    public boolean checkNotificationAccess() {
+        try {
+            return androidx.core.app.NotificationManagerCompat.getEnabledListenerPackages(context)
+                    .contains(context.getPackageName());
+        } catch (NoClassDefFoundError e) {
+            // Fallback for older/custom androids if compat lib missing
+             String enabledListeners = android.provider.Settings.Secure.getString(context.getContentResolver(), 
+                "enabled_notification_listeners");
+             return enabledListeners != null && enabledListeners.contains(context.getPackageName());
+        }
+    }
+
     private void updateActiveController(List<MediaController> controllers) {
         MediaController candidate = null;
         if (controllers != null) {
