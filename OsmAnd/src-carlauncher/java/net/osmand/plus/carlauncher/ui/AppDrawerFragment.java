@@ -44,7 +44,7 @@ public class AppDrawerFragment extends Fragment {
     private RecyclerView recyclerView;
     private AppDrawerAdapter adapter;
     private View loadingView;
-    private List<AppItem> cachedApps; // Cache
+    private static List<AppItem> cachedApps; // Static Cache to prevent reloading
     private PackageReceiver packageReceiver;
 
     @Override
@@ -63,6 +63,18 @@ public class AppDrawerFragment extends Fragment {
         if (getContext() != null) {
             getContext().registerReceiver(packageReceiver, filter);
         }
+    }
+    
+    // ... (rest of onCreate/onDestroy) ...
+
+    // (Skip to AppItem definition)
+
+    // ...
+
+    private static class AppItem { // Static class
+        String label;
+        String packageName;
+        Drawable icon;
     }
 
     @Override
@@ -220,11 +232,7 @@ public class AppDrawerFragment extends Fragment {
         }
     }
 
-    private class AppItem {
-        String label;
-        String packageName;
-        Drawable icon;
-    }
+
 
     private class AppDrawerAdapter extends RecyclerView.Adapter<AppDrawerAdapter.ViewHolder> {
 
