@@ -60,15 +60,24 @@ public class OBDWidget extends BaseWidget {
         
         // Setup Click Listener (Reconnect/Info)
         view.setOnClickListener(v -> {
-            if (plugin != null) {
-                if (!plugin.isConnected()) {
+            boolean connected = (plugin != null && plugin.isConnected());
+            if (connected) {
+                // Open Dashboard
+                try {
+                    android.content.Intent intent = new android.content.Intent(context, net.osmand.plus.carlauncher.ui.ObdDashboardActivity.class);
+                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
+                } catch (Exception e) {
+                     Toast.makeText(context, "Dashboard Açılamadı", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                // Formatting Reconnect
+                if (plugin != null) {
                    plugin.connectToLastConnectedDevice(1);
                    Toast.makeText(context, "OBD Bağlanıyor...", Toast.LENGTH_SHORT).show();
                 } else {
-                   Toast.makeText(context, "OBD Bağlı: " + plugin.getConnectedDeviceName(), Toast.LENGTH_SHORT).show();
+                   Toast.makeText(context, "OBD Eklentisi Aktif Değil", Toast.LENGTH_SHORT).show();
                 }
-            } else {
-                 Toast.makeText(context, "OBD Eklentisi Aktif Değil", Toast.LENGTH_SHORT).show();
             }
         });
 

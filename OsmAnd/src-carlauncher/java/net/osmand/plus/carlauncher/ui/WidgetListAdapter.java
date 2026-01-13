@@ -20,6 +20,7 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
         void onWidgetRemoved(BaseWidget widget);
         void onAddWidgetClicked();
         void onWidgetLongClicked(View view, BaseWidget widget);
+        void onStartDrag(RecyclerView.ViewHolder viewHolder);
     }
 
     private final List<BaseWidget> widgets;
@@ -140,9 +141,10 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
         holder.itemView.setLayoutParams(params);
 
         // --- 2. Content Binding ---
+        // Clean up
         holder.container.removeAllViews();
         
-        // Bind Widget
+        // A. Add Widget View
         BaseWidget widget = widgets.get(position);
         View widgetView = widget.getRootView();
         if (widgetView == null) widgetView = widget.createView();
@@ -153,12 +155,24 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         }
         
+        // B. Add Gradient Overlay
+        if (holder.gradientOverlay.getParent() != null) ((ViewGroup)holder.gradientOverlay.getParent()).removeView(holder.gradientOverlay);
+        holder.container.addView(holder.gradientOverlay, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        
+        // C. Add Drag Overlay (on top)
+        if (holder.overlay.getParent() != null) ((ViewGroup)holder.overlay.getParent()).removeView(holder.overlay);
+        holder.container.addView(holder.overlay, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        
+        // D. Listeners
         holder.itemView.setOnClickListener(null); 
-        holder.itemView.setOnClickListener(null); 
-        // holder.itemView.setOnLongClickListener(v -> {
-        //    if (actionListener != null) actionListener.onWidgetLongClicked(v, widget);
-        //    return true;
-        // });
+        holder.itemView.setOnLongClickListener(v -> {
+            if (actionListener != null) {
+                actionListener.onStartDrag(holder);
+            }
+            return true;
+        });
     }
 
     @Override
@@ -173,27 +187,22 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
     static class WidgetViewHolder extends RecyclerView.ViewHolder {
         FrameLayout container;
         FrameLayout overlay;
+        View gradientOverlay;
 
         public WidgetViewHolder(@NonNull View itemView) {
             super(itemView);
             container = (FrameLayout) itemView;
+
+            // Gradient Overlay
+            gradientOverlay = new View(itemView.getContext());
+            gradientOverlay.setBackgroundResource(net.osmand.plus.R.drawable.bg_gradient_overlay);
 
             // Create Overlay for Drag Feedback
             overlay = new FrameLayout(itemView.getContext());
             
             // 1. Icon (Move Symbol)
             ImageView icon = new ImageView(itemView.getContext());
-            // Using a generic icon available in OsmAnd or Android
-            icon.setImageResource(net.osmand.plus.R.drawable.ic_action_view); // Placeholder if move icon not found, or use gpx
-            // Trying to use a standard one. ic_action_view is usually an eye.
-            // Let's use ic_action_gpx_dark as user liked previously or standard android
-            // Ideally should be a "Move" arrows icon. 
-            // Using ic_action_gpx_dark as placeholder for now, user requested "move icon"
-            // Let's check available icons... ic_context_menu_delete etc.
-            // Safe bet: ic_action_reorder if exists?? No.
-            // Using simple circle shape drawable for symbol or just the Border is key.
-            // Let's use the same icon as handle for consistency if we knew it?
-            icon.setImageResource(net.osmand.plus.R.drawable.ic_action_settings); // Settings gear looks okay for "Maintenance/Move"
+            icon.setImageResource(net.osmand.plus.R.drawable.ic_action_settings); 
             
             icon.setColorFilter(0xFFFFFFFF); // White icon
             
@@ -221,9 +230,7 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
             
             overlay.setVisibility(View.GONE);
             
-            // Add to Container (Ensure Top Z-Index)
-            container.addView(overlay, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            // Views are added in onBindViewHolder
         }
 
         public void setDragState(boolean isDragging) {

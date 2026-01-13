@@ -55,9 +55,30 @@ public class WeatherManager {
         void onWeatherError(String error);
     }
 
+    private static final String KEY_UPDATE_INTERVAL = "update_interval_minutes";
+
     private WeatherManager(Context context) {
         this.context = context.getApplicationContext();
         this.prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+    }
+
+    public int getUpdateIntervalMinutes() {
+        return prefs.getInt(KEY_UPDATE_INTERVAL, 30);
+    }
+
+    public void setUpdateIntervalMinutes(int minutes) {
+        prefs.edit().putInt(KEY_UPDATE_INTERVAL, minutes).apply();
+    }
+
+    public void forceRefresh() {
+        Location loc = OsmAndApplication.getSettings().getLastKnownLocation(); 
+        // Need access to last location if possible, or just ignore if no loc.
+        // Assuming we have cached lat/lon
+        double lat = getDouble(prefs, KEY_LAST_LAT, 0);
+        double lon = getDouble(prefs, KEY_LAST_LON, 0);
+        if (lat != 0 && lon != 0) {
+            fetchWeather(lat, lon);
+        }
     }
 
     public static synchronized WeatherManager getInstance(Context context) {

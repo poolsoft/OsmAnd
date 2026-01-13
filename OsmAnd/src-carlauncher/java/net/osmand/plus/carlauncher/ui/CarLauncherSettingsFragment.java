@@ -252,10 +252,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         }
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-    }
+
 
     // ═══════════════════════════════════════════════════════════════
     // GÖRÜNÜM AYARLARI

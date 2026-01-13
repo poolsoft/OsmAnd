@@ -161,20 +161,22 @@ public class ClockWidget extends BaseWidget implements WeatherManager.WeatherLis
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT);
         int margin = dpToPx(8);
-        params.setMargins(margin, margin, margin, margin);
+        // Add more space at bottom for Date
+        params.setMargins(margin, margin, margin, dpToPx(36)); 
         analogClockView.setLayoutParams(params);
         
         root.addView(analogClockView);
 
-        // Date Overlay for Analog
+        // Date Overlay for Analog (Centered at bottom area)
         dateText = new TextView(context);
         dateText.setTextColor(Color.WHITE);
         dateText.setTextSize(14);
+        dateText.setTypeface(Typeface.DEFAULT_BOLD);
         FrameLayout.LayoutParams dateParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         dateParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        dateParams.setMargins(0, 0, 0, dpToPx(16));
+        dateParams.setMargins(0, 0, 0, dpToPx(12)); // Position in the reserved space
         dateText.setLayoutParams(dateParams);
         
         root.addView(dateText);

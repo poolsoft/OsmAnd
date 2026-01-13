@@ -313,6 +313,8 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         }
     }
     
+    private androidx.recyclerview.widget.ItemTouchHelper itemTouchHelper;
+
     private void applyWidgetsToView() {
         if (listRecyclerView != null) {
             CarLauncherSettings settings = new CarLauncherSettings(getContext());
@@ -336,6 +338,11 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                         widgetManager.removeWidget(widget);
                         applyWidgetsToView(); 
                     }
+                    @Override public void onStartDrag(RecyclerView.ViewHolder viewHolder) {
+                        if (itemTouchHelper != null) {
+                            itemTouchHelper.startDrag(viewHolder);
+                        }
+                    }
                 }
             );
             
@@ -346,7 +353,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             listRecyclerView.setAdapter(adapter);
             
              androidx.recyclerview.widget.ItemTouchHelper.Callback callback = new androidx.recyclerview.widget.ItemTouchHelper.Callback() {
-                @Override public boolean isLongPressDragEnabled() { return true; }
+                @Override public boolean isLongPressDragEnabled() { return false; } // Handled manually via onStartDrag
                 @Override public boolean isItemViewSwipeEnabled() { return false; }
                 @Override public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
                     int dragFlags = androidx.recyclerview.widget.ItemTouchHelper.UP | androidx.recyclerview.widget.ItemTouchHelper.DOWN |
@@ -386,8 +393,8 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                     }
                 }
             };
-            androidx.recyclerview.widget.ItemTouchHelper touchHelper = new androidx.recyclerview.widget.ItemTouchHelper(callback);
-            touchHelper.attachToRecyclerView(listRecyclerView);
+            itemTouchHelper = new androidx.recyclerview.widget.ItemTouchHelper(callback);
+            itemTouchHelper.attachToRecyclerView(listRecyclerView);
         }
     }
 
