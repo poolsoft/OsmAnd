@@ -23,6 +23,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Merkezi Müzik Yoneticisi.
  * Hem yerel (Internal) hem de harici (External - Spotify, YouTube vs) muzik
  * kaynaklarini yonetir.
+ *
+ * Permission Note: External control requires 'android.permission.BIND_NOTIFICATION_LISTENER_SERVICE'
+ * granted by user in System Settings.
  */
 public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
@@ -231,63 +234,77 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     // --- Controls (Widget ile uyumlu isimler) ---
 
     public void togglePlayPause() {
-        // V16: "Last Active Wins" Strategy
-        
-        // 1. Refresh External Sessions
+        // 1. Permission Check
+        if (!checkNotificationAccess()) {
+            android.widget.Toast.makeText(context, "Harici kontrol için 'Bildirim Erişimi' izni gerekli!", android.widget.Toast.LENGTH_LONG).show();
+            // Optional: Intent logic is in Widget, not here usually, but we could broadcast.
+            // Assuming UI handles the intent based on a specific state or toast is enough.
+        }
+
+        // 2. Refresh External Sessions (Always try to find fresh info)
         MediaSessionManager manager = (MediaSessionManager) context.getSystemService(Context.MEDIA_SESSION_SERVICE);
         if (manager != null) {
             try {
-                List<MediaController> controllers = manager.getActiveSessions(null);
+                // Requires Permission!
+                ComponentName listenerComp = new ComponentName(context, "net.osmand.plus.carlauncher.MediaNotificationListener");
+                List<MediaController> controllers = manager.getActiveSessions(listenerComp);
                 updateActiveController(controllers);
             } catch (Exception e) {
-                 android.util.Log.e(TAG, "Failed to refresh sessions in togglePlayPause", e);
+                 // Log.w(TAG, "Session refresh failed (Normal if no permission)");
             }
         }
-        
-        // 2. Decide based on Last Active Source
-        if (lastActiveSource == MusicSource.EXTERNAL) {
-            if (activeExternalController != null) {
-                // External was last active, try to toggle it
-                // It handles both Play and Pause
+
+        // 3. Aggressive Logic: Preferred Package Priority
+        // If user explicitly selected an external app (e.g. Spotify) as preferred,
+        // and Internal is NOT playing, try to force that external app.
+        if (preferredPackage != null && !preferredPackage.equals("usage.internal.player") && !internalPlayer.isPlaying()) {
+            
+            // A. If we have a controller for it, use it!
+            if (activeExternalController != null && activeExternalController.getPackageName().equals(preferredPackage)) {
                 PlaybackState state = activeExternalController.getPlaybackState();
                 if (state != null && state.getState() == PlaybackState.STATE_PLAYING) {
                     activeExternalController.getTransportControls().pause();
                 } else {
                     activeExternalController.getTransportControls().play();
                 }
+                lastActiveSource = MusicSource.EXTERNAL;
                 return;
-            } else {
-                // External was last, but now it's gone (Session killed).
-                // Fallback: If Internal has track, switch to Internal.
-                // Else: Try to launch preferred app.
-                if (internalPlayer.getCurrentTrack() != null) {
-                    lastActiveSource = MusicSource.INTERNAL; // Switch context
-                    internalPlayer.playPause();
-                    return;
-                } else if (preferredPackage != null && !preferredPackage.equals("usage.internal.player")) {
-                     startPreferredApplication(preferredPackage);
-                     return;
-                }
             }
-        } 
+            
+            // B. If no active controller for preferred, but we have it saved: LAUNCH IT.
+            // Often launching the app resumes music or makes the session active.
+            startPreferredApplication(preferredPackage);
+            lastActiveSource = MusicSource.EXTERNAL;
+            return;
+        }
+
+        // 4. Default "Last Active" Fallback
         
-        // 3. If Last Source is INTERNAL (or External failed above)
-        if (lastActiveSource == MusicSource.INTERNAL) {
-            if (internalPlayer.getCurrentTrack() != null) {
-                internalPlayer.playPause();
-            } else {
-                // Internal has nothing.
-                // If External is available (paused in background), switch to it.
-                if (activeExternalController != null) {
-                    lastActiveSource = MusicSource.EXTERNAL;
-                    activeExternalController.getTransportControls().play();
-                } else if (preferredPackage != null && !preferredPackage.equals("usage.internal.player")) {
-                    startPreferredApplication(preferredPackage);
-                } else {
-                    // Nothing at all. Trigger internal to likely show "Select Music"
-                    internalPlayer.playPause();
-                }
-            }
+        // If External is Active (Controller exists), use it
+        if (activeExternalController != null) {
+             PlaybackState state = activeExternalController.getPlaybackState();
+             if (state != null && state.getState() == PlaybackState.STATE_PLAYING) {
+                 activeExternalController.getTransportControls().pause();
+             } else {
+                 activeExternalController.getTransportControls().play();
+             }
+             lastActiveSource = MusicSource.EXTERNAL;
+             return;
+        }
+
+        // If Internal has track, toggle it
+        if (internalPlayer.getCurrentTrack() != null) {
+            internalPlayer.playPause();
+            lastActiveSource = MusicSource.INTERNAL;
+            return;
+        }
+        
+        // If nothing at all... Launch preferred if exists, else Toast
+        if (preferredPackage != null && !preferredPackage.equals("usage.internal.player")) {
+             startPreferredApplication(preferredPackage);
+        } else {
+             // Try to play internal empty?
+             internalPlayer.playPause(); 
         }
     }
 

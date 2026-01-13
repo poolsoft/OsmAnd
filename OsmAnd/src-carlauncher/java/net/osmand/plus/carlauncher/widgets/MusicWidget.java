@@ -104,6 +104,16 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     }
 
     private void showMusicAppPicker() {
+        if (!musicManager.checkNotificationAccess()) {
+             android.widget.Toast.makeText(context, "Lütfen 'Bildirim Erişimi' iznini verin.", android.widget.Toast.LENGTH_LONG).show();
+             try {
+                context.startActivity(new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+             } catch (Exception e) {
+                 android.widget.Toast.makeText(context, "Ayarlar açılamadı, manuel gidin.", android.widget.Toast.LENGTH_SHORT).show();
+             }
+             return;
+        }
+
         new net.osmand.plus.carlauncher.dock.AppPickerDialog(context, true, (packageName, appName, icon) -> {
             musicManager.setPreferredPackage(packageName);
             updateAppIcon(packageName);
