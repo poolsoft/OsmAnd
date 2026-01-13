@@ -59,28 +59,98 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         setupAboutPrefs();
     }
 
+    private android.widget.LinearLayout splitContainer;
+    private androidx.preference.PreferenceCategory currentActiveCategory;
+    private final List<androidx.preference.PreferenceCategory> allCategories = new ArrayList<>();
+    private View selectionHighlight;
+    private ViewGroup categoriesList;
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
+        // Super creates the RecyclerView for preferences default view
         View prefsView = super.onCreateView(inflater, container, savedInstanceState);
-        if (prefsView == null)
-            return null;
+        if (prefsView == null) return null;
 
-        prefsView.setBackgroundColor(0xFF111111); // Dark background
+        // Determine Orientation
+        boolean isLandscape = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 
-        // Wrapper to hold Prefs + Close Button
+        if (isLandscape) {
+             return createSplitLayout(prefsView);
+        } else {
+             return createSingleLayout(prefsView);
+        }
+    }
+
+    private View createSingleLayout(View prefsView) {
+        prefsView.setBackgroundColor(0xFF111111);
         android.widget.FrameLayout wrapper = new android.widget.FrameLayout(getContext());
         wrapper.setLayoutParams(new android.view.ViewGroup.LayoutParams(
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT));
-        wrapper.setFitsSystemWindows(true); // Ensure padding for status bar
+        wrapper.setFitsSystemWindows(true);
+        wrapper.addView(prefsView);
+        addCloseButton(wrapper);
+        
+        // Ensure all categories visible in single layout (Portait)
+        restoreAllCategories();
+        
+        return wrapper;
+    }
 
-        // Add Prefs View
-        wrapper.addView(prefsView, new android.widget.FrameLayout.LayoutParams(
+    private View createSplitLayout(View prefsView) {
+        splitContainer = new android.widget.LinearLayout(getContext());
+        splitContainer.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        splitContainer.setLayoutParams(new android.view.ViewGroup.LayoutParams(
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+        splitContainer.setBackgroundColor(0xFF111111);
 
-        // Add Close Button (Top-Right)
+        // --- Left Pane: Headers ---
+        android.widget.ScrollView leftScroll = new android.widget.ScrollView(getContext());
+        leftScroll.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                0, android.view.ViewGroup.LayoutParams.MATCH_PARENT, 0.3f));
+        leftScroll.setBackgroundColor(0xFF1A1A1A); // Slightly lighter
+        
+        categoriesList = new android.widget.LinearLayout(getContext());
+        categoriesList.setOrientation(android.widget.LinearLayout.VERTICAL);
+        categoriesList.setPadding(0, 24, 0, 24);
+        leftScroll.addView(categoriesList);
+        
+        splitContainer.addView(leftScroll);
+        
+        // --- Divider ---
+        View divider = new View(getContext());
+        divider.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                2, android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+        divider.setBackgroundColor(0xFF333333);
+        splitContainer.addView(divider);
+
+        // --- Right Pane: Content ---
+        android.widget.FrameLayout rightPane = new android.widget.FrameLayout(getContext());
+        rightPane.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                0, android.view.ViewGroup.LayoutParams.MATCH_PARENT, 0.7f));
+        
+        // Add the Prefs RecyclerView here
+        // Note: prefsView is the RecyclerView returned by super
+        if (prefsView.getParent() != null) {
+            ((ViewGroup)prefsView.getParent()).removeView(prefsView);
+        }
+        rightPane.addView(prefsView);
+        
+        splitContainer.addView(rightPane);
+        
+        addCloseButton(rightPane); // Close button on right pane top corner
+
+        // Init Categories from XML logic
+        // We need to wait for preferences to be bound? They are bound in onCreatePreferences.
+        // So we can access them now.
+        setupCategoriesList();
+
+        return splitContainer;
+    }
+
+    private void addCloseButton(android.widget.FrameLayout container) {
         if (getContext() != null) {
             android.widget.ImageButton closeBtn = new android.widget.ImageButton(getContext());
             closeBtn.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
@@ -92,14 +162,84 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             closeBtn.setOnClickListener(v -> closeSettings());
 
             android.widget.FrameLayout.LayoutParams btnParams = new android.widget.FrameLayout.LayoutParams(
-                    120, 120); // approx 40-48dp
+                    120, 120); 
             btnParams.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
             btnParams.setMargins(24, 24, 24, 24);
 
-            wrapper.addView(closeBtn, btnParams);
+            container.addView(closeBtn, btnParams);
         }
+    }
 
-        return wrapper;
+    private void restoreAllCategories() {
+         for (androidx.preference.PreferenceCategory cat : allCategories) {
+             cat.setVisible(true);
+         }
+    }
+
+    private void setupCategoriesList() {
+        allCategories.clear();
+        categoriesList.removeAllViews();
+        
+        androidx.preference.PreferenceScreen screen = getPreferenceScreen();
+        if (screen == null) return;
+        
+        int count = screen.getPreferenceCount();
+        for (int i = 0; i < count; i++) {
+            Preference p = screen.getPreference(i);
+            if (p instanceof androidx.preference.PreferenceCategory) {
+                androidx.preference.PreferenceCategory cat = (androidx.preference.PreferenceCategory) p;
+                allCategories.add(cat);
+                addCategoryToMenu(cat);
+            }
+        }
+        
+        // Select first default
+        if (!allCategories.isEmpty()) {
+            selectCategory(allCategories.get(0));
+        }
+    }
+
+    private void addCategoryToMenu(androidx.preference.PreferenceCategory cat) {
+        android.widget.TextView item = new android.widget.TextView(getContext());
+        item.setText(cat.getTitle());
+        item.setTextColor(0xFFBBBBBB);
+        item.setTextSize(16);
+        item.setPadding(32, 24, 32, 24);
+        item.setTag(cat);
+        
+        android.util.TypedValue outValue = new android.util.TypedValue();
+        if (getContext() != null)
+            getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+        item.setBackgroundResource(outValue.resourceId);
+
+        item.setOnClickListener(v -> selectCategory(cat));
+        categoriesList.addView(item);
+    }
+    
+    private void selectCategory(androidx.preference.PreferenceCategory target) {
+        // Toggle Visibility
+        for (androidx.preference.PreferenceCategory cat : allCategories) {
+            cat.setVisible(cat == target);
+        }
+        
+        // Update Menu UI (Highlight)
+        for (int i = 0; i < categoriesList.getChildCount(); i++) {
+            View child = categoriesList.getChildAt(i);
+            if (child instanceof android.widget.TextView) {
+                android.widget.TextView tv = (android.widget.TextView) child;
+                if (tv.getTag() == target) {
+                    tv.setTextColor(0xFFFFFFFF);
+                    tv.setTypeface(null, android.graphics.Typeface.BOLD);
+                    tv.setBackgroundColor(0xFF2A2A2A); // Active bg
+                } else {
+                    tv.setTextColor(0xFFBBBBBB);
+                    tv.setTypeface(null, android.graphics.Typeface.NORMAL);
+                    tv.setBackgroundColor(0x00000000);
+                }
+            }
+        }
+        
+        currentActiveCategory = target;
     }
 
     private void closeSettings() {

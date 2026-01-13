@@ -116,6 +116,10 @@ public class AppDockFragment extends Fragment
                 getContext().registerReceiver(dockUpdateReceiver, filter);
             }
         }
+        
+        // Register Local Broadcast Receiver
+        androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(getContext())
+                .registerReceiver(dockUpdateReceiver, new android.content.IntentFilter("net.osmand.carlauncher.DOCK_UPDATED"));
     }
 
     private android.content.BroadcastReceiver dockUpdateReceiver;
@@ -502,6 +506,7 @@ public class AppDockFragment extends Fragment
         if (dockUpdateReceiver != null && getContext() != null) {
             try {
                 getContext().unregisterReceiver(dockUpdateReceiver);
+                androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(dockUpdateReceiver);
             } catch (Exception e) {
                 // Ignore if already unregistered
             }
@@ -513,18 +518,17 @@ public class AppDockFragment extends Fragment
         
         layoutButton.post(() -> {
             switch (mode) {
-                case 0: // Normal (Widgets Visible) -> Show 'List/Dashboard' icon implies 'View as Dashboard' (Current) or 'Switch view'
-                    // If we want to imply "Click to hide widgets", maybe an icon showing just a square?
-                    // Let's use the list icon for now.
-                    layoutButton.setImageResource(net.osmand.plus.R.drawable.ic_action_view_as_list);
+                case 0: // Normal (Widgets Visible) -> Show "Map Mode" icon to switch to map
+                     // Icon should indicate the TARGET state or CURRENT state? 
+                     // Usually button shows what it DOES. Click to go to Fullscreen Map.
+                     // So show Map Icon.
+                    layoutButton.setImageResource(android.R.drawable.ic_menu_mapmode);
                     break;
-                case 1: // No Widgets (Map Only) -> Show Map specific icon or Fullscreen hint
-                    // android.R.drawable.ic_menu_mapmode is usually available
-                    layoutButton.setImageResource(android.R.drawable.ic_menu_mapmode); 
+                case 2: // Full Screen (Map Only) -> Show "Dashboard" icon to switch to widgets
+                    layoutButton.setImageResource(net.osmand.plus.R.drawable.ic_action_view_as_list); // Or Dashboard icon
                     break;
-                case 2: // Full Screen
-                    // Button is hidden in parent, but if visible, maybe Exit icon
-                    layoutButton.setImageResource(net.osmand.plus.R.drawable.ic_action_view_as_list);
+                default: 
+                    layoutButton.setImageResource(android.R.drawable.ic_menu_mapmode);
                     break;
             }
         });

@@ -79,11 +79,15 @@ public class Material3ClockWidget extends BaseWidget {
     protected void onSizeChanged(WidgetSize newSize) {
         if (tvDate == null) return;
         
-        // Show date only on MEDIUM and LARGE
-        if (newSize == WidgetSize.MEDIUM || newSize == WidgetSize.LARGE) {
-            tvDate.setVisibility(View.VISIBLE);
+        // Show date in ALL sizes, but adjust size
+        tvDate.setVisibility(View.VISIBLE);
+        
+        if (newSize == WidgetSize.SMALL) {
+            tvDate.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 12); // Smaller for compact
+            tvDate.setPadding(0, 0, 0, 4); // Reduce padding
         } else {
-            tvDate.setVisibility(View.GONE);
+            tvDate.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16); // Normal/Large
+            tvDate.setPadding(0, 0, 0, 8);
         }
     }
 

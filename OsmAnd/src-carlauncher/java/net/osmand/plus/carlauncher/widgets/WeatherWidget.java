@@ -65,12 +65,6 @@ public class WeatherWidget extends BaseWidget implements WeatherManager.WeatherL
     }
 
     @Override
-    public void update() {
-        // Redundant if listener works, but can force refresh UI
-        updateUI(weatherManager.getCachedWeather());
-    }
-    
-    @Override
     public void onWeatherUpdated(WeatherManager.WeatherData data) {
          new Handler(Looper.getMainLooper()).post(() -> updateUI(data));
     }
@@ -81,6 +75,52 @@ public class WeatherWidget extends BaseWidget implements WeatherManager.WeatherL
             if (tvDesc != null) tvDesc.setText(error);
             if (progressBar != null) progressBar.setVisibility(View.GONE);
         });
+    }
+
+    @Override
+    public void update() {
+        // Redundant if listener works, but can force refresh UI
+        updateUI(weatherManager.getCachedWeather());
+    }
+    
+    @Override
+    protected void onSizeChanged(WidgetSize newSize) {
+        if (rootView == null) return;
+        
+        // Adjust UI based on size
+        if (newSize == WidgetSize.SMALL) {
+            // Compact Mode
+            if (tvDesc != null) tvDesc.setVisibility(View.GONE);
+            if (progressBar != null) progressBar.setVisibility(View.GONE); // Hide loading in small to save space?
+            
+            // Icon smaller
+            if (ivIcon != null) {
+                ivIcon.setVisibility(View.VISIBLE);
+                // Layout params could be adjusted here if needed, 
+                // but simpler to rely on layout constraints or GONE handling
+            }
+            
+            if (tvLocation != null) tvLocation.setVisibility(View.GONE); // Hide location in small
+        } else {
+            // Normal Mode
+            if (tvDesc != null) tvDesc.setVisibility(View.VISIBLE);
+            if (tvLocation != null) tvLocation.setVisibility(View.VISIBLE);
+            // Loading bar handled by data state
+        }
+        
+        // Refresh data display
+        updateUI(weatherManager.getCachedWeather());
+    }
+
+    @Override
+    public boolean isConfigurable() {
+        return true;
+    }
+
+    @Override
+    public void openConfig(androidx.fragment.app.FragmentManager fragmentManager) {
+        net.osmand.plus.carlauncher.ui.WeatherConfigDialog dialog = new net.osmand.plus.carlauncher.ui.WeatherConfigDialog(this);
+        dialog.show(fragmentManager, "WeatherConfig");
     }
 
     private void updateUI(WeatherManager.WeatherData data) {
@@ -99,7 +139,6 @@ public class WeatherWidget extends BaseWidget implements WeatherManager.WeatherL
         }
         
         if (tvDesc != null) {
-            // Simple description based on code mapping
             tvDesc.setText(getWeatherDescription(data.weatherCode));
         }
 
@@ -109,9 +148,13 @@ public class WeatherWidget extends BaseWidget implements WeatherManager.WeatherL
         }
         
         if (tvLocation != null) {
-             // Since we don't have City Name yet, we might leave static or try to get from Location Service if available?
-             // Leaving default "Şehir" or "Konum" for now as placeholder
              tvLocation.setText("Konum");
+        }
+        
+        // Enforcement for specific sizes if layout reset properties
+        if (size == WidgetSize.SMALL) {
+             if (tvDesc != null) tvDesc.setVisibility(View.GONE);
+             if (tvLocation != null) tvLocation.setVisibility(View.GONE);
         }
     }
     
@@ -127,13 +170,8 @@ public class WeatherWidget extends BaseWidget implements WeatherManager.WeatherL
     }
 
     private int getIconResource(String iconName) {
-        // Map icon names to drawable resources
-        // Assumes resources exist: ic_weather_clear, ic_weather_cloudy, ic_weather_rain
-        // If not, fallback to existing icons like ic_action_umbrella
-        
         int resId = context.getResources().getIdentifier(iconName, "drawable", context.getPackageName());
         if (resId == 0) {
-            // Fallbacks
             if (iconName.contains("clear")) return net.osmand.plus.R.drawable.ic_action_sun; 
             if (iconName.contains("cloud")) return net.osmand.plus.R.drawable.ic_action_cloud;
             return net.osmand.plus.R.drawable.ic_action_umbrella;

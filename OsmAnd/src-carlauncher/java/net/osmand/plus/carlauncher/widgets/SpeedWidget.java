@@ -141,8 +141,10 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         if (limitContainer != null) {
             if (size == WidgetSize.SMALL) {
                 limitContainer.setVisibility(View.GONE);
+                if (speedText != null) speedText.setTextSize(48); // Smaller for compact
             } else {
                 // Visibility set by updateMaxSpeed
+                 if (speedText != null) speedText.setTextSize(64); // Normal
             }
         }
     }
@@ -187,14 +189,6 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
 
         // 2. Analog View Update
         if (analogView != null) {
-             // Convert m/s to km/h roughly for display (View expects value)
-             // OsmAndFormatter handles units, but View needs raw float.
-             // Assuming km/h preference for simplicity or use app settings?
-             // App settings is better.
-             // OsmAndFormatter.getFormattedSpeed(speed, app) returns string.
-             // Accessing settings: app.getSettings().METRIC_SYSTEM...
-             // For now, let's use a rough m/s * 3.6 conversion for Analog
-             // Ideally we pass unit type to View.
              float kmh = currentSpeed * 3.6f;
              analogView.setSpeed(kmh);
         }
@@ -221,23 +215,44 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
                      
                      limitText.setText(limitStr);
                      
-                     // Warning
-                     float tolerance = 0.55f;
-                     if (currentSpeed > (maxSpeed + tolerance)) {
-                        // Warning Style
-                        android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
-                        gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-                        gd.setColor(Color.parseColor("#CCFF0000"));
-                        gd.setStroke(dpToPx(4), Color.RED);
-                        limitText.setBackground(gd);
-                        limitText.setTextColor(Color.WHITE);
+                     // Color Logic (Gradual)
+                     // maxSpeed is m/s. currentSpeed is m/s.
+                     float diff = currentSpeed - maxSpeed;
+                     // Tolerance: e.g. up to 10% or 5km/h
+                     // Let's use simplified km/h based logic for visual check
+                     float diffKmh = diff * 3.6f;
+                     
+                     int defaultColor = Color.parseColor("#6582c1ff"); // White
+                     int warningColor = Color.parseColor("#FFD54F"); // Amber
+                     int dangerColor = Color.parseColor("#FF5252"); // Red
+                     
+                     if (diffKmh > 5) { // +5 km/h over
+                         if (speedText != null) speedText.setTextColor(dangerColor);
+                         
+                         // Limit Box Danger
+                         android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+                         gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+                         gd.setColor(Color.parseColor("#CCFF0000"));
+                         gd.setStroke(dpToPx(4), Color.RED);
+                         limitText.setBackground(gd);
+                         limitText.setTextColor(Color.WHITE);
+                         
+                     } else if (diffKmh > 0) { // 0-5 km/h over
+                         if (speedText != null) speedText.setTextColor(warningColor);
+                         
+                         // Limit Box Warning
+                         limitText.setBackgroundResource(net.osmand.plus.R.drawable.bg_speed_limit);
+                         limitText.setTextColor(Color.RED); // Text Red
                      } else {
+                         // Normal
+                         if (speedText != null) speedText.setTextColor(defaultColor);
                          limitText.setBackgroundResource(net.osmand.plus.R.drawable.bg_speed_limit);
                          limitText.setTextColor(Color.BLACK);
                      }
 
                  } else {
                      limitContainer.setVisibility(View.GONE);
+                     if (speedText != null) speedText.setTextColor(Color.parseColor("#6582c1ff"));
                  }
              }
         }

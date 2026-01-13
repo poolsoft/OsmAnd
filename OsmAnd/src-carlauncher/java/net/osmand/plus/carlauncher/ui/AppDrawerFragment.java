@@ -296,7 +296,7 @@ public class AppDrawerFragment extends Fragment {
     }
 
     private void showAppOptions(AppItem item) {
-        String[] options = { "Dock'a Ekle (Standart)", "Dock'a Ekle (Overlay)", "Uygulama Bilgisi" };
+        String[] options = { "Dock'a Ekle (Standart)", "Dock'a Ekle (Split-Screen)", "Dock'a Ekle (Overlay)", "Uygulama Bilgisi" };
 
         new AlertDialog.Builder(getContext())
                 .setTitle(item.label)
@@ -306,9 +306,12 @@ public class AppDrawerFragment extends Fragment {
                             addToDock(item, LaunchMode.FULL_SCREEN);
                             break;
                         case 1:
-                            addToDock(item, LaunchMode.OVERLAY);
+                            addToDock(item, LaunchMode.SPLIT_SCREEN);
                             break;
                         case 2:
+                            addToDock(item, LaunchMode.OVERLAY);
+                            break;
+                        case 3:
                             showAppInfo(item.packageName);
                             break;
                     }
@@ -336,9 +339,11 @@ public class AppDrawerFragment extends Fragment {
         if (dockManager.addShortcut(shortcut)) {
             Toast.makeText(getContext(), item.label + " dock'a eklendi.", Toast.LENGTH_SHORT).show();
 
-            // Send broadcast to refresh Dock
+            // Send broadcast to refresh Dock (Both Local and Global for safety)
             Intent updateIntent = new Intent("net.osmand.carlauncher.DOCK_UPDATED");
+            updateIntent.setPackage(getContext().getPackageName()); // Security
             getContext().sendBroadcast(updateIntent);
+            androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(getContext()).sendBroadcast(updateIntent);
         }
         closeDrawer();
     }
