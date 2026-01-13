@@ -41,6 +41,8 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     public static final String TAG = "CarLauncherSettingsFragment";
 
     private CarLauncherSettings settings;
+    private android.widget.LinearLayout splitContainer;
+    private android.widget.LinearLayout categoriesList;
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
