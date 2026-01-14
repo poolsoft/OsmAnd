@@ -64,7 +64,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     private androidx.preference.PreferenceCategory currentActiveCategory;
     private final List<androidx.preference.PreferenceCategory> allCategories = new ArrayList<>();
     private View selectionHighlight;
-    private ViewGroup categoriesList;
+    private android.widget.LinearLayout categoriesList;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
