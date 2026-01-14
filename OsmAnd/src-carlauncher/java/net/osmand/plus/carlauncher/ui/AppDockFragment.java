@@ -83,8 +83,7 @@ public class AppDockFragment extends Fragment
     private MusicManager musicManager;
 
     public interface OnAppDockListener {
-        void onLayoutToggle();
-
+        void onLayoutModeToggle();
         void onAppDrawerOpen();
     }
 
@@ -222,7 +221,7 @@ public class AppDockFragment extends Fragment
         if (layoutButton != null) {
             layoutButton.setOnClickListener(v -> {
                 if (listener != null)
-                    listener.onLayoutToggle();
+                    listener.onLayoutModeToggle();
             });
             // Long press opens settings as backup
             layoutButton.setOnLongClickListener(v -> {

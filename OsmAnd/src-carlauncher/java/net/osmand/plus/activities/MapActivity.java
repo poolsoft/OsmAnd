@@ -636,7 +636,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			btnFullscreenExit.setOnClickListener(v -> {
 				// Exit Full Screen -> Reset to Normal (Mode 0) or Toggle
 				layoutMode = 2; // Force current state to 2 so toggle goes to 0
-				onLayoutToggle();
+				onLayoutModeToggle();
 			});
 		}
 
@@ -823,7 +823,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
     }
 
 	@Override
-	public void onLayoutToggle() {
+	public void onLayoutModeToggle() {
 		// Cycle: 0 (Normal) -> 1 (Widget Hidden) -> 2 (Full Screen) -> 0
 		layoutMode = (layoutMode + 1) % 2;
 		updateLayoutMode();
