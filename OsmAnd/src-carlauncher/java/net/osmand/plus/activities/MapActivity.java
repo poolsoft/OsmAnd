@@ -634,9 +634,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
             });
 
 			btnFullscreenExit.setOnClickListener(v -> {
-				// Exit Full Screen -> Reset to Normal (Mode 0)
-				layoutMode = 2; // Ensure we are in mode 2 logic before toggling
-				toggleLayoutMode(); // This will switch to 0
+				// Exit Full Screen -> Reset to Normal (Mode 0) or Toggle
+				layoutMode = 2; // Force current state to 2 so toggle goes to 0
+				onLayoutToggle();
 			});
 		}
 
@@ -673,13 +673,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 	
 	public void toggleLayoutMode() {
-	    // Cycle: 0 (Normal) <-> 2 (Full Screen)
+	    // Cycle: 0 (Normal) -> 2 (Full Screen) -> 0
 	    if (layoutMode == 0) {
-	        layoutMode = 2; // Switch to Fullscreen
-            isWidgetPanelOpen = false; // Close panel
+	        layoutMode = 2;
 	    } else {
-	        layoutMode = 0; // Switch to Normal
-            isWidgetPanelOpen = true; // Open panel
+	        layoutMode = 0;
 	    }
 	    
 	    AppDockFragment dock = getAppDockFragment();
@@ -687,6 +685,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	        dock.updateLayoutIcon(layoutMode);
 	    }
 	    
+	    isWidgetPanelOpen = !isWidgetPanelOpen;
 	    applyWidgetPanelState();
 	}
 	
@@ -720,29 +719,25 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         
         // MODE 0: NORMAL or MODE 2: FULLSCREEN (with Drawer)
         if (isPortrait) {
-            // PORTRAIT
-            // V17: Respect LayoutMode even in Portrait.
-            // If Mode 2 (Fullscreen), Hide Panel.
-            if (layoutMode == 2) {
-                 constraintSet.setVisibility(R.id.widget_panel, View.GONE);
-                 if (widgetHandle != null) constraintSet.setVisibility(R.id.widget_handle, View.VISIBLE); // Show handle to allow open? Or use Layout Button?
-                 // Layout Button is in Dock, which adheres to main layout.
-                 // If Panel is GONE, Map should take space.
-                 constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
-            } else {
-                // Mode 0 (Normal)
-                constraintSet.setVisibility(R.id.widget_panel, View.VISIBLE);
-                if (widgetHandle != null) constraintSet.setVisibility(R.id.widget_handle, View.GONE);
-                
-                constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
-                constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP);
-                constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
-            }
+            // PORTRAIT: Safe Mode - Widgets always visible at bottom or depending on open state if we wanted
+            // Currently treated as always visible in portrait based on prior logic, or we can toggle it?
+            // User requested "Portrait -> Horizontal", implying the list is horizontal.
+            // If we want the panel to be toggleable in portrait too, we should respect isWidgetPanelOpen.
+            // But let's stick to the previous "Always Visible" behavior for Portrait unless requested otherwise.
+            // Wait, previous code had `constraintSet.setVisibility(R.id.widget_panel, View.VISIBLE);` unconditionally.
+            
+            constraintSet.setVisibility(R.id.widget_panel, View.VISIBLE);
+            if (widgetHandle != null) constraintSet.setVisibility(R.id.widget_handle, View.GONE);
+            
+            constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+            constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP);
+            // Fix: Anchor WidgetPanel to TOP of AppDock, not Parent Bottom, to prevent overlap
+            constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
             
             constraintSet.applyTo(rootLayout);
             
             // FORCE UPDATE
-            widgetPanel.setVisibility(layoutMode == 2 ? View.GONE : View.VISIBLE);
+            widgetPanel.setVisibility(View.VISIBLE);
             if (widgetHandle != null) widgetHandle.setVisibility(View.GONE);
             
         } else {

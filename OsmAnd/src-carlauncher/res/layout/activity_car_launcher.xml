@@ -44,7 +44,7 @@
         android:background="@drawable/bg_drawer_handle"
         android:scaleType="fitCenter"
         android:padding="12dp"
-        android:elevation="15dp"
+        android:elevation="21dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" 
