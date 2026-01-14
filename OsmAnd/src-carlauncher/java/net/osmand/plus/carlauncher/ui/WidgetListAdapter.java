@@ -195,7 +195,7 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
 
             // Gradient Overlay - NON-CLICKABLE
             gradientOverlay = new View(itemView.getContext());
-            gradientOverlay.setBackgroundResource(net.osmand.plus.R.drawable.bg_gradient_overlay);
+            //gradientOverlay.setBackgroundResource(net.osmand.plus.R.drawable.bg_gradient_overlay);
             gradientOverlay.setClickable(false);
             gradientOverlay.setFocusable(false);
 
