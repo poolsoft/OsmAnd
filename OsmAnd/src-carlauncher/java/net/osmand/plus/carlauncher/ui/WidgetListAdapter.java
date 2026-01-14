@@ -187,17 +187,17 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
     static class WidgetViewHolder extends RecyclerView.ViewHolder {
         FrameLayout container;
         FrameLayout overlay;
-        View gradientOverlay;
+        //View gradientOverlay;
 
         public WidgetViewHolder(@NonNull View itemView) {
             super(itemView);
             container = (FrameLayout) itemView;
 
             // Gradient Overlay - NON-CLICKABLE
-            gradientOverlay = new View(itemView.getContext());
-            //gradientOverlay.setBackgroundResource(net.osmand.plus.R.drawable.bg_gradient_overlay);
-            gradientOverlay.setClickable(false);
-            gradientOverlay.setFocusable(false);
+            // gradientOverlay = new View(itemView.getContext());
+            // gradientOverlay.setBackgroundResource(net.osmand.plus.R.drawable.bg_gradient_overlay);
+            // gradientOverlay.setClickable(false);
+            // gradientOverlay.setFocusable(false);
 
             // Create Overlay for Drag Feedback
             overlay = new FrameLayout(itemView.getContext());

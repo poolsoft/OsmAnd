@@ -39,7 +39,14 @@ public class WeatherWidget extends BaseWidget implements WeatherManager.WeatherL
 
     @Override
     public View createView() {
+        // Parent belirtilmediği için layout params manuel ayarlanmalı veya 
+        // view eklendiği yerde ayarlanacağı varsayılmalıdır.
         View view = LayoutInflater.from(context).inflate(net.osmand.plus.R.layout.widget_weather, null);
+        
+        // LayoutParams düzeltmesi (İhtiyaca göre değiştirin, genelde gereklidir)
+        view.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 
+                ViewGroup.LayoutParams.WRAP_CONTENT));
 
         tvLocation = view.findViewById(net.osmand.plus.R.id.weather_location);
         tvTemp = view.findViewById(net.osmand.plus.R.id.weather_temp);
@@ -48,37 +55,54 @@ public class WeatherWidget extends BaseWidget implements WeatherManager.WeatherL
         progressBar = view.findViewById(net.osmand.plus.R.id.weather_loading);
 
         rootView = view;
-        
-        rootView = view;
-        
-        rootView.setOnClickListener(v -> {
-            net.osmand.plus.carlauncher.CarLauncherInterface activity = null;
+
+        // Listener'ı bir değişkene atayıp tekrar kullanmak daha temizdir
+        View.OnClickListener openDashboardListener = v -> {
+            net.osmand.plus.carlauncher.CarLauncherInterface callback = null;
             Context ctx = context;
             
-            // Traverse ContextWrapper to find Activity
             while (ctx instanceof android.content.ContextWrapper) {
+                // 1. Context'in kendisi Interface mi?
                 if (ctx instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
-                    activity = (net.osmand.plus.carlauncher.CarLauncherInterface) ctx;
+                    callback = (net.osmand.plus.carlauncher.CarLauncherInterface) ctx;
                     break;
                 }
+                
+                // 2. Context Activity mi? (Activity ise daha derine inme)
                 if (ctx instanceof android.app.Activity) {
-                     // Check if this activity implements interface
-                     if (ctx instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
-                         activity = (net.osmand.plus.carlauncher.CarLauncherInterface) ctx;
-                     }
-                     break; // Stop at Activity level
+                    if (ctx instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
+                        callback = (net.osmand.plus.carlauncher.CarLauncherInterface) ctx;
+                    }
+                    break; // Activity bulunduysa loop bitmeli
                 }
+                
+                // 3. Bir alt context'e in
                 ctx = ((android.content.ContextWrapper) ctx).getBaseContext();
+                
+                // Null check (Güvenlik için)
+                if (ctx == null) break;
             }
             
-            if (activity != null) {
-                activity.openWeatherDashboard();
+            if (callback != null) {
+                callback.openWeatherDashboard();
             } else {
-                android.util.Log.e("WeatherWidget", "Context is NOT CarLauncherInterface: " + context.getClass().getName());
+                android.util.Log.e("WeatherWidget", "Context, CarLauncherInterface'i uygulamıyor veya bulunamadı: " + context.getClass().getName());
             }
-        });
+        };
+
+        // Listener'ı hem ikona hem de kök görünüme ata
+        if (ivIcon != null) {
+            ivIcon.setOnClickListener(openDashboardListener);
+        }
+        if (rootView != null) {
+            rootView.setOnClickListener(openDashboardListener);
+        }
         
-        updateUI(weatherManager.getCachedWeather());
+        // Null check eklenmeli
+        if (weatherManager != null) {
+            updateUI(weatherManager.getCachedWeather());
+        }
+        
         return rootView;
     }
 
