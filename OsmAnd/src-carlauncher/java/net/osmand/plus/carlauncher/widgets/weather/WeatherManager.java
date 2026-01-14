@@ -71,10 +71,7 @@ public class WeatherManager {
     }
 
     public void forceRefresh() {
-        Location loc = null;
-        if (context instanceof OsmandApplication) {
-             loc = ((OsmandApplication) context).getSettings().getLastKnownLocation();
-        } 
+ 
         // Need access to last location if possible, or just ignore if no loc.
         // Assuming we have cached lat/lon
         double lat = getDouble(prefs, KEY_LAST_LAT, 0);
