@@ -825,7 +825,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	public void onLayoutToggle() {
 		// Cycle: 0 (Normal) -> 1 (Widget Hidden) -> 2 (Full Screen) -> 0
-		layoutMode = (layoutMode + 1) % 3;
+		layoutMode = (layoutMode + 1) % 2;
 		updateLayoutMode();
 	}
 
