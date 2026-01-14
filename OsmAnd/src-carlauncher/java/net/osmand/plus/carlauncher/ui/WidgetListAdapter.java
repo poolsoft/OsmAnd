@@ -193,12 +193,16 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
             super(itemView);
             container = (FrameLayout) itemView;
 
-            // Gradient Overlay
+            // Gradient Overlay - NON-CLICKABLE
             gradientOverlay = new View(itemView.getContext());
             gradientOverlay.setBackgroundResource(net.osmand.plus.R.drawable.bg_gradient_overlay);
+            gradientOverlay.setClickable(false);
+            gradientOverlay.setFocusable(false);
 
             // Create Overlay for Drag Feedback
             overlay = new FrameLayout(itemView.getContext());
+            overlay.setClickable(false);
+            overlay.setFocusable(false);
             
             // 1. Icon (Move Symbol)
             ImageView icon = new ImageView(itemView.getContext());

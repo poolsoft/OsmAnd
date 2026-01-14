@@ -49,12 +49,32 @@ public class WeatherWidget extends BaseWidget implements WeatherManager.WeatherL
 
         rootView = view;
         
+        rootView = view;
+        
         rootView.setOnClickListener(v -> {
-            if (context instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
-                ((net.osmand.plus.carlauncher.CarLauncherInterface) context).openWeatherDashboard();
-            } else if (context instanceof net.osmand.plus.activities.MapActivity) {
-                 // Fallback explicit cast if interface match fails (class loader issues?)
-                // ((net.osmand.plus.activities.MapActivity) context).openWeatherDashboard(); // Only if needed
+            net.osmand.plus.carlauncher.CarLauncherInterface activity = null;
+            Context ctx = context;
+            
+            // Traverse ContextWrapper to find Activity
+            while (ctx instanceof android.content.ContextWrapper) {
+                if (ctx instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
+                    activity = (net.osmand.plus.carlauncher.CarLauncherInterface) ctx;
+                    break;
+                }
+                if (ctx instanceof android.app.Activity) {
+                     // Check if this activity implements interface
+                     if (ctx instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
+                         activity = (net.osmand.plus.carlauncher.CarLauncherInterface) ctx;
+                     }
+                     break; // Stop at Activity level
+                }
+                ctx = ((android.content.ContextWrapper) ctx).getBaseContext();
+            }
+            
+            if (activity != null) {
+                activity.openWeatherDashboard();
+            } else {
+                android.util.Log.e("WeatherWidget", "Context is NOT CarLauncherInterface: " + context.getClass().getName());
             }
         });
         
