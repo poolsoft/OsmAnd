@@ -884,6 +884,18 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 	}
 
+	public void openWeatherDashboard() {
+		if (appDrawerContainer != null) {
+			appDrawerContainer.setVisibility(View.VISIBLE);
+			if (getSupportFragmentManager().findFragmentByTag("WeatherDashboardFragment") == null) {
+				getSupportFragmentManager().beginTransaction()
+						.replace(R.id.app_drawer_container, new net.osmand.plus.carlauncher.ui.WeatherDashboardFragment(),
+								"WeatherDashboardFragment")
+						.commitAllowingStateLoss();
+			}
+		}
+	}
+
 	public void closeAppDrawer() {
 		if (appDrawerContainer != null) {
 			appDrawerContainer.setVisibility(View.GONE);
@@ -901,6 +913,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				if (drawerFragment != null) {
 					fm.beginTransaction().remove(drawerFragment).commitAllowingStateLoss();
 				}
+                // Remove WeatherDashboardFragment if exists
+                Fragment weatherFragment = fm.findFragmentByTag("WeatherDashboardFragment");
+                if (weatherFragment != null) {
+                    fm.beginTransaction().remove(weatherFragment).commitAllowingStateLoss();
+                }
 				// Clear back stack
 				if (fm.getBackStackEntryCount() > 0) {
 					fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);

@@ -13,6 +13,8 @@ public interface CarLauncherInterface {
     void closeAppDrawer();
 
     void openMusicPlayer();
+    
+    void openWeatherDashboard();
 
     OsmandMapTileView getMapView();
 }

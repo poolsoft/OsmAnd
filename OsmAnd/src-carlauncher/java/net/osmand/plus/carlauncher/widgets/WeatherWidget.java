@@ -48,6 +48,16 @@ public class WeatherWidget extends BaseWidget implements WeatherManager.WeatherL
         progressBar = view.findViewById(net.osmand.plus.R.id.weather_loading);
 
         rootView = view;
+        
+        rootView.setOnClickListener(v -> {
+            if (context instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
+                ((net.osmand.plus.carlauncher.CarLauncherInterface) context).openWeatherDashboard();
+            } else if (context instanceof net.osmand.plus.activities.MapActivity) {
+                 // Fallback explicit cast if interface match fails (class loader issues?)
+                // ((net.osmand.plus.activities.MapActivity) context).openWeatherDashboard(); // Only if needed
+            }
+        });
+        
         updateUI(weatherManager.getCachedWeather());
         return rootView;
     }

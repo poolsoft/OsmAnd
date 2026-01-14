@@ -129,6 +129,7 @@ public class WeatherManager {
 
     /**
      * API'den hava durumu verisi ceker.
+     * URL Guncellendi: Saatlik veriler, Ruzgar, Yagis, Gorunurluk, Hissedilen.
      */
     public void fetchWeather(double lat, double lon) {
         if (!isNetworkAvailable()) {
@@ -136,8 +137,16 @@ public class WeatherManager {
             return;
         }
 
+        // Params:
+        // current: temperature_2m, relative_humidity_2m, apparent_temperature, precipitation, weather_code, wind_speed_10m, wind_direction_10m
+        // hourly: temperature_2m, weather_code, precipitation_probability, visibility
+        // daily: weather_code, temperature_2m_max, temperature_2m_min, precipitation_probability_max
         String url = String.format(Locale.US, 
-            "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto", 
+            "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f" +
+            "&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m" +
+            "&hourly=temperature_2m,weather_code,precipitation_probability,visibility" +
+            "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
+            "&timezone=auto", 
             lat, lon);
 
         new FetchTask().execute(url, String.valueOf(lat), String.valueOf(lon));
@@ -153,6 +162,7 @@ public class WeatherManager {
     }
 
     private boolean isNetworkAvailable() {
+        if (context == null) return false;
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo info = cm.getActiveNetworkInfo();
         return info != null && info.isConnected();
@@ -174,16 +184,75 @@ public class WeatherManager {
             JSONObject json = new JSONObject(jsonStr);
             WeatherData data = new WeatherData();
             
-            // Current Units
+            // --- Current Units ---
             JSONObject current = json.getJSONObject("current");
             data.temp = current.getDouble("temperature_2m");
             data.weatherCode = current.getInt("weather_code");
+            data.humidity = current.optInt("relative_humidity_2m", 0);
+            data.apparentTemp = current.optDouble("apparent_temperature", data.temp);
+            data.windSpeed = current.optDouble("wind_speed_10m", 0);
+            data.windDirection = current.optInt("wind_direction_10m", 0);
             
-            // Daily High/Low (Index 0 is today)
+            // --- Daily ---
             JSONObject daily = json.getJSONObject("daily");
             if (daily != null) {
-                data.maxTemp = daily.getJSONArray("temperature_2m_max").getDouble(0);
-                data.minTemp = daily.getJSONArray("temperature_2m_min").getDouble(0);
+                org.json.JSONArray maxTemps = daily.getJSONArray("temperature_2m_max");
+                org.json.JSONArray minTemps = daily.getJSONArray("temperature_2m_min");
+                org.json.JSONArray codes = daily.getJSONArray("weather_code");
+                org.json.JSONArray rainProbs = daily.optJSONArray("precipitation_probability_max");
+                org.json.JSONArray times = daily.getJSONArray("time");
+
+                // Daily List
+                data.dailyForecasts = new ArrayList<>();
+                for (int i = 0; i < maxTemps.length(); i++) {
+                    DailyForecast df = new DailyForecast();
+                    df.date = times.getString(i);
+                    df.maxTemp = maxTemps.getDouble(i);
+                    df.minTemp = minTemps.getDouble(i);
+                    df.weatherCode = codes.getInt(i);
+                    if (rainProbs != null) df.rainProb = rainProbs.getInt(i);
+                    data.dailyForecasts.add(df);
+                }
+                
+                // Current Day Max/Min from Index 0
+                if (!data.dailyForecasts.isEmpty()) {
+                    data.maxTemp = data.dailyForecasts.get(0).maxTemp;
+                    data.minTemp = data.dailyForecasts.get(0).minTemp;
+                    data.rainProbToday = data.dailyForecasts.get(0).rainProb;
+                }
+            }
+            
+            // --- Hourly ---
+            JSONObject hourly = json.getJSONObject("hourly");
+            if (hourly != null) {
+                org.json.JSONArray temps = hourly.getJSONArray("temperature_2m");
+                org.json.JSONArray codes = hourly.getJSONArray("weather_code");
+                org.json.JSONArray rains = hourly.optJSONArray("precipitation_probability");
+                org.json.JSONArray visibilities = hourly.optJSONArray("visibility");
+                org.json.JSONArray times = hourly.getJSONArray("time");
+
+                // Get current hour index roughly (simple logic: Open-Meteo returns past hours too)
+                // We'll just store all and let UI filter or take next 24
+                
+                data.hourlyForecasts = new ArrayList<>();
+                // Limit to 24 hours from "now" logic requires parsing time string, 
+                // for simplicity we take first 24 points or try to find current hour index.
+                // Open-Meteo "current" block gives current time, usually aligns. 
+                // We will just load first 24 entries starting from current local time index approximately
+                // Ideally we should match string timestamps. For now, simple list.
+                
+                int count = Math.min(times.length(), 24); // Just take first 24 for safety if logic complex
+                // Better: Take ALL and filter in UI based on timestamp vs current time.
+                // Storing all for now.
+                for (int i = 0; i < times.length(); i++) {
+                     HourlyForecast hf = new HourlyForecast();
+                     hf.time = times.getString(i);
+                     hf.temp = temps.getDouble(i);
+                     hf.weatherCode = codes.getInt(i);
+                     if (rains != null) hf.rainProb = rains.getInt(i);
+                     if (visibilities != null) hf.visibility = visibilities.getDouble(i);
+                     data.hourlyForecasts.add(hf);
+                }
             }
             
             data.timestamp = timestamp;
@@ -262,30 +331,50 @@ public class WeatherManager {
         public double temp;
         public double maxTemp;
         public double minTemp;
+        public double apparentTemp; // Hissedilen
+        public double windSpeed; // km/h
+        public int windDirection;
+        public int humidity; // %
+        public int rainProbToday; // %
+        
         public int weatherCode;
         public long timestamp;
         public boolean isStale;
+        
+        public List<DailyForecast> dailyForecasts;
+        public List<HourlyForecast> hourlyForecasts;
 
-        public String getIconName() {
+        public String getIconName(int code) {
             // WMO Code Mapping
-            // 0: Clear sky
-            // 1, 2, 3: Mainly clear, partly cloudy, and overcast
-            // 45, 48: Fog
-            // 51-55: Drizzle
-            // 61-65: Rain
-            // 71-77: Snow
-            // 80-82: Rain showers
-            // 95-99: Thunderstorm
-            
-            if (weatherCode == 0) return "ic_weather_clear";
-            if (weatherCode >= 1 && weatherCode <= 3) return "ic_weather_cloudy";
-            if (weatherCode >= 45 && weatherCode <= 48) return "ic_weather_cloudy"; // Fog -> Cloudy
-            if (weatherCode >= 51 && weatherCode <= 67) return "ic_weather_rain";
-            if (weatherCode >= 71 && weatherCode <= 77) return "ic_weather_rain"; // Snow -> Rain (Temp)
-            if (weatherCode >= 80 && weatherCode <= 82) return "ic_weather_rain";
-            if (weatherCode >= 95) return "ic_weather_rain"; // Storm -> Rain (Temp)
-            
-            return "ic_weather_cloudy"; // Default fallback
+            if (code == 0) return "ic_weather_clear";
+            if (code >= 1 && code <= 3) return "ic_weather_cloudy";
+            if (code >= 45 && code <= 48) return "ic_weather_cloudy";
+            if (code >= 51 && code <= 67) return "ic_weather_rain";
+            if (code >= 71 && code <= 77) return "ic_weather_rain";
+            if (code >= 80 && code <= 82) return "ic_weather_rain";
+            if (code >= 95) return "ic_weather_rain";
+            return "ic_weather_cloudy";
         }
+        
+        // Convenience for current
+        public String getIconName() {
+            return getIconName(weatherCode);
+        }
+    }
+    
+    public static class DailyForecast {
+        public String date; // YYYY-MM-DD
+        public double maxTemp;
+        public double minTemp;
+        public int weatherCode;
+        public int rainProb;
+    }
+    
+    public static class HourlyForecast {
+        public String time; // ISO8601
+        public double temp;
+        public int weatherCode;
+        public int rainProb;
+        public double visibility; // meters
     }
 }
