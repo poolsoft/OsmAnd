@@ -156,9 +156,12 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
         }
         
         // B. Add Gradient Overlay
+        // REMOVED by request (User disabled field)
+        /*
         if (holder.gradientOverlay.getParent() != null) ((ViewGroup)holder.gradientOverlay.getParent()).removeView(holder.gradientOverlay);
         holder.container.addView(holder.gradientOverlay, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        */
         
         // C. Add Drag Overlay (on top)
         if (holder.overlay.getParent() != null) ((ViewGroup)holder.overlay.getParent()).removeView(holder.overlay);
