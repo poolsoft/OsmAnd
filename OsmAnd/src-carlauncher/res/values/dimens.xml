@@ -4,7 +4,7 @@
 
     <!-- APP DOCK -->
     <dimen name="dock_height">54dp</dimen>
-    <dimen name="dock_icon_size">36dp</dimen>
+    <dimen name="dock_icon_size">40dp</dimen>
     <dimen name="dock_icon_padding">8dp</dimen>
     <dimen name="dock_clock_text_size">24sp</dimen>
     <dimen name="dock_music_height">48dp</dimen>

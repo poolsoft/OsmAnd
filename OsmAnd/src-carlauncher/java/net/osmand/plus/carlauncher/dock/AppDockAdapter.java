@@ -66,10 +66,14 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // Genislik: ikon boyutu + yatay padding (dimens.xml'den okunur, qualifier sistemi calisir)
+        int iconSize = (int) context.getResources().getDimension(net.osmand.plus.R.dimen.dock_icon_size);
+        int itemWidth = iconSize + dpToPx(16); // ikon + yatay bosluk
+
         LinearLayout itemView = new LinearLayout(context);
         itemView.setOrientation(LinearLayout.VERTICAL);
         itemView.setLayoutParams(new RecyclerView.LayoutParams(
-                dpToPx(80),
+                itemWidth,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         itemView.setGravity(android.view.Gravity.CENTER);
         itemView.setPadding(dpToPx(4), dpToPx(2), dpToPx(4), dpToPx(2));
@@ -128,10 +132,10 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
             removeButton.setVisibility(View.GONE);
             container.addView(removeButton);
 
-            // Icon
+            // Icon — boyut dimens.xml'den gelir (qualifier sistemi: telefon vs araba teybi)
+            int iconSize = (int) context.getResources().getDimension(net.osmand.plus.R.dimen.dock_icon_size);
             iconView = new ImageView(context);
-            iconView.setLayoutParams(new LinearLayout.LayoutParams(
-                    dpToPx(44), dpToPx(44))); // Enlarge icon
+            iconView.setLayoutParams(new LinearLayout.LayoutParams(iconSize, iconSize));
             iconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             container.addView(iconView);
 
