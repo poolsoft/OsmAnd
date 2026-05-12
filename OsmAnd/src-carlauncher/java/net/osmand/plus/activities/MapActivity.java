@@ -265,6 +265,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		app.applyTheme(this);
 		supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
 		setRequestedOrientation(AndroidUiHelper.getScreenOrientation(this));
+		net.osmand.plus.plugins.PluginsHelper.registerPlugin(new net.osmand.plus.carlauncher.antenna.AntennaPlugin(app));
 		super.onCreate(savedInstanceState);
         
         // V8: Initialize Car Launcher UI AFTER window setup

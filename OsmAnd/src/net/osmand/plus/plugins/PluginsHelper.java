@@ -127,7 +127,6 @@ public class PluginsHelper {
 		allPlugins.add(new AstronomyPlugin(app));
 		allPlugins.add(new AccessibilityPlugin(app));
 		allPlugins.add(new OsmandDevelopmentPlugin(app));
-		allPlugins.add(new net.osmand.plus.carlauncher.antenna.AntennaPlugin(app));
 
 		loadCustomPlugins(app);
 		registerAppInitializingDependedProperties(app);
@@ -143,6 +142,13 @@ public class PluginsHelper {
 		allPlugins.add(plugin);
 		enablePlugin(null, app, plugin, true);
 		saveCustomPlugins(app);
+	}
+
+	public static void registerPlugin(@NonNull OsmandPlugin plugin) {
+		OsmandPlugin oldPlugin = getPlugin(plugin.getId());
+		if (oldPlugin == null) {
+			allPlugins.add(plugin);
+		}
 	}
 
 	public static void removeCustomPlugin(@NonNull OsmandApplication app, @NonNull CustomOsmandPlugin plugin) {
