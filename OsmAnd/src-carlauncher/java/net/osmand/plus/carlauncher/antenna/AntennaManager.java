@@ -123,6 +123,15 @@ public class AntennaManager {
         notifyListener();
     }
 
+    /** Kaynak ve hedef noktaları yer degistirir. */
+    public void swapPoints() {
+        AntennaPoint temp = this.pointSource;
+        this.pointSource = this.pointTarget;
+        this.pointTarget = temp;
+        savePoints();
+        notifyListener();
+    }
+
     // --- Layer / Picking ---
 
     public boolean isLayerVisible() {

@@ -50,6 +50,18 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
         valAzimuth = view.findViewById(net.osmand.plus.R.id.val_azimuth);
         valElevation = view.findViewById(net.osmand.plus.R.id.val_elevation);
         statsContainer = view.findViewById(net.osmand.plus.R.id.stats_container);
+        android.widget.ImageButton btnSwap = view.findViewById(net.osmand.plus.R.id.btn_swap);
+
+        // Swap butonu — sadece iki nokta da seciliyse aktif
+        btnSwap.setOnClickListener(v -> {
+            if (manager.getSource() != null && manager.getTarget() != null) {
+                manager.swapPoints();
+            } else {
+                android.widget.Toast.makeText(context,
+                        "Kaynak ve hedef nokta secilmeden swap yapilamaz.",
+                        android.widget.Toast.LENGTH_SHORT).show();
+            }
+        });
 
         // Kaynak butonu
         view.findViewById(net.osmand.plus.R.id.btn_set_source)
@@ -138,6 +150,17 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
 
         AntennaManager.AntennaPoint source = manager.getSource();
         AntennaManager.AntennaPoint target = manager.getTarget();
+
+        // Swap butonu durumu: iki nokta seciliyse aktif, degil ise gri
+        android.widget.ImageButton swapBtn = rootView.findViewById(net.osmand.plus.R.id.btn_swap);
+        if (swapBtn != null) {
+            boolean bothSelected = source != null && target != null;
+            swapBtn.setEnabled(bothSelected);
+            swapBtn.setAlpha(bothSelected ? 1.0f : 0.3f);
+            // Aktifken tint rengi degistir
+            int tintColor = bothSelected ? 0xFF4CAF50 : 0xFF555555;
+            swapBtn.setColorFilter(tintColor);
+        }
 
         // Kaynak etiketi
         if (source != null) {

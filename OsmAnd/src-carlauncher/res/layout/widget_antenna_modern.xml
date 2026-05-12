@@ -82,14 +82,18 @@
                 android:layout_marginTop="2dp"/>
         </LinearLayout>
 
-        <!-- OK ikonu -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <!-- Swap Butonu (iki nokta secilince aktif olur) -->
+        <ImageButton
+            android:id="@+id/btn_swap"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:layout_gravity="center_vertical"
-            android:text=" > "
-            android:textColor="#555555"
-            android:textSize="14sp"/>
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_sort_by_size"
+            android:tint="#555555"
+            android:padding="4dp"
+            android:scaleType="fitCenter"
+            android:contentDescription="Kaynak-Hedef Degistir"/>
 
         <!-- HEDEF -->
         <LinearLayout

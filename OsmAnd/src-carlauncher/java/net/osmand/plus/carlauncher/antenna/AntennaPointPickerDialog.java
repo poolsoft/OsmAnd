@@ -96,9 +96,11 @@ public class AntennaPointPickerDialog extends BottomSheetDialogFragment {
         root.findViewById(net.osmand.plus.R.id.btn_picker_close)
                 .setOnClickListener(v -> dismiss());
 
-        // GPS
-        root.findViewById(net.osmand.plus.R.id.option_gps)
-                .setOnClickListener(v -> onGpsSelected());
+        // GPS secenegi: iki nokta da seciliyse gizle (swap butonu daha mantikli)
+        View optionGps = root.findViewById(net.osmand.plus.R.id.option_gps);
+        boolean bothPointsSet = manager.getSource() != null && manager.getTarget() != null;
+        optionGps.setVisibility(bothPointsSet ? View.GONE : View.VISIBLE);
+        optionGps.setOnClickListener(v -> onGpsSelected());
 
         // GPS konum bilgisi
         TextView tvGpsSub = root.findViewById(net.osmand.plus.R.id.tv_gps_subtitle);
