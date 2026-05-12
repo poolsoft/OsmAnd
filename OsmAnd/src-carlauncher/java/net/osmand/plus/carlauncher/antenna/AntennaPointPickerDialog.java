@@ -1,9 +1,7 @@
 package net.osmand.plus.carlauncher.antenna;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.location.Location;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.LayoutInflater;
@@ -21,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
+import net.osmand.Location;
 import net.osmand.data.FavouritePoint;
 import net.osmand.data.LatLon;
 import net.osmand.plus.OsmandApplication;
