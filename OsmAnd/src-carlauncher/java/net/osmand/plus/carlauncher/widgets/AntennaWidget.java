@@ -5,126 +5,113 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.carlauncher.antenna.AntennaManager;
+import net.osmand.plus.carlauncher.antenna.AntennaPointPickerDialog;
 
 import java.util.Locale;
 
 /**
- * Widget for Antenna Alignment.
- * Connects to AntennaManager to display A/B points and calculated angles.
+ * Anten Hizalama Widget'i.
+ * Kaynak ve hedef noktalari gosterir, secim dialog'unu acar.
+ * Hesaplanan azimut, mesafe ve egim bilgilerini kompakt olarak gosterir.
  */
 public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaListener {
 
-    public static final String ACTION_PICK_ANTENNA_POINT = "net.osmand.carlauncher.PICK_ANTENNA_POINT";
-    public static final String EXTRA_POINT_TYPE = "point_type"; // "A" or "B"
-
-    private TextView textPointA, textPointB;
+    private TextView textSource, textTarget;
     private TextView valDistance, valAzimuth, valElevation;
-    private ImageView compassArrow;
-    private View contentLayout;
-    private ImageView iconExpand;
-    private boolean isExpanded = false;
+    private View statsContainer;
 
     private final AntennaManager manager;
 
     public AntennaWidget(@NonNull Context context, @NonNull OsmandApplication app) {
         super(context, "antenna", "Anten");
         this.manager = AntennaManager.getInstance(context);
-        this.order = 4; // Place after Music
+        this.order = 4;
     }
 
     @NonNull
     @Override
     public View createView() {
-        View view = LayoutInflater.from(context).inflate(net.osmand.plus.R.layout.widget_antenna_modern, null);
+        View view = LayoutInflater.from(context)
+                .inflate(net.osmand.plus.R.layout.widget_antenna_modern, null);
 
-        // Bind Views
-        View headerLayout = view.findViewById(net.osmand.plus.R.id.header_layout);
-        contentLayout = view.findViewById(net.osmand.plus.R.id.content_layout);
-        iconExpand = view.findViewById(net.osmand.plus.R.id.icon_expand);
-
-        textPointA = view.findViewById(net.osmand.plus.R.id.text_point_a);
-        textPointB = view.findViewById(net.osmand.plus.R.id.text_point_b);
+        // View baglama
+        textSource = view.findViewById(net.osmand.plus.R.id.text_source);
+        textTarget = view.findViewById(net.osmand.plus.R.id.text_target);
         valDistance = view.findViewById(net.osmand.plus.R.id.val_distance);
         valAzimuth = view.findViewById(net.osmand.plus.R.id.val_azimuth);
         valElevation = view.findViewById(net.osmand.plus.R.id.val_elevation);
-        compassArrow = view.findViewById(net.osmand.plus.R.id.compass_arrow);
+        statsContainer = view.findViewById(net.osmand.plus.R.id.stats_container);
 
-        View btnSetA = view.findViewById(net.osmand.plus.R.id.btn_set_a);
-        View btnSetB = view.findViewById(net.osmand.plus.R.id.btn_set_b);
+        // Kaynak butonu
+        view.findViewById(net.osmand.plus.R.id.btn_set_source)
+                .setOnClickListener(v -> openPickerDialog(true));
 
-        // Listeners
-        headerLayout.setOnClickListener(v -> toggleExpand());
+        // Hedef butonu
+        view.findViewById(net.osmand.plus.R.id.btn_set_target)
+                .setOnClickListener(v -> openPickerDialog(false));
 
-        btnSetA.setOnClickListener(v -> startPickPoint("A"));
-        btnSetB.setOnClickListener(v -> startPickPoint("B"));
-
-        View btnAlign = view.findViewById(net.osmand.plus.R.id.btn_align);
-        btnAlign.setOnClickListener(v -> {
-            if (manager.getPointA() != null && manager.getPointB() != null) {
+        // Hizalama penceresi
+        view.findViewById(net.osmand.plus.R.id.btn_align).setOnClickListener(v -> {
+            if (manager.getSource() != null && manager.getTarget() != null) {
                 try {
                     Intent intent = new Intent(context,
                             net.osmand.plus.carlauncher.antenna.AntennaAlignmentActivity.class);
-                    // Explicitly set component to match where it is declared (net.osmand.plus) if
-                    // needed,
-                    // though class reference should work if package is correct.
-                    // If application ID differs from package name in manifest, implicit resolution
-                    // might fail for explicit class?
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(intent);
                 } catch (Exception e) {
-                    try {
-                        // Fallback: Try explicit ComponentName with fixed package "net.osmand.plus"
-                        Intent intent = new Intent();
-                        intent.setComponent(new android.content.ComponentName("net.osmand.plus",
-                                "net.osmand.plus.carlauncher.antenna.AntennaAlignmentActivity"));
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        context.startActivity(intent);
-                    } catch (Exception e2) {
-                        Toast.makeText(context, "Hata: Anten aracı başlatılamadı.", Toast.LENGTH_SHORT).show();
-                        e2.printStackTrace();
-                    }
+                    Toast.makeText(context, "Hizalama ekrani baslatilirken hata.", Toast.LENGTH_SHORT).show();
+                    e.printStackTrace();
                 }
             } else {
-                Toast.makeText(context, "Lütfen önce A ve B noktalarını seçin.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Lutfen once kaynak ve hedef noktayi secin.", Toast.LENGTH_SHORT).show();
             }
         });
 
-        // Setup Layout Params
-        // view.setLayoutParams(new ViewGroup.LayoutParams(dpToPx(300),
-        // ViewGroup.LayoutParams.WRAP_CONTENT));
-        // Use match_parent width handled by container usually, but keep specific if
-        // needed.
-        // XML is match_parent width. FrameLayout container might constraint it.
-        // Keeping dpToPx(300) causes it to be fixed width.
-        // If user wants modern, maybe full width?
-        // NavigationWidget uses match parent.
-        view.setLayoutParams(
-                new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        view.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
 
         rootView = view;
-        updateExpandState();
+        updateUI();
         return rootView;
     }
 
-    private void toggleExpand() {
-        isExpanded = !isExpanded;
-        updateExpandState();
+    /**
+     * Picker dialog'u acar.
+     * @param isSource true=Kaynak secimi, false=Hedef secimi
+     */
+    private void openPickerDialog(boolean isSource) {
+        if (context instanceof FragmentActivity) {
+            FragmentManager fm = ((FragmentActivity) context).getSupportFragmentManager();
+            AntennaPointPickerDialog dialog = isSource
+                    ? AntennaPointPickerDialog.forSource()
+                    : AntennaPointPickerDialog.forTarget();
+            dialog.show(fm, AntennaPointPickerDialog.TAG);
+        } else {
+            // FragmentActivity yoksa eski harita secimi yontemine fallback
+            manager.setPickingMode(isSource ? AntennaManager.PICK_SOURCE : AntennaManager.PICK_TARGET);
+            manager.setLayerVisible(true);
+            Toast.makeText(context,
+                    "Haritaya tikladiginizdaki konumu " + (isSource ? "kaynak" : "hedef") + " olarak ayarlar.",
+                    Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
     public void onStart() {
         super.onStart();
         manager.setListener(this);
+        manager.setLayerVisible(true);
         updateUI();
-        manager.setLayerVisible(isExpanded);
     }
 
     @Override
@@ -132,14 +119,6 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
         super.onStop();
         manager.setListener(null);
         manager.setLayerVisible(false);
-    }
-
-    private void updateExpandState() {
-        if (contentLayout != null) {
-            contentLayout.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
-            iconExpand.animate().rotation(isExpanded ? 180 : 0).setDuration(200).start();
-        }
-        manager.setLayerVisible(isExpanded);
     }
 
     @Override
@@ -155,50 +134,52 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
     }
 
     private void updateUI() {
-        if (rootView == null)
-            return;
+        if (rootView == null) return;
 
-        AntennaManager.AntennaPoint pA = manager.getPointA();
-        AntennaManager.AntennaPoint pB = manager.getPointB();
+        AntennaManager.AntennaPoint source = manager.getSource();
+        AntennaManager.AntennaPoint target = manager.getTarget();
 
-        textPointA.setText(pA != null ? (pA.name != null ? pA.name : "Lat: " + String.format(Locale.US, "%.4f", pA.lat))
-                : "Seçiniz");
-        textPointB.setText(pB != null ? (pB.name != null ? pB.name : "Lat: " + String.format(Locale.US, "%.4f", pB.lat))
-                : "Seçiniz");
-
-        if (pA != null && pB != null) {
-            // Distance
-            double distMeters = manager.getDistanceMeters();
-            if (distMeters >= 1000) {
-                valDistance.setText(String.format(Locale.US, "%.2f km", distMeters / 1000));
-            } else {
-                valDistance.setText(String.format(Locale.US, "%.0f m", distMeters));
-            }
-
-            // Azimuth
-            double azimuth = manager.getAzimuthAtoB();
-            valAzimuth.setText(String.format(Locale.US, "%.1f°", azimuth));
-
-            // Rotate Arrow (relative to Up being North)
-            compassArrow.setRotation((float) azimuth);
-
-            // Elevation
-            double elev = manager.getElevationAtoB();
-            valElevation.setText(String.format(Locale.US, "%.1f°", elev));
+        // Kaynak etiketi
+        if (source != null) {
+            String name = (source.name != null && !source.name.isEmpty())
+                    ? source.name
+                    : String.format(Locale.US, "%.4f, %.4f", source.lat, source.lon);
+            textSource.setText(name);
+            textSource.setTextColor(0xFF4FC3F7); // Mavi — ayarlanmis
         } else {
-            valDistance.setText("-");
-            valAzimuth.setText("-");
-            valElevation.setText("-");
-            compassArrow.setRotation(0);
+            textSource.setText("Sec...");
+            textSource.setTextColor(0xFF888888);
         }
-    }
 
-    private void startPickPoint(String type) {
-        manager.setPickingMode(type);
-        Toast.makeText(context, "Haritada anten " + type + " noktasına dokunun.", Toast.LENGTH_SHORT).show();
-    }
+        // Hedef etiketi
+        if (target != null) {
+            String name = (target.name != null && !target.name.isEmpty())
+                    ? target.name
+                    : String.format(Locale.US, "%.4f, %.4f", target.lat, target.lon);
+            textTarget.setText(name);
+            textTarget.setTextColor(0xFFFFD700); // Altin — ayarlanmis
+        } else {
+            textTarget.setText("Sec...");
+            textTarget.setTextColor(0xFF888888);
+        }
 
-    private int dpToPx(int dp) {
-        return (int) (dp * context.getResources().getDisplayMetrics().density);
+        // Hesaplama degerleri
+        if (source != null && target != null) {
+            statsContainer.setVisibility(View.VISIBLE);
+
+            double distMeters = manager.getDistanceMeters();
+            valDistance.setText(distMeters >= 1000
+                    ? String.format(Locale.US, "%.2f km", distMeters / 1000)
+                    : String.format(Locale.US, "%.0f m", distMeters));
+
+            double az = manager.getAzimuthSourceToTarget();
+            if (az < 0) az += 360;
+            valAzimuth.setText(String.format(Locale.US, "%.1f deg", az));
+
+            double elev = manager.getElevationSourceToTarget();
+            valElevation.setText(String.format(Locale.US, "%.1f deg", elev));
+        } else {
+            statsContainer.setVisibility(View.GONE);
+        }
     }
 }

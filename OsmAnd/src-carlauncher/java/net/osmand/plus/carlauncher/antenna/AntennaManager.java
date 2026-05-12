@@ -11,24 +11,32 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Manages Antenna Points (A and B) and calculations.
- * Singleton.
+ * Anten noktalarini (Kaynak ve Hedef) yoneten Singleton.
+ * pointA/pointB yerine pointSource/pointTarget kullanilir.
+ * Geriye uyumluluk icin getPointA/getPointB wrapper'lari muhafaza edilmistir.
  */
 public class AntennaManager {
 
     private static AntennaManager instance;
     private static final String PREFS_NAME = "antenna_prefs";
-    private static final String KEY_POINT_A = "point_a";
-    private static final String KEY_POINT_B = "point_b";
+    private static final String KEY_SOURCE = "point_source"; // onceki: point_a
+    private static final String KEY_TARGET = "point_target"; // onceki: point_b
+    // Eski anahtar adlari — goc icin
+    private static final String KEY_POINT_A_LEGACY = "point_a";
+    private static final String KEY_POINT_B_LEGACY = "point_b";
+
+    // Picking mode sabitleri
+    public static final String PICK_SOURCE = "SOURCE";
+    public static final String PICK_TARGET = "TARGET";
 
     private boolean layerVisible = false;
-    private String pickingMode = null; // "A" or "B" or null
+    private String pickingMode = null; // PICK_SOURCE, PICK_TARGET veya null
 
     private final Context context;
     private final SharedPreferences prefs;
 
-    private AntennaPoint pointA;
-    private AntennaPoint pointB;
+    private AntennaPoint pointSource;
+    private AntennaPoint pointTarget;
     private AntennaListener listener;
 
     public interface AntennaListener {
@@ -52,34 +60,70 @@ public class AntennaManager {
         this.listener = listener;
     }
 
+    // --- Kaynak Nokta ---
+
+    public void setSource(LatLon latLon, String name, double altitude) {
+        this.pointSource = new AntennaPoint(latLon.getLatitude(), latLon.getLongitude(), altitude, name);
+        savePoints();
+        notifyListener();
+    }
+
+    @Nullable
+    public AntennaPoint getSource() {
+        return pointSource;
+    }
+
+    // --- Hedef Nokta ---
+
+    public void setTarget(LatLon latLon, String name, double altitude) {
+        this.pointTarget = new AntennaPoint(latLon.getLatitude(), latLon.getLongitude(), altitude, name);
+        savePoints();
+        notifyListener();
+    }
+
+    @Nullable
+    public AntennaPoint getTarget() {
+        return pointTarget;
+    }
+
+    // --- Geriye uyumluluk wrapper'lari ---
+
+    /** @deprecated getSource() kullanin */
+    @Deprecated
     public void setPointA(LatLon latLon, String name, double altitude) {
-        this.pointA = new AntennaPoint(latLon.getLatitude(), latLon.getLongitude(), altitude, name);
-        savePoints();
-        notifyListener();
+        setSource(latLon, name, altitude);
     }
 
+    /** @deprecated getTarget() kullanin */
+    @Deprecated
     public void setPointB(LatLon latLon, String name, double altitude) {
-        this.pointB = new AntennaPoint(latLon.getLatitude(), latLon.getLongitude(), altitude, name);
-        savePoints();
-        notifyListener();
+        setTarget(latLon, name, altitude);
     }
 
-    public void clearPoints() {
-        this.pointA = null;
-        this.pointB = null;
-        savePoints();
-        notifyListener();
-    }
-
+    /** @deprecated getSource() kullanin */
+    @Deprecated
     @Nullable
     public AntennaPoint getPointA() {
-        return pointA;
+        return pointSource;
     }
 
+    /** @deprecated getTarget() kullanin */
+    @Deprecated
     @Nullable
     public AntennaPoint getPointB() {
-        return pointB;
+        return pointTarget;
     }
+
+    // --- Temizle ---
+
+    public void clearPoints() {
+        this.pointSource = null;
+        this.pointTarget = null;
+        savePoints();
+        notifyListener();
+    }
+
+    // --- Layer / Picking ---
 
     public boolean isLayerVisible() {
         return layerVisible;
@@ -99,71 +143,70 @@ public class AntennaManager {
         notifyListener();
     }
 
-    // Calculations
+    // --- Hesaplamalar ---
 
     public double getDistanceMeters() {
-        if (pointA == null || pointB == null)
-            return 0;
-        return MapUtils.getDistance(pointA.lat, pointA.lon, pointB.lat, pointB.lon);
+        if (pointSource == null || pointTarget == null) return 0;
+        return MapUtils.getDistance(pointSource.lat, pointSource.lon, pointTarget.lat, pointTarget.lon);
     }
 
-    public double getAzimuthAtoB() {
-        if (pointA == null || pointB == null)
-            return 0;
-        // MapUtils doesn't have simple bearing? We can use Location or manual calc.
-        // Using basic math for now or android.location.Location if available.
+    public double getAzimuthSourceToTarget() {
+        if (pointSource == null || pointTarget == null) return 0;
         android.location.Location locA = new android.location.Location("");
-        locA.setLatitude(pointA.lat);
-        locA.setLongitude(pointA.lon);
-
+        locA.setLatitude(pointSource.lat);
+        locA.setLongitude(pointSource.lon);
         android.location.Location locB = new android.location.Location("");
-        locB.setLatitude(pointB.lat);
-        locB.setLongitude(pointB.lon);
-
+        locB.setLatitude(pointTarget.lat);
+        locB.setLongitude(pointTarget.lon);
         return locA.bearingTo(locB);
     }
 
-    public double getElevationAtoB() {
-        if (pointA == null || pointB == null)
-            return 0;
-        double dist = getDistanceMeters();
-        double altDiff = pointB.altitude - pointA.altitude;
-        // Simple elevation angle: tan(angle) = diff / dist
-        // Note: Earth curvature might be relevant for very long distances, but for
-        // typical WiFi (<50km) this is close enough for alignment start.
+    /** @deprecated getAzimuthSourceToTarget() kullanin */
+    @Deprecated
+    public double getAzimuthAtoB() {
+        return getAzimuthSourceToTarget();
+    }
 
-        // Correction for Earth curvature (visual line of sight) involves more complex
-        // math,
-        // but for antenna alignment, usually "Geometric Elevation" is what's needed
-        // initially.
+    public double getElevationSourceToTarget() {
+        if (pointSource == null || pointTarget == null) return 0;
+        double dist = getDistanceMeters();
+        double altDiff = pointTarget.altitude - pointSource.altitude;
         return Math.toDegrees(Math.atan2(altDiff, dist));
     }
 
-    // Persistence
+    /** @deprecated getElevationSourceToTarget() kullanin */
+    @Deprecated
+    public double getElevationAtoB() {
+        return getElevationSourceToTarget();
+    }
+
+    // --- Kalicilik ---
 
     private void savePoints() {
         SharedPreferences.Editor editor = prefs.edit();
-        if (pointA != null)
-            editor.putString(KEY_POINT_A, pointA.toJson().toString());
+        if (pointSource != null)
+            editor.putString(KEY_SOURCE, pointSource.toJson().toString());
         else
-            editor.remove(KEY_POINT_A);
+            editor.remove(KEY_SOURCE);
 
-        if (pointB != null)
-            editor.putString(KEY_POINT_B, pointB.toJson().toString());
+        if (pointTarget != null)
+            editor.putString(KEY_TARGET, pointTarget.toJson().toString());
         else
-            editor.remove(KEY_POINT_B);
+            editor.remove(KEY_TARGET);
 
         editor.apply();
     }
 
     private void loadPoints() {
-        String jsonA = prefs.getString(KEY_POINT_A, null);
-        if (jsonA != null)
-            pointA = AntennaPoint.fromJson(jsonA);
+        // Yeni anahtardan yukle
+        String jsonSource = prefs.getString(KEY_SOURCE, null);
+        // Eski kayittan goc
+        if (jsonSource == null) jsonSource = prefs.getString(KEY_POINT_A_LEGACY, null);
+        if (jsonSource != null) pointSource = AntennaPoint.fromJson(jsonSource);
 
-        String jsonB = prefs.getString(KEY_POINT_B, null);
-        if (jsonB != null)
-            pointB = AntennaPoint.fromJson(jsonB);
+        String jsonTarget = prefs.getString(KEY_TARGET, null);
+        if (jsonTarget == null) jsonTarget = prefs.getString(KEY_POINT_B_LEGACY, null);
+        if (jsonTarget != null) pointTarget = AntennaPoint.fromJson(jsonTarget);
     }
 
     private void notifyListener() {
@@ -171,6 +214,8 @@ public class AntennaManager {
             listener.onAntennaPointsChanged();
         }
     }
+
+    // --- AntennaPoint sinifi ---
 
     public static class AntennaPoint {
         public double lat;
@@ -209,7 +254,7 @@ public class AntennaManager {
                         obj.optDouble("lat"),
                         obj.optDouble("lon"),
                         obj.optDouble("alt", 0),
-                        obj.optString("name", "Unknown"));
+                        obj.optString("name", "Bilinmiyor"));
             } catch (JSONException e) {
                 return null;
             }

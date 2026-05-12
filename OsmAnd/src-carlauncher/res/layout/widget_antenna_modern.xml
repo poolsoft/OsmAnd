@@ -1,231 +1,212 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Anten Hizalama Widget — Her zaman acik kompakt layout -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@drawable/bg_widget_modern"
-    android:padding="8dp">
+    android:padding="10dp">
 
-    <!-- Header (Click to Expand/Collapse) -->
+    <!-- Baslik Satiri -->
     <LinearLayout
-        android:id="@+id/header_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="8dp"
-        android:background="?android:attr/selectableItemBackground">
+        android:gravity="center_vertical"
+        android:paddingBottom="8dp">
 
         <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:src="@android:drawable/ic_menu_compass"
-            android:tint="#EEE" />
+            android:tint="#EEE"/>
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:paddingStart="12dp"
-            android:text="ANTEN HİZALAMA"
+            android:paddingStart="8dp"
+            android:text="ANTEN HIZALAMA"
             android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:textSize="12sp"
+            android:textStyle="bold"/>
 
-        <ImageView
-            android:id="@+id/icon_expand"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@android:drawable/arrow_down_float"
-            android:tint="#AAA" />
+        <!-- Hizalama penceresi acma butonu -->
+        <ImageButton
+            android:id="@+id/btn_align"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_circle_translucent_white"
+            android:src="@android:drawable/ic_menu_compass"
+            android:padding="6dp"
+            android:scaleType="fitCenter"
+            android:tint="#FF6D00"
+            android:contentDescription="Hizalamayi Baslat"/>
     </LinearLayout>
 
-    <!-- Collapsible Content -->
+    <!-- Kaynak / Hedef satiri -->
     <LinearLayout
-        android:id="@+id/content_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone"
-        android:paddingTop="8dp">
+        android:orientation="horizontal"
+        android:paddingBottom="6dp">
 
-        <!-- Compass Visual -->
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
-            
-            <ImageView
-                android:id="@+id/compass_arrow"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="center"
-                android:src="@android:drawable/ic_menu_mylocation"
-                android:tint="#FFD700" 
-                android:rotation="0"/>
-        </FrameLayout>
-
-        <!-- Point Selection Controls -->
+        <!-- KAYNAK -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:id="@+id/btn_set_source"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingBottom="12dp">
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_rounded_black"
+            android:padding="8dp"
+            android:layout_marginEnd="4dp">
 
-            <!-- Point A -->
-            <LinearLayout
-                android:id="@+id/btn_set_a"
-                android:layout_width="0dp"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="?android:attr/selectableItemBackground"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="8dp">
+                android:text="KAYNAK"
+                android:textColor="#4FC3F7"
+                android:textSize="9sp"
+                android:textStyle="bold"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="NOKTA A"
-                    android:textColor="#AAAAAA"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/text_point_a"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:text="Seçilmedi"
-                    android:textColor="#FFFFFF"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <View
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:background="#33FFFFFF" />
-
-            <!-- Point B -->
-            <LinearLayout
-                android:id="@+id/btn_set_b"
-                android:layout_width="0dp"
+            <TextView
+                android:id="@+id/text_source"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="?android:attr/selectableItemBackground"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="NOKTA B"
-                    android:textColor="#AAAAAA"
-                    android:textSize="10sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/text_point_b"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:text="Seçilmedi"
-                    android:textColor="#FFFFFF"
-                    android:textSize="12sp" />
-            </LinearLayout>
+                android:text="Sec..."
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:layout_marginTop="2dp"/>
         </LinearLayout>
 
-        <!-- Stats Grid (Distance/Azimuth/Elevation) -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <!-- OK ikonu -->
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:baselineAligned="false"
-            android:orientation="horizontal">
+            android:layout_gravity="center_vertical"
+            android:text=" > "
+            android:textColor="#555555"
+            android:textSize="14sp"/>
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-                <TextView
-                    android:id="@+id/val_distance"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="-"
-                    android:textColor="#FFFFFF"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Mesafe"
-                    android:textColor="#BBBBBB"
-                    android:textSize="10sp" />
-            </LinearLayout>
+        <!-- HEDEF -->
+        <LinearLayout
+            android:id="@+id/btn_set_target"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_rounded_black"
+            android:padding="8dp"
+            android:layout_marginStart="4dp">
 
-            <LinearLayout
-                android:layout_width="0dp"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-                <TextView
-                    android:id="@+id/val_azimuth"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="-"
-                    android:textColor="#FFD700" 
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Açı"
-                    android:textColor="#BBBBBB"
-                    android:textSize="10sp" />
-            </LinearLayout>
+                android:text="HEDEF"
+                android:textColor="#FFD700"
+                android:textSize="9sp"
+                android:textStyle="bold"/>
 
-            <LinearLayout
-                android:layout_width="0dp"
+            <TextView
+                android:id="@+id/text_target"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-                <TextView
-                    android:id="@+id/val_elevation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="-"
-                    android:textColor="#FFFFFF"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Yükseklik"
-                    android:textColor="#BBBBBB"
-                    android:textSize="10sp" />
-            </LinearLayout>
+                android:text="Sec..."
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:layout_marginTop="2dp"/>
         </LinearLayout>
 
-        <!-- Modern Action Button -->
-        <Button
-            android:id="@+id/btn_align"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="16dp"
-            android:text="HİZALAMA PENCERESİNİ AÇ"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:backgroundTint="#FF6D00"
-            android:elevation="4dp"
-            android:stateListAnimator="@null"/>
-            
+    </LinearLayout>
+
+    <!-- Hesaplama degerleri (nokta secildiyse goster) -->
+    <LinearLayout
+        android:id="@+id/stats_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <!-- Azimut -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/val_azimuth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-"
+                android:textColor="#FFD700"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Azimut"
+                android:textColor="#888888"
+                android:textSize="9sp"/>
+        </LinearLayout>
+
+        <!-- Mesafe -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/val_distance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mesafe"
+                android:textColor="#888888"
+                android:textSize="9sp"/>
+        </LinearLayout>
+
+        <!-- Pitch / Egim -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/val_elevation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="-"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Egim"
+                android:textColor="#888888"
+                android:textSize="9sp"/>
+        </LinearLayout>
+
     </LinearLayout>
 
 </LinearLayout>

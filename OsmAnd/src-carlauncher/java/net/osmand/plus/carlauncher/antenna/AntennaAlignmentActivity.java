@@ -12,7 +12,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
 
-import net.osmand.plus.carlauncher.antenna.AntennaManager.AntennaPoint;
+
 
 import java.util.Locale;
 
@@ -83,20 +83,23 @@ public class AntennaAlignmentActivity extends Activity implements SensorEventLis
     }
 
     private void loadTargetData() {
-        AntennaPoint pA = manager.getPointA();
-        AntennaPoint pB = manager.getPointB();
+        AntennaManager.AntennaPoint source = manager.getSource();
+        AntennaManager.AntennaPoint target = manager.getTarget();
 
-        if (pA != null && pB != null) {
-            targetAzimuth = (float) manager.getAzimuthAtoB();
+        if (source != null && target != null) {
+            targetAzimuth = (float) manager.getAzimuthSourceToTarget();
             if (targetAzimuth < 0)
                 targetAzimuth += 360;
 
-            targetPitch = (float) manager.getElevationAtoB();
+            targetPitch = (float) manager.getElevationSourceToTarget();
 
-            textTargetInfo.setText(String.format(Locale.US, "HEDEF: Azimuth %.1f° | Pitch %.1f°\n%s -> %s",
-                    targetAzimuth, targetPitch, pA.name, pB.name));
+            textTargetInfo.setText(String.format(java.util.Locale.US,
+                    "KAYNAK: %s -> HEDEF: %s\nAzimut %.1f deg | Pitch %.1f deg",
+                    source.name, target.name, targetAzimuth, targetPitch));
 
             alignmentView.setTarget(targetAzimuth, targetPitch);
+        } else {
+            textTargetInfo.setText("Kaynak ve hedef nokta ayarlanmamis.");
         }
     }
 

@@ -61,14 +61,14 @@ public class AntennaMapLayer extends OsmandMapLayer implements AntennaManager.An
             return;
         }
 
-        AntennaManager.AntennaPoint pA = manager.getPointA();
-        AntennaManager.AntennaPoint pB = manager.getPointB();
+        AntennaManager.AntennaPoint pA = manager.getSource();
+        AntennaManager.AntennaPoint pB = manager.getTarget();
 
         if (pA != null) {
-            drawPoint(canvas, tileBox, pA, "A");
+            drawPoint(canvas, tileBox, pA, "KAYNAK");
         }
         if (pB != null) {
-            drawPoint(canvas, tileBox, pB, "B");
+            drawPoint(canvas, tileBox, pB, "HEDEF");
         }
 
         if (pA != null && pB != null) {
@@ -120,20 +120,21 @@ public class AntennaMapLayer extends OsmandMapLayer implements AntennaManager.An
         String pickingMode = manager.getPickingMode();
         if (pickingMode != null) {
             LatLon latLon = tileBox.getLatLonFromPixel(point.x, point.y);
-            // Get altitude if available (e.g. from context or just 0 for now)
-            double alt = 0; // TODO: Get from DEM if possible
+            double alt = 0;
 
-            if ("A".equals(pickingMode)) {
-                manager.setPointA(latLon, "Nokta A", alt);
-            } else if ("B".equals(pickingMode)) {
-                manager.setPointB(latLon, "Nokta B", alt);
+            if (AntennaManager.PICK_SOURCE.equals(pickingMode)) {
+                manager.setSource(latLon, "Harita Noktasi", alt);
+                android.widget.Toast.makeText(view.getContext(), "Kaynak nokta ayarlandi.",
+                        android.widget.Toast.LENGTH_SHORT).show();
+            } else if (AntennaManager.PICK_TARGET.equals(pickingMode)) {
+                manager.setTarget(latLon, "Harita Noktasi", alt);
+                android.widget.Toast.makeText(view.getContext(), "Hedef nokta ayarlandi.",
+                        android.widget.Toast.LENGTH_SHORT).show();
             }
 
-            android.widget.Toast.makeText(view.getContext(), "Anten " + pickingMode + " ayarlandı.",
-                    android.widget.Toast.LENGTH_SHORT).show();
-            manager.setPickingMode(null); // Reset mode
+            manager.setPickingMode(null);
             view.refreshMap();
-            return true; // Consumed
+            return true;
         }
         return false;
     }
