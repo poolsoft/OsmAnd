@@ -6,7 +6,7 @@
     android:background="#E6000000"
     android:clickable="true"
     android:focusable="true"
-    android:padding="16dp">
+    android:padding="@dimen/weather_padding">
 
     <!-- Header -->
     <TextView
@@ -15,7 +15,7 @@
         android:layout_height="wrap_content"
         android:text="Location"
         android:textColor="#FFFFFF"
-        android:textSize="20sp"
+        android:textSize="@dimen/weather_location_text_size"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -44,8 +44,8 @@
 
         <ImageView
             android:id="@+id/img_current_icon"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
+            android:layout_width="@dimen/weather_icon_size"
+            android:layout_height="@dimen/weather_icon_size"
             android:src="@drawable/ic_weather_cloudy"/>
 
         <TextView
@@ -54,7 +54,7 @@
             android:layout_height="wrap_content"
             android:text="24°"
             android:textColor="#FFFFFF"
-            android:textSize="56sp"
+            android:textSize="@dimen/weather_temp_text_size"
             android:textStyle="bold"
             android:layout_marginStart="16dp"/>
 
@@ -70,7 +70,7 @@
                 android:layout_height="wrap_content"
                 android:text="Cloudy"
                 android:textColor="#E0E0E0"
-                android:textSize="16sp"/>
+                android:textSize="@dimen/weather_condition_text_size"/>
 
             <TextView
                  android:id="@+id/tv_apparent_temp"
@@ -78,7 +78,7 @@
                  android:layout_height="wrap_content"
                  android:text="Feels 26°"
                  android:textColor="#AAAAAA"
-                 android:textSize="14sp"/>
+                 android:textSize="@dimen/weather_feels_text_size"/>
 
         </LinearLayout>
     </LinearLayout>
@@ -94,21 +94,21 @@
 
         <!-- Wind -->
         <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center">
-             <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_action_direction" android:tint="#AAAAAA"/>
+             <ImageView android:layout_width="@dimen/weather_detail_icon_size" android:layout_height="@dimen/weather_detail_icon_size" android:src="@drawable/ic_action_direction" android:tint="#AAAAAA"/>
              <TextView android:id="@+id/tv_wind" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="15 km/h" android:textColor="#FFFFFF"/>
              <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Wind" android:textColor="#AAAAAA" android:textSize="10sp"/>
         </LinearLayout>
 
         <!-- Rain -->
         <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center">
-             <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_weather_rain" android:tint="#AAAAAA"/>
+             <ImageView android:layout_width="@dimen/weather_detail_icon_size" android:layout_height="@dimen/weather_detail_icon_size" android:src="@drawable/ic_weather_rain" android:tint="#AAAAAA"/>
              <TextView android:id="@+id/tv_rain" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="10%" android:textColor="#FFFFFF"/>
              <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Rain" android:textColor="#AAAAAA" android:textSize="10sp"/>
         </LinearLayout>
 
         <!-- Visibility -->
         <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center">
-             <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_action_view" android:tint="#AAAAAA"/>
+             <ImageView android:layout_width="@dimen/weather_detail_icon_size" android:layout_height="@dimen/weather_detail_icon_size" android:src="@drawable/ic_action_view" android:tint="#AAAAAA"/>
              <TextView android:id="@+id/tv_visibility" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="10 km" android:textColor="#FFFFFF"/>
              <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Visibility" android:textColor="#AAAAAA" android:textSize="10sp"/>
         </LinearLayout>
@@ -121,7 +121,7 @@
         android:layout_height="wrap_content"
         android:text="Hourly Forecast"
         android:textColor="#AAAAAA"
-        android:textSize="14sp"
+        android:textSize="@dimen/weather_section_label_text_size"
         android:layout_marginTop="24dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/details_container"/>
@@ -141,7 +141,7 @@
         android:layout_height="wrap_content"
         android:text="Daily Forecast"
         android:textColor="#AAAAAA"
-        android:textSize="14sp"
+        android:textSize="@dimen/weather_section_label_text_size"
         android:layout_marginTop="16dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/rv_hourly"/>

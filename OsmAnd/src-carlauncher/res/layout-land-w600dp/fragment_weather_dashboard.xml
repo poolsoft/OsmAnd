@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Araba Teybi Landscape — 3 Sutunlu Ultra Compact Layout (1280x480) -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#E6000000"
+    android:clickable="true"
+    android:focusable="true"
+    android:padding="@dimen/weather_padding">
+
+    <!-- HEADER: Location + Close (tek satir, ince) -->
+    <TextView
+        android:id="@+id/tv_location"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Location"
+        android:textColor="#FFFFFF"
+        android:textSize="@dimen/weather_location_text_size"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btn_close"/>
+
+    <ImageButton
+        android:id="@+id/btn_close"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:tint="#FFFFFF"
+        android:padding="4dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <!-- SOL SUTUN (30%): Sicaklik + Durum + Detaylar -->
+    <LinearLayout
+        android:id="@+id/col_left"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:paddingEnd="8dp"
+        app:layout_constraintWidth_percent="0.30"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_location"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <!-- Ikon + Sicaklik yan yana -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/img_current_icon"
+                android:layout_width="@dimen/weather_icon_size"
+                android:layout_height="@dimen/weather_icon_size"
+                android:src="@drawable/ic_weather_cloudy"/>
+
+            <TextView
+                android:id="@+id/tv_current_temp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="24°"
+                android:textColor="#FFFFFF"
+                android:textSize="@dimen/weather_temp_text_size"
+                android:textStyle="bold"
+                android:layout_marginStart="6dp"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_current_condition"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cloudy"
+            android:textColor="#E0E0E0"
+            android:textSize="@dimen/weather_condition_text_size"
+            android:layout_marginTop="2dp"/>
+
+        <TextView
+            android:id="@+id/tv_apparent_temp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Feels 26°"
+            android:textColor="#AAAAAA"
+            android:textSize="@dimen/weather_feels_text_size"
+            android:layout_marginTop="2dp"/>
+
+        <!-- Detaylar (kompakt) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="6dp">
+
+            <TextView
+                android:id="@+id/tv_wind"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💨 15 km/h"
+                android:textColor="#FFFFFF"
+                android:textSize="@dimen/weather_feels_text_size"/>
+
+            <TextView
+                android:id="@+id/tv_rain"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🌧 10%"
+                android:textColor="#FFFFFF"
+                android:textSize="@dimen/weather_feels_text_size"
+                android:layout_marginTop="2dp"/>
+
+            <TextView
+                android:id="@+id/tv_visibility"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👁 10 km"
+                android:textColor="#FFFFFF"
+                android:textSize="@dimen/weather_feels_text_size"
+                android:layout_marginTop="2dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- ORTA DIKEY AYIRICI -->
+    <View
+        android:id="@+id/divider_1"
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:background="#33FFFFFF"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        app:layout_constraintStart_toEndOf="@+id/col_left"
+        app:layout_constraintTop_toBottomOf="@+id/tv_location"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+    <!-- ORTA SUTUN (40%): Saatlik Tahmin + Trend Grafigi -->
+    <LinearLayout
+        android:id="@+id/col_mid"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        app:layout_constraintWidth_percent="0.40"
+        app:layout_constraintStart_toEndOf="@+id/divider_1"
+        app:layout_constraintTop_toBottomOf="@+id/tv_location"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <TextView
+            android:id="@+id/lbl_hourly"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hourly"
+            android:textColor="#AAAAAA"
+            android:textSize="@dimen/weather_section_label_text_size"
+            android:layout_marginBottom="4dp"/>
+
+        <!-- Saatlik yatay liste -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_hourly"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"/>
+
+        <!-- Trend grafigi -->
+        <net.osmand.plus.carlauncher.widgets.view.TrendGraphView
+            android:id="@+id/trend_graph"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="4dp"/>
+
+    </LinearLayout>
+
+    <!-- SAG DIKEY AYIRICI -->
+    <View
+        android:id="@+id/divider_2"
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:background="#33FFFFFF"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        app:layout_constraintStart_toEndOf="@+id/col_mid"
+        app:layout_constraintTop_toBottomOf="@+id/tv_location"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+    <!-- SAG SUTUN (30%): 7 Gunluk Tahmin -->
+    <LinearLayout
+        android:id="@+id/col_right"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:paddingStart="8dp"
+        app:layout_constraintStart_toEndOf="@+id/divider_2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_location"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <TextView
+            android:id="@+id/lbl_daily"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="7-Day"
+            android:textColor="#AAAAAA"
+            android:textSize="@dimen/weather_section_label_text_size"
+            android:layout_marginBottom="4dp"/>
+
+        <!-- 7 Gunluk tahmin: dikey liste -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_daily"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"/>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
