@@ -1314,7 +1314,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		FragmentManager fragmentManager = getSupportFragmentManager();
 
 		if (app.getMapMarkersHelper().getPlanRouteContext().isFragmentVisible()) {
-			PlanRouteFragment.showInstance(this);
+			PlanRouteFragment.showInstance(this, null);
 		}
 
 		if (app.isApplicationInitializing() || DashboardOnMap.staticVisible) {
@@ -1556,7 +1556,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	@Override
 	public void updateStatusBarColor() {
-		UiUtilities.updateStatusBarColor(this);
+		UiUtilities.updateSystemBarColors(this);
 	}
 
 	@Override
@@ -1729,7 +1729,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		stopped = true;
 		lockHelper.onStop(this);
 		extendedMapActivity.onStop(this);
-		fragmentsHelper.onStop();
 
 		super.onStop();
 	}

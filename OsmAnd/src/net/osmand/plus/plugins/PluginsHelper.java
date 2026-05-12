@@ -127,6 +127,7 @@ public class PluginsHelper {
 		allPlugins.add(new AstronomyPlugin(app));
 		allPlugins.add(new AccessibilityPlugin(app));
 		allPlugins.add(new OsmandDevelopmentPlugin(app));
+		allPlugins.add(new net.osmand.plus.carlauncher.antenna.AntennaPlugin(app));
 
 		loadCustomPlugins(app);
 		registerAppInitializingDependedProperties(app);
