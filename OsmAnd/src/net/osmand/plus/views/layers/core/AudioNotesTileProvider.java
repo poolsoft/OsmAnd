@@ -50,6 +50,7 @@ public class AudioNotesTileProvider extends interface_MapTiledCollectionProvider
         textStyle = new TextRasterizer.Style();
         this.density = density;
         this.offset = new PointI(0, 0);
+        this.swigTakeOwnership();
     }
 
     public void drawSymbols(@NonNull MapRendererView mapRenderer) {
@@ -204,8 +205,13 @@ public class AudioNotesTileProvider extends interface_MapTiledCollectionProvider
         return MapMarker.PinIconHorisontalAlignment.CenterHorizontal;
     }
 
-    @Override
-    public PointI getPinIconOffset() {
-        return offset;
-    }
+	@Override
+	public PointI getPinIconOffset() {
+		return offset;
+	}
+
+	@Override
+	public boolean waitForLoading() {
+		return true;
+	}
 }

@@ -1,6 +1,8 @@
 package net.osmand.plus.plugins.externalsensors.devices.sensors;
 
+import android.graphics.drawable.Drawable;
 import android.view.View;
+import android.widget.ImageView;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
@@ -27,6 +29,8 @@ import java.util.List;
 
 public class SensorTextWidget extends SimpleWidget {
 
+	protected static final String NOT_ACTUAL_VALUE = "0";
+
 	private final ExternalSensorsPlugin plugin;
 	private final SensorWidgetDataFieldType fieldType;
 	private final CommonPreference<String> deviceIdPref;
@@ -48,18 +52,27 @@ public class SensorTextWidget extends SimpleWidget {
 		externalDeviceId = getDeviceId(appMode);
 		this.widgetState = new ExternalSensorWidgetState(app, customId, fieldType);
 		applyDeviceId();
+	}
+
+	@Override
+	protected void setupView(@NonNull View view) {
+		super.setupView(view);
 		updateInfo(null);
 		setImageDrawable(getIconId());
 		updateWidgetName();
 	}
 
 	@Override
-	public void setImageDrawable(int res) {
+	public void setImageDrawable(@NonNull ImageView imageView, @Nullable Drawable drawable, int visibility) {
 		if (isDeviceConnected()) {
-			super.setImageDrawable(res);
+			super.setImageDrawable(imageView, drawable, visibility);
 		} else {
 			if (shouldShowIcon()) {
-				setImageDrawable(app.getUIUtilities().getIcon(res, nightMode));
+				if (isShowSensorData()) {
+					imageView.setImageDrawable(drawable);
+				} else {
+					imageView.setImageDrawable(app.getUIUtilities().getThemedIcon(fieldType.disconnectedBatteryIconId));
+				}
 				imageView.setVisibility(View.VISIBLE);
 			} else {
 				imageView.setVisibility(View.GONE);
@@ -163,11 +176,16 @@ public class SensorTextWidget extends SimpleWidget {
 					}
 				}
 				if (field != null) {
-					if (isUpdateNeeded() || !Algorithms.objectEquals(cachedNumber, field.getNumberValue())) {
-						cachedNumber = field.getNumberValue();
+					Number correctValue = sensor.hasActualData() ? field.getNumberValue() : 0;
+					if (isUpdateNeeded() || !Algorithms.objectEquals(cachedNumber, correctValue)) {
+						cachedNumber = correctValue;
 						FormattedValue formattedValue = field.getFormattedValue(app);
 						if (formattedValue != null) {
-							setText(formattedValue.value, formattedValue.unit);
+							if (sensor.hasActualData()) {
+								setText(formattedValue.value, formattedValue.unit);
+							} else {
+								setText(NOT_ACTUAL_VALUE, formattedValue.unit);
+							}
 						} else {
 							setText(NO_VALUE, null);
 						}
@@ -177,7 +195,7 @@ public class SensorTextWidget extends SimpleWidget {
 				}
 			} else {
 				AbstractDevice<?> device = sensor.getDevice();
-				if(device.hasBatteryLevel()) {
+				if (device.hasBatteryLevel()) {
 					setText(String.valueOf(device.getBatteryLevel()), "%");
 				} else {
 					setText(app.getString(R.string.n_a), null);
@@ -235,6 +253,14 @@ public class SensorTextWidget extends SimpleWidget {
 		@Override
 		public void onDeviceConnecting(@NonNull AbstractDevice<?> device) {
 		}
+
+		@Override
+		public void onActualStateChanged() {
+			app.runInUIThread(() -> {
+				forceUpdate = true;
+				updateInfo(null);
+			});
+		}
 	};
 
 	@NonNull
@@ -291,9 +317,17 @@ public class SensorTextWidget extends SimpleWidget {
 		}
 		boolean isConnected = sensor != null && currentDevice.isConnected();
 		if (isConnected) {
-			return isShowSensorData() ? nightMode ? fieldType.nightIconId : fieldType.dayIconId : nightMode ? fieldType.nightBatteryIconId : fieldType.dayBatteryIconId;
+			if (isShowSensorData()) {
+				return nightMode ? fieldType.nightIconId : fieldType.dayIconId;
+			} else {
+				return nightMode ? fieldType.nightBatteryIconId : fieldType.dayBatteryIconId;
+			}
 		} else {
-			return isShowSensorData() ? fieldType.disconnectedIconId : fieldType.disconnectedBatteryIconId;
+			if (isShowSensorData()) {
+				return nightMode ? fieldType.nightDisconnectedIconId : fieldType.dayDisconnectedIconId;
+			} else {
+				return fieldType.disconnectedBatteryIconId;
+			}
 		}
 	}
 

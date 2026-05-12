@@ -67,6 +67,7 @@ import net.osmand.plus.quickaction.QuickActionType;
 import net.osmand.plus.settings.backend.ApplicationMode;
 import net.osmand.plus.settings.backend.WidgetsAvailabilityHelper;
 import net.osmand.plus.settings.backend.preferences.CommonPreference;
+import net.osmand.plus.settings.enums.ScreenLayoutMode;
 import net.osmand.plus.settings.fragments.SettingsScreenType;
 import net.osmand.plus.utils.AndroidUtils;
 import net.osmand.plus.utils.UiUtilities;
@@ -148,7 +149,7 @@ public class WeatherPlugin extends OsmandPlugin {
 					updateLayers(app, null);
 
 					if (weatherHelper.shouldUpdateForecastCache()) {
-						weatherHelper.updateForecastCache();
+						weatherHelper.updateForecastCacheAsync();
 					}
 				} else if (event == INDEX_REGION_BOUNDARIES) {
 					clearOutdatedCache();
@@ -173,7 +174,7 @@ public class WeatherPlugin extends OsmandPlugin {
 			updateMapPresentationEnvironment();
 
 			if (weatherHelper.shouldUpdateForecastCache()) {
-				weatherHelper.updateForecastCache();
+				weatherHelper.updateForecastCacheAsync();
 			}
 		}
 		return super.init(app, activity);
@@ -189,7 +190,7 @@ public class WeatherPlugin extends OsmandPlugin {
 
 	private void clearOutdatedCache() {
 		if (weatherHelper.getWeatherResourcesManager() != null) {
-			weatherHelper.clearOutdatedCache();
+			weatherHelper.clearOutdatedCacheAsync();
 		} else {
 			log.error("Tile Resources Manager isn't initialized");
 		}
@@ -254,8 +255,9 @@ public class WeatherPlugin extends OsmandPlugin {
 	}
 
 	@Override
-	public void createWidgets(@NonNull MapActivity mapActivity, @NonNull List<MapWidgetInfo> widgetInfos, @NonNull ApplicationMode appMode) {
-		WidgetInfoCreator creator = new WidgetInfoCreator(app, appMode);
+	public void createWidgets(@NonNull MapActivity mapActivity, @NonNull List<MapWidgetInfo> widgetInfos,
+			@NonNull ApplicationMode appMode, @Nullable ScreenLayoutMode layoutMode) {
+		WidgetInfoCreator creator = new WidgetInfoCreator(app, appMode, layoutMode);
 
 		MapWidget temperatureWidget = createMapWidgetForParams(mapActivity, WEATHER_TEMPERATURE_WIDGET);
 		if (temperatureWidget != null) {
@@ -618,10 +620,16 @@ public class WeatherPlugin extends OsmandPlugin {
 	}
 
 	@Override
+	public boolean isMapPositionIconNeeded() {
+		return hasCustomForecast();
+	}
+
+	@Override
 	protected boolean layerShouldBeDisabled(@NonNull OsmandMapLayer layer) {
 		return hasCustomForecast() && layer instanceof DownloadedRegionsLayer;
 	}
 
+	@Override
 	public void onIndexItemDownloaded(@NonNull IndexItem item, boolean updatingFile) {
 		if (item.getType() == WEATHER_FORECAST) {
 			weatherHelper.updateForecastCache(item.getTargetFile(app).getAbsolutePath());

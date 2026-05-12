@@ -31,6 +31,7 @@ import net.osmand.plus.settings.enums.TracksSortMode;
 import net.osmand.plus.track.GpxAppearanceAdapter;
 import net.osmand.shared.gpx.data.TrackFolder;
 import net.osmand.plus.track.helpers.GpxAppearanceHelper;
+import net.osmand.plus.track.helpers.GpxUiHelper;
 import net.osmand.shared.gpx.GpxDbHelper;
 import net.osmand.plus.track.helpers.SelectedGpxFile;
 import net.osmand.plus.utils.AndroidUtils;
@@ -48,7 +49,6 @@ import net.osmand.shared.gpx.GpxTrackAnalysis;
 import net.osmand.shared.io.KFile;
 import net.osmand.util.Algorithms;
 
-import java.io.File;
 import java.text.DateFormat;
 import java.util.Collections;
 import java.util.Date;
@@ -169,15 +169,15 @@ public class TrackViewHolder extends RecyclerView.ViewHolder {
 			if (sortMode == NAME_ASCENDING || sortMode == NAME_DESCENDING) {
 				appendNameDescription(builder, trackItem, analysis, shouldShowFolder);
 			} else if (sortMode == DATE_ASCENDING || sortMode == DATE_DESCENDING) {
-				appendCreationTimeDescription(builder, trackItem, analysis);
+				appendCreationTimeDescription(builder, trackItem, analysis, shouldShowFolder);
 			} else if (sortMode == DISTANCE_ASCENDING || sortMode == DISTANCE_DESCENDING) {
 				appendDistanceDescription(builder, trackItem, analysis, shouldShowFolder);
 			} else if (sortMode == DURATION_ASCENDING || sortMode == DURATION_DESCENDING) {
 				appendDurationDescription(builder, trackItem, analysis, shouldShowFolder);
 			} else if (sortMode == NEAREST) {
-				appendNearestDescription(builder, analysis, cityName);
+				appendNearestDescription(builder, trackItem, analysis, cityName, shouldShowFolder);
 			} else if (sortMode == LAST_MODIFIED) {
-				appendLastModifiedDescription(builder, trackItem, analysis);
+				appendLastModifiedDescription(builder, trackItem, analysis, shouldShowFolder);
 			}
 			description.setText(builder);
 		}
@@ -197,16 +197,13 @@ public class TrackViewHolder extends RecyclerView.ViewHolder {
 
 	private void appendNameDescription(@NonNull SpannableStringBuilder builder, @NonNull TrackItem trackItem,
 	                                   @NonNull GpxTrackAnalysis analysis, boolean shouldShowFolder) {
-		builder.append(OsmAndFormatter.getFormattedDistance(analysis.getTotalDistance(), app));
-		if (analysis.isTimeSpecified()) {
-			builder.append(" • ");
-			appendDuration(builder, analysis);
-		}
-		appendPoints(builder, analysis);
-		appendFolderName(builder, trackItem, shouldShowFolder);
+		GpxUiHelper.appendTrackShortDescription(app, builder, analysis, trackItem.getFile(), shouldShowFolder);
 	}
 
-	private void appendCreationTimeDescription(@NonNull SpannableStringBuilder builder, @NonNull TrackItem trackItem, @NonNull GpxTrackAnalysis analysis) {
+	private void appendCreationTimeDescription(@NonNull SpannableStringBuilder builder,
+	                                           @NonNull TrackItem trackItem,
+	                                           @NonNull GpxTrackAnalysis analysis,
+	                                           boolean shouldShowFolder) {
 		GpxDataItem dataItem = trackItem.getDataItem();
 		long creationTime = dataItem != null ? dataItem.getParameter(FILE_CREATION_TIME) : -1;
 		if (creationTime > 10) {
@@ -215,15 +212,13 @@ public class TrackViewHolder extends RecyclerView.ViewHolder {
 			setupTextSpan(builder);
 			builder.append(" | ");
 		}
-		builder.append(OsmAndFormatter.getFormattedDistance(analysis.getTotalDistance(), app));
-		if (analysis.isTimeSpecified()) {
-			builder.append(" • ");
-			appendDuration(builder, analysis);
-		}
-		appendPoints(builder, analysis);
+		GpxUiHelper.appendTrackShortDescription(app, builder, analysis, trackItem.getFile(), shouldShowFolder);
 	}
 
-	private void appendLastModifiedDescription(@NonNull SpannableStringBuilder builder, @NonNull TrackItem trackItem, @NonNull GpxTrackAnalysis analysis) {
+	private void appendLastModifiedDescription(@NonNull SpannableStringBuilder builder,
+	                                           @NonNull TrackItem trackItem,
+	                                           @NonNull GpxTrackAnalysis analysis,
+	                                           boolean shouldShowFolder) {
 		long lastModified = trackItem.getLastModified();
 		if (lastModified > 0) {
 			DateFormat format = OsmAndFormatter.getDateFormat(app);
@@ -231,43 +226,40 @@ public class TrackViewHolder extends RecyclerView.ViewHolder {
 			setupTextSpan(builder);
 			builder.append(" | ");
 		}
-		builder.append(OsmAndFormatter.getFormattedDistance(analysis.getTotalDistance(), app));
-		if (analysis.isTimeSpecified()) {
-			builder.append(" • ");
-			appendDuration(builder, analysis);
-		}
-		appendPoints(builder, analysis);
+		GpxUiHelper.appendTrackShortDescription(app, builder, analysis, trackItem.getFile(), shouldShowFolder);
 	}
 
 	private void appendDistanceDescription(@NonNull SpannableStringBuilder builder, @NonNull TrackItem trackItem,
 	                                       @NonNull GpxTrackAnalysis analysis, boolean shouldShowFolder) {
-		builder.append(OsmAndFormatter.getFormattedDistance(analysis.getTotalDistance(), app));
+		GpxUiHelper.appendTrackDistance(app, builder, analysis);
 		setupTextSpan(builder);
 
 		if (analysis.isTimeSpecified()) {
 			builder.append(" • ");
-			appendDuration(builder, analysis);
+			GpxUiHelper.appendTrackDuration(app, builder, analysis);
 		}
-		appendPoints(builder, analysis);
-		appendFolderName(builder, trackItem, shouldShowFolder);
+		GpxUiHelper.appendTrackPoints(builder, analysis);
+		GpxUiHelper.appendTrackFolderName(builder, trackItem.getFile(), shouldShowFolder);
 	}
 
 	private void appendDurationDescription(@NonNull SpannableStringBuilder builder, @NonNull TrackItem trackItem,
 	                                       @NonNull GpxTrackAnalysis analysis, boolean shouldShowFolder) {
 		if (analysis.isTimeSpecified()) {
-			appendDuration(builder, analysis);
+			GpxUiHelper.appendTrackDuration(app, builder, analysis);
 			setupTextSpan(builder);
 			builder.append(" • ");
 		}
-		builder.append(OsmAndFormatter.getFormattedDistance(analysis.getTotalDistance(), app));
+		GpxUiHelper.appendTrackDistance(app, builder, analysis);
 
-		appendPoints(builder, analysis);
-		appendFolderName(builder, trackItem, shouldShowFolder);
+		GpxUiHelper.appendTrackPoints(builder, analysis);
+		GpxUiHelper.appendTrackFolderName(builder, trackItem.getFile(), shouldShowFolder);
 	}
 
 	private void appendNearestDescription(@NonNull SpannableStringBuilder builder,
+										  @NonNull TrackItem trackItem,
 	                                      @NonNull GpxTrackAnalysis analysis,
-	                                      @Nullable String cityName) {
+	                                      @Nullable String cityName,
+	                                      boolean shouldShowFolder) {
 		KLatLon latLon = analysis.getLatLonStart();
 		if (latLon != null) {
 			UpdateLocationInfo locationInfo = new UpdateLocationInfo(app, null, SharedUtil.jLatLon(latLon));
@@ -279,45 +271,7 @@ public class TrackViewHolder extends RecyclerView.ViewHolder {
 			builder.append(" | ");
 			UpdateLocationUtils.updateDirectionDrawable(app, directionIcon, locationInfo, locationViewCache);
 		}
-		builder.append(OsmAndFormatter.getFormattedDistance(analysis.getTotalDistance(), app));
-		if (analysis.isTimeSpecified()) {
-			builder.append(" • ");
-			appendDuration(builder, analysis);
-		}
-		appendPoints(builder, analysis);
-	}
-
-	private void appendDuration(@NonNull SpannableStringBuilder builder, @NonNull GpxTrackAnalysis analysis) {
-		if (analysis.isTimeSpecified()) {
-			int duration = analysis.getDurationInSeconds();
-			builder.append(Algorithms.formatDuration(duration, app.accessibilityEnabled()));
-		}
-	}
-
-	private void appendPoints(@NonNull SpannableStringBuilder builder, @NonNull GpxTrackAnalysis analysis) {
-		if (analysis.getWptPoints() > 0) {
-			builder.append(" • ");
-			builder.append(String.valueOf(analysis.getWptPoints()));
-		}
-	}
-
-	private void appendFolderName(@NonNull SpannableStringBuilder builder, @NonNull TrackItem trackItem, boolean shouldShowFolder) {
-		String folderName = getFolderName(trackItem, shouldShowFolder);
-		if (!Algorithms.isEmpty(folderName)) {
-			builder.append(" | ");
-			builder.append(Algorithms.capitalizeFirstLetter(folderName));
-		}
-	}
-
-	@Nullable
-	private String getFolderName(@NonNull TrackItem trackItem, boolean shouldShowFolder) {
-		String folderName = null;
-		KFile file = trackItem.getFile();
-		if (shouldShowFolder && file != null) {
-			String[] path = file.absolutePath().split(File.separator);
-			folderName = path.length > 1 ? path[path.length - 2] : null;
-		}
-		return folderName;
+		GpxUiHelper.appendTrackShortDescription(app, builder, analysis, trackItem.getFile(), shouldShowFolder);
 	}
 
 	private void setupTextSpan(@NonNull SpannableStringBuilder builder) {

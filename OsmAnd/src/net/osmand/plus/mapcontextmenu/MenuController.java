@@ -609,18 +609,22 @@ public abstract class MenuController extends BaseMenuController implements Colla
 	@ColorRes
 	public int getAdditionalInfoColorId() {
 		if (openingHoursInfo != null) {
-			boolean open = false;
-			for (OpeningHours.Info info : openingHoursInfo) {
-				if (info.isOpened() || info.isOpened24_7()) {
-					open = true;
-					break;
-				}
-			}
-			return open ? R.color.text_color_positive : R.color.text_color_negative;
+			return isOpeningHoursOpen(openingHoursInfo) ? R.color.text_color_positive : R.color.text_color_negative;
 		} else if (shouldShowMapSize()) {
 			return R.color.icon_color_default_light;
 		}
 		return 0;
+	}
+
+	public static boolean isOpeningHoursOpen(@NonNull List<OpeningHours.Info> openingHoursInfo) {
+		boolean open = false;
+		for (OpeningHours.Info info : openingHoursInfo) {
+			if (info.isOpened() || info.isOpened24_7()) {
+				open = true;
+				break;
+			}
+		}
+		return open;
 	}
 
 	public CharSequence getAdditionalInfoStr() {
@@ -629,7 +633,7 @@ public abstract class MenuController extends BaseMenuController implements Colla
 			if (openingHoursInfo != null) {
 				int colorOpen = mapActivity.getColor(R.color.text_color_positive);
 				int colorClosed = mapActivity.getColor(R.color.text_color_negative);
-				return getSpannableOpeningHours(openingHoursInfo, colorOpen, colorClosed);
+				return getSpannableOpeningHours(openingHoursInfo, colorOpen, colorClosed, false);
 			} else if (shouldShowMapSize()) {
 				return mapActivity.getString(R.string.file_size_in_mb, indexItem.getArchiveSizeMB());
 			}
@@ -648,8 +652,7 @@ public abstract class MenuController extends BaseMenuController implements Colla
 	}
 
 	public static SpannableString getSpannableOpeningHours(List<OpeningHours.Info> openingHoursInfo,
-	                                                       int colorOpen,
-	                                                       int colorClosed) {
+	                                                       int colorOpen, int colorClosed, boolean brief) {
 		StringBuilder sb = new StringBuilder();
 		int[] pos = new int[openingHoursInfo.size()];
 		for (int i = 0; i < openingHoursInfo.size(); i++) {
@@ -657,7 +660,7 @@ public abstract class MenuController extends BaseMenuController implements Colla
 			if (sb.length() > 0) {
 				sb.append("\n");
 			}
-			sb.append(info.getInfo());
+			sb.append(brief ? info.getShortInfo() : info.getInfo());
 			pos[i] = sb.length();
 		}
 		SpannableString infoStr = new SpannableString(sb.toString());

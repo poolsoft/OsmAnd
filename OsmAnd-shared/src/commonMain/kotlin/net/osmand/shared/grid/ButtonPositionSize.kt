@@ -50,10 +50,15 @@ class ButtonPositionSize {
 
 	fun setMoveDescendantsHorizontal() = apply { this.moveDescendants = MOVE_DESCENDANTS_HORIZONTAL }
 
+	fun isMoveDescendantsAny(): Boolean = moveDescendants == MOVE_DESCENDANTS_ANY
+
 	fun setMoveHorizontal() = apply { this.xMove = true }
+
+	fun setMoveAny() = apply { this.xMove = true; this.yMove = true; }
 
 	fun setNonMoveable() = apply { this.xMove = false; this.yMove = false; }
 
+	fun isMovable() = xMove || yMove
 
 	fun setSize(width8dp: Int, height8dp: Int) = apply {
 		this.width = width8dp

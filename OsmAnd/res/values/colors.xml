@@ -35,10 +35,13 @@
 	<color name="icon_color_osmand_dark">#d28521</color>
 	<color name="icon_color_active_light">#237bff</color>
 	<color name="icon_color_active_dark">#d28521</color>
+	<color name="icon_color_warning">#EE5622</color>
 	<color name="map_button_icon_color_light">#727272</color>
 	<color name="map_button_icon_color_dark">#cccccc</color>
 	<color name="map_button_background_color_light">#FFFFFF</color>
 	<color name="map_button_background_color_dark">#000000</color>
+	<color name="icon_color_inverse_light">#FFFFFF</color>
+	<color name="icon_color_inverse_dark">#F2F2F2</color>
 	
 	<!-- AppBar & Status bar -->
 	<color name="app_bar_main_light">#ff8800</color>
@@ -72,10 +75,36 @@
 	<color name="active_color_secondary_light">#DEEBFF</color>
 	<color name="active_color_secondary_dark">#4D300E</color>
 
+	<!-- Material -->
+	<color name="text_color_primary_light_v2">#212121</color>
+	<color name="text_color_primary_dark_v2">#E6E6E6</color>
+	<color name="icon_color_default_light_v2">#676D7E</color>
+	<color name="icon_color_default_dark_v2">#727272</color>
+	<color name="active_color_primary_light_v2">#3355FF</color>
+	<color name="active_color_primary_dark_v2">#D28521</color>
+	<color name="active_color_secondary_light_v2">#DDE5FF</color>
+	<color name="active_color_secondary_dark_v2">#4D300E</color>
+	<color name="buttons_secondary_light_v2">#E9E9EC</color>
+	<color name="buttons_secondary_dark_v2">#303436</color>
+	<color name="material_switch_outline_light">#6589BD</color>
+	<color name="material_switch_outline_dark">#845415</color>
+	<color name="icon_color_active_light_v2">#1852FF</color>
+	<color name="icon_color_active_dark_v2">#d28521</color>
+
 	<!-- Divider -->
 	<color name="divider_color_light">#e6e6e6</color>
 	<color name="divider_color_dark">#2c3033</color>
 	<color name="divider_color">#ccc</color>
+
+	<!-- Progress bar-->
+	<color name="routing_fast_progress_fill_light">#16C866</color>
+    <color name="routing_fast_progress_fill_dark">#16C866</color>
+    <color name="routing_fast_progress_track_light">#CDE4D8</color>
+    <color name="routing_fast_progress_track_dark">#20603D</color>
+	<color name="routing_standard_progress_fill_light">#237BFF</color>
+    <color name="routing_standard_progress_fill_dark">#237BFF</color>
+    <color name="routing_standard_progress_track_light">#D3E5FF</color> 
+    <color name="routing_standard_progress_track_dark">#2D3C53</color>
 
 	<!-- User created points -->
 	<color name="marker_blue">#2196f3</color>
@@ -104,6 +133,7 @@
 	<color name="activity_background_transparent_color_dark">#ea17181a</color>
 	<color name="material_text_input_layout_bg">#4DCCCCCC</color>
 
+	<!-- Buttons -->
 	<color name="active_buttons_and_links_bg_pressed_light">#0f67eb</color>
 	<color name="active_buttons_and_links_bg_pressed_dark">#b87114</color>
 	<color name="inactive_buttons_and_links_bg_light">#f0f0f0</color>
@@ -114,6 +144,47 @@
 	<color name="stroked_buttons_and_links_bg_dark">#0017181a</color>
 	<color name="stroked_buttons_and_links_outline_light">#cccccc</color>
 	<color name="stroked_buttons_and_links_outline_dark">#303336</color>
+
+	<color name="btn_bg_primary_light">#237BFF</color>
+    <color name="btn_bg_primary_dark">#237BFF</color>
+
+    <color name="btn_bg_primary_pressed_light">#0F67EB</color>
+    <color name="btn_bg_primary_pressed_dark">#004BBD</color>
+
+    <color name="btn_bg_secondary_light">#F0F0F0</color>
+    <color name="btn_bg_secondary_dark">#303436</color>
+
+    <color name="btn_bg_secondary_pressed_light">#D6D6D6</color>
+    <color name="btn_bg_secondary_pressed_dark">#181A1B</color>
+
+    <color name="btn_bg_accent_light">#DEEBFF</color>
+    <color name="btn_bg_accent_dark">#16396E</color>
+
+    <color name="btn_bg_accent_pressed_light">#ADCEFF</color>
+    <color name="btn_bg_accent_pressed_dark">#131C2A</color>
+
+    <color name="btn_bg_disabled_light">#F0F0F0</color>
+    <color name="btn_bg_disabled_dark">#303436</color>
+
+
+    <color name="btn_outline_secondary_light">#CCCCCC</color>
+    <color name="btn_outline_secondary_dark">#484D51</color>
+
+    <color name="btn_outline_accent_light">#80B2FF</color>
+    <color name="btn_outline_accent_dark">#2765C3</color>
+
+    <color name="btn_outline_primary_focused_light">#0D5ACE</color>
+    <color name="btn_outline_primary_focused_dark">#0D5ACE</color>
+
+
+    <color name="btn_text_on_primary_light">#FFFFFF</color>
+    <color name="btn_text_on_primary_dark">#FFFFFF</color>
+
+    <color name="btn_text_on_secondary_light">#237BFF</color>
+    <color name="btn_text_on_secondary_dark">#237BFF</color>
+
+    <color name="btn_text_on_disabled_light">#666666</color>
+    <color name="btn_text_on_disabled_dark">#666666</color>
 
 	<color name="subscription_active_bg_color_light">#fff9b2</color>
 	<color name="subscription_active_bg_color_dark">#43453b</color>
@@ -168,8 +239,8 @@
 	<color name="plugin_details_install_header_bg_light">#dbdbdb</color>
 	<color name="plugin_details_install_header_bg_dark">#2d3438</color>
 
-	<color name="list_item_light_pressed">#8cffffff</color>
-	<color name="list_item_dark_pressed">#be222526</color>
+	<color name="list_item_light_pressed">#b2e6e6e6</color>
+	<color name="list_item_dark_pressed">#cc3b3b3b</color>
 
 	<color name="fab_color">#ff8f00</color>
 	<color name="fab_color_pressed">#e58200</color>
@@ -205,6 +276,12 @@
 	<color name="color_black_transparent">#90000000</color>
 	<color name="widgettext_night">#ffC8C8C8</color>
 	<color name="widgettext_day">#000</color>
+	<color name="widget_units_color_light">#666666</color>
+	<color name="widget_units_color_dark">#8C8C8C</color>
+	<color name="speedometer_tolerance_units_color_light">#4C4950</color>
+	<color name="speedometer_tolerance_units_color_dark">#4C4950</color>
+	<color name="speedometer_limit_units_color_light">#FFFFFF</color>
+	<color name="speedometer_limit_units_color_dark">#FFFFFF</color>
 	<!-- widgettext_shadow_night is the same as widget background color for non-transparent night skin (from box_night_free_simple.9.png) -->
 	<color name="widgettext_shadow_night">#dc262626</color>
 	<color name="widgettext_shadow_day">#fff</color>
@@ -222,6 +299,10 @@
 	<!-- Speedometer -->
 	<color name="speedometer_text_speed_exceed_day">#E71D36</color>
 	<color name="speedometer_text_speed_exceed_night">#E71D36</color>
+	<color name="speedometer_bg_limit_day">#E71D34</color>
+	<color name="speedometer_bg_limit_night">#E71D34</color>
+	<color name="speedometer_bg_tolerance_day">#FFBF00</color>
+	<color name="speedometer_bg_tolerance_night">#FFBF00</color>
 
 	<color name="color_myloc_distance">#0080FF</color>
 	<color name="wpt_distance_color">#dd6CB336</color>
@@ -507,4 +588,47 @@
 
 	<color name="slider_label_text_light">#ffffff</color>
 	<color name="slider_label_text_dark">#e6e6e6</color>
+
+	<color name="speed_limit_tolerance_value">#000000</color>
+	<color name="speed_limit_tolerance_units">#4C4950</color>
+	<color name="speeding_value">#ffffff</color>
+	<color name="speeding_units">#ffffff</color>
+
+	<!-- Astro visibility graph -->
+	<color name="astro_visibility_x_tick_color">#BEBCC2</color>
+	<color name="astro_visibility_x_label_color">#7D738C</color>
+	<color name="astro_visibility_y_label_color">#2183F4</color>
+	<color name="astro_visibility_y_grid_color">#80D8D7DB</color>
+	<color name="astro_visibility_y_zero_color">#D8D7DB</color>
+
+	<color name="astro_visibility_marker_border_color">#AEB4C2</color>
+	<color name="astro_visibility_marker_az_color">#14CC9E</color>
+
+	<color name="astro_visibility_cursor_line_center">#E6EBF9</color>
+	<color name="astro_visibility_cursor_line_side">#33FFFFFF</color>
+	<color name="astro_visibility_cursor_dot_fill">#1852FF</color>
+	<color name="astro_visibility_cursor_dot_stroke">#FFFFFF</color>
+
+	<color name="astro_visibility_sun_gt_15">#80A0FF</color>
+	<color name="astro_visibility_sun_6_15">#668CFF</color>
+	<color name="astro_visibility_sun_0_6">#2E62FF</color>
+	<color name="astro_visibility_sun_m6_0">#0034CC</color>
+	<color name="astro_visibility_sun_m12_m6">#00134D</color>
+	<color name="astro_visibility_sun_lt_m12">#020D2C</color>
+
+	<color name="astro_visibility_fill_gt_45">#F3FF5A</color>
+	<color name="astro_visibility_fill_15_45">#F7D750</color>
+	<color name="astro_visibility_fill_0_15">#FB5934</color>
+	<color name="astro_visibility_fill_lt_0">#8E24AA</color>
+
+
+	<!-- Free version banner -->
+	<color name="banner_downloads_remaining_light">#ff8f00</color>
+	<color name="banner_downloads_remaining_dark">#D28521</color>
+	<color name="banner_downloads_used_light">#DEDEE3</color>
+	<color name="banner_downloads_used_dark">#34343C</color>
+	<color name="sale_badge_light">#E82A3B</color>
+	<color name="sale_badge_dark">#E82A3B</color>
+	<color name="banner_feature_bg_light">#EDF1F7</color>
+	<color name="banner_feature_bg_dark">#2E3238</color>
 </resources>

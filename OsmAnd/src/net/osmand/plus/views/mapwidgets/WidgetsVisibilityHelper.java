@@ -6,6 +6,7 @@ import static net.osmand.plus.views.mapwidgets.WidgetsVisibilityHelper.VisibleEl
 import android.view.View;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import net.osmand.plus.OsmandApplication;
@@ -13,6 +14,7 @@ import net.osmand.plus.R;
 import net.osmand.plus.activities.MapActivity;
 import net.osmand.plus.exploreplaces.ExplorePlacesFragment;
 import net.osmand.plus.helpers.AndroidUiHelper;
+import net.osmand.plus.helpers.DiscountHelper.DiscountBarController;
 import net.osmand.plus.helpers.MapFragmentsHelper;
 import net.osmand.plus.mapcontextmenu.MapContextMenu;
 import net.osmand.plus.mapcontextmenu.MapContextMenuFragment;
@@ -22,6 +24,7 @@ import net.osmand.plus.measurementtool.SnapTrackWarningFragment;
 import net.osmand.plus.routepreparationmenu.MapRouteInfoMenu;
 import net.osmand.plus.routing.RoutingHelper;
 import net.osmand.plus.settings.backend.ApplicationMode;
+import net.osmand.plus.settings.enums.ScreenLayoutMode;
 import net.osmand.plus.track.fragments.TrackMenuFragment;
 import net.osmand.plus.views.MapLayers;
 import net.osmand.plus.views.layers.MapQuickActionLayer;
@@ -79,7 +82,7 @@ public class WidgetsVisibilityHelper {
 	public boolean shouldShowTopCoordinatesWidget() {
 		return !mapActivity.shouldHideTopControls()
 				&& mapActivity.getMapRouteInfoMenu().shouldShowTopControls()
-				&& !mapActivity.isTopToolbarActive()
+				&& (!mapActivity.isTopToolbarActive() || isTopToolbarDiscountBar())
 				&& !isInRouteLineAppearanceMode()
 				&& !isInChoosingRoutesMode()
 				&& !isInWaypointsChoosingMode()
@@ -95,11 +98,15 @@ public class WidgetsVisibilityHelper {
 	public boolean shouldHideVerticalWidgets() {
 		return isMapRouteInfoMenuVisible()
 				|| isExplorePlacesMode()
-				|| mapActivity.isTopToolbarActive()
+				|| (mapActivity.isTopToolbarActive() && !isTopToolbarDiscountBar())
 				|| mapActivity.shouldHideTopControls()
 				|| isInRouteLineAppearanceMode()
 				|| isInConfigureMapOptionMode()
 				|| !shouldShowElementOnActiveScreen(VERTICAL_WIDGETS);
+	}
+
+	public boolean isTopToolbarDiscountBar() {
+		return mapLayers.getMapInfoLayer().getTopToolbarController() instanceof DiscountBarController;
 	}
 
 	public boolean shouldHideBottomWidgets() {
@@ -119,6 +126,7 @@ public class WidgetsVisibilityHelper {
 				&& !isInRouteLineAppearanceMode()
 				&& !isInConfigureMapOptionMode()
 				&& !isContextMenuFragmentVisible()
+				&& !isInPlanRouteMode()
 				&& shouldShowElementOnActiveScreen(BOTTOM_MENU_BUTTONS);
 	}
 
@@ -135,6 +143,7 @@ public class WidgetsVisibilityHelper {
 		return showTopControls
 				&& !isInFollowTrackMode()
 				&& !isInConfigureMapOptionMode()
+				&& !isInPlanRouteMode()
 				&& (additionalDialogsHide || !isPortrait());
 	}
 
@@ -162,19 +171,26 @@ public class WidgetsVisibilityHelper {
 
 	public boolean shouldShowBackToLocationButton() {
 		boolean screensAllowed = shouldShowElementOnActiveScreen(BACK_TO_LOCATION_BUTTON);
+		boolean isContextMenuVisible = isContextMenuFragmentVisible();
+		boolean isMeasurementToolVisible = isInMeasurementToolMode();
+
 		boolean additionalDialogsHide = !isInGpxApproximationMode()
 				&& !isInChoosingRoutesMode()
 				&& !isInWaypointsChoosingMode()
 				&& !isInFollowTrackMode()
 				&& !isInRouteLineAppearanceMode()
-				&& !isContextMenuFragmentVisible()
+				&& !isContextMenuVisible
 				&& screensAllowed;
+
 		boolean showTopControls = !mapActivity.shouldHideTopControls()
 				|| (isInTrackMenuMode() && !isPortrait());
+
 		return showTopControls
 				&& !isInConfigureMapOptionMode()
+				&& !isInPlanRouteMode()
 				&& !(isMapLinkedToLocation() && routingHelper.isFollowingMode())
-				&& (additionalDialogsHide || !isPortrait());
+				&& !(isMeasurementToolVisible && isContextMenuVisible)
+				&& additionalDialogsHide;
 	}
 
 	public boolean shouldShowElevationProfileWidget() {
@@ -207,13 +223,14 @@ public class WidgetsVisibilityHelper {
 		return shouldShowElementOnActiveScreen(SPEEDOMETER);
 	}
 
-	public static boolean isWidgetEnabled(@NonNull MapActivity activity,
-			@NonNull WidgetsPanel panel, @NonNull String... widgetsIds) {
+	public static boolean isWidgetEnabled(@NonNull MapActivity activity, @NonNull WidgetsPanel panel,
+			@Nullable ScreenLayoutMode layoutMode, @NonNull String... widgetsIds) {
 		OsmandApplication app = activity.getApp();
 		ApplicationMode appMode = app.getSettings().getApplicationMode();
 
 		MapWidgetRegistry widgetRegistry = app.getOsmandMap().getMapLayers().getMapWidgetRegistry();
-		Set<MapWidgetInfo> enabledWidgets = widgetRegistry.getWidgetsForPanel(activity, appMode, ENABLED_MODE, Collections.singletonList(panel));
+		Set<MapWidgetInfo> enabledWidgets = widgetRegistry.getWidgetsForPanel(activity, appMode,
+				layoutMode, ENABLED_MODE, Collections.singletonList(panel));
 
 		for (MapWidgetInfo widgetInfo : enabledWidgets) {
 			if (CollectionUtils.containsAny(widgetInfo.key, widgetsIds)) {
@@ -238,7 +255,7 @@ public class WidgetsVisibilityHelper {
 	}
 
 	private boolean isInGpxDetailsMode() {
-		return mapLayers.getContextMenuLayer().isInGpxDetailsMode();
+		return isTrackDetailsMenuOpened();
 	}
 
 	private boolean isInAddGpxPointMode() {
@@ -264,8 +281,8 @@ public class WidgetsVisibilityHelper {
 		return false;
 	}
 
-	private boolean isInPlanRouteMode() {
-		return mapLayers.getMapMarkersLayer().isInPlanRouteMode();
+	public boolean isInPlanRouteMode() {
+		return fragmentsHelper.getPlanRouteFragment() != null;
 	}
 
 	private boolean isInTrackAppearanceMode() {
@@ -360,7 +377,7 @@ public class WidgetsVisibilityHelper {
 	}
 
 	private boolean isTrackDetailsMenuOpened() {
-		return mapActivity.getTrackDetailsMenu().isVisible();
+		return fragmentsHelper.getTrackDetailsMenuFragment() != null;
 	}
 
 	private boolean isRecMenuVisible() {

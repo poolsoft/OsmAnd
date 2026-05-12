@@ -92,7 +92,8 @@ public class Amenity extends MapObject {
 	public static final String ADDR_HOUSENUMBER = "addr_housenumber";
 	public static final String DIFF_ELE_DOWN = "diff_ele_down";
 	public static final String DIFF_ELE_UP = "diff_ele_up";
-	
+	public static final String ALT_NAME_TAG = "short";
+
 	private String subType;
 	private PoiCategory type;
 	// duplicate for fast access
@@ -174,6 +175,16 @@ public class Amenity extends MapObject {
 		this.subType = subType;
 	}
 
+	public String getMainSubtype() {
+		String subtype = getSubType();
+		int index = subtype.indexOf(';');
+		String firstKey = index == -1 ? subtype : subtype.substring(0, index);
+
+		PoiCategory category = getType();
+		PoiType poiType = findPoiType(firstKey, category, MapPoiTypes.getDefault());
+		return poiType != null ? poiType.getTranslation() : Algorithms.capitalizeFirstLetterAndLowercase(firstKey.replace('_', ' '));
+	}
+
 	public String getSubTypeStr() {
 		StringBuilder builder = new StringBuilder();
 
@@ -182,14 +193,7 @@ public class Amenity extends MapObject {
 		MapPoiTypes mapPoiTypes = MapPoiTypes.getDefault();
 
 		for (String type : subtype.split(";")) {
-			PoiType poiType = category.getPoiTypeByKeyName(type);
-			if (poiType == null) {
-				// Try to get POI type from another category, but skip non-OSM-types
-				AbstractPoiType abstractPoiType = mapPoiTypes.getAnyPoiTypeByKey(type);
-				if (abstractPoiType instanceof PoiType && !abstractPoiType.isNotEditableOsm()) {
-					poiType = (PoiType) abstractPoiType;
-				}
-			}
+			PoiType poiType = findPoiType(type, category, mapPoiTypes);
 			if (poiType != null) {
 				builder.append((builder.length() == 0) ? poiType.getTranslation() : ", " + poiType.getTranslation().toLowerCase());
 			}
@@ -198,6 +202,18 @@ public class Amenity extends MapObject {
 			builder.append(Algorithms.capitalizeFirstLetterAndLowercase(subtype.replace('_', ' ')));
 		}
 		return builder.toString();
+	}
+
+	private PoiType findPoiType(String keyName, PoiCategory category, MapPoiTypes mapPoiTypes) {
+		PoiType poiType = category.getPoiTypeByKeyName(keyName);
+		if (poiType == null) {
+			// Try to get POI type from another category, but skip non-OSM-types
+			AbstractPoiType abstractPoiType = mapPoiTypes.getAnyPoiTypeByKey(keyName);
+			if (abstractPoiType instanceof PoiType && !abstractPoiType.isNotEditableOsm()) {
+				poiType = (PoiType) abstractPoiType;
+			}
+		}
+		return poiType;
 	}
 
 	public String getOpeningHours() {
@@ -887,7 +903,7 @@ public class Amenity extends MapObject {
 	public String getTranslation(MapPoiTypes mapPoiTypes, String alternateName) {
 		for (String key : getAdditionalInfoKeys()) {
 			String value = getAdditionalInfo(key);
-			if (value.equals(alternateName)) {
+			if (value != null && value.equals(alternateName)) {
 				PoiType poiType = getPoiType(mapPoiTypes, key, value);
 				if (poiType != null && !poiType.isText()) {
 					return poiType.getTranslation();
@@ -898,41 +914,60 @@ public class Amenity extends MapObject {
 	}
 
 	public String getCityFromTagGroups(String lang) {
-		if (tagGroups == null) {
+		if (Algorithms.isEmpty(tagGroups)) {
 			return null;
 		}
-		TreeMap<CityType, String> names = new TreeMap<City.CityType, String>(); 
+		String singleName = null;
+		CityType singleType = null;
+		String nameLangTag = "name:" + lang;
+		EnumMap<CityType, String> names = null;
+
 		for (Map.Entry<Integer, List<TagValuePair>> entry : tagGroups.entrySet()) {
-			String translated = "";
-			String nonTranslated = "";
-			City.CityType type = null;
-			for (TagValuePair tagValue : entry.getValue()) {
-				if (tagValue.tag.endsWith("name:" + lang)) {
+			CityType type = null;
+			String translated = null;
+			String nonTranslated = null;
+
+			List<TagValuePair> tagValues = entry.getValue();
+			for (int i = 0; i < tagValues.size(); i++) {
+				TagValuePair tagValue = tagValues.get(i);
+				if (tagValue.tag.endsWith(nameLangTag)) {
 					translated = tagValue.value;
-				}
-				if (tagValue.tag.endsWith("name")) {
+				} else if (tagValue.tag.endsWith("name")) {
 					nonTranslated = tagValue.value;
-				}
-				if (tagValue.tag.equals("place")) {
-					type = City.CityType.valueFromString(tagValue.value.toUpperCase());
+				} else if (tagValue.tag.equals("place")) {
+					type = CityType.valueFromString(tagValue.value);
 				}
 			}
-			String name = translated.isEmpty() ? nonTranslated : translated;
-			if (!name.isEmpty() && isCityTypeAccept(type)) {
-				names.put(type, name);
+			String name = Algorithms.isEmpty(translated) ? nonTranslated : translated;
+			if (!Algorithms.isEmpty(name) && isCityTypeAccept(type)) {
+				if (names != null) {
+					names.put(type, name);
+				} else if (singleType == null) {
+					singleType = type;
+					singleName = name;
+				} else if (singleType == type) {
+					singleName = name;
+				} else {
+					names = new EnumMap<>(CityType.class);
+					names.put(singleType, singleName);
+					names.put(type, name);
+				}
 			}
 		}
-		String result = "";
-		for (String nm : names.values()) {
+		if (names == null) {
+			return singleType == null ? "" : singleName;
+		}
+		StringBuilder result = new StringBuilder();
+		for (String name : names.values()) {
 			if (result.length() > 0) {
-				result += ", ";
+				result.append(", ");
 			}
-			result += nm;
+			result.append(name);
 		}
-		return result;
+		return result.toString();
 	}
 
-	private boolean isCityTypeAccept(City.CityType type) {
+	private boolean isCityTypeAccept(CityType type) {
 		if (type == null) {
 			return false;
 		}
@@ -982,7 +1017,7 @@ public class Amenity extends MapObject {
 	}
 
 	public static String getPoiStringWithoutType(Amenity amenity, String locale, boolean transliterate) {
-		String typeName = amenity.getSubTypeStr();
+		String typeName = amenity.getMainSubtype();
 		String localName = amenity.getName(locale, transliterate);
 		if (typeName != null && localName.contains(typeName)) {
 			// type is contained in name e.g.
@@ -1033,5 +1068,26 @@ public class Amenity extends MapObject {
 		result.putAll(amenityTags); // unresolved residues
 
 		return result;
+	}
+
+	public String getIcon() {
+		if (type == null || subType == null) {
+			return null;
+		}
+		PoiType pt = type.getPoiTypeByKeyName(subType);
+		if (pt == null) {
+			return null;
+		}
+		String icon = pt.getOriginalIconName();
+		if (icon == null && !pt.getPoiAdditionals().isEmpty()) {
+			for (PoiType ad : pt.getPoiAdditionals()) {
+				String headerIcon = ad.getOriginalIconName();
+				if (headerIcon != null && getAdditionalInfo(ad.getKeyName()) != null) {
+					icon = headerIcon;
+					break;
+				}
+			}
+		}
+		return icon;
 	}
 }

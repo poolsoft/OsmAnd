@@ -16,6 +16,8 @@ import net.osmand.shared.gpx.primitives.TrkSegment;
 import net.osmand.shared.gpx.primitives.WptPt;
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.card.color.ColoringStyle;
+import net.osmand.shared.palette.domain.PaletteItem;
+import net.osmand.shared.palette.domain.category.GradientPaletteCategory;
 import net.osmand.shared.routing.ColoringType;
 import net.osmand.plus.track.helpers.SelectedGpxFile;
 import net.osmand.render.RenderingRulesStorage;
@@ -43,15 +45,19 @@ public class CachedTrack {
 	private final Map<Integer, List<RouteSegmentResult>> routeCache = new ConcurrentHashMap<>();
 	private final Map<String, List<TrkSegment>> simplifiedSegmentsCache = new HashMap<>();
 	private final Map<String, List<TrkSegment>> nonSimplifiedSegmentsCache = new HashMap<>();
-	private Set<String> availableColoringTypes;
+	private final Set<String> usedPaletteNames = new HashSet<>();
+	private final boolean currentTrack;
 
 	private CachedTrackParams params;
+	private Set<String> availableColoringTypes;
+	private boolean forceUpdate;
 
 	public CachedTrack(@NonNull OsmandApplication app, @NonNull SelectedGpxFile selectedGpxFile) {
 		this.app = app;
 		this.selectedGpxFile = selectedGpxFile;
+		this.currentTrack = selectedGpxFile.isShowCurrentTrack();
 		this.params = new CachedTrackParams(selectedGpxFile.getGpxFileToDisplay().getModifiedTime(),
-				selectedGpxFile.getFilteredSelectedGpxFile() != null, false);
+				selectedGpxFile.hasFilters(), selectedGpxFile.isJoinSegments(), selectedGpxFile.getPointsToDisplayCount());
 	}
 
 	@NonNull
@@ -66,14 +72,18 @@ public class CachedTrack {
 
 	@Nullable
 	public List<RouteSegmentResult> getCachedRouteSegments(int nonEmptySegmentIdx) {
-		if (isCachedTrackChanged()) {
-			clearCaches();
-		}
+		clearOutdatedCache();
 		return routeCache.get(nonEmptySegmentIdx);
 	}
 
 	public void setCachedRouteSegments(@NonNull List<RouteSegmentResult> routeSegments, int nonEmptySegmentIdx) {
 		routeCache.put(nonEmptySegmentIdx, routeSegments);
+	}
+
+	public void onPaletteUpdated(@NonNull String paletteName) {
+		if (usedPaletteNames.contains(paletteName)) {
+			forceUpdate = true;
+		}
 	}
 
 	@NonNull
@@ -88,16 +98,14 @@ public class CachedTrack {
 	@NonNull
 	public List<TrkSegment> getTrackSegments(@Nullable GradientScaleType scaleType,
 	                                         @Nullable GradientScaleType outlineScaleType,
-	                                         @NonNull String palette) {
-		if (isCachedTrackChanged()) {
-			clearCaches();
-		}
-
-		String trackId = scaleType + "_" + palette + "_" + outlineScaleType;
+	                                         @NonNull String paletteName) {
+		boolean cleared = clearOutdatedCache();
+		String trackId = scaleType + "_" + paletteName + "_" + outlineScaleType;
 		List<TrkSegment> segments = nonSimplifiedSegmentsCache.get(trackId);
-		if (segments == null) {
-			RouteColorize colorization = scaleType != null ? createGpxColorization(scaleType, palette) : null;
-			RouteColorize outlineColorization = outlineScaleType != null ? createGpxColorization(outlineScaleType, palette) : null;
+
+		if (shouldUpdateSegments(segments, cleared)) {
+			RouteColorize colorization = scaleType != null ? createGpxColorization(scaleType, paletteName) : null;
+			RouteColorize outlineColorization = outlineScaleType != null ? createGpxColorization(outlineScaleType, paletteName) : null;
 
 			Pair<GradientScaleType, List<RouteColorizationPoint>> lineColors = null;
 			Pair<GradientScaleType, List<RouteColorizationPoint>> outlineColors = null;
@@ -107,39 +115,67 @@ public class CachedTrack {
 			if (outlineColorization != null) {
 				outlineColors = new Pair<>(outlineScaleType, outlineColorization.getResult());
 			}
-			segments = createColoredSegments(lineColors, outlineColors);
+			segments = buildAndUpdateSegments(segments, lineColors, outlineColors);
 			nonSimplifiedSegmentsCache.put(trackId, segments);
+			usedPaletteNames.add(paletteName);
 		}
 
 		return segments;
 	}
 
 	@NonNull
-	public List<TrkSegment> getSimplifiedTrackSegments(int zoom, @NonNull GradientScaleType scaleType, @NonNull String palette) {
-		if (isCachedTrackChanged()) {
-			clearCaches();
-		}
-
-		String trackId = zoom + "_" + scaleType + "_" + palette;
+	public List<TrkSegment> getSimplifiedTrackSegments(int zoom,
+	                                                   @NonNull GradientScaleType scaleType,
+	                                                   @NonNull String paletteName) {
+		boolean cleared = clearOutdatedCache();
+		String trackId = zoom + "_" + scaleType + "_" + paletteName;
 		List<TrkSegment> segments = simplifiedSegmentsCache.get(trackId);
-		if (segments == null) {
-			RouteColorize colorization = createGpxColorization(scaleType, palette);
+
+		if (shouldUpdateSegments(segments, cleared)) {
+			RouteColorize colorization = createGpxColorization(scaleType, paletteName);
 			List<RouteColorizationPoint> colorsOfPoints = colorization.getSimplifiedResult(zoom);
-			segments = createColoredSegments(Pair.create(scaleType, colorsOfPoints), null);
+			segments = buildAndUpdateSegments(segments, Pair.create(scaleType, colorsOfPoints), null);
 			simplifiedSegmentsCache.put(trackId, segments);
+			usedPaletteNames.add(paletteName);
 		}
 
 		return segments;
 	}
 
-	private boolean isCachedTrackChanged() {
+	private boolean shouldUpdateSegments(@Nullable List<TrkSegment> segments, boolean changed) {
+		return segments == null || (changed && currentTrack);
+	}
+
+	@NonNull
+	private List<TrkSegment> buildAndUpdateSegments(@Nullable List<TrkSegment> oldSegments,
+			@Nullable Pair<GradientScaleType, List<RouteColorizationPoint>> lineColors,
+			@Nullable Pair<GradientScaleType, List<RouteColorizationPoint>> outlineColors) {
+		List<TrkSegment> newSegments = createColoredSegments(lineColors, outlineColors);
+		if (currentTrack && oldSegments != null && oldSegments.size() == newSegments.size()) {
+			for (int i = 0; i < oldSegments.size(); i++) {
+				oldSegments.get(i).getPoints().clear();
+				oldSegments.get(i).getPoints().addAll(newSegments.get(i).getPoints());
+			}
+			return oldSegments;
+		}
+		return newSegments;
+	}
+
+	private boolean clearOutdatedCache() {
 		GpxFile gpxFile = selectedGpxFile.getGpxFileToDisplay();
+		boolean useFilteredGpx = selectedGpxFile.hasFilters();
 		boolean useJoinSegments = selectedGpxFile.isJoinSegments();
-		boolean useFilteredGpx = selectedGpxFile.getFilteredSelectedGpxFile() != null;
-		if (useFilteredGpx != params.useFilteredGpx
-				|| useJoinSegments != params.useJoinSegments
-				|| gpxFile.getModifiedTime() != params.prevModifiedTime) {
-			params = new CachedTrackParams(gpxFile.getModifiedTime(), useFilteredGpx, useJoinSegments);
+		long pointsCount = selectedGpxFile.getPointsToDisplayCount();
+
+		if (useFilteredGpx != params.useFilteredGpx() || useJoinSegments != params.useJoinSegments()
+				|| gpxFile.getModifiedTime() != params.modifiedTime() || pointsCount != params.pointsCount()
+				|| forceUpdate) {
+			forceUpdate = false;
+			boolean keepSegmentsCache = currentTrack && pointsCount >= params.pointsCount();
+			params = new CachedTrackParams(gpxFile.getModifiedTime(), useFilteredGpx, useJoinSegments, pointsCount);
+
+			clearCaches(keepSegmentsCache);
+
 			return true;
 		}
 		return false;
@@ -150,10 +186,19 @@ public class CachedTrack {
 		GpxFile gpxFile = selectedGpxFile.getGpxFileToDisplay();
 		GpxTrackAnalysis trackAnalysis = selectedGpxFile.getTrackAnalysisToDisplay(app);
 		ColorizationType colorizationType = scaleType.toColorizationType();
+		GradientPaletteCategory category = scaleType.toPaletteCategory();
 		float maxSpeed = app.getSettings().getApplicationMode().getMaxSpeed();
-		ColorPalette colorPalette = app.getColorPaletteHelper().getGradientColorPaletteSync(colorizationType, gradientPalette);
 
-		return new RouteColorize(gpxFile, trackAnalysis, colorizationType, colorPalette, maxSpeed);
+		boolean fixedValues = false;
+		ColorPalette colorPalette = null;
+
+		PaletteItem item = app.getPaletteRepository().findPaletteItem(category.getId(), gradientPalette);
+		if (item instanceof PaletteItem.Gradient gradient) {
+			fixedValues = gradient.isFixed();
+			colorPalette = gradient.getColorPalette();
+		}
+
+		return new RouteColorize(gpxFile, trackAnalysis, colorizationType, colorPalette, maxSpeed, fixedValues);
 	}
 
 	@NonNull
@@ -234,7 +279,7 @@ public class CachedTrack {
 	}
 
 	public boolean isColoringTypeAvailable(@NonNull ColoringType coloringType, @Nullable String routeInfoAttribute) {
-		if (params.prevModifiedTime != selectedGpxFile.getGpxFileToDisplay().getModifiedTime() || availableColoringTypes == null) {
+		if (params.modifiedTime() != selectedGpxFile.getGpxFileToDisplay().getModifiedTime() || availableColoringTypes == null) {
 			availableColoringTypes = listAvailableColoringTypes();
 		}
 		return availableColoringTypes.contains(coloringType.getName(routeInfoAttribute));
@@ -278,9 +323,12 @@ public class CachedTrack {
 		return availableRouteInfoAttributes;
 	}
 
-	private void clearCaches() {
-		nonSimplifiedSegmentsCache.clear();
-		simplifiedSegmentsCache.clear();
+	private void clearCaches(boolean keepSegmentsCache) {
+		if (!keepSegmentsCache) {
+			nonSimplifiedSegmentsCache.clear();
+			simplifiedSegmentsCache.clear();
+		}
+		usedPaletteNames.clear();
 		routeCache.clear();
 	}
 }

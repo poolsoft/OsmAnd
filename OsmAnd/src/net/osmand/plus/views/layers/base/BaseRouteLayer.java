@@ -15,7 +15,6 @@ import net.osmand.PlatformUtil;
 import net.osmand.core.jni.FColorARGB;
 import net.osmand.data.RotatedTileBox;
 import net.osmand.plus.R;
-import net.osmand.plus.card.color.palette.gradient.PaletteGradientColor;
 import net.osmand.plus.render.OsmandRenderer;
 import net.osmand.plus.routing.PreviewRouteLineInfo;
 import net.osmand.plus.settings.backend.ApplicationMode;
@@ -23,10 +22,12 @@ import net.osmand.plus.settings.backend.OsmandSettings;
 import net.osmand.plus.settings.backend.preferences.CommonPreference;
 import net.osmand.plus.utils.AndroidUtils;
 import net.osmand.plus.utils.ColorUtilities;
+import net.osmand.plus.utils.UiUtilities;
 import net.osmand.plus.views.OsmandMapTileView;
 import net.osmand.render.RenderingRuleProperty;
 import net.osmand.render.RenderingRuleSearchRequest;
 import net.osmand.render.RenderingRulesStorage;
+import net.osmand.shared.palette.domain.PaletteConstants;
 import net.osmand.shared.routing.ColoringType;
 import net.osmand.util.Algorithms;
 
@@ -46,7 +47,7 @@ public abstract class BaseRouteLayer extends OsmandMapLayer {
 
 	protected PreviewRouteLineInfo previewRouteLineInfo;
 	protected ColoringType routeColoringType = ColoringType.DEFAULT;
-	protected String routeGradientPalette = PaletteGradientColor.DEFAULT_NAME;
+	protected String routeGradientPalette = PaletteConstants.DEFAULT_NAME;
 	protected String routeInfoAttribute;
 
 	protected RenderingLineAttributes attrs;
@@ -108,7 +109,7 @@ public abstract class BaseRouteLayer extends OsmandMapLayer {
 	}
 
 	protected void initIcons() {
-		actionArrow = BitmapFactory.decodeResource(view.getResources(), R.drawable.map_action_arrow, null);
+		actionArrow = UiUtilities.decodeResource(view.getResources(), R.drawable.map_action_arrow);
 	}
 
 	protected void updateRouteColors(boolean night) {

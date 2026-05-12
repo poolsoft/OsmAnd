@@ -1,6 +1,8 @@
 package net.osmand.shared.gpx
 
 import net.osmand.shared.util.KAlgorithms
+import net.osmand.shared.util.LoggerFactory
+import net.osmand.shared.util.PlatformUtil
 import kotlin.reflect.KClass
 
 enum class GpxParameter(
@@ -101,6 +103,8 @@ enum class GpxParameter(
 	AVG_OBD_FUEL_LEVEL("avgVmFuel", "double", Double::class, 0.0, true),
 	MAX_OBD_FUEL_LEVEL("maxVmFuel", "double", Double::class, 0.0, true);
 
+	val log = LoggerFactory.getLogger("GpxParameter")
+
 	fun isNullSupported(): Boolean = defaultValue == null
 
 	fun isAnalysisRecalculationNeeded(): Boolean {
@@ -118,6 +122,58 @@ enum class GpxParameter(
 	fun isAppearanceParameter(): Boolean = APPEARANCE_PARAMETERS.contains(this)
 
 	fun isGpxDirParameter(): Boolean = GPX_DIR_PARAMETERS.contains(this)
+
+	fun <T : Comparable<T>>getComparableValue(value: Any): T {
+		if (value is String) {
+			return getValueFromString(value)
+		} else if (value is Number) {
+			return when (typeClass) {
+				Int::class -> check<T>(value.toInt()) as T
+				Double::class -> check<T>(value.toDouble()) as T
+				Long::class -> check<T>(value.toLong()) as T
+				Float::class -> check<T>(value.toFloat()) as T
+				else -> throw IllegalArgumentException("Can not cast $value to $typeClass")
+			}
+		}
+		throw IllegalArgumentException("$value is not a number")
+	}
+
+	fun <T>getValueFromString(value: String): T {
+		var numberValue: Comparable<*>? = null
+		try {
+			numberValue = when (typeClass) {
+				Double::class -> value.toDouble()
+				Float::class -> value.toFloat()
+				Int::class -> value.toInt()
+				Long::class -> value.toLong()
+				else -> null
+			}
+		} catch (_: Throwable) {
+			log.error("Can't parse $value for type $typeClass")
+		}
+
+		val convertedValue: T? = when (typeClass) {
+			Double::class -> check(numberValue ?: 0.0)
+			Float::class -> check(numberValue ?: 0f)
+			Int::class -> check(numberValue ?: 0)
+			Long::class -> check(numberValue ?: 0L)
+			else -> null
+		}
+		if (convertedValue != null) {
+			return convertedValue
+		} else {
+			throw IllegalArgumentException("value can not be cast to $typeClass")
+		}
+	}
+
+	@Suppress("UNCHECKED_CAST")
+	fun <T>check(value: Comparable<*>): T? {
+		return try {
+			value as T
+		} catch (_: ClassCastException) {
+			null
+		}
+	}
 
 	companion object {
 

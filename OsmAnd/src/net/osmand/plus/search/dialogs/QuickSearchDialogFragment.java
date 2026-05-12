@@ -1,16 +1,6 @@
 package net.osmand.plus.search.dialogs;
 
-import static net.osmand.search.core.ObjectType.CITY;
-import static net.osmand.search.core.ObjectType.HOUSE;
-import static net.osmand.search.core.ObjectType.LOCATION;
-import static net.osmand.search.core.ObjectType.ONLINE_SEARCH;
-import static net.osmand.search.core.ObjectType.PARTIAL_LOCATION;
-import static net.osmand.search.core.ObjectType.POI_TYPE;
-import static net.osmand.search.core.ObjectType.POSTCODE;
-import static net.osmand.search.core.ObjectType.SEARCH_STARTED;
-import static net.osmand.search.core.ObjectType.STREET;
-import static net.osmand.search.core.ObjectType.STREET_INTERSECTION;
-import static net.osmand.search.core.ObjectType.VILLAGE;
+import static net.osmand.search.core.ObjectType.*;
 import static net.osmand.search.core.SearchCoreFactory.SEARCH_AMENITY_TYPE_PRIORITY;
 
 import android.annotation.SuppressLint;
@@ -61,13 +51,11 @@ import net.osmand.plus.OsmAndLocationProvider;
 import net.osmand.plus.OsmAndLocationProvider.OsmAndCompassListener;
 import net.osmand.plus.OsmAndLocationProvider.OsmAndLocationListener;
 import net.osmand.plus.OsmAndTaskManager;
-import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
 import net.osmand.plus.activities.MapActivity;
 import net.osmand.plus.base.BaseFullScreenDialogFragment;
 import net.osmand.plus.download.DownloadIndexesThread.DownloadEvents;
 import net.osmand.plus.exploreplaces.ExplorePlacesFragment;
-import net.osmand.plus.helpers.LocaleHelper;
 import net.osmand.plus.mapcontextmenu.MapContextMenu;
 import net.osmand.plus.myplaces.favorites.FavoriteGroup;
 import net.osmand.plus.plugins.PluginsHelper;
@@ -114,6 +102,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment implements OsmAndCompassListener,
 		OsmAndLocationListener, DownloadEvents, OnPreferenceChanged {
@@ -195,7 +184,7 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 	private boolean runSearchFirstTime;
 	private boolean phraseDefined;
 	private boolean addressSearch;
-	private boolean citiesLoaded;
+	private List<SearchResult> nearestCities;
 	private LatLon storedOriginalLocation;
 
 	private QuickSearchType searchType = QuickSearchType.REGULAR;
@@ -205,6 +194,7 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 
 	private static boolean isDebugMode = SearchUICore.isDebugMode();
 	private ProcessTopIndex processTopIndexAfterLoad = ProcessTopIndex.NO;
+	private final Stack<SearchPhrase> addressSearchStack = new Stack<>();
 
 	private enum ProcessTopIndex {
 		FILTER,
@@ -486,7 +476,7 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 				hideKeyboard();
 				addressSearch = position == 2;
 				updateClearButtonAndHint();
-				if (addressSearch && !citiesLoaded) {
+				if (addressSearch && !isCitiesLoaded()) {
 					reloadCities();
 				} else {
 					restoreSearch();
@@ -647,9 +637,16 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 
 	private void onBackButtonPressed() {
 		if (tabBarHidden) {
-			hideKeyboard();
-			searchEditText.setText("");
-			updateTabBarVisibility(true);
+			if (!addressSearchStack.isEmpty()) {
+				String newText = addressSearchStack.pop().getFullSearchPhrase();
+				searchEditText.setText(newText);
+				searchEditText.setSelection(newText.length());
+			} else {
+				hideKeyboard();
+				searchUICore.resetSearch();
+				searchEditText.setText("");
+				updateTabBarVisibility(true);
+			}
 		} else if (!processBackAction()) {
 			Dialog dialog = getDialog();
 			if (dialog != null) {
@@ -786,6 +783,7 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 		paused = false;
 		cancelPrev = false;
 		hidden = false;
+		addressSearchStack.clear();
 		if (interruptedSearch) {
 			addMoreButton(true);
 			interruptedSearch = false;
@@ -921,6 +919,7 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 		SearchSettings settings = searchUICore.getSearchSettings().setOriginalLocation(
 				new LatLon(searchLatLon.getLatitude(), searchLatLon.getLongitude()));
 		settings = settings.setLangs(appLang, mapLang, transliterate);
+		QuickSearchHelper.applySearchStatSetting(settings);
 		searchUICore.updateSettings(settings);
 
 		if (newSearch) {
@@ -1126,7 +1125,7 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 
 			case ADDRESS:
 				addressSearchFragment = (QuickSearchAddressListFragment) searchListFragment;
-				if (addressSearch && !citiesLoaded) {
+				if (addressSearch && !isCitiesLoaded()) {
 					reloadCities();
 				}
 				break;
@@ -1154,7 +1153,7 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 		if (app.isApplicationInitializing()) {
 			showProgressBar();
 			app.getAppInitializer().addOnFinishListener(result -> {
-				if (!paused) {
+				if (!paused && isAdded()) {
 					reloadCategoriesInternal();
 					if (!searching) {
 						hideProgressBar();
@@ -1249,7 +1248,7 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 		if (app.isApplicationInitializing()) {
 			showProgressBar();
 			app.getAppInitializer().addOnFinishListener(result -> {
-				if (!paused) {
+				if (!paused && isAdded()) {
 					reloadCitiesInternal();
 					if (!searching) {
 						hideProgressBar();
@@ -1299,12 +1298,14 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 			LOG.info("UI >> Start last city searching (within nearests)");
 		}
 		SearchResult lastCity = null;
-		if (res != null) {
-			citiesLoaded = !res.getCurrentSearchResults().isEmpty();
+		List<SearchResult> results = res != null ? res.getCurrentSearchResults() : null;
+		if (!Algorithms.isEmpty(results)) {
+			nearestCities = results;
+
 			long lastCityId = settings.getLastSearchedCity();
-			for (SearchResult sr : res.getCurrentSearchResults()) {
-				if (sr.objectType == ObjectType.CITY && ((City) sr.object).getId() == lastCityId) {
-					lastCity = sr;
+			for (SearchResult result : nearestCities) {
+				if (result.objectType == CITY && ((City) result.object).getId() == lastCityId) {
+					lastCity = result;
 					break;
 				}
 			}
@@ -1392,10 +1393,10 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 			QuickSearchCoordinatesFragment.showInstance(QuickSearchDialogFragment.this, latLon.getLatitude(), latLon.getLongitude());
 		}));
 
-		if (res != null) {
+		if (!Algorithms.isEmpty(nearestCities)) {
 			rows.add(new QuickSearchHeaderListItem(app, getString(R.string.nearest_cities), true));
 			int limit = 15;
-			for (SearchResult sr : res.getCurrentSearchResults()) {
+			for (SearchResult sr : nearestCities) {
 				if (limit > 0) {
 					rows.add(new QuickSearchListItem(app, sr));
 				}
@@ -1407,11 +1408,15 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 		}
 	}
 
+	public boolean isCitiesLoaded() {
+		return !Algorithms.isEmpty(nearestCities);
+	}
+
 	public void reloadHistory() {
 		if (app.isApplicationInitializing()) {
 			showProgressBar();
 			app.getAppInitializer().addOnFinishListener(result -> {
-				if (!paused) {
+				if (!paused && isAdded()) {
 					reloadHistoryInternal();
 					if (!searching) {
 						hideProgressBar();
@@ -1470,6 +1475,7 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 				.setEmptyQueryAllowed(false)
 				.setSortByName(false)
 				.setRadiusLevel(1);
+		QuickSearchHelper.applySearchStatSetting(onlineSettings);
 		searchUICore.updateSettings(onlineSettings);
 		setResultCollection(null);
 	}
@@ -1479,6 +1485,7 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 				.setSortByName(false)
 				.setSearchTypes(CITY, VILLAGE, POSTCODE, HOUSE, STREET_INTERSECTION, STREET, LOCATION, PARTIAL_LOCATION)
 				.setRadiusLevel(1);
+		QuickSearchHelper.applySearchStatSetting(addressSettings);
 		searchUICore.updateSettings(addressSettings);
 	}
 
@@ -1487,6 +1494,7 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 				.setSortByName(true)
 				.setSearchTypes(CITY, VILLAGE)
 				.setRadiusLevel(1);
+		QuickSearchHelper.applySearchStatSetting(citySettings);
 		searchUICore.updateSettings(citySettings);
 	}
 
@@ -1495,6 +1503,7 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 				.setSortByName(false)
 				.setSearchTypes(CITY)
 				.setRadiusLevel(1);
+		QuickSearchHelper.applySearchStatSetting(nearestSettings);
 		searchUICore.updateSettings(nearestSettings);
 	}
 
@@ -1506,6 +1515,7 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 				.setRadiusLevel(1);
 		storedOriginalLocation = settings.getOriginalLocation();
 		settings.setOriginalLocation(latLon);
+		QuickSearchHelper.applySearchStatSetting(settings);
 		searchUICore.updateSettings(settings);
 	}
 
@@ -1514,6 +1524,7 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 				.setEmptyQueryAllowed(false)
 				.setSortByName(true)
 				.setRadiusLevel(1);
+		QuickSearchHelper.applySearchStatSetting(postcodeSettings);
 		searchUICore.updateSettings(postcodeSettings);
 	}
 
@@ -1522,6 +1533,7 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 				.setEmptyQueryAllowed(false)
 				.setSortByName(false)
 				.setRadiusLevel(1);
+		QuickSearchHelper.applySearchStatSetting(stopAddressSettings);
 		searchUICore.updateSettings(stopAddressSettings);
 	}
 
@@ -1670,7 +1682,9 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 	private void showLocationToolbar() {
 		app.runInUIThread(() -> {
 			foundPartialLocation = true;
-			updateToolbarButton();
+			if (isAdded()) {
+				updateToolbarButton();
+			}
 		});
 	}
 
@@ -1710,8 +1724,18 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 				if (isDebugMode) {
 					LOG.info("UI >> API results shown <" + phrase + "> API=<" + searchApi + "> Results=" + getSearchResultCollectionFormattedSize(getResultCollection()));
 				}
+				displayToastIfAnyImpreciseResults(apiResults);
 			}
 		});
+	}
+
+	private void displayToastIfAnyImpreciseResults(List<SearchResult> apiResults) {
+		for (SearchResult apiResult : apiResults) {
+			if (apiResult.hasImpreciseCoordinates()) {
+				app.showToastMessage(R.string.imprecise_coordinates);
+				break;
+			}
+		}
 	}
 
 	private void showRegionResults(BinaryMapIndexReader region,
@@ -1888,7 +1912,6 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 	}
 
 	private void updateSearchResult(SearchResultCollection res, boolean append) {
-
 		if (!paused && mainSearchFragment != null) {
 			List<QuickSearchListItem> rows = new ArrayList<>();
 			if (res != null && !res.getCurrentSearchResults().isEmpty()) {
@@ -2142,8 +2165,8 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 		PluginsHelper.onNewDownloadIndexes(this);
 		updateContent(heading);
 		List<Fragment> childFragment = getChildFragmentManager().getFragments();
-		for(Fragment fragment : childFragment) {
-			if(fragment instanceof DownloadEvents downloadEventsFragment) {
+		for (Fragment fragment : childFragment) {
+			if (fragment instanceof DownloadEvents downloadEventsFragment) {
 				downloadEventsFragment.onUpdatedIndexesList();
 			}
 		}
@@ -2153,8 +2176,8 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 	public void downloadInProgress() {
 		updateContent(heading);
 		List<Fragment> childFragment = getChildFragmentManager().getFragments();
-		for(Fragment fragment : childFragment) {
-			if(fragment instanceof DownloadEvents downloadEventsFragment) {
+		for (Fragment fragment : childFragment) {
+			if (fragment instanceof DownloadEvents downloadEventsFragment) {
 				downloadEventsFragment.downloadInProgress();
 			}
 		}
@@ -2164,8 +2187,8 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 	public void downloadHasFinished() {
 		updateContent(heading);
 		List<Fragment> childFragment = getChildFragmentManager().getFragments();
-		for(Fragment fragment : childFragment) {
-			if(fragment instanceof DownloadEvents downloadEventsFragment) {
+		for (Fragment fragment : childFragment) {
+			if (fragment instanceof DownloadEvents downloadEventsFragment) {
 				downloadEventsFragment.downloadHasFinished();
 			}
 		}
@@ -2219,10 +2242,10 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 		return null;
 	}
 
-	public void showResult(@NonNull PoiUIFilter filter) {
+	public void showResult(@NonNull PoiUIFilter filter, @NonNull SearchResultCollection collection) {
 		buttonToolbarText.setText(R.string.shared_string_show_on_map);
 		mainSearchFragment.getAdapter().clear();
-		updateSearchResult(createSearchResultCollection(app, filter.getCurrentSearchResult()), true);
+		updateSearchResult(collection, true);
 		((QuickSearchListAdapter) mainSearchFragment.getAdapter()).setPoiUIFilter(filter);
 		updateTabBarVisibility(false);
 		toolbarEdit.setVisibility(View.GONE);
@@ -2231,23 +2254,8 @@ public class QuickSearchDialogFragment extends BaseFullScreenDialogFragment impl
 		toolbar.setVisibility(View.VISIBLE);
 	}
 
-	@NonNull
-	public static SearchResultCollection createSearchResultCollection(
-			@NonNull OsmandApplication app, @NonNull List<Amenity> amenities) {
-		SearchUICore core = app.getSearchUICore().getCore();
-		String locale = LocaleHelper.getPreferredPlacesLanguage(app);
-		boolean transliterate = app.getSettings().MAP_TRANSLITERATE_NAMES.get();
-		SearchSettings settings = core.getSearchSettings().setLang(locale, transliterate);
-
-		SearchPhrase phrase = SearchPhrase.emptyPhrase(settings);
-		SearchResultCollection collection = new SearchResultCollection(phrase);
-
-		List<SearchResult> results = new ArrayList<>();
-		for (Amenity amenity : amenities) {
-			SearchResult result = SearchCoreFactory.createSearchResult(amenity, phrase, core.getPoiTypes());
-			results.add(result);
-		}
-		collection.addSearchResults(results, false, false);
-		return collection;
+	public void onSearchResultSelected() {
+		SearchResultCollection searchResult = searchHelper.getCore().getCurrentSearchResult();
+		addressSearchStack.push(searchResult.getPhrase());
 	}
 }

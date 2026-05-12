@@ -17,6 +17,7 @@ import static net.osmand.plus.measurementtool.command.ClearPointsCommand.ClearCo
 import static net.osmand.plus.routing.TransportRoutingHelper.PUBLIC_TRANSPORT_KEY;
 
 import android.content.Intent;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask.Status;
 import android.os.Bundle;
@@ -62,6 +63,8 @@ import net.osmand.plus.base.BaseFullScreenFragment;
 import net.osmand.plus.base.ContextMenuFragment.MenuState;
 import net.osmand.plus.helpers.AndroidUiHelper;
 import net.osmand.plus.helpers.MapDisplayPositionManager;
+import net.osmand.plus.helpers.MapDisplayPositionManager.BoundsChangeListener;
+import net.osmand.plus.helpers.MapDisplayPositionManager.ICoveredScreenRectProvider;
 import net.osmand.plus.helpers.MapDisplayPositionManager.IMapDisplayPositionProvider;
 import net.osmand.plus.helpers.MapFragmentsHelper;
 import net.osmand.plus.helpers.TargetPointsHelper;
@@ -96,7 +99,10 @@ import net.osmand.plus.utils.AndroidNetworkUtils.NetworkResult;
 import net.osmand.plus.utils.AndroidNetworkUtils.OnFileUploadCallback;
 import net.osmand.plus.utils.InsetTarget.Type;
 import net.osmand.plus.views.OsmandMapTileView;
+import net.osmand.plus.views.controls.MapHudLayout;
+import net.osmand.plus.views.controls.maphudbuttons.MapButton;
 import net.osmand.plus.views.layers.MapControlsLayer.MapControlsThemeProvider;
+import net.osmand.plus.views.mapwidgets.widgets.RulerWidget;
 import net.osmand.plus.widgets.dialogbutton.DialogButtonType;
 import net.osmand.plus.widgets.multistatetoggle.IconToggleButton;
 import net.osmand.plus.widgets.multistatetoggle.IconToggleButton.IconRadioItem;
@@ -121,6 +127,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.ref.WeakReference;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -129,7 +136,8 @@ import java.util.Locale;
 public class MeasurementToolFragment extends BaseFullScreenFragment implements RouteBetweenPointsFragmentListener,
 		OptionsFragmentListener, GpxApproximationFragmentListener, SelectedPointFragmentListener,
 		SaveAsNewTrackFragmentListener, MapControlsThemeProvider, GpsFilterFragmentLister,
-		OnFileUploadCallback, CalculateAltitudeListener, IMapDisplayPositionProvider, CallbackWithObject<String> {
+		OnFileUploadCallback, CalculateAltitudeListener, IMapDisplayPositionProvider,
+		ICoveredScreenRectProvider, CallbackWithObject<String> {
 
 	public static final String TAG = MeasurementToolFragment.class.getSimpleName();
 	public static final String TAPS_DISABLED_KEY = "taps_disabled_key";
@@ -168,13 +176,20 @@ public class MeasurementToolFragment extends BaseFullScreenFragment implements R
 	private RadioItem pointsBtn;
 	private RadioItem graphBtn;
 	private View mainView;
+	private View mainContentView;
 	private View bottomMapControls;
 	private View topMapControls;
 	private ImageView upDownBtn;
 	private ImageView undoBtn;
 	private ImageView redoBtn;
 	private ImageView mainIcon;
+	private View measurementButtons;
+	private ImageButton snapToRoadButton;
+	private View profileConfigButton;
+	private MapHudLayout mapHudLayout;
+
 	private OnBackPressedCallback onBackPressedCallback;
+	private BoundsChangeListener mainContentBoundsChangeListener;
 	private OnGlobalLayoutListener widgetsLayoutListener;
 
 	private String filePath;
@@ -196,6 +211,10 @@ public class MeasurementToolFragment extends BaseFullScreenFragment implements R
 	private LatLon initialPoint;
 	private UploadFileTask calculateSrtmTask;
 	private HeightsResolverTask calculateHeightmapTask;
+
+	@Nullable
+	private RulerWidget rulerWidget;
+	private List<MapButton> mapButtons = new ArrayList<>();
 
 	enum FinalSaveAction {
 		SHOW_SNACK_BAR_AND_CLOSE,
@@ -263,6 +282,7 @@ public class MeasurementToolFragment extends BaseFullScreenFragment implements R
 	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mapDisplayPositionManager = app.getMapViewTrackingUtilities().getMapDisplayPositionManager();
+		mainContentBoundsChangeListener = new BoundsChangeListener(mapDisplayPositionManager, true);
 		if (editingCtx == null) {
 			editingCtx = new MeasurementEditingContext(app);
 		}
@@ -338,6 +358,7 @@ public class MeasurementToolFragment extends BaseFullScreenFragment implements R
 		View view = inflate(R.layout.fragment_measurement_tool, container, false);
 
 		mainView = view.findViewById(R.id.main_view);
+		mainContentView = view.findViewById(R.id.main_content);
 		detailsMenu = new GraphDetailsMenu(mainView);
 		LinearLayout infoButtonsContainer = mainView.findViewById(R.id.custom_radio_buttons);
 		if (portrait) {
@@ -353,7 +374,7 @@ public class MeasurementToolFragment extends BaseFullScreenFragment implements R
 		} else {
 			cardsContainer = mapActivity.findViewById(R.id.left_side_menu);
 			bottomMapControls = mapActivity.findViewById(R.id.bottom_controls_container);
-			topMapControls = mapActivity.findViewById(R.id.top_controls_container);
+			topMapControls = mapActivity.findViewById(R.id.lanes_widget_special_position);
 
 			infoTypeBtn = new IconToggleButton(app, infoButtonsContainer, nightMode);
 			pointsBtn = new IconRadioItem(R.drawable.ic_action_plan_route_point_colored).setUseDefaultColor();
@@ -521,22 +542,24 @@ public class MeasurementToolFragment extends BaseFullScreenFragment implements R
 				callMapActivity(activity -> dismiss(activity, false));
 			}
 		});
+		mapHudLayout = mapActivity.findViewById(R.id.map_hud_layout);
+		measurementButtons = inflate(R.layout.measurement_buttons, mapHudLayout, false);
+		snapToRoadButton = measurementButtons.findViewById(R.id.snap_to_road_image_button);
+		profileConfigButton = measurementButtons.findViewById(R.id.profile_with_config_btn);
 
-		ImageButton snapToRoadBtn = mapActivity.findViewById(R.id.snap_to_road_image_button);
-		snapToRoadBtn.setBackgroundResource(nightMode ? R.drawable.btn_circle_night : R.drawable.btn_circle);
-		snapToRoadBtn.setOnClickListener(v -> startSnapToRoad(false));
-		snapToRoadBtn.setVisibility(View.VISIBLE);
-		LinearLayout profileWithConfig = mapActivity.findViewById(R.id.profile_with_config_btn);
+		snapToRoadButton.setBackgroundResource(nightMode ? R.drawable.btn_circle_night : R.drawable.btn_circle);
+		snapToRoadButton.setOnClickListener(v -> startSnapToRoad(false));
+		snapToRoadButton.setVisibility(View.VISIBLE);
 
-		View background = profileWithConfig.findViewById(R.id.btn_background);
+		View background = profileConfigButton.findViewById(R.id.btn_background);
 		AndroidUtils.setBackground(background, AppCompatResources.getDrawable(view.getContext(),
 				AndroidUtils.resolveAttribute(view.getContext(), R.attr.bg_round_btn)));
-		View divider = profileWithConfig.findViewById(R.id.divider);
+		View divider = profileConfigButton.findViewById(R.id.divider);
 		divider.setBackgroundResource(AndroidUtils.resolveAttribute(view.getContext(), R.attr.divider_color));
-		ImageButton profileBtn = profileWithConfig.findViewById(R.id.profile);
+		ImageButton profileBtn = profileConfigButton.findViewById(R.id.profile);
 		profileBtn.setBackgroundResource(nightMode ? R.drawable.btn_circle_night_no_shadow : R.drawable.btn_circle_no_shadow);
 		profileBtn.setOnClickListener(v -> startSnapToRoad(false));
-		ImageButton configBtn = profileWithConfig.findViewById(R.id.profile_config);
+		ImageButton configBtn = profileConfigButton.findViewById(R.id.profile_config);
 		configBtn.setBackgroundResource(nightMode ? R.drawable.btn_circle_night_no_shadow : R.drawable.btn_circle_no_shadow);
 		configBtn.setImageDrawable(getContentIcon(R.drawable.ic_action_settings));
 		configBtn.setOnClickListener(v ->
@@ -587,6 +610,7 @@ public class MeasurementToolFragment extends BaseFullScreenFragment implements R
 		InsetTargetsCollection collection = super.getInsetTargets();
 		collection.removeType(Type.ROOT_INSET);
 		collection.replace(InsetTarget.createBottomContainer(R.id.main_content).build());
+		collection.replace(InsetTarget.createHorizontalLandscape(R.id.map_controls_container).build());
 		return collection;
 	}
 
@@ -762,6 +786,10 @@ public class MeasurementToolFragment extends BaseFullScreenFragment implements R
 	public void onResume() {
 		super.onResume();
 		mapDisplayPositionManager.registerMapPositionProvider(this);
+		mapDisplayPositionManager.registerCoveredScreenRectProvider(this);
+		if (mainContentView != null) {
+			mainContentView.addOnLayoutChangeListener(mainContentBoundsChangeListener);
+		}
 		callMapActivity(mapActivity -> {
 			if (mapActivity.getMapLayers().hasMapActivity()) {
 				mapActivity.getOnBackPressedDispatcher().addCallback(this, onBackPressedCallback);
@@ -774,11 +802,18 @@ public class MeasurementToolFragment extends BaseFullScreenFragment implements R
 				updateToolbar();
 			}
 		});
+		if (mapHudLayout != null && measurementButtons != null) {
+			mapHudLayout.addWidget(measurementButtons);
+		}
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
+		if (mainContentView != null) {
+			mainContentView.removeOnLayoutChangeListener(mainContentBoundsChangeListener);
+		}
+		mapDisplayPositionManager.unregisterCoveredScreenRectProvider(this);
 		mapDisplayPositionManager.unregisterMapPositionProvider(this);
 		callMapActivity(mapActivity -> {
 			mapActivity.getMapLayers().getMapControlsLayer().removeThemeInfoProviderTag(TAG);
@@ -786,6 +821,10 @@ public class MeasurementToolFragment extends BaseFullScreenFragment implements R
 		detailsMenu.onDismiss();
 		detailsMenu.setMapActivity(null);
 		updateMapDisplayPosition();
+
+		if (mapHudLayout != null && measurementButtons != null) {
+			mapHudLayout.removeWidget(measurementButtons);
+		}
 	}
 
 	@Override
@@ -798,6 +837,7 @@ public class MeasurementToolFragment extends BaseFullScreenFragment implements R
 		MeasurementToolLayer layer = getMeasurementLayer();
 		layer.setOnSingleTapListener(null);
 		layer.setOnEnterMovePointModeListener(null);
+		mainContentView = null;
 	}
 
 	@Override
@@ -1501,23 +1541,21 @@ public class MeasurementToolFragment extends BaseFullScreenFragment implements R
 		ApplicationMode appMode = editingCtx.getAppMode();
 		callMapActivity(mapActivity -> {
 			Drawable icon;
-			ImageButton snapToRoadBtn = mapActivity.findViewById(R.id.snap_to_road_image_button);
-			LinearLayout profileWithConfig = mapActivity.findViewById(R.id.profile_with_config_btn);
-			ImageButton configBtn = profileWithConfig.findViewById(R.id.profile);
+			ImageButton configBtn = profileConfigButton.findViewById(R.id.profile);
 			if (isTrackReadyToCalculate()) {
 				if (appMode == DEFAULT_APP_MODE) {
 					icon = getActiveIcon(R.drawable.ic_action_split_interval);
-					snapToRoadBtn.setVisibility(View.VISIBLE);
-					profileWithConfig.setVisibility(View.GONE);
+					snapToRoadButton.setVisibility(View.VISIBLE);
+					profileConfigButton.setVisibility(View.GONE);
 				} else {
 					icon = getPaintedIcon(appMode.getIconRes(), appMode.getProfileColor(nightMode));
-					snapToRoadBtn.setVisibility(View.GONE);
-					profileWithConfig.setVisibility(View.VISIBLE);
+					snapToRoadButton.setVisibility(View.GONE);
+					profileConfigButton.setVisibility(View.VISIBLE);
 				}
 			} else {
 				icon = getContentIcon(R.drawable.ic_action_help);
 			}
-			snapToRoadBtn.setImageDrawable(icon);
+			snapToRoadButton.setImageDrawable(icon);
 			configBtn.setImageDrawable(icon);
 			mapActivity.refreshMap();
 		});
@@ -1528,10 +1566,8 @@ public class MeasurementToolFragment extends BaseFullScreenFragment implements R
 	}
 
 	private void hideSnapToRoadIcon() {
-		callMapActivity(mapActivity -> {
-			mapActivity.findViewById(R.id.snap_to_road_image_button).setVisibility(View.GONE);
-			mapActivity.findViewById(R.id.profile_with_config_btn).setVisibility(View.GONE);
-		});
+		AndroidUiHelper.updateVisibility(snapToRoadButton, false);
+		AndroidUiHelper.updateVisibility(profileConfigButton, false);
 	}
 
 	private void collectPoints() {
@@ -1730,6 +1766,9 @@ public class MeasurementToolFragment extends BaseFullScreenFragment implements R
 		MeasurementToolLayer layer = getMeasurementLayer();
 		boolean added = editingCtx.getCommandManager().execute(new AddPointCommand(layer, true));
 		doAddOrMovePointCommonStuff();
+		if (added) {
+			closeMapContextMenuIfNeeded();
+		}
 		return added;
 	}
 
@@ -1756,10 +1795,40 @@ public class MeasurementToolFragment extends BaseFullScreenFragment implements R
 	@Nullable
 	@Override
 	public MapPosition getMapDisplayPosition() {
-		if (infoExpanded) {
+		if (infoExpanded || isMapContextMenuVisible()) {
 			return portrait ? MapPosition.MIDDLE_TOP : MapPosition.LANDSCAPE_MIDDLE_END;
 		}
 		return MapPosition.CENTER;
+	}
+
+	@Override
+	public boolean shouldProjectMapDisplayPositionToVisibleRect(@NonNull MapPosition position) {
+		return position == MapPosition.CENTER;
+	}
+
+	@NonNull
+	@Override
+	public List<Rect> getCoveredScreenRects() {
+		Rect rect = mainContentView == null ? null : AndroidUtils.getViewBoundOnScreen(mainContentView);
+		return rect != null ? Collections.singletonList(rect) : Collections.emptyList();
+	}
+
+	private void closeMapContextMenuIfNeeded() {
+		MapContextMenu menu = getMapContextMenu();
+		if (menu != null && menu.isVisible()) {
+			menu.close();
+		}
+	}
+
+	private boolean isMapContextMenuVisible() {
+		MapContextMenu menu = getMapContextMenu();
+		return menu != null && menu.isVisible();
+	}
+
+	@Nullable
+	private MapContextMenu getMapContextMenu() {
+		MapActivity mapActivity = getMapActivity();
+		return mapActivity != null ? mapActivity.getContextMenu() : null;
 	}
 
 	private void addToGpx(FinalSaveAction finalSaveAction) {

@@ -1,5 +1,6 @@
 package net.osmand.plus.views.controls;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,8 @@ import net.osmand.plus.R;
 import net.osmand.plus.helpers.AndroidUiHelper;
 import net.osmand.plus.settings.backend.ApplicationMode;
 import net.osmand.plus.settings.backend.OsmandSettings;
+import net.osmand.plus.settings.enums.ScreenLayoutMode;
+import net.osmand.plus.utils.AndroidUtils;
 import net.osmand.plus.views.controls.WidgetsPagerAdapter.PageViewHolder;
 import net.osmand.plus.views.mapwidgets.MapWidgetInfo;
 import net.osmand.plus.views.mapwidgets.MapWidgetRegistry;
@@ -32,6 +35,8 @@ import java.util.TreeMap;
 
 public class WidgetsPagerAdapter extends RecyclerView.Adapter<PageViewHolder> {
 
+	private final OsmandApplication app;
+	private final Context context;
 	private final OsmandSettings settings;
 	private final WidgetsPanel widgetsPanel;
 	private final MapWidgetRegistry widgetRegistry;
@@ -39,8 +44,11 @@ public class WidgetsPagerAdapter extends RecyclerView.Adapter<PageViewHolder> {
 	private VisiblePages visiblePages;
 	private ViewHolderBindListener bindListener;
 
-	public WidgetsPagerAdapter(@NonNull OsmandApplication app, @NonNull WidgetsPanel widgetsPanel) {
+	public WidgetsPagerAdapter(@NonNull Context context, @NonNull WidgetsPanel widgetsPanel) {
+		this.context = context;
 		this.widgetsPanel = widgetsPanel;
+
+		app = AndroidUtils.getApp(context);
 		settings = app.getSettings();
 		widgetRegistry = app.getOsmandMap().getMapLayers().getMapWidgetRegistry();
 		visiblePages = collectVisiblePages();
@@ -112,8 +120,11 @@ public class WidgetsPagerAdapter extends RecyclerView.Adapter<PageViewHolder> {
 	                                @NonNull Set<MapWidgetInfo> widgets,
 	                                @NonNull ApplicationMode appMode) {
 		Map<Integer, List<MapWidget>> textInfoWidgets = new TreeMap<>();
+		ScreenLayoutMode layoutMode = ScreenLayoutMode.getDefault(context);
+		List<String> widgetsVisibility = MapWidgetInfo.getWidgetsVisibility(app, appMode, layoutMode);
+
 		for (MapWidgetInfo widgetInfo : widgets) {
-			if (widgetInfo.isEnabledForAppMode(appMode)) {
+			if (widgetInfo.isEnabledForAppMode(appMode, widgetsVisibility)) {
 				MapWidget widget = widgetInfo.widget;
 				addWidgetViewToPage(textInfoWidgets, widgetInfo.pageIndex, widget);
 			}

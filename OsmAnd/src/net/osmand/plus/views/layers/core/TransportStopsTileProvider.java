@@ -61,6 +61,7 @@ public class TransportStopsTileProvider extends interface_MapTiledCollectionProv
 		this.textStyle = new TextRasterizer.Style();
 		this.textScale = textScale;
 		offset = new PointI(0, 0);
+		this.swigTakeOwnership();
 	}
 
 	public void drawSymbols(@NonNull MapRendererView mapRenderer) {
@@ -214,6 +215,11 @@ public class TransportStopsTileProvider extends interface_MapTiledCollectionProv
 	@Override
 	public PointI getPinIconOffset() {
 		return offset;
+	}
+
+	@Override
+	public boolean waitForLoading() {
+		return true;
 	}
 
 	public static class StopsCollectionPoint extends interface_MapTiledCollectionPoint {

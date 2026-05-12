@@ -39,6 +39,7 @@ public class LocationPointsTileProvider extends interface_MapTiledCollectionProv
       }
       skPointBitmap = pointBitmap;
       this.offset = new PointI(0, 0);
+      this.swigTakeOwnership();
    }
 
    public void drawPoints(@NonNull MapRendererView mapRenderer) {
@@ -135,8 +136,13 @@ public class LocationPointsTileProvider extends interface_MapTiledCollectionProv
       return MapMarker.PinIconHorisontalAlignment.CenterHorizontal;
    }
 
-   @Override
-   public PointI getPinIconOffset() {
-      return offset;
-   }
+	@Override
+	public PointI getPinIconOffset() {
+		return offset;
+	}
+
+	@Override
+	public boolean waitForLoading() {
+		return true;
+	}
 }

@@ -151,11 +151,23 @@ public class FavouritesFileHelper {
 	}
 
 	public void collectFavoriteGroups(@NonNull GpxFile gpxFile, @NonNull Map<String, FavoriteGroup> favoriteGroups) {
-		for (Map.Entry<String, PointsGroup> entry : gpxFile.getPointsGroups().entrySet()) {
+		Map<String, PointsGroup> pointsGroups = gpxFile.getPointsGroups();
+		boolean singleGroupFile = pointsGroups.size() == 1;
+		File file = !Algorithms.isEmpty(gpxFile.getPath()) ? new File(gpxFile.getPath()) : null;
+		boolean useFileMetadata = singleGroupFile && file != null && file.exists();
+		for (Map.Entry<String, PointsGroup> entry : pointsGroups.entrySet()) {
 			String key = entry.getKey();
 			PointsGroup pointsGroup = entry.getValue();
 			FavoriteGroup favoriteGroup = FavoriteGroup.fromPointsGroup(pointsGroup);
-
+			if (useFileMetadata) {
+				favoriteGroup.setSize(file.length());
+				favoriteGroup.setTimeModified(gpxFile.getModifiedTime());
+			} else {
+				FavoriteGroup existingGroup = favoriteGroups.get(key);
+				if (existingGroup != null) {
+					favoriteGroup.copyFileMetadata(existingGroup);
+				}
+			}
 			favoriteGroups.put(key, favoriteGroup);
 		}
 	}

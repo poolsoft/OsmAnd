@@ -13,10 +13,7 @@ import net.osmand.data.Amenity;
 import net.osmand.data.City;
 import net.osmand.data.LatLon;
 import net.osmand.data.Street;
-import net.osmand.osm.AbstractPoiType;
-import net.osmand.osm.PoiCategory;
-import net.osmand.osm.PoiFilter;
-import net.osmand.osm.PoiType;
+import net.osmand.osm.*;
 import net.osmand.util.Algorithms;
 import net.osmand.util.MapUtils;
 
@@ -59,20 +56,30 @@ public class SearchResult {
 	public String addressName;
 	public String cityName;
 	public Collection<String> otherNames;
-	
 
 	public String localeRelatedObjectName;
 	public Object relatedObject;
 	public double distRelatedObjectName;
 
+	private boolean impreciseCoordinates;
 	private double unknownPhraseMatchWeight = 0;
 	private CheckWordsMatchCount completeMatchRes = null;
 
 	public enum SearchResultResource {
-		DETAILED,
-		WIKIPEDIA,
-		BASEMAP,
-		TRAVEL
+		DETAILED(3),
+		BASEMAP(3),
+		WIKIPEDIA(2),
+		TRAVEL(1);
+
+		private final int weight;
+		
+		private SearchResultResource(int weight) {
+			this.weight = weight;
+		}
+		
+		public int getWeight() {
+			return weight;
+		}
 	}
 
 	private SearchResultResource searchResultResource;
@@ -83,6 +90,14 @@ public class SearchResult {
 
 	public SearchResult(SearchPhrase sp) {
 		this.requiredSearchPhrase = sp;
+	}
+
+	public boolean hasImpreciseCoordinates() {
+		return impreciseCoordinates;
+	}
+
+	public void setImpreciseCoordinates(boolean imprecise) {
+		this.impreciseCoordinates = imprecise;
 	}
 
 	// maximum corresponds to the top entry
@@ -104,12 +119,14 @@ public class SearchResult {
 
 
 	private double getSumPhraseMatchWeight(SearchResult exactResult) {
-		double res = getTypeWeight(exactResult, objectType);
+		double res = 1;
 		completeMatchRes = new CheckWordsMatchCount();
 		if (requiredSearchPhrase.getUnselectedPoiType() != null) {
 			// search phrase matches poi type, then we lower all POI matches and don't check allWordsMatched
 		} else if (objectType == ObjectType.POI_TYPE) {
 			// don't overload with poi types
+		} else if (isPublicTransport()) {
+			res -= 0.1;
 		} else {
 			boolean matched = localeName != null && allWordsMatched(localeName, exactResult, completeMatchRes);
 			// incorrect fix
@@ -153,7 +170,7 @@ public class SearchResult {
 			}
 			// if all words from search phrase match (<) the search result words - we prioritize it higher
 			if (matched) {
-				res = getPhraseWeightForCompleteMatch(exactResult, completeMatchRes);
+				res = getPhraseWeightForCompleteMatch(completeMatchRes, exactResult);
 			}
 			if (object instanceof Amenity a) {
 				int elo = a.getTravelEloNumber();
@@ -170,28 +187,49 @@ public class SearchResult {
 		return res;
 	}
 
-	private double getPhraseWeightForCompleteMatch(SearchResult exactResult, CheckWordsMatchCount completeMatchRes) {
-		double res = getTypeWeight(exactResult, objectType) * MAX_TYPES_BASE_10;
-		// if all words from search phrase == the search result words - we prioritize it even higher
+	private double getPhraseWeightForCompleteMatch(CheckWordsMatchCount completeMatchRes, SearchResult exactResult) {
+		double res = ObjectType.getTypeWeight(objectType) * MAX_TYPES_BASE_10; // range 10 - 40
+		boolean closeDistance = false;
+		LatLon searchLocation = requiredSearchPhrase.getSettings().getOriginalLocation();
+		if (searchLocation != null && this.location != null) {
+			double dist = MapUtils.getDistance(searchLocation, this.location);
+			if (dist <= NEAREST_METERS_LIMIT) {
+				// will sort in groups by object type each ~2 km
+				int coef = (int)(((NEAREST_METERS_LIMIT - dist) / NEAREST_METERS_LIMIT) * 15);
+				res = ObjectType.getTypeWeight(objectType) + MAX_TYPES_BASE_10 * 4 + coef;
+				closeDistance = true;
+				// range 41 - 59
+			}
+		}
 		if (completeMatchRes.allWordsEqual) {
-			boolean closeDistance = requiredSearchPhrase.getLastTokenLocation() != null && this.location != null 
-					&& MapUtils.getDistance(requiredSearchPhrase.getLastTokenLocation(), this.location) <= NEAREST_METERS_LIMIT;
+			// if all words from search phrase == the search result words - we prioritize it even higher
 			if (objectType != ObjectType.POI || closeDistance) {
-				res = getTypeWeight(exactResult, objectType) * MAX_TYPES_BASE_10 + MAX_PHRASE_WEIGHT_TOTAL / 2;
+				res = ObjectType.getTypeWeight(objectType) * MAX_TYPES_BASE_10 + MAX_PHRASE_WEIGHT_TOTAL / 2;
+			}
+			if (closeDistance) {
+				res += 1;
+			}
+			if (objectType == ObjectType.CITY && exactResult == null) {
+				res += MAX_PHRASE_WEIGHT_TOTAL / 2;
+			}
+			// range 60 - 91
+		}
+		if (res < MAX_TYPES_BASE_10 * 4) {
+			// equalize unmatched results
+			res = MAX_TYPES_BASE_10;
+			if (getResourceType() == SearchResultResource.BASEMAP) {
+				res += 1;
+			}
+			if (object != null && object instanceof Amenity am && am.isRouteArticle()) {
+				res += 0.5;
+			}
+			if (objectType == ObjectType.STREET_INTERSECTION) {
+				res -= 1;
 			}
 		}
 		return res;
 	}
 	
-	
-
-	private double getTypeWeight(SearchResult exactResult, ObjectType ot) {
-		if (exactResult == null && !requiredSearchPhrase.isLikelyAddressSearch()) {
-			return 1;
-		}
-		return ObjectType.getTypeWeight(ot);
-	}
-
 	public int getDepth() {
 		if (parentSearchResult != null) {
 			return 1 + parentSearchResult.getDepth();
@@ -310,7 +348,7 @@ public class SearchResult {
 		if (location != null && this.location != null) {
 			distance = MapUtils.getDistance(location, this.location);
 		}
-		return priority - 1 / (1 + priorityDistance * distance);
+		return priority - 1 / (1 + priorityDistance * distance);  
 	}
 
 	public double getSearchDistance(LatLon location, double pd) {
@@ -490,5 +528,14 @@ public class SearchResult {
 			otherNames = oth;
 		}
 		return backup;
+	}
+	
+	private boolean isPublicTransport() {
+		if (objectType != ObjectType.POI) {
+			return false;
+		}
+		Amenity am = (Amenity) object; 
+		List<String> transportTypes = MapPoiTypes.getDefault().getPublicTransportTypes();
+		return transportTypes.contains(am.getSubType());
 	}
 }

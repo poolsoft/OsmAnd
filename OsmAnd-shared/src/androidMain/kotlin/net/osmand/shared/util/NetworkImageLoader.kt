@@ -24,7 +24,7 @@ class NetworkImageLoader(private val context: Context, useDiskCache: Boolean = f
 
         private const val MAX_THREADS = 8
         private const val MAX_REQUESTS_PER_HOST = 4
-        private const val USER_AGENT = "Mozilla/5.0 (OsmAnd; Android)"
+        const val USER_AGENT = "Mozilla/5.0 (OsmAnd; Android)"
 
         private const val MAX_ATTEMPTS = 5
         private const val HTTP_TOO_MANY_REQUESTS = 429
@@ -54,18 +54,24 @@ class NetworkImageLoader(private val context: Context, useDiskCache: Boolean = f
         .addInterceptor { chain ->
             var attempt = 0
             var lastCode = 0
+            val call = chain.call()
             val req = chain.request()
             var lastIoError: java.io.IOException? = null
             while (attempt++ < MAX_ATTEMPTS) {
                 try {
-                    val resp = chain.proceed(req)
-                    if (resp.code != HTTP_TOO_MANY_REQUESTS) {
-                        return@addInterceptor resp
+                    if (!call.isCanceled()) {
+                        val resp = chain.proceed(req)
+                        if (resp.code != HTTP_TOO_MANY_REQUESTS) {
+                            return@addInterceptor resp
+                        }
+                        lastCode = resp.code
+                        resp.close()
                     }
-                    lastCode = resp.code
-                    resp.close()
                 } catch (e: java.io.IOException) {
                     lastIoError = e
+                }
+                if (call.isCanceled()) {
+                    throw lastIoError ?: java.io.IOException("Canceled")
                 }
                 val backoff = RETRY_SLEEP * attempt
                 Thread.sleep(Random.nextLong(backoff, backoff * 2))
@@ -184,5 +190,9 @@ class LoadingImage(val url: String, private val disposable: Disposable) {
 
     fun cancel() {
         disposable.dispose()
+    }
+
+    fun isCanceled(): Boolean {
+        return disposable.isDisposed
     }
 }

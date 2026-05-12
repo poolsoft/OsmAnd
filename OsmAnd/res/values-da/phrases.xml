@@ -114,7 +114,6 @@
     <string name="poi_traffic_calming_choker">Indsnævring</string>
     <string name="poi_traffic_signals">Lyskryds</string>
     <string name="poi_car_repair">Autoværksted</string>
-    <string name="poi_service_tyres">Dækservice</string>
     <string name="poi_vehicle_inspection">Bilsyn</string>
     <string name="poi_car_wash">Bilvask</string>
     <string name="poi_fuel">Tankstation;Benzintank;Servicestation</string>
@@ -280,7 +279,7 @@
     <string name="poi_horse_racing">Hestevæddeløb</string>
     <string name="poi_ice_skating">Skøjteløb</string>
     <string name="poi_ice_stock">Isstok</string>
-    <string name="poi_korfbal">Korfball</string>
+    <string name="poi_korfball">Korfball</string>
     <string name="poi_sport_motor">Motorsport</string>
     <string name="poi_sport_multi">Multisport</string>
     <string name="poi_orienteering">Orienteringsløb</string>
@@ -447,7 +446,7 @@
     <string name="poi_craft_stand_builder">Udstillingsbygger</string>
     <string name="poi_craft_stonemason">Stenhugger</string>
     <string name="poi_craft_sun_protection">Solafskærmning</string>
-    <string name="poi_craft_sweep">Skorstensfejer</string>
+    <string name="poi_craft_chimney_sweeper">Skorstensfejer</string>
     <string name="poi_craft_tailor">Skrædder</string>
     <string name="poi_craft_tiler">Brolægger</string>
     <string name="poi_craft_tinsmith">Pladesmed</string>
@@ -875,7 +874,7 @@
     <string name="poi_email">E-mail</string>
     <string name="poi_fax">Fax</string>
     <string name="facebook">Facebook</string>
-    <string name="poi_mobile">Mobiltelefon</string>
+    <string name="poi_mobile">Mobil</string>
     <string name="poi_animal_shelter_dog">Hunde</string>
     <string name="poi_animal_shelter_cat">Katte</string>
     <string name="poi_animal_shelter_dog_cat">Hunde, katte</string>
@@ -1640,7 +1639,7 @@
     <string name="poi_bin_yes">Med affaldskurv</string>
     <string name="poi_bin_no">Uden affaldskurv</string>
     <string name="poi_shelter_type_public_transport">Offentlig transport</string>
-    <string name="poi_shelter_type_picnic_shelter">Picnic</string>
+    <string name="poi_shelter_type_picnic_shelter">Madpakkehus</string>
     <string name="poi_shelter_type_weather_shelter">Tarp</string>
     <string name="poi_shelter_type_lean_to">Shelter</string>
     <string name="poi_shelter_type_basic_hut">Primitiv hytte</string>
@@ -1788,7 +1787,6 @@
     <string name="poi_training_art">Uddannelse: kunst</string>
     <string name="poi_training_cooking">Uddannelse: madlavning</string>
     <string name="poi_training_computer">Uddannelse: computer</string>
-    <string name="poi_training_yoga">Uddannelse: yoga</string>
     <string name="poi_training_martial_art">Uddannelse: kampsport</string>
     <string name="poi_training_aviation">Uddannelse: luftfart</string>
     <string name="poi_training_hairdressing">Uddannelse: frisør</string>
@@ -2886,7 +2884,6 @@
     <string name="poi_cuisine_yogurt">Yoghurt</string>
     <string name="poi_cuisine_gyros">Gyros</string>
     <string name="poi_cuisine_empanada">Empanada</string>
-    <string name="poi_cuisine_crepes">Crepes</string>
     <string name="poi_cuisine_yakiniku">Yakiniku</string>
     <string name="poi_cuisine_suki">Suki</string>
     <string name="poi_cuisine_udon">Udon</string>
@@ -3731,7 +3728,7 @@
     <string name="poi_community_gender_male">Fællesskabets køn: mand</string>
     <string name="poi_community_gender_mixed">Fællesskabet køn: blandet</string>
     <string name="poi_cash_withdrawal_operator">Operatør af hævning af kontanter</string>
-    <string name="poi_parking_space">Parkeringsplads</string>
+    <string name="poi_parking_space">Parkeringsbås</string>
     <string name="poi_url">URL</string>
     <string name="poi_volcano_type">Type</string>
     <string name="poi_volcano_status">Status</string>
@@ -3760,9 +3757,9 @@
     <string name="poi_video_telephone">Video</string>
     <string name="poi_sms_yes">Ja</string>
     <string name="poi_sms_no">Nej</string>
-    <string name="poi_covered_booth">Stand</string>
-    <string name="poi_booth">Stand type</string>
-    <string name="poi_video_yes">Ja</string>
+    <string name="poi_covered_booth">Ja</string>
+    <string name="poi_booth">Standtype</string>
+    <string name="poi_video_yes">Ja;Video</string>
     <string name="poi_video_no">Nej</string>
     <string name="poi_internet_access_fee_customers">Internetadgang: kunder</string>
     <string name="poi_traffic_signals_sound_locate">Kun når det er tilladt at gå</string>
@@ -3836,7 +3833,7 @@
     <string name="poi_liaison_filter">Forbindelsesofficerer</string>
     <string name="poi_consulate_filter">Konsulat</string>
     <string name="poi_embassy_filter">Ambassade</string>
-    <string name="poi_parking_layby">Langs gaden</string>
+    <string name="poi_parking_layby">Holdebane</string>
     <string name="poi_parking_sheds">Overdækket parkering</string>
     <string name="poi_fuel_lng">LNG</string>
     <string name="poi_siren">Sirene</string>
@@ -4217,7 +4214,6 @@
     <string name="poi_hindu_temple">Hindutempel</string>
     <string name="poi_consulate">Konsulat</string>
     <string name="poi_hazard_landslide">Jordskred</string>
-    <string name="poi_hazard_additional_yes">Fare</string>
     <string name="poi_hazard_falling_rocks">Faldende sten</string>
     <string name="poi_hazard_contamination">Forurening</string>
     <string name="poi_hazard_yes">Fare</string>
@@ -4303,4 +4299,12 @@
     <string name="poi_museum_transport">Transport</string>
     <string name="poi_museum_railway">Jernbane</string>
     <string name="poi_museum_aerospace">Luftfart</string>
+    <string name="poi_denomination_ukrainian_orthodox">Ukrainsk ortodoks</string>
+    <string name="poi_denomination_evangelical_lutheran">Evangelisk-luthersk</string>
+    <string name="poi_denomination_anabaptist">Anabaptist</string>
+    <string name="poi_memorial_type">Mindesmærketype</string>
+    <string name="poi_covered_booth_filter">Stand</string>
+    <string name="poi_route_activity_type_canoe">Kano</string>
+    <string name="poi_us_maps_recreation_area_facility_group_shelter">Gruppehjem</string>
+    <string name="poi_trolley_bay">Bås til indkøbsvogne</string>
 </resources>

@@ -185,7 +185,6 @@
     <string name="poi_traffic_calming_choker">Gerdanlık</string>
     <string name="poi_traffic_signals">Dur ışığı</string>
     <string name="poi_car_repair">Araba onarımı</string>
-    <string name="poi_service_tyres">Lastikler</string>
     <string name="poi_vehicle_inspection">Araç muayene</string>
     <string name="poi_car_wash">Oto yıkama</string>
     <string name="poi_fuel">Gaz istasyonu;Benzin istasyonu;Dolum istasyonu;Petrol istasyonu</string>
@@ -510,7 +509,7 @@
     <string name="poi_horse_racing">At yarışı</string>
     <string name="poi_ice_skating">Buz pateni</string>
     <string name="poi_ice_stock">Buz stoku</string>
-    <string name="poi_korfbal">Korfbol</string>
+    <string name="poi_korfball">Korfbol</string>
     <string name="poi_sport_motor">Motor sporları</string>
     <string name="poi_orienteering">Oryantiring</string>
     <string name="poi_paddle_tennis">Raket Tenisi</string>
@@ -783,7 +782,7 @@
     <string name="poi_craft_stand_builder">Stand oluşturucu</string>
     <string name="poi_craft_stonemason">Taş ustası</string>
     <string name="poi_craft_sun_protection">Güneş koruma sanatı</string>
-    <string name="poi_craft_sweep">Süpürme</string>
+    <string name="poi_craft_chimney_sweeper">Süpürme</string>
     <string name="poi_craft_tailor">Terzi</string>
     <string name="poi_craft_tiler">Kiremitçi</string>
     <string name="poi_craft_tinsmith">Tenekeci</string>
@@ -2037,7 +2036,6 @@
     <string name="poi_training_art">Eğitim: sanat</string>
     <string name="poi_training_cooking">Eğitim: aşçılık</string>
     <string name="poi_training_computer">Eğitim: bilgisayar</string>
-    <string name="poi_training_yoga">Eğitim: yoga</string>
     <string name="poi_training_martial_art">Eğitim: savaş sanatı</string>
     <string name="poi_training_aviation">Eğitim: havacılık</string>
     <string name="poi_training_hairdressing">Eğitim: kuaförlük</string>
@@ -2877,7 +2875,6 @@
     <string name="poi_cuisine_tex_mex">Tex-mex</string>
     <string name="poi_cuisine_baguette">Baget</string>
     <string name="poi_cuisine_waffle">Waffle</string>
-    <string name="poi_cuisine_crepes">Krep</string>
     <string name="poi_cuisine_falafel">Falafel</string>
     <string name="poi_cuisine_tacos">Tako</string>
     <string name="poi_cuisine_canteen">Kantin</string>

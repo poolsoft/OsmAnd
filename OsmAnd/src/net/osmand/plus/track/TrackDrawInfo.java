@@ -19,6 +19,8 @@ import static net.osmand.shared.gpx.GpxParameter.TRACK_3D_LINE_POSITION_TYPE;
 import static net.osmand.shared.gpx.GpxParameter.TRACK_3D_WALL_COLORING_TYPE;
 import static net.osmand.shared.gpx.GpxParameter.TRACK_VISUALIZATION_TYPE;
 import static net.osmand.shared.gpx.GpxParameter.WIDTH;
+
+import net.osmand.shared.palette.domain.PaletteConstants;
 import net.osmand.shared.routing.Gpx3DWallColorType;
 
 import android.os.Bundle;
@@ -30,8 +32,6 @@ import androidx.annotation.Nullable;
 
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.card.color.ColoringStyle;
-import net.osmand.plus.card.color.palette.gradient.PaletteGradientColor;
-import net.osmand.plus.card.color.palette.gradient.PaletteGradientColor;
 import net.osmand.shared.routing.ColoringType;
 import net.osmand.plus.settings.backend.ApplicationMode;
 import net.osmand.plus.settings.backend.OsmandSettings;
@@ -92,7 +92,7 @@ public class TrackDrawInfo {
 	private Gpx3DLinePositionType trackLinePositionType = Gpx3DLinePositionType.TOP;
 	private float additionalExaggeration = 1f;
 	private float elevationMeters = 1000f;
-	private String gradientColorName = PaletteGradientColor.DEFAULT_NAME;
+	private String gradientColorName = PaletteConstants.DEFAULT_NAME;
 
 	@TrackAppearanceType
 	private final int appearanceType;
@@ -112,12 +112,12 @@ public class TrackDrawInfo {
 		appearanceType = bundle.getInt(TRACK_APPEARANCE_TYPE);
 	}
 
-	public TrackDrawInfo(@NonNull OsmandApplication app, @NonNull String filePath, @Nullable GpxDataItem gpxDataItem) {
+	public TrackDrawInfo(@NonNull OsmandApplication app, @NonNull GpxFile gpxFile, @Nullable GpxDataItem gpxDataItem) {
 		this.appearanceType = GPX_FILE;
 		if (gpxDataItem != null) {
-			updateParams(app, gpxDataItem);
+			updateParams(app, gpxFile, gpxDataItem);
 		}
-		this.filePath = filePath;
+		this.filePath = gpxFile.getPath();
 	}
 
 	private void initCurrentTrackParams(@NonNull OsmandApplication app) {
@@ -143,7 +143,7 @@ public class TrackDrawInfo {
 		routeInfoAttribute = ColoringType.Companion.getRouteInfoAttribute(null);
 	}
 
-	public void updateParams(@NonNull OsmandApplication app, @NonNull GpxDataItem item) {
+	public void updateParams(@NonNull OsmandApplication app, @NonNull GpxFile gpxFile, @NonNull GpxDataItem item) {
 		GpxAppearanceHelper helper = new GpxAppearanceHelper(app);
 
 		width = helper.getParameter(item, WIDTH);
@@ -155,7 +155,7 @@ public class TrackDrawInfo {
 		splitInterval = helper.requireParameter(item, SPLIT_INTERVAL);
 		joinSegments = helper.requireParameter(item, JOIN_SEGMENTS);
 		showArrows = helper.requireParameter(item, SHOW_ARROWS);
-		showStartFinish = helper.requireParameter(item, SHOW_START_FINISH);
+		showStartFinish = helper.isShowStartFinishForTrack(gpxFile, item, null);
 		trackVisualizationType = Gpx3DVisualizationType.get3DVisualizationType(helper.getParameter(item, TRACK_VISUALIZATION_TYPE));
 		trackWallColorType = Gpx3DWallColorType.Companion.get3DWallColorType(helper.getParameter(item, TRACK_3D_WALL_COLORING_TYPE));
 		trackLinePositionType = Gpx3DLinePositionType.get3DLinePositionType(helper.getParameter(item, TRACK_3D_LINE_POSITION_TYPE));
@@ -356,8 +356,7 @@ public class TrackDrawInfo {
 			showArrows = false;
 			showStartFinish = true;
 			coloringType = ColoringType.Companion.requireValueOf(TRACK, null);
-			gradientColorName = PaletteGradientColor.DEFAULT_NAME;
-			gradientColorName = PaletteGradientColor.DEFAULT_NAME;
+			gradientColorName = PaletteConstants.DEFAULT_NAME;
 			routeInfoAttribute = ColoringType.Companion.getRouteInfoAttribute(null);
 			trackVisualizationType = Gpx3DVisualizationType.NONE;
 			trackWallColorType = Gpx3DWallColorType.NONE;
@@ -370,7 +369,8 @@ public class TrackDrawInfo {
 			splitInterval = gpxFile.getSplitInterval();
 			splitType = GpxSplitType.getSplitTypeByName(gpxFile.getSplitType()).getType();
 			coloringType = ColoringType.Companion.requireValueOf(TRACK, gpxFile.getColoringType());
-			gradientColorName = !Algorithms.isEmpty(gpxFile.getGradientColorPalette()) ? gpxFile.getGradientColorPalette() : PaletteGradientColor.DEFAULT_NAME ;
+			String savedGradientColorName = gpxFile.getGradientColorPalette();
+			gradientColorName = !Algorithms.isEmpty(savedGradientColorName) ? savedGradientColorName : PaletteConstants.DEFAULT_NAME ;
 			routeInfoAttribute = ColoringType.Companion.getRouteInfoAttribute(gpxFile.getColoringType());
 			trackVisualizationType = Gpx3DVisualizationType.get3DVisualizationType(gpxFile.get3DVisualizationType());
 			trackWallColorType = Gpx3DWallColorType.Companion.get3DWallColorType(gpxFile.get3DWallColoringType());

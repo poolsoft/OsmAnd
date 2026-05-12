@@ -186,6 +186,10 @@ public class MapContextMenuFragment extends BaseFullScreenFragment implements Do
 		mainViewBoundsChangeListener = new BoundsChangeListener(displayPositionManager, false);
 		portrait = AndroidUiHelper.isOrientationPortrait(mapActivity);
 
+		if (isForceCenterRequired()) {
+			this.centered = true;
+		}
+
 		DialogManager dialogManager = mapActivity.getApp().getDialogManager();
 		GalleryController controller = (GalleryController) dialogManager.findController(GalleryController.PROCESS_ID);
 		if (controller == null) {
@@ -970,7 +974,7 @@ public class MapContextMenuFragment extends BaseFullScreenFragment implements Do
 		}
 
 		applyPosY(currentY, needCloseMenu, needMapAdjust, currentMenuState, newMenuState, 0);
-		updateNavBarColor();
+		updateNavigationBarColor();
 	}
 
 	private void restoreCustomMapRatio() {
@@ -1439,7 +1443,7 @@ public class MapContextMenuFragment extends BaseFullScreenFragment implements Do
 			bottomLayout.removeAllViews();
 			buildBottomView();
 
-			if (centered) {
+			if (centered || isForceCenterRequired()) {
 				this.initLayout = true;
 				this.centered = true;
 			}
@@ -1449,6 +1453,11 @@ public class MapContextMenuFragment extends BaseFullScreenFragment implements Do
 			updateButtonsAndProgress();
 			runLayoutListener();
 		}
+	}
+
+	private boolean isForceCenterRequired() {
+		MapActivity mapActivity = getMapActivity();
+		return mapActivity != null && mapActivity.getMapLayers().getMeasurementToolLayer().isInMeasurementMode();
 	}
 
 	private void createTransportBadges() {
@@ -1763,12 +1772,20 @@ public class MapContextMenuFragment extends BaseFullScreenFragment implements Do
 		return zoom;
 	}
 
+	private float getMapRatioY() {
+		if (menu.isLandscapeLayout()) {
+			return displayPositionManager.getNavigationMapPosition() == MapPosition.BOTTOM ? 0.15f : 0.5f;
+		}
+		float ratioY = displayPositionManager.getMapRatio().y;
+		return 1f - ratioY;
+	}
+
 	private LatLon calculateCenterLatLon(LatLon latLon, int zoom, boolean updateOrigXY) {
 		double flat = latLon.getLatitude();
 		double flon = latLon.getLongitude();
 
 		RotatedTileBox cp = map.getRotatedTileBox();
-		cp.setCenterLocation(0.5f, displayPositionManager.getNavigationMapPosition() == MapPosition.BOTTOM ? 0.15f : 0.5f);
+		cp.setCenterLocation(0.5f, getMapRatioY());
 		cp.setLatLonCenter(flat, flon);
 		cp.setZoom(zoom);
 		flat = cp.getLatFromPixel(cp.getPixWidth() / 2f, cp.getPixHeight() / 2f);
@@ -1926,31 +1943,33 @@ public class MapContextMenuFragment extends BaseFullScreenFragment implements Do
 	}
 
 	private void updateAdditionalInfoVisibility() {
-		View line3 = view.findViewById(R.id.context_menu_line3);
-		View additionalInfoImageView = view.findViewById(R.id.additional_info_image_view);
-		View additionalInfoTextView = view.findViewById(R.id.additional_info_text_view);
-		View compassView = view.findViewById(R.id.compass_layout);
-		View altitudeView = view.findViewById(R.id.altitude_layout);
-		View titleButtonContainer = view.findViewById(R.id.title_button_container);
-		View downloadButtonsContainer = view.findViewById(R.id.download_buttons_container);
-		View titleBottomButtonContainer = view.findViewById(R.id.title_bottom_button_container);
-		View titleProgressContainer = view.findViewById(R.id.title_progress_container);
+		if (view != null) {
+			View line3 = view.findViewById(R.id.context_menu_line3);
+			View additionalInfoImageView = view.findViewById(R.id.additional_info_image_view);
+			View additionalInfoTextView = view.findViewById(R.id.additional_info_text_view);
+			View compassView = view.findViewById(R.id.compass_layout);
+			View altitudeView = view.findViewById(R.id.altitude_layout);
+			View titleButtonContainer = view.findViewById(R.id.title_button_container);
+			View downloadButtonsContainer = view.findViewById(R.id.download_buttons_container);
+			View titleBottomButtonContainer = view.findViewById(R.id.title_bottom_button_container);
+			View titleProgressContainer = view.findViewById(R.id.title_progress_container);
 
-		if (line3.getVisibility() == View.GONE
-				&& additionalInfoImageView.getVisibility() == View.GONE
-				&& additionalInfoTextView.getVisibility() == View.GONE
-				&& compassView.getVisibility() == View.INVISIBLE
-				&& altitudeView.getVisibility() == View.GONE
-				&& titleButtonContainer.getVisibility() == View.GONE
-				&& downloadButtonsContainer.getVisibility() == View.GONE
-				&& titleBottomButtonContainer.getVisibility() == View.GONE) {
-			if (titleProgressContainer.getVisibility() == View.VISIBLE) {
-				view.findViewById(R.id.additional_info_row_container).setVisibility(View.GONE);
+			if (line3.getVisibility() == View.GONE
+					&& additionalInfoImageView.getVisibility() == View.GONE
+					&& additionalInfoTextView.getVisibility() == View.GONE
+					&& compassView.getVisibility() == View.INVISIBLE
+					&& altitudeView.getVisibility() == View.GONE
+					&& titleButtonContainer.getVisibility() == View.GONE
+					&& downloadButtonsContainer.getVisibility() == View.GONE
+					&& titleBottomButtonContainer.getVisibility() == View.GONE) {
+				if (titleProgressContainer.getVisibility() == View.VISIBLE) {
+					view.findViewById(R.id.additional_info_row_container).setVisibility(View.GONE);
+				}
+				view.findViewById(R.id.additional_info_row).setVisibility(View.GONE);
+			} else {
+				view.findViewById(R.id.additional_info_row_container).setVisibility(View.VISIBLE);
+				view.findViewById(R.id.additional_info_row).setVisibility(View.VISIBLE);
 			}
-			view.findViewById(R.id.additional_info_row).setVisibility(View.GONE);
-		} else {
-			view.findViewById(R.id.additional_info_row_container).setVisibility(View.VISIBLE);
-			view.findViewById(R.id.additional_info_row).setVisibility(View.VISIBLE);
 		}
 	}
 
@@ -2127,10 +2146,19 @@ public class MapContextMenuFragment extends BaseFullScreenFragment implements Do
 	}
 
 	private LatLon getAdjustedMarkerLocation(int y, LatLon reqMarkerLocation, boolean center, int zoom) {
+		// Skip manual padding calculations if the map focus is already shifted from the physical center.
+		// This prevents a double-shift and ensures the marker aligns perfectly with the visual center.
+		if (center) {
+			PointF ratio = displayPositionManager.getMapRatio();
+			if (Math.abs(ratio.x - 0.5f) > 0.01f || Math.abs(ratio.y - 0.5f) > 0.01f) {
+				return reqMarkerLocation;
+			}
+		}
+
 		double markerLat = reqMarkerLocation.getLatitude();
 		double markerLon = reqMarkerLocation.getLongitude();
 		RotatedTileBox box = map.getRotatedTileBox();
-		box.setCenterLocation(0.5f, displayPositionManager.getNavigationMapPosition() == MapPosition.BOTTOM ? 0.15f : 0.5f);
+		box.setCenterLocation(0.5f, getMapRatioY());
 		box.setZoom(zoom);
 		boolean hasMapCenter = mapCenter != null;
 		int markerMapCenterX = 0;

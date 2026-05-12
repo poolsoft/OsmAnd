@@ -3,6 +3,7 @@
     <item name="index_item" type="id"/>
 
     <item name="item_as_tag" type="id"/>
+    <item name="view_holder_as_tag" type="id"/>
 
     <!-- Bearing widget ids-->
     <item name="bearing_widget_state_relative_bearing" type="id"/>
@@ -33,4 +34,6 @@
     <item name="initial_padding_top" type="id"/>
     <item name="initial_padding_right" type="id"/>
     <item name="initial_padding_bottom" type="id"/>
+    <item name="widget_panel_view_pager_left" type="id" />
+    <item name="widget_panel_view_pager_right" type="id" />
 </resources>

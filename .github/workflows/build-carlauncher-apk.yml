@@ -1,5 +1,4 @@
-name: Build CarLauncher.apk(Branch)
-
+name: Build CarLauncher.apk
 on:
   workflow_dispatch:
 

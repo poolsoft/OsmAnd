@@ -13,9 +13,10 @@ import androidx.annotation.StringRes;
 
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.settings.backend.ApplicationMode;
-import net.osmand.plus.settings.backend.OsmandSettings;
 import net.osmand.plus.settings.backend.WidgetsAvailabilityHelper;
+import net.osmand.plus.settings.backend.preferences.CommonPreference;
 import net.osmand.plus.settings.backend.preferences.OsmandPreference;
+import net.osmand.plus.settings.enums.ScreenLayoutMode;
 import net.osmand.plus.views.mapwidgets.widgets.MapWidget;
 import net.osmand.plus.views.mapwidgets.widgets.TextInfoWidget;
 import net.osmand.plus.views.mapwidgets.widgetstates.WidgetState;
@@ -23,6 +24,7 @@ import net.osmand.util.Algorithms;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class MapWidgetInfo implements Comparable<MapWidgetInfo> {
@@ -46,6 +48,10 @@ public abstract class MapWidgetInfo implements Comparable<MapWidgetInfo> {
 	private final String message;
 	private final WidgetState widgetState;
 
+	// Cached to prevent memory allocation during rendering loops
+	private final String hiddenKey;
+	private final String collapsedKey;
+
 	public MapWidgetInfo(@NonNull String key,
 						 @NonNull MapWidget widget,
 						 @DrawableRes int daySettingsIconId,
@@ -65,6 +71,8 @@ public abstract class MapWidgetInfo implements Comparable<MapWidgetInfo> {
 		this.pageIndex = page;
 		this.priority = order;
 		this.widgetPanel = widgetPanel;
+		this.hiddenKey = HIDE_PREFIX + key;
+		this.collapsedKey = COLLAPSED_PREFIX + key;
 	}
 
 	public void setWidgetPanel(@NonNull WidgetsPanel widgetPanel) {
@@ -155,55 +163,55 @@ public abstract class MapWidgetInfo implements Comparable<MapWidgetInfo> {
 	}
 
 	@NonNull
-	public abstract WidgetsPanel getUpdatedPanel();
+	public abstract WidgetsPanel getUpdatedPanel(ScreenLayoutMode layoutMode);
 
-	public boolean isEnabledForAppMode(@NonNull ApplicationMode appMode) {
-		List<String> widgetsVisibility = getWidgetsVisibility(appMode);
-		if (widgetsVisibility.contains(key) || widgetsVisibility.contains(COLLAPSED_PREFIX + key)) {
+	public boolean isEnabledForAppMode(@NonNull ApplicationMode appMode, @Nullable ScreenLayoutMode layoutMode) {
+		return isEnabledForAppMode(appMode, getWidgetsVisibility(getApp(), appMode, layoutMode));
+	}
+
+	public boolean isEnabledForAppMode(@NonNull ApplicationMode appMode, @NonNull List<String> widgetsVisibility) {
+		if (widgetsVisibility.contains(key) || widgetsVisibility.contains(collapsedKey)) {
 			return true;
-		} else if (widgetsVisibility.contains(HIDE_PREFIX + key)) {
+		} else if (widgetsVisibility.contains(hiddenKey)) {
 			return false;
 		}
 		return WidgetsAvailabilityHelper.isWidgetVisibleByDefault(getApp(), key, appMode);
 	}
 
-	public void enableDisableForMode(@NonNull ApplicationMode appMode, @Nullable Boolean enabled) {
-		List<String> widgetsVisibility = getWidgetsVisibility(appMode);
+	public void enableDisableForMode(@NonNull ApplicationMode appMode, @Nullable Boolean enabled, @Nullable ScreenLayoutMode layoutMode) {
+		OsmandApplication app = getApp();
+		List<String> widgetsVisibility = new ArrayList<>(getWidgetsVisibility(app, appMode, layoutMode));
 		widgetsVisibility.remove(key);
-		widgetsVisibility.remove(COLLAPSED_PREFIX + key);
-		widgetsVisibility.remove(HIDE_PREFIX + key);
+		widgetsVisibility.remove(hiddenKey);
+		widgetsVisibility.remove(collapsedKey);
 
 		if (enabled != null && (!isCustomWidget() || enabled)) {
-			widgetsVisibility.add(enabled ? key : HIDE_PREFIX + key);
+			widgetsVisibility.add(enabled ? key : hiddenKey);
 		}
-
 		StringBuilder newVisibilityString = new StringBuilder();
 		for (String visibility : widgetsVisibility) {
 			newVisibilityString.append(visibility).append(SETTINGS_SEPARATOR);
 		}
+		getVisibilityPreference(app, layoutMode).setModeValue(appMode, newVisibilityString.toString());
 
-		getVisibilityPreference().setModeValue(appMode, newVisibilityString.toString());
-
-		OsmandPreference<?> settingsPref = widget.getWidgetSettingsPrefToReset(appMode);
+		CommonPreference<?> settingsPref = widget.getWidgetSettingsPrefToReset(appMode, layoutMode);
 		if ((enabled == null || !enabled) && settingsPref != null) {
 			settingsPref.resetModeToDefault(appMode);
 		}
 	}
 
 	@NonNull
-	private List<String> getWidgetsVisibility(@NonNull ApplicationMode appMode) {
-		String widgetsVisibilityString = getVisibilityPreference().getModeValue(appMode);
-		return new ArrayList<>(Arrays.asList(widgetsVisibilityString.split(SETTINGS_SEPARATOR)));
+	public static List<String> getWidgetsVisibility(@NonNull OsmandApplication app, @NonNull ApplicationMode appMode, @Nullable ScreenLayoutMode layoutMode) {
+		String widgetsVisibilityString = getVisibilityPreference(app, layoutMode).getModeValue(appMode);
+		if (Algorithms.isEmpty(widgetsVisibilityString)) {
+			return Collections.emptyList();
+		}
+		return Arrays.asList(widgetsVisibilityString.split(SETTINGS_SEPARATOR));
 	}
 
 	@NonNull
-	private OsmandPreference<String> getVisibilityPreference() {
-		return getSettings().MAP_INFO_CONTROLS;
-	}
-
-	@NonNull
-	private OsmandSettings getSettings() {
-		return getApp().getSettings();
+	private static OsmandPreference<String> getVisibilityPreference(@NonNull OsmandApplication app, @Nullable ScreenLayoutMode layoutMode) {
+		return app.getSettings().getMapInfoControls(layoutMode);
 	}
 
 	@NonNull

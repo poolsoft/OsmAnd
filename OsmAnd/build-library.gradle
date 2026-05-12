@@ -4,6 +4,7 @@ apply from: 'build-common.gradle'
 apply from: rootProject.file("versions.gradle")
 
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-parcelize'
 
 android {
 
@@ -54,29 +55,23 @@ android {
 			osmandTask.dependsOn(copyBundledAssets)
 			osmandTask.dependsOn(copy3DModels)
 			osmandTask.dependsOn(collectVoiceAssets)
-			osmandTask.dependsOn(collectAstroAssets)
+			osmandTask.dependsOn(downloadStarsDb)
 			osmandTask.dependsOn(downloadWorldMiniBasemap)
 		}
 		def mapSourceSetPathsName= "map${taskName}SourceSetPaths"
 		tasks.named(mapSourceSetPathsName).configure { osmandTask ->
 			println(osmandTask.getName())
-			osmandTask.dependsOn(copyMapShaderIcons)
-			osmandTask.dependsOn(copyMapPOIIcons)
-			osmandTask.dependsOn(copyLargePOIIcons)
+			osmandTask.dependsOn(copyIcons)
 		}
 		def packageResources= "package${taskName}Resources"
 		tasks.named(packageResources).configure { osmandTask ->
 			println(osmandTask.getName())
-			osmandTask.dependsOn(copyMapShaderIcons)
-			osmandTask.dependsOn(copyMapPOIIcons)
-			osmandTask.dependsOn(copyLargePOIIcons)
+			osmandTask.dependsOn(copyIcons)
 		}
 		def generateResources= "generate${taskName}Resources"
 		tasks.named(generateResources).configure { osmandTask ->
 			println(osmandTask.getName() + " generate resources")
-			osmandTask.dependsOn(copyMapShaderIcons)
-			osmandTask.dependsOn(copyMapPOIIcons)
-			osmandTask.dependsOn(copyLargePOIIcons)
+			osmandTask.dependsOn(copyIcons)
 		}
 	}
 }

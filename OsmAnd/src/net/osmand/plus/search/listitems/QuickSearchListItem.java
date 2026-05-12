@@ -4,7 +4,6 @@ import static net.osmand.osm.MapPoiTypes.OSM_WIKI_CATEGORY;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.text.Spannable;
 import android.util.Pair;
 
 import androidx.annotation.DrawableRes;
@@ -32,25 +31,43 @@ import net.osmand.plus.render.RenderingIcons;
 import net.osmand.plus.settings.enums.ThemeUsageContext;
 import net.osmand.plus.track.clickable.ClickableWayHelper;
 import net.osmand.plus.utils.OsmAndFormatter;
+import net.osmand.plus.utils.UiUtilities;
 import net.osmand.plus.views.PointImageUtils;
 import net.osmand.search.core.CustomSearchPoiFilter;
+import net.osmand.search.core.ObjectType;
 import net.osmand.search.core.SearchResult;
 import net.osmand.search.core.SearchSettings;
 import net.osmand.shared.gpx.GpxFile;
 import net.osmand.shared.gpx.primitives.WptPt;
 import net.osmand.util.Algorithms;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 
 public class QuickSearchListItem {
 
+	private static final String STREET_INTERSECTION_DIVIDER = " + ";
 	protected final OsmandApplication app;
 	private final SearchResult searchResult;
 
 	public QuickSearchListItem(OsmandApplication app, SearchResult searchResult) {
 		this.app = app;
 		this.searchResult = searchResult;
+	}
+
+	enum AlternativeNameTags {
+		LOC_NAME_TAG("loc_name"),
+		ALT_NAME_TAG("alt_name"),
+		OLD_NAME_TAG("old_name");
+
+		AlternativeNameTags(String tagName) {
+			this.tagName = tagName;
+		}
+
+		final String tagName;
 	}
 
 	public QuickSearchListItemType getType() {
@@ -96,8 +113,18 @@ public class QuickSearchListItem {
 		return getName(app, searchResult);
 	}
 
-	public Spannable getSpannableName() {
-		return null;
+	public CharSequence getSpannableName() {
+		if (searchResult != null && searchResult.objectType != null) {
+			if (Objects.requireNonNull(searchResult.objectType) == ObjectType.STREET_INTERSECTION) {
+				String name = getName(app, searchResult);
+				boolean nightMode = app.getDaynightHelper().isNightMode(app.getSettings().getApplicationMode(), ThemeUsageContext.APP);
+				int colorId = nightMode ? R.color.text_color_secondary_dark : R.color.text_color_secondary_light;
+				return UiUtilities.createColorSpannable(name, app.getColor(colorId), false, STREET_INTERSECTION_DIVIDER);
+			}
+			return getName(app, searchResult);
+		} else {
+			return getName();
+		}
 	}
 
 	public static String getName(OsmandApplication app, SearchResult searchResult) {
@@ -112,7 +139,7 @@ public class QuickSearchListItem {
 				break;
 			case STREET_INTERSECTION:
 				if (!Algorithms.isEmpty(searchResult.localeRelatedObjectName)) {
-					return searchResult.localeName + " - " + searchResult.localeRelatedObjectName;
+					return searchResult.localeName + STREET_INTERSECTION_DIVIDER + searchResult.localeRelatedObjectName;
 				}
 				break;
 			case RECENT_OBJ:
@@ -143,7 +170,7 @@ public class QuickSearchListItem {
 	}
 
 	public static String getExtendedTypeName(@NonNull OsmandApplication app,
-			@NonNull SearchResult searchResult) {
+	                                         @NonNull SearchResult searchResult) {
 		String typeName = getTypeName(app, searchResult);
 		String alternateName = searchResult.alternateName;
 		if (searchResult.object instanceof Amenity amenity) {
@@ -169,6 +196,36 @@ public class QuickSearchListItem {
 		} else {
 			return app.getString(R.string.ltr_or_rtl_combine_via_bold_point, typeName, alternateName);
 		}
+	}
+
+	@NonNull
+	protected String getPoiTypeTranslation(@NonNull OsmandApplication app, @NonNull Amenity amenity) {
+		String itemType = getPoiTypeKey(amenity);
+		PoiType subType = app.getPoiTypes().getPoiTypeByKey(itemType);
+		return subType != null ? subType.getTranslation() : "";
+	}
+
+	@NonNull
+	protected String getPoiTypeKey(@NonNull Amenity amenity) {
+		String itemType = amenity.getOsmandPoiKey();
+		if (itemType == null) {
+			itemType = amenity.getSubType();
+		}
+		return itemType;
+	}
+
+	@Nullable
+	public static String getDistanceToCity(@NonNull OsmandApplication app, @Nullable SearchResult searchResult) {
+		if (searchResult != null && searchResult.objectType == ObjectType.VILLAGE) {
+			if (!Algorithms.isEmpty(searchResult.localeRelatedObjectName)) {
+				if (searchResult.distRelatedObjectName > 0) {
+					return OsmAndFormatter.getFormattedDistance((float) searchResult.distRelatedObjectName, app)
+							+ " " + app.getString(R.string.shared_string_from) + " "
+							+ searchResult.localeRelatedObjectName;
+				}
+			}
+		}
+		return null;
 	}
 
 	public static String getTypeName(OsmandApplication app, SearchResult searchResult) {
@@ -197,11 +254,9 @@ public class QuickSearchListItem {
 				}
 			case STREET:
 				StringBuilder streetBuilder = new StringBuilder();
-				if (searchResult.localeName.endsWith(")")) {
-					int i = searchResult.localeName.indexOf('(');
-					if (i > 0) {
-						streetBuilder.append(searchResult.localeName.substring(i + 1, searchResult.localeName.length() - 1));
-					}
+				String cityPart = getStreetCityPart(searchResult);
+				if (cityPart != null) {
+					streetBuilder.append(cityPart);
 				}
 				if (!Algorithms.isEmpty(searchResult.localeRelatedObjectName)) {
 					if (streetBuilder.length() > 0) {
@@ -254,7 +309,13 @@ public class QuickSearchListItem {
 					String locationCountry = app.getRegions().getCountryName(latLon);
 					searchResult.localeRelatedObjectName = locationCountry == null ? "" : locationCountry;
 				}
-				return searchResult.localeRelatedObjectName;
+				if (searchResult.hasImpreciseCoordinates()) {
+					String imprecise = app.getString(R.string.imprecise_coordinates);
+					return app.getString(R.string.ltr_or_rtl_combine_via_bold_point,
+							searchResult.localeRelatedObjectName, imprecise);
+				} else {
+					return searchResult.localeRelatedObjectName;
+				}
 			case FAVORITE:
 				FavouritePoint fav = (FavouritePoint) searchResult.object;
 				return fav.getCategory().length() == 0 ?
@@ -330,6 +391,17 @@ public class QuickSearchListItem {
 		return getIcon(app, searchResult);
 	}
 
+	@Nullable
+	public static String getStreetCityPart(SearchResult searchResult) {
+		if (searchResult.localeName.endsWith(")")) {
+			int i = searchResult.localeName.indexOf('(');
+			if (i > 0) {
+				return searchResult.localeName.substring(i + 1, searchResult.localeName.length() - 1);
+			}
+		}
+		return null;
+	}
+
 	public static String getAmenityIconName(@NonNull Context ctx, @NonNull Amenity amenity) {
 		return RenderingIcons.getIconNameForAmenity(ctx, amenity);
 	}
@@ -341,22 +413,25 @@ public class QuickSearchListItem {
 		}
 
 		int iconId = -1;
+		boolean nightMode = app.getDaynightHelper().isNightMode(ThemeUsageContext.APP);
+		int defIconColor = nightMode ? R.color.icon_color_default_dark : R.color.icon_color_default_light;
 		switch (searchResult.objectType) {
 			case CITY:
 				boolean town = (searchResult.object instanceof City)
 						&& (((City) searchResult.object).getType() == CityType.TOWN);
 				return town
-						? getIcon(app, R.drawable.mx_place_town)
-						: getIcon(app, R.drawable.ic_action_building2);
+						? getIcon(app, R.drawable.mx_place_town, defIconColor)
+						: getIcon(app, R.drawable.ic_action_building2, defIconColor);
 			case VILLAGE:
-				return getIcon(app, R.drawable.mx_village);
+				return getIcon(app, R.drawable.mx_village, defIconColor);
 			case POSTCODE:
+				return getIcon(app, R.drawable.ic_action_postcode, defIconColor);
 			case STREET:
-				return getIcon(app, R.drawable.ic_action_street_name);
+				return getIcon(app, R.drawable.ic_action_street_name, defIconColor);
 			case HOUSE:
-				return getIcon(app, R.drawable.ic_action_building);
+				return getIcon(app, R.drawable.ic_action_building, defIconColor);
 			case STREET_INTERSECTION:
-				return getIcon(app, R.drawable.ic_action_intersection);
+				return getIcon(app, R.drawable.ic_action_intersection, defIconColor);
 			case POI_TYPE:
 				if (searchResult.object instanceof AbstractPoiType) {
 					String iconName = PoiFilterUtils.getPoiTypeIconName((AbstractPoiType) searchResult.object);
@@ -381,23 +456,7 @@ public class QuickSearchListItem {
 				}
 			case POI:
 				Amenity amenity = (Amenity) searchResult.object;
-				Drawable shieldIcon = getRouteShieldDrawable(app, amenity);
-				if (shieldIcon != null) {
-					return shieldIcon;
-				}
-				String id = getAmenityIconName(app, amenity);
-				Drawable icon = null;
-				if (id != null) {
-					iconId = RenderingIcons.getBigIconResourceId(id);
-					if (iconId > 0) {
-						icon = getIcon(app, iconId);
-					}
-				}
-				if (icon == null) {
-					return getIcon(app, R.drawable.ic_action_search_dark);
-				} else {
-					return icon;
-				}
+				return getAmenityTypeIcon(app, amenity, defIconColor);
 			case GPX_TRACK:
 				return getIcon(app, R.drawable.ic_action_polygom_dark);
 			case LOCATION:
@@ -438,6 +497,35 @@ public class QuickSearchListItem {
 		return null;
 	}
 
+	public static Drawable getAmenityTypeIcon(OsmandApplication app, Amenity amenity, int iconColor) {
+		return getAmenityTypeIcon(app, amenity, iconColor, false);
+	}
+
+	public static Drawable getAmenityTypeIcon(OsmandApplication app, Amenity amenity, int iconColor, boolean useCustomColor) {
+		int iconId;
+		Drawable shieldIcon = getRouteShieldDrawable(app, amenity);
+		if (shieldIcon != null) {
+			return shieldIcon;
+		}
+		String id = getAmenityIconName(app, amenity);
+		Drawable icon = null;
+		if (id != null) {
+			iconId = RenderingIcons.getBigIconResourceId(id);
+			if (iconId > 0) {
+				if (amenity.getType().isAdministrative() || useCustomColor) {
+					icon = getIcon(app, iconId, iconColor);
+				} else {
+					icon = getIcon(app, iconId);
+				}
+			}
+		}
+		if (icon == null) {
+			return getIcon(app, R.drawable.ic_action_search_dark);
+		} else {
+			return icon;
+		}
+	}
+
 	@Nullable
 	public static Drawable getRouteShieldDrawable(OsmandApplication app, Amenity amenity) {
 		boolean isClickableWay = app.getClickableWayHelper().isClickableWayAmenity(amenity);
@@ -445,6 +533,9 @@ public class QuickSearchListItem {
 			boolean nightMode = app.getDaynightHelper().isNightMode(ThemeUsageContext.APP);
 			Drawable shieldIcon = NetworkRouteDrawable
 					.getIconByAmenityShieldTags(amenity, app, nightMode, isClickableWay);
+			if (shieldIcon instanceof NetworkRouteDrawable networkRouteDrawable) {
+				networkRouteDrawable.setTextSize(16, nightMode);
+			}
 			if (shieldIcon != null) {
 				return shieldIcon;
 			}
@@ -453,7 +544,7 @@ public class QuickSearchListItem {
 	}
 
 	public static int getHistoryIconId(@NonNull OsmandApplication app,
-			@NonNull HistoryEntry entry) {
+	                                   @NonNull HistoryEntry entry) {
 		int iconId = -1;
 		PointDescription name = entry.getName();
 		if (name != null && !Algorithms.isEmpty(name.getIconName())) {
@@ -579,7 +670,11 @@ public class QuickSearchListItem {
 
 	private static Drawable getIcon(@NonNull OsmandApplication app, @DrawableRes int iconId) {
 		boolean nightMode = app.getDaynightHelper().isNightMode(ThemeUsageContext.APP);
-		return app.getUIUtilities().getIcon(iconId, !nightMode ? R.color.osmand_orange : R.color.osmand_orange_dark);
+		return getIcon(app, iconId, !nightMode ? R.color.osmand_orange : R.color.osmand_orange_dark);
+	}
+
+	private static Drawable getIcon(@NonNull OsmandApplication app, @DrawableRes int iconId, int colorId) {
+		return app.getUIUtilities().getIcon(iconId, colorId);
 	}
 
 	@DrawableRes
@@ -602,4 +697,54 @@ public class QuickSearchListItem {
 	public String toString() {
 		return getName();
 	}
+
+	@NonNull
+	public CharSequence getMapObjectTitleWithAltName(@NonNull OsmandApplication app, boolean nightMode) {
+		SearchResult searchResult = getSearchResult();
+		String mapLang = app.getSettings().MAP_PREFERRED_LOCALE.get();
+		if (Algorithms.isEmpty(mapLang) && searchResult != null) {
+			CharSequence spannableName = getSpannableName();
+			return completeWithAltNames(app, spannableName != null ? getSpannableName().toString() : "", searchResult, nightMode);
+		} else if (searchResult != null && searchResult.object instanceof MapObject mapObject) {
+			String title = mapObject.getName(mapLang);
+			String altName = Algorithms.isEmpty(searchResult.alternateName) ? mapObject.getName() : searchResult.alternateName;
+			if (Algorithms.isEmpty(title) && Algorithms.isEmpty(altName)) {
+				return getSpannableName();
+			} else if (Algorithms.isEmpty(title)) {
+				return altName;
+			} else {
+				return addPartInParentheses(app, title, altName, nightMode);
+			}
+		} else {
+			return getSpannableName();
+		}
+	}
+
+	public static CharSequence completeWithAltNames(@NonNull Context ctx, @NotNull String mainPart, @NotNull SearchResult searchResult, boolean nightMode) {
+		if (!Algorithms.isEmpty(searchResult.alternateName)) {
+			return addPartInParentheses(ctx, mainPart, searchResult.alternateName, nightMode);
+		}
+		if (searchResult.object instanceof MapObject mapObject) {
+			for (int i = 0; i < AlternativeNameTags.values().length; i++) {
+				AlternativeNameTags tag = AlternativeNameTags.values()[i];
+				if (mapObject.getNamesMap(false).containsKey(tag.tagName)) {
+					return addPartInParentheses(ctx, mainPart, mapObject.getName(tag.tagName), nightMode);
+				}
+			}
+		}
+		return mainPart;
+	}
+
+	@NonNull
+	private static CharSequence addPartInParentheses(Context ctx, @NonNull CharSequence mainPart, String partToAdd, boolean nightMode) {
+		if (Algorithms.isEmpty(partToAdd) || Algorithms.stringsEqual(mainPart.toString(), partToAdd)) {
+			return mainPart;
+		} else {
+			int textColor = nightMode ? R.color.text_color_secondary_dark : R.color.text_color_secondary_light;
+			String altName = String.format("(%s)", partToAdd);
+			mainPart = String.format("%s %s", mainPart, altName);
+			return UiUtilities.createColorSpannable(mainPart.toString(), ctx.getColor(textColor), false, altName);
+		}
+	}
+
 }

@@ -65,6 +65,7 @@ import net.osmand.plus.settings.enums.LocationSource;
 import net.osmand.plus.simulation.OsmAndLocationSimulation;
 import net.osmand.plus.track.helpers.GpxUiHelper;
 import net.osmand.plus.views.OsmandMapTileView;
+import net.osmand.router.FastRoutingState;
 import net.osmand.search.core.ObjectType;
 import net.osmand.search.core.SearchResult;
 import net.osmand.shared.gpx.GpxFile;
@@ -127,6 +128,8 @@ public class NavigationSession extends Session implements NavigationListener, Os
 	private NavigationManager navigationManager;
 	private boolean carNavigationShouldBeActive; // it could set true before init navigationManager
 	private TripHelper tripHelper;
+
+	private FastRoutingState.Status lastFastRoutingComplication = null;
 
 	NavigationSession() {
 		getLifecycle().addObserver(this);
@@ -192,13 +195,11 @@ public class NavigationSession extends Session implements NavigationListener, Os
 		routingHelper.addListener(this);
 
 		ApplicationMode appMode = settings.getApplicationMode();
-		if (!isAppModeDerivedFromCar(appMode)) {
-			for (ApplicationMode mode : ApplicationMode.values(app)) {
-				if (isAppModeDerivedFromCar(mode)) {
-					originalAppMode = appMode;
-					settings.setApplicationMode(mode, false);
-					break;
-				}
+		if (!appMode.isAppModeDerivedFromCar()) {
+			ApplicationMode carMode = ApplicationMode.getFirstCarMode(app);
+			if (carMode != null) {
+				originalAppMode = appMode;
+				settings.setApplicationMode(carMode, false);
 			}
 		}
 		if (navigationCarSurface != null) {
@@ -228,7 +229,6 @@ public class NavigationSession extends Session implements NavigationListener, Os
 	public void onStop(@NonNull LifecycleOwner owner) {
 		OsmandApplication app = getApp();
 		routingHelper.removeListener(this);
-		settings.setLastKnownMapElevation(app.getOsmandMap().getMapView().getElevationAngle());
 
 		boolean routing = settings.FOLLOW_THE_ROUTE.get() || routingHelper.isRouteCalculated()
 				|| routingHelper.isRouteBeingCalculated();
@@ -263,9 +263,6 @@ public class NavigationSession extends Session implements NavigationListener, Os
 		app.setCarNavigationSession(null);
 	}
 
-	private boolean isAppModeDerivedFromCar(ApplicationMode appMode) {
-		return appMode == ApplicationMode.CAR || appMode.isDerivedRoutingFrom(ApplicationMode.CAR);
-	}
 
 	public boolean hasStarted() {
 		Lifecycle.State state = getLifecycle().getCurrentState();
@@ -381,7 +378,6 @@ public class NavigationSession extends Session implements NavigationListener, Os
 				screenManager.pushForResult(new RoutePreviewScreen(context, settingsAction, result, true), (obj) -> {
 					if (obj != null) {
 						getApp().runInUIThread(() -> {
-							getApp().getOsmandMap().getMapActions().startNavigation();
 							if (hasStarted()) {
 								startNavigationScreen();
 							}
@@ -474,6 +470,7 @@ public class NavigationSession extends Session implements NavigationListener, Os
 
 	@Override
 	public void newRouteIsCalculated(boolean newRoute, ValueHolder<Boolean> showToast) {
+		closeMissingMapsScreen();
 		if (routingHelper.isFollowingMode() && routingHelper.isRouteCalculated()) {
 			startNavigationScreen();
 			updateCarNavigation(getApp().getLocationProvider().getLastKnownLocation());
@@ -523,7 +520,8 @@ public class NavigationSession extends Session implements NavigationListener, Os
 		OsmandApplication app = getApp();
 		CarContext context = getCarContext();
 		ScreenManager screenManager = context.getCarService(ScreenManager.class);
-		Screen top = screenManager.getTop();
+		Screen top = !screenManager.getScreenStack().isEmpty() ? screenManager.getTop() : null;
+
 		TargetPoint pointToNavigate = app.getTargetPointsHelper().getPointToNavigate();
 		if (app.getRoutingHelper().isRouteCalculated() && !app.getRoutingHelper().isFollowingMode()
 				&& pointToNavigate != null && !(top instanceof RoutePreviewScreen)) {
@@ -554,7 +552,6 @@ public class NavigationSession extends Session implements NavigationListener, Os
 			screenManager.pushForResult(new RoutePreviewScreen(context, settingsAction, result, false), (obj) -> {
 				if (obj != null) {
 					app.runInUIThread(() -> {
-						app.getOsmandMap().getMapActions().startNavigation();
 						if (hasStarted()) {
 							startNavigationScreen();
 						}
@@ -643,11 +640,10 @@ public class NavigationSession extends Session implements NavigationListener, Os
 			this.navigationManager.setNavigationManagerCallback(new NavigationManagerCallback() {
 				@Override
 				public void onStopNavigation() {
-					if (routingHelper.isRouteCalculated() && routingHelper.isFollowingMode()) {
-						routingHelper.pauseNavigation();
-					} else {
+					if (!routingHelper.isRouteCalculated() || !routingHelper.isFollowingMode()) {
 						getApp().stopNavigation();
 					}
+					carNavigationShouldBeActive = false;
 				}
 
 				@Override
@@ -689,6 +685,7 @@ public class NavigationSession extends Session implements NavigationListener, Os
 			navigationManager.navigationStarted();
 		}
 		carNavigationShouldBeActive = true;
+		updateCarNavigation(getApp().getLocationProvider().getLastKnownLocation());
 	}
 
 	/**
@@ -729,7 +726,14 @@ public class NavigationSession extends Session implements NavigationListener, Os
 						density = 1;
 					}
 					Trip trip = tripHelper.buildTrip(currentLocation, density);
-					navigationManager.updateTrip(trip);
+					if (carNavigationShouldBeActive) {
+						try {
+							navigationManager.updateTrip(trip);
+						} catch (IllegalStateException e) {
+							carNavigationShouldBeActive = false;
+							LOG.warn("NavigationManager is no longer in started state, stop sending trip updates", e);
+						}
+					}
 
 					List<Destination> destinations = null;
 					Destination destination = tripHelper.getLastDestination();
@@ -775,21 +779,47 @@ public class NavigationSession extends Session implements NavigationListener, Os
 		}
 	}
 
-	public void showMissingMapsScreen() {
+	public void showMissingMapsScreen(boolean allowContinue) {
 		CarContext carContext = getCarContext();
 		if (carContext != null) {
-			carContext.getCarService(ScreenManager.class).push(new MissingMapsScreen(carContext));
+			Screen topScreen = getScreenManager().getTop();
+			if (!(topScreen instanceof MissingMapsScreen)) {
+				carContext.getCarService(ScreenManager.class).push(new MissingMapsScreen(carContext, allowContinue));
+			}
+		}
+	}
+
+	public void closeMissingMapsScreen() {
+		Screen topScreen = getScreenManager().getTop();
+		if (topScreen instanceof MissingMapsScreen) {
+			topScreen.finish();
 		}
 	}
 
 	@Override
 	public void onCalculationStart() {
-
+		lastFastRoutingComplication = null;
 	}
 
 	@Override
 	public void onUpdateCalculationProgress(int progress) {
+		catchCurrentMissingMaps();
+	}
 
+	private void catchCurrentMissingMaps() {
+		OsmandApplication app = getApp();
+		if (app != null && app.getRoutingHelper().hasCurrentMissingMaps()) {
+			FastRoutingState.Status complication = app.getRoutingHelper().getCurrentFastRoutingComplication();
+			if (complication != null && complication != lastFastRoutingComplication) {
+				lastFastRoutingComplication = complication;
+				if (FastRoutingState.isSuccessStatus(complication)
+						|| FastRoutingState.isCancelledStatus(complication)) {
+					closeMissingMapsScreen();
+				} else {
+					showMissingMapsScreen(!FastRoutingState.isFailedStatus(complication));
+				}
+			}
+		}
 	}
 
 	@Override

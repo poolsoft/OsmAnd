@@ -216,7 +216,6 @@
     <string name="poi_traffic_calming_island">Drošības saliņa</string>
     <string name="poi_traffic_signals">Luksofors</string>
     <string name="poi_car_repair">Autoserviss</string>
-    <string name="poi_service_tyres">Riepu serviss</string>
     <string name="poi_vehicle_inspection">Tehniskās apskates stacijas</string>
     <string name="poi_car_wash">Automazgātuve</string>
     <string name="poi_fuel">Degvielas uzpildes stacijas</string>
@@ -535,7 +534,7 @@
     <string name="poi_hockey">Hokejs</string>
     <string name="poi_horse_racing">Zirgu sacīkstes</string>
     <string name="poi_ice_skating">Slidošana uz ledus</string>
-    <string name="poi_korfbal">Korfbols</string>
+    <string name="poi_korfball">Korfbols</string>
     <string name="poi_sport_motor">Motosports</string>
     <string name="poi_sport_multi">Daudzdisciplīnu sports</string>
     <string name="poi_orienteering">Orientēšanās sports</string>
@@ -1165,7 +1164,7 @@
     <string name="poi_seasonal_winter">Ziema</string>
     <string name="poi_base">Bāzes lēkšana</string>
     <string name="poi_craft_clockmaker">Pulksteņmeistars</string>
-    <string name="poi_craft_sweep">Skursteņslauķis</string>
+    <string name="poi_craft_chimney_sweeper">Skursteņslauķis</string>
     <string name="poi_beacon_cardinal">Kardinālā bāka</string>
     <string name="poi_beacon_lateral">Laterālā bāka</string>
     <string name="poi_beacon_safe_water">Drošu ūdeņu bāka</string>
@@ -1925,7 +1924,6 @@
     <string name="poi_training_art">Mākslas kursi</string>
     <string name="poi_training_cooking">Ēdienu pagatavošanas kursi</string>
     <string name="poi_training_computer">Datorzinību kursi</string>
-    <string name="poi_training_yoga">Jogas kursi</string>
     <string name="poi_training_martial_art">Kara mākslas kursi</string>
     <string name="poi_training_aviation">Aviācijas kursi</string>
     <string name="poi_training_hairdressing">Friziera kursi</string>

@@ -116,7 +116,6 @@
     <string name="poi_traffic_calming_choker">نقطهٔ گازانبری</string>
     <string name="poi_traffic_signals">چراغ راهنما</string>
     <string name="poi_car_repair">تعمیر خودرو</string>
-    <string name="poi_service_tyres">پنچرگیری</string>
     <string name="poi_vehicle_inspection">معاینه فنی خودرو</string>
     <string name="poi_car_wash">کارواش</string>
     <string name="poi_fuel">جایگاه سوخت; جایگاه سوخت‌گیری; پمپ بنزین; پمپ گاز</string>
@@ -314,7 +313,7 @@
     <string name="poi_horse_racing">پیست اسب دوانی</string>
     <string name="poi_ice_skating">اسکیت روی یخ</string>
     <string name="poi_ice_stock">زمین یخ</string>
-    <string name="poi_korfbal">زمین بسکتبال اسکاتلندی</string>
+    <string name="poi_korfball">زمین بسکتبال اسکاتلندی</string>
     <string name="poi_sport_motor">ورزش موتورسواری</string>
     <string name="poi_sport_multi">چندورزشی</string>
     <string name="poi_orienteering">ورزش جهت یابی</string>
@@ -497,7 +496,7 @@
     <string name="poi_craft_stand_builder">ساخت و ساز</string>
     <string name="poi_craft_stonemason">سنگ تراش</string>
     <string name="poi_craft_sun_protection">صنایع حفاظتی</string>
-    <string name="poi_craft_sweep">رفته گر</string>
+    <string name="poi_craft_chimney_sweeper">رفته گر</string>
     <string name="poi_craft_tailor">خیاط</string>
     <string name="poi_craft_tiler">اجر پزی</string>
     <string name="poi_craft_tinsmith">حلبی‌ساز</string>
@@ -1313,7 +1312,6 @@
     <string name="poi_training_art">آموزش: هنر</string>
     <string name="poi_training_cooking">آموزش: آشپزی</string>
     <string name="poi_training_computer">آموزش: کامپیوتر</string>
-    <string name="poi_training_yoga">آموزش: یوگا</string>
     <string name="poi_training_martial_art">آموزش: هنرهای رزمی</string>
     <string name="poi_animal_training_dog">سگ</string>
     <string name="poi_animal_training_horse">اسب</string>

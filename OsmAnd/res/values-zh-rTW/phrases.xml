@@ -160,7 +160,6 @@
     <string name="poi_traffic_calming_choker">路面縮窄</string>
     <string name="poi_traffic_signals">交通號誌</string>
     <string name="poi_car_repair">汽車修理廠</string>
-    <string name="poi_service_tyres">輪胎</string>
     <string name="poi_vehicle_inspection">車輛檢修</string>
     <string name="poi_car_wash">洗車場</string>
     <string name="poi_fuel">加油站</string>
@@ -407,7 +406,7 @@
     <string name="poi_horse_racing">賽馬</string>
     <string name="poi_ice_skating">滑冰</string>
     <string name="poi_ice_stock">冰上滑盤</string>
-    <string name="poi_korfbal">合球</string>
+    <string name="poi_korfball">合球</string>
     <string name="poi_sport_motor">汽車運動</string>
     <string name="poi_sport_multi">綜合運動</string>
     <string name="poi_orienteering">定向運動</string>
@@ -622,7 +621,7 @@
     <string name="poi_craft_stand_builder">活動展台</string>
     <string name="poi_craft_stonemason">石匠</string>
     <string name="poi_craft_sun_protection">遮陽篷行業</string>
-    <string name="poi_craft_sweep">煙囪清掃工</string>
+    <string name="poi_craft_chimney_sweeper">煙囪清掃工</string>
     <string name="poi_craft_tailor">裁縫</string>
     <string name="poi_craft_tiler">磚瓦匠</string>
     <string name="poi_craft_tinsmith">錫器匠</string>
@@ -875,7 +874,7 @@
     <string name="poi_email">電子郵件</string>
     <string name="poi_fax">傳真</string>
     <string name="facebook">臉書</string>
-    <string name="poi_mobile">行動電話</string>
+    <string name="poi_mobile">手機</string>
     <string name="poi_animal_shelter_dog">狗</string>
     <string name="poi_animal_shelter_cat">貓</string>
     <string name="poi_animal_shelter_dog_cat">狗、貓</string>
@@ -1159,7 +1158,7 @@
     <string name="poi_water_characteristic_mud">泥漿</string>
     <string name="poi_water_characteristic_sulfuric">硫酸</string>
     <string name="poi_water_point">供水點</string>
-    <string name="poi_cuisine">美食</string>
+    <string name="poi_cuisine">菜系</string>
     <string name="poi_information_guidepost">路標</string>
     <string name="poi_information_board">資訊板</string>
     <string name="poi_information_map">地圖</string>
@@ -1795,7 +1794,6 @@
     <string name="poi_training_art">培訓：藝術</string>
     <string name="poi_training_cooking">培訓：烹飪</string>
     <string name="poi_training_computer">培訓：電腦</string>
-    <string name="poi_training_yoga">培訓：瑜伽</string>
     <string name="poi_training_martial_art">培訓：武術</string>
     <string name="poi_training_aviation">培訓：航空</string>
     <string name="poi_training_hairdressing">培訓：美容美髮</string>
@@ -2930,7 +2928,6 @@
     <string name="poi_cuisine_yogurt">優格</string>
     <string name="poi_cuisine_gyros">希臘旋轉烤肉</string>
     <string name="poi_cuisine_empanada">拉丁餡餅</string>
-    <string name="poi_cuisine_crepes">可麗餅</string>
     <string name="poi_cuisine_yakiniku">烤肉</string>
     <string name="poi_cuisine_suki">泰式火鍋</string>
     <string name="poi_cuisine_udon">烏龍麵</string>
@@ -3761,7 +3758,7 @@
     <string name="poi_video_telephone">視訊</string>
     <string name="poi_sms_yes">是;簡訊</string>
     <string name="poi_sms_no">否</string>
-    <string name="poi_covered_booth">亭</string>
+    <string name="poi_covered_booth">是</string>
     <string name="poi_booth">亭類型</string>
     <string name="poi_video_yes">是;視訊</string>
     <string name="poi_video_no">否</string>
@@ -4993,7 +4990,6 @@
     <string name="poi_hazard_falling_rocks">落石</string>
     <string name="poi_hazard_contamination">污染</string>
     <string name="poi_hazard_yes">災害</string>
-    <string name="poi_hazard_additional_yes">災害</string>
     <string name="poi_network_rhn">區域馬匹網路 (RHN)</string>
     <string name="poi_network_lhn">在地馬匹網路 (LHN)</string>
     <string name="poi_network_nhn">國家馬匹網路 (NHN)</string>
@@ -5158,9 +5154,21 @@
     <string name="poi_barrier_log">原木</string>
     <string name="poi_barrier_sliding_gate">滑動門</string>
     <string name="poi_sample_collection_filter">採集樣本</string>
-    <string name="x">X（原 Twitter）</string>
-    <string name="poi_sample_collection">採集樣本</string>
+    <string name="x">X (先前是 Twitter)</string>
+    <string name="poi_sample_collection">採集樣本;血液;實驗室;檢測</string>
     <string name="poi_sample_collection_yes">是</string>
     <string name="poi_sample_collection_covid19">COVID19</string>
     <string name="poi_sample_collection_blood">血</string>
+    <string name="poi_memorial_type">紀念類型</string>
+    <string name="poi_yoga">瑜伽</string>
+    <string name="poi_covered_booth_filter">攤位</string>
+    <string name="poi_rapids_filter">急流等級</string>
+    <string name="poi_rapids_grade_0">0（靜水）</string>
+    <string name="poi_rapids_grade_1">1（簡單）</string>
+    <string name="poi_rapids_grade_2">2（初學者）</string>
+    <string name="poi_rapids_grade_3">3（中級）</string>
+    <string name="poi_rapids_grade_4">4（進階）</string>
+    <string name="poi_rapids_grade_5">5（專家）</string>
+    <string name="poi_rapids_grade_6">6（極限）</string>
+    <string name="poi_rapids_grade_x">X（無法進入）</string>
 </resources>
