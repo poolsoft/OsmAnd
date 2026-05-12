@@ -4,6 +4,7 @@ import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteRegion;
 import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteTypeRule;
 import net.osmand.binary.RouteDataObject;
 import net.osmand.router.BinaryRoutePlanner.RouteSegment;
+import net.osmand.shared.routing.GeneralRouterProfile;
 import net.osmand.util.Algorithms;
 import net.osmand.util.MapUtils;
 
@@ -125,23 +126,7 @@ public class GeneralRouter implements VehicleRouter {
 			return null;
 		}
 	}
-	
-	public enum GeneralRouterProfile {
-		CAR,
-		PEDESTRIAN,
-		BICYCLE,
-		BOAT,
-		SKI,
-		MOPED,
-		TRAIN,
-		PUBLIC_TRANSPORT,
-		HORSEBACKRIDING;
-		
-		public String getBaseProfile() {
-			return this.toString().toLowerCase();
-		}
-	}
-	
+
 	public enum RoutingParameterType {
 		NUMERIC,
 		BOOLEAN,
@@ -153,6 +138,7 @@ public class GeneralRouter implements VehicleRouter {
 		GeneralRouter parent = root;
 		this.profile = parent.profile;
 		this.attributes = new LinkedHashMap<String, String>();
+
 		Iterator<Entry<String, String>> e = parent.attributes.entrySet().iterator();
 		while (e.hasNext()) {
 			Entry<String, String> next = e.next();
@@ -719,9 +705,12 @@ public class GeneralRouter implements VehicleRouter {
 		if (prevTs != ts) {
 			totalPenalty += Math.abs(ts - prevTs) / 2;
 		}
-		
-		if (segment.getRoad().roundabout() && !prev.getRoad().roundabout()) {
-			double rt = getRoundaboutTurnPenalty();
+
+		boolean currentRoundAbout = segment.getRoad().roundabout();
+		boolean previousRoundAbout = prev.getRoad().roundabout();
+
+		if ((currentRoundAbout && !previousRoundAbout) || (!currentRoundAbout && previousRoundAbout)) {
+			float rt = getRoundaboutTurnPenalty() / 2;
 			if (rt > 0) {
 				totalPenalty += rt;
 			}
@@ -991,6 +980,8 @@ public class GeneralRouter implements VehicleRouter {
 		public static final int EQUAL_EXPRESSION = 3;
 		public static final int MIN_EXPRESSION = 4;
 		public static final int MAX_EXPRESSION = 5;
+		public static final int GREAT_OR_EQUAL_EXPRESSION = 6;
+		public static final int LESS_OR_EQUAL_EXPRESSION = 7;
 
 		public RouteAttributeExpression(String[] vs, String valueType, int expressionId) {
 			this.expressionType = expressionId;
@@ -1022,10 +1013,14 @@ public class GeneralRouter implements VehicleRouter {
 			if (Double.isNaN(f1) || Double.isNaN(f2)) {
 				return false;
 			}
-			if (expressionType == LESS_EXPRESSION) {
-				return f1 <= f2;
-			} else if (expressionType == GREAT_EXPRESSION) {
+			if (expressionType == GREAT_EXPRESSION) {
+				return f1 > f2;
+			} else if (expressionType == GREAT_OR_EQUAL_EXPRESSION) {
 				return f1 >= f2;
+			} else if (expressionType == LESS_EXPRESSION) {
+				return f1 < f2;
+			} else if (expressionType == LESS_OR_EQUAL_EXPRESSION) {
+				return f1 <= f2;
 			} else if (expressionType == EQUAL_EXPRESSION) {
 				return f1 == f2;
 			}
@@ -1199,6 +1194,16 @@ public class GeneralRouter implements VehicleRouter {
 		public void registerGreatCondition(String value1, String value2, String valueType) {
 			conditionExpressions.add(new RouteAttributeExpression(new String[]{value1, value2}, valueType,
 					RouteAttributeExpression.GREAT_EXPRESSION));
+		}
+
+		public void registerGreatOrEqualCondition(String value1, String value2, String valueType) {
+			conditionExpressions.add(new RouteAttributeExpression(new String[]{value1, value2}, valueType,
+					RouteAttributeExpression.GREAT_OR_EQUAL_EXPRESSION));
+		}
+
+		public void registerLessOrEqualCondition(String value1, String value2, String valueType) {
+			conditionExpressions.add(new RouteAttributeExpression(new String[]{value1, value2}, valueType,
+					RouteAttributeExpression.LESS_OR_EQUAL_EXPRESSION));
 		}
 
 		public void registerEqualCondition(String value1, String value2, String valueType) {

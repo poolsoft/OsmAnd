@@ -74,6 +74,7 @@ public class AidlTileProvider extends interface_MapTiledCollectionProvider {
 		this.smallIconBg = aidlMapLayer.getSmallIconBg();
 		this.offset = new PointI(0, 0);
 		this.bigIconOffset = new PointI(0, (int) yOffset);
+		this.swigTakeOwnership();
 	}
 
 	public void drawSymbols(@NonNull MapRendererView mapRenderer) {
@@ -222,6 +223,11 @@ public class AidlTileProvider extends interface_MapTiledCollectionProvider {
 			return bigIconOffset;
 		}
 		return offset;
+	}
+
+	@Override
+	public boolean waitForLoading() {
+		return true;
 	}
 
 	public void addToData(@NonNull AidlMapPointWrapper mapPoint, Bitmap image, boolean isStale, String caption) throws IllegalStateException {

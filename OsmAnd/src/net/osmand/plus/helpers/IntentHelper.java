@@ -2,9 +2,8 @@ package net.osmand.plus.helpers;
 
 import static net.osmand.data.PointDescription.POINT_TYPE_POI;
 import static net.osmand.plus.backup.BackupListeners.OnRegisterDeviceListener;
-import static net.osmand.plus.configmap.tracks.PreselectedTabParams.CALLING_FRAGMENT_TAG;
-import static net.osmand.plus.configmap.tracks.PreselectedTabParams.PRESELECTED_TRACKS_TAB_ID;
-import static net.osmand.plus.configmap.tracks.PreselectedTabParams.SELECT_ALL_ITEMS_ON_TAB;
+import static net.osmand.plus.configmap.tracks.TracksTabsFragment.CALLING_FRAGMENT_TAG;
+import static net.osmand.plus.configmap.tracks.TracksTabsFragment.PRESELECTED_TAB_PARAMS_KEY;
 import static net.osmand.plus.helpers.MapFragmentsHelper.CLOSE_ALL_FRAGMENTS;
 import static net.osmand.plus.importfiles.ImportHelper.getGpxDestinationDir;
 import static net.osmand.plus.importfiles.OnSuccessfulGpxImport.OPEN_GPX_CONTEXT_MENU;
@@ -53,7 +52,6 @@ import net.osmand.plus.backup.ui.LoginDialogType;
 import net.osmand.plus.chooseplan.ChoosePlanFragment;
 import net.osmand.plus.chooseplan.OsmAndFeature;
 import net.osmand.plus.configmap.tracks.PreselectedTabParams;
-import net.osmand.plus.configmap.tracks.TrackTabType;
 import net.osmand.plus.configmap.tracks.TracksTabsFragment;
 import net.osmand.plus.dashboard.DashboardType;
 import net.osmand.plus.inapp.InAppPurchaseUtils;
@@ -326,29 +324,30 @@ public class IntentHelper {
 		if (latLon != null) {
 			double pinLat = latLon.getLatitude();
 			double pinLon = latLon.getLongitude();
-			int zoom = settings.getLastKnownMapZoom();
 
-			BaseDetailsObject amenity = searchBaseDetailsObject(pinLat, pinLon, name, type, wikiDataId, osmId);
-			if (amenity == null) {
-				return false;
+			if (app.isApplicationInitializing()) {
+				app.getAppInitializer().addListener(new AppInitializeListener() {
+
+					@Override
+					public void onFinish(@NonNull AppInitializer init) {
+						init.removeListener(this);
+						if (!showAmenity(pinLat, pinLon, name, type, wikiDataId, osmId)) {
+							int zoom = settings.getLastKnownMapZoom();
+							settings.setMapLocationToShow(pinLat, pinLon, zoom, new PointDescription(pinLat, pinLon));
+						}
+						if (AndroidUtils.isActivityNotDestroyed(mapActivity) && settings.MAP_ACTIVITY_ENABLED) {
+							mapActivity.readLocationToShow();
+						}
+					}
+				});
+				clearIntent(intent);
+				return true;
 			}
-
-			String lang = app.getSettings().MAP_PREFERRED_LOCALE.get();
-			boolean transliterate = app.getSettings().MAP_TRANSLITERATE_NAMES.get();
-			String poiSimpleFormat = null;
-			PoiCategory category = amenity.getSyntheticAmenity().getType();
-			if (!MapPoiTypes.getDefault().isOtherCategory(category)) {
-				if (category != null && category.isWiki()) {
-					poiSimpleFormat = amenity.getSyntheticAmenity().getName(lang, transliterate);
-				} else {
-					poiSimpleFormat = Amenity.getPoiStringWithoutType(amenity.getSyntheticAmenity(), lang, transliterate);
-				}
+			boolean shown = showAmenity(pinLat, pinLon, name, type, wikiDataId, osmId);
+			if (shown) {
+				clearIntent(intent);
 			}
-
-			PointDescription pointDescription = new PointDescription(POINT_TYPE_POI, poiSimpleFormat);
-			pointDescription.setIconName(getAmenityIconName(app, amenity.getSyntheticAmenity()));
-			settings.setMapLocationToShow(pinLat, pinLon, zoom, pointDescription, true, amenity);
-			return true;
+			return shown;
 		}
 
 		clearIntent(intent);
@@ -373,6 +372,7 @@ public class IntentHelper {
 				pointDescription.setName(name);
 				settings.setMapLocationToShow(latLon.getLatitude(), latLon.getLongitude(), zoom, pointDescription);
             }
+			clearIntent(intent);
             return true;
         }
 		clearIntent(intent);
@@ -396,6 +396,33 @@ public class IntentHelper {
 		}
 
 		return false;
+	}
+
+	private boolean showAmenity(double pinLat, double pinLon, @Nullable String name, @Nullable String type,
+	                            @Nullable String wikiDataId, @Nullable String osmId) {
+		int zoom = settings.getLastKnownMapZoom();
+
+		BaseDetailsObject amenity = searchBaseDetailsObject(pinLat, pinLon, name, type, wikiDataId, osmId);
+		if (amenity == null) {
+			return false;
+		}
+
+		String lang = app.getSettings().MAP_PREFERRED_LOCALE.get();
+		boolean transliterate = app.getSettings().MAP_TRANSLITERATE_NAMES.get();
+		String poiSimpleFormat = null;
+		PoiCategory category = amenity.getSyntheticAmenity().getType();
+		if (!MapPoiTypes.getDefault().isOtherCategory(category)) {
+			if (category != null && category.isWiki()) {
+				poiSimpleFormat = amenity.getSyntheticAmenity().getName(lang, transliterate);
+			} else {
+				poiSimpleFormat = Amenity.getPoiStringWithoutType(amenity.getSyntheticAmenity(), lang, transliterate);
+			}
+		}
+
+		PointDescription pointDescription = new PointDescription(POINT_TYPE_POI, poiSimpleFormat);
+		pointDescription.setIconName(getAmenityIconName(app, amenity.getSyntheticAmenity()));
+		settings.setMapLocationToShow(pinLat, pinLon, zoom, pointDescription, true, amenity);
+		return true;
 	}
 
 	@Nullable
@@ -573,9 +600,7 @@ public class IntentHelper {
 					return false;
 				}
 				String name = data.getQueryParameter("name");
-				if (Algorithms.isEmpty(name)) {
-					name = Algorithms.getFileWithoutDirs(url);
-				}
+				name = Algorithms.getFileWithoutDirs(Algorithms.isEmpty(name) ? url : name);
 				if (!name.endsWith(IndexConstants.GPX_FILE_EXT)) {
 					name += IndexConstants.GPX_FILE_EXT;
 				}
@@ -718,13 +743,11 @@ public class IntentHelper {
 				clearIntent(intent);
 			}
 			Bundle extras = intent.getExtras();
-			if (extras != null && intent.hasExtra(PRESELECTED_TRACKS_TAB_ID)) {
-				String id = extras.getString(PRESELECTED_TRACKS_TAB_ID, TrackTabType.ALL.name());
+			if (extras != null && intent.hasExtra(PRESELECTED_TAB_PARAMS_KEY)) {
 				String callingFragmentTag = extras.getString(CALLING_FRAGMENT_TAG, null);
-				boolean selectAllItems = intent.getBooleanExtra(SELECT_ALL_ITEMS_ON_TAB, false);
+				PreselectedTabParams params = extras.getParcelable(PRESELECTED_TAB_PARAMS_KEY);
 
-				PreselectedTabParams params = new PreselectedTabParams(id, selectAllItems);
-				TracksTabsFragment.showInstance(mapActivity.getSupportFragmentManager(), params, callingFragmentTag);
+				TracksTabsFragment.showInstance(mapActivity, params, callingFragmentTag);
 				clearIntent(intent);
 			}
 			if (intent.hasExtra(SELECTED_TYPES)) {

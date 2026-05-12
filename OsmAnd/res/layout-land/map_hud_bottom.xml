@@ -18,36 +18,14 @@
 			android:layout_height="wrap_content"
 			android:layout_gravity="bottom|start">
 
-			<!-- ALARM -->
+			<include layout="@layout/speedometer_widget" />
 
-			<LinearLayout
-				android:id="@+id/alarms_container"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_marginStart="@dimen/map_button_shadow_margin"
-				android:layout_marginBottom="@dimen/map_alarm_bottom_margin_land"
-				android:orientation="horizontal">
-
-				<include
-					android:id="@+id/speedometer_widget"
-					layout="@layout/speedometer_widget" />
-
-				<include
-					android:id="@+id/map_alarm_warning"
-					layout="@layout/map_alarm_warning"
-					android:layout_width="@dimen/map_alarm_size"
-					android:layout_height="@dimen/map_alarm_size"
-					android:layout_gravity="center_vertical"
-					android:layout_marginStart="@dimen/content_padding_medium" />
-
-			</LinearLayout>
+			<include layout="@layout/map_alarm_warning" />
 
 			<LinearLayout
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:layout_gravity="bottom|start">
-
-				<!-- PREPARATION SCREEN -->
 
 				<include
 					layout="@layout/recording_note_fragment"
@@ -55,65 +33,29 @@
 					android:layout_height="wrap_content"
 					android:layout_gravity="bottom|start" />
 
-				<LinearLayout
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content"
-					android:layout_gravity="bottom|start"
-					android:layout_marginStart="@dimen/map_button_margin"
-					android:layout_marginEnd="@dimen/map_button_spacing_land"
-					android:layout_marginBottom="@dimen/map_button_margin"
-					android:orientation="horizontal">
-
-					<net.osmand.plus.widgets.FrameLayoutEx
-						android:id="@+id/measurement_buttons"
-						android:layout_width="wrap_content"
-						android:layout_height="wrap_content">
-
-						<ImageButton
-							android:id="@+id/snap_to_road_image_button"
-							android:layout_width="@dimen/map_button_size"
-							android:layout_height="@dimen/map_button_size"
-							android:layout_gravity="bottom"
-							android:background="@drawable/btn_circle"
-							android:contentDescription="@string/snap_to_road"
-							android:visibility="gone"
-							tools:src="@drawable/ic_action_remove_dark" />
-
-						<include
-							android:id="@+id/profile_with_config_btn"
-							layout="@layout/profile_with_config_btn_layout"
-							android:layout_width="wrap_content"
-							android:layout_height="@dimen/map_button_size"
-							android:layout_gravity="bottom"
-							android:visibility="gone" />
-
-					</net.osmand.plus.widgets.FrameLayoutEx>
-
-				</LinearLayout>
 			</LinearLayout>
+
 		</FrameLayout>
 
 		<FrameLayout
 			android:layout_width="0dp"
-			android:layout_height="@dimen/map_button_size"
+			android:layout_height="wrap_content"
 			android:layout_gravity="bottom"
 			android:layout_marginBottom="@dimen/map_button_margin"
-			android:layout_weight="1">
-
-			<!-- TRANSPARENCY -->
+			android:layout_weight="1"
+			android:minHeight="@dimen/map_button_size">
 
 			<LinearLayout
 				android:id="@+id/map_transparency_layout"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:layout_gravity="center"
+				android:layout_gravity="bottom|center_horizontal"
 				android:orientation="horizontal">
 
 				<com.google.android.material.slider.Slider
 					android:id="@+id/map_transparency_slider"
 					android:layout_width="@dimen/map_trans_seek_size"
-					android:layout_height="wrap_content"
-					android:layout_gravity="center" />
+					android:layout_height="wrap_content" />
 
 			</LinearLayout>
 

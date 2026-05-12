@@ -18,6 +18,7 @@ import net.osmand.plus.OsmAndTaskManager;
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
 import net.osmand.plus.Version;
+import net.osmand.shared.util.NetworkImageLoader;
 import net.osmand.util.Algorithms;
 
 import org.apache.commons.logging.Log;
@@ -41,6 +42,7 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.text.MessageFormat;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +51,10 @@ import java.util.Map.Entry;
 import java.util.concurrent.Executor;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Response;
 
 public class AndroidNetworkUtils {
 
@@ -1070,4 +1076,5 @@ public class AndroidNetworkUtils {
 	public static String getHttpProtocol() {
 		return Build.VERSION.SDK_INT < Build.VERSION_CODES.N_MR1 ? "http://" : "https://";
 	}
+
 }

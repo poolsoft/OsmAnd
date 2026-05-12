@@ -52,10 +52,11 @@ import net.osmand.plus.keyevent.KeyEventHelper;
 import net.osmand.plus.mapmarkers.MapMarkersDbHelper;
 import net.osmand.plus.mapmarkers.MapMarkersHelper;
 import net.osmand.plus.myplaces.favorites.FavouritesHelper;
+import net.osmand.plus.myplaces.favorites.dialogs.FavoriteSortModesHelper;
 import net.osmand.plus.notifications.NotificationHelper;
 import net.osmand.plus.onlinerouting.OnlineRoutingHelper;
 import net.osmand.plus.plugins.PluginsHelper;
-import net.osmand.plus.plugins.monitoring.LiveMonitoringHelper;
+import net.osmand.plus.plugins.monitoring.live.LiveMonitoringHelper;
 import net.osmand.plus.plugins.monitoring.OsmandMonitoringPlugin;
 import net.osmand.plus.plugins.monitoring.SavingTrackHelper;
 import net.osmand.plus.plugins.osmedit.oauth.OsmOAuthHelper;
@@ -92,6 +93,8 @@ import net.osmand.plus.wikivoyage.data.TravelHelper;
 import net.osmand.plus.wikivoyage.data.TravelObfHelper;
 import net.osmand.render.RenderingRulesStorage;
 import net.osmand.router.RoutingConfiguration;
+import net.osmand.shared.palette.data.PaletteRepository;
+import net.osmand.shared.gpx.SmartFolderHelper;
 import net.osmand.util.Algorithms;
 import net.osmand.util.CollectionUtils;
 import net.osmand.util.OpeningHoursParser;
@@ -307,7 +310,7 @@ public class AppInitializer implements IProgress {
 		app.daynightHelper = startupInit(new DayNightHelper(app), DayNightHelper.class);
 		app.avoidRoadsHelper = startupInit(new AvoidRoadsHelper(app), AvoidRoadsHelper.class);
 		app.gpxDisplayHelper = startupInit(new GpxDisplayHelper(app), GpxDisplayHelper.class);
-		app.colorPaletteHelper = startupInit(new ColorPaletteHelper(app), ColorPaletteHelper.class);
+		app.paletteRepository = startupInit(new PaletteRepository(), PaletteRepository.class);
 		app.savingTrackHelper = startupInit(new SavingTrackHelper(app), SavingTrackHelper.class);
 		app.analyticsHelper = startupInit(new AnalyticsHelper(app), AnalyticsHelper.class);
 		app.feedbackHelper = startupInit(new FeedbackHelper(app), FeedbackHelper.class);
@@ -350,6 +353,7 @@ public class AppInitializer implements IProgress {
 		app.averageGlideComputer = startupInit(new AverageGlideComputer(app), AverageGlideComputer.class);
 		app.weatherHelper = startupInit(new WeatherHelper(app), WeatherHelper.class);
 		app.dialogManager = startupInit(new DialogManager(), DialogManager.class);
+		app.smartFolderHelper = startupInit(new SmartFolderHelper(), SmartFolderHelper.class);
 		app.routeLayersHelper = startupInit(new RouteLayersHelper(app), RouteLayersHelper.class);
 		app.model3dHelper = startupInit(new Model3dHelper(app), Model3dHelper.class);
 		app.trackSortModesHelper = startupInit(new TrackSortModesHelper(app), TrackSortModesHelper.class);
@@ -365,11 +369,17 @@ public class AppInitializer implements IProgress {
 		OpeningHoursParser.setAdditionalString("is_open", app.getString(R.string.poi_dialog_opening_hours));
 		OpeningHoursParser.setAdditionalString("is_open_24_7", app.getString(R.string.shared_string_is_open_24_7));
 		OpeningHoursParser.setAdditionalString("will_open_at", app.getString(R.string.will_open_at));
+		OpeningHoursParser.setAdditionalString("will_open_at_short", app.getString(R.string.open_from_short));
 		OpeningHoursParser.setAdditionalString("open_from", app.getString(R.string.open_from));
+		OpeningHoursParser.setAdditionalString("open_from_short", app.getString(R.string.open_from_short));
 		OpeningHoursParser.setAdditionalString("will_close_at", app.getString(R.string.will_close_at));
+		OpeningHoursParser.setAdditionalString("will_close_at_short", app.getString(R.string.open_till_short));
 		OpeningHoursParser.setAdditionalString("open_till", app.getString(R.string.open_till));
+		OpeningHoursParser.setAdditionalString("open_till_short", app.getString(R.string.open_till_short));
 		OpeningHoursParser.setAdditionalString("will_open_tomorrow_at", app.getString(R.string.will_open_tomorrow_at));
+		OpeningHoursParser.setAdditionalString("will_open_tomorrow_at_short", app.getString(R.string.tomorrow));
 		OpeningHoursParser.setAdditionalString("will_open_on", app.getString(R.string.will_open_on));
+		OpeningHoursParser.setAdditionalString("will_open_on_short", app.getString(R.string.open_from_short));
 	}
 
 	private void updateRegionVars() {

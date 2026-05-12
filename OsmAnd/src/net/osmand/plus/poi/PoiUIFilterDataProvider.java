@@ -1,5 +1,8 @@
 package net.osmand.plus.poi;
 
+import static net.osmand.data.DataSourceType.OFFLINE;
+import static net.osmand.data.DataSourceType.ONLINE;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -14,6 +17,7 @@ import net.osmand.search.AmenitySearcher;
 import net.osmand.util.MapUtils;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class PoiUIFilterDataProvider {
@@ -29,20 +33,18 @@ public class PoiUIFilterDataProvider {
         this.explorePlacesProvider = app.getExplorePlacesProvider();
     }
 
-    public DataSourceType getDataSourceType() {
-        if (filter.isTopWikiFilter()) {
-            return app.getSettings().WIKI_DATA_SOURCE_TYPE.get() == DataSourceType.ONLINE
-                    ? DataSourceType.ONLINE : DataSourceType.OFFLINE;
-        } else {
-            return DataSourceType.OFFLINE;
-        }
-    }
+	@NonNull
+	public DataSourceType getDataSourceType() {
+		return filter.isTopWikiFilter() ? app.getSettings().WIKI_DATA_SOURCE_TYPE.get() : OFFLINE;
+	}
 
     List<Amenity> searchAmenities(double lat, double lon, double topLatitude,
                                   double bottomLatitude, double leftLongitude,
                                   double rightLongitude, int zoom,
-                                  @Nullable ResultMatcher<Amenity> matcher) {
-        if (filter.isTopWikiFilter() && getDataSourceType() == DataSourceType.ONLINE) {
+                                  @Nullable ResultMatcher<Amenity> matcher,
+                                  @Nullable Comparator<Amenity> comparator,
+                                  int comparatorLimit) {
+        if (filter.isTopWikiFilter() && getDataSourceType() == ONLINE) {
             return searchWikiOnline(lat, lon, topLatitude, bottomLatitude, leftLongitude, rightLongitude,
                     filter.wrapResultMatcher(matcher));
         } else {
@@ -50,7 +52,7 @@ public class PoiUIFilterDataProvider {
             AmenitySearcher.Settings settings = app.getResourceManager().getDefaultAmenitySearchSettings();
             return amenitySearcher.searchAmenities(filter, filter.additionalFilter, topLatitude, leftLongitude,
                     bottomLatitude, rightLongitude, zoom, true, settings.fileVisibility(),
-                    filter.wrapResultMatcher(matcher));
+                    filter.wrapResultMatcher(matcher), null, comparator, comparatorLimit);
         }
     }
 
@@ -89,6 +91,6 @@ public class PoiUIFilterDataProvider {
             }
         }
         MapUtils.sortListOfMapObject(result, lat, lon);
-        return data;
+        return result;
     }
 }

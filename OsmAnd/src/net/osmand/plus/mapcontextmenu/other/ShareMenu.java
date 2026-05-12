@@ -1,5 +1,6 @@
 package net.osmand.plus.mapcontextmenu.other;
 
+import static net.osmand.plus.mapcontextmenu.other.ShareItem.COPY_LIST;
 import static net.osmand.plus.mapcontextmenu.other.ShareItem.SAVE_AS_FILE;
 import static net.osmand.plus.mapcontextmenu.other.SharePoiParams.getFormattedShareLatLon;
 import static net.osmand.plus.mapcontextmenu.other.ShareSheetReceiver.*;
@@ -24,6 +25,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.text.TextUtilsCompat;
 import androidx.core.view.ViewCompat;
+import androidx.fragment.app.FragmentActivity;
 
 import net.osmand.PlatformUtil;
 import net.osmand.data.LatLon;
@@ -52,6 +54,7 @@ public class ShareMenu extends BaseMenuController {
 
 	private static final String KEY_SHARE_MENU_LATLON = "key_share_menu_latlon";
 	private static final String KEY_SHARE_MENU_POINT_TITLE = "key_share_menu_point_title";
+	private static final String KEY_SHARE_MENU_IS_FAVORITE = "key_share_menu_is_favorite";
 	public static final String KEY_SAVE_FILE_NAME = "key_save_file_name";
 
 	private LatLon latLon;
@@ -61,9 +64,13 @@ public class ShareMenu extends BaseMenuController {
 	private String geoUrl;
 	private String sms;
 	private String urlLink;
+	private Boolean isFavorite = false;
 
-	private ShareMenu(@NonNull MapActivity mapActivity) {
-		super(mapActivity);
+	public Boolean isFavorite() {
+		return isFavorite;
+	}
+	private ShareMenu(@NonNull FragmentActivity activity) {
+		super(activity);
 	}
 
 	@NonNull
@@ -94,7 +101,27 @@ public class ShareMenu extends BaseMenuController {
 		menu.urlLink = urlLink;
 
 		if (Build.VERSION.SDK_INT >= 34) {
-			showNativeShareDialog(menu, activity);
+			showNativeShareDialog(menu, activity.getApp(), activity);
+		} else {
+			ShareMenuFragment.showInstance(activity.getSupportFragmentManager(), menu);
+		}
+	}
+
+	public static void show(LatLon latLon, String title, String address, String urlLink, @NonNull OsmandApplication app, @NonNull FragmentActivity activity) {
+		show(latLon, title, address, urlLink, app, activity, false);
+	}
+
+	public static void show(LatLon latLon, String title, String address, String urlLink,
+	                        @NonNull OsmandApplication app, @NonNull FragmentActivity activity, @NonNull Boolean isFavorite) {
+		ShareMenu menu = new ShareMenu(activity);
+		menu.latLon = latLon;
+		menu.title = title;
+		menu.address = address;
+		menu.urlLink = urlLink;
+		menu.isFavorite = isFavorite;
+
+		if (Build.VERSION.SDK_INT >= 34) {
+			showNativeShareDialog(menu, app, null);
 		} else {
 			ShareMenuFragment.showInstance(activity.getSupportFragmentManager(), menu);
 		}
@@ -102,17 +129,14 @@ public class ShareMenu extends BaseMenuController {
 
 	public void share(@NonNull ShareItem item) {
 		MapActivity activity = getMapActivity();
-		if (activity != null) {
-			setupSharingFields(activity);
-			startAction(activity, item, sms, address, title, coordinates, geoUrl, urlLink);
-		}
+		setupSharingFields(app, activity);
+		startAction(app, item, sms, address, title, coordinates, geoUrl, urlLink);
 	}
 
 	@RequiresApi(api = 34)
-	private static void showNativeShareDialog(@NonNull ShareMenu menu, @NonNull MapActivity activity) {
-		menu.setupSharingFields(activity);
+	private static void showNativeShareDialog(@NonNull ShareMenu menu, @NonNull OsmandApplication app, @Nullable MapActivity activity) {
+		menu.setupSharingFields(app, activity);
 
-		OsmandApplication app = activity.getApp();
 		List<ShareItem> items = ShareItem.getNativeShareItems();
 		ChooserAction[] actions = new ChooserAction[items.size()];
 
@@ -134,7 +158,7 @@ public class ShareMenu extends BaseMenuController {
 					intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
 			actions[i] = new ChooserAction.Builder(Icon.createWithResource(app, item.getIconId()),
-					activity.getString(item.getTitleId()), pendingIntent).build();
+					app.getString(item.getTitleId()), pendingIntent).build();
 		}
 
 		Intent sendIntent = new Intent(Intent.ACTION_SEND);
@@ -144,18 +168,18 @@ public class ShareMenu extends BaseMenuController {
 
 		Intent shareIntent = Intent.createChooser(sendIntent, null);
 		shareIntent.putExtra(Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS, actions);
-		AndroidUtils.startActivityIfSafe(activity.getApp(), sendIntent, shareIntent);
+		AndroidUtils.startActivityIfSafe(app, sendIntent, shareIntent);
 	}
 
-	private void setupSharingFields(@NonNull MapActivity activity) {
+	private void setupSharingFields(OsmandApplication app, @Nullable MapActivity activity) {
 		StringBuilder builder = new StringBuilder();
 		if (!Algorithms.isEmpty(title)) {
 			builder.append(title).append("\n");
 		}
-		if (!Algorithms.isEmpty(address) && !address.equals(title) && !address.equals(activity.getString(R.string.no_address_found))) {
+		if (!Algorithms.isEmpty(address) && !address.equals(title) && !address.equals(app.getString(R.string.no_address_found))) {
 			builder.append(address).append("\n");
 		}
-		builder.append(activity.getString(R.string.shared_string_location)).append(": ");
+		builder.append(app.getString(R.string.shared_string_location)).append(": ");
 		if (TextUtilsCompat.getLayoutDirectionFromLocale(Locale.getDefault()) == ViewCompat.LAYOUT_DIRECTION_RTL) {
 			builder.append("\n");
 		}
@@ -164,7 +188,12 @@ public class ShareMenu extends BaseMenuController {
 		try {
 			double latVal = latLon.getLatitude();
 			double lonVal = latLon.getLongitude();
-			int zoom = activity.getMapView().getZoom();
+			int zoom;
+			if (activity != null) {
+				zoom = activity.getMapView().getZoom();
+			} else {
+				zoom = app.getSettings().getLastKnownMapZoom();
+			}
 
 			Pair<String, String> formattedLatLon = getFormattedShareLatLon(latLon);
 			String latStr = formattedLatLon.first;
@@ -185,7 +214,7 @@ public class ShareMenu extends BaseMenuController {
 		}
 		sms = builder.toString();
 
-		OsmandSettings settings = ((OsmandApplication) activity.getApplicationContext()).getSettings();
+		OsmandSettings settings = app.getSettings();
 		int format = settings.COORDINATES_FORMAT.get();
 		coordinates = OsmAndFormatter.getFormattedCoordinates(latLon.getLatitude(), latLon.getLongitude(), format, false);
 	}
@@ -238,10 +267,17 @@ public class ShareMenu extends BaseMenuController {
 				.path("map/poi/");
 
 		for (String key : params.getParams().keySet()) {
+			if ("pin".equals(key)) {
+				continue;
+			}
 			String value = params.getParams().get(key);
 			if (!Algorithms.isEmpty(value)) {
 				builder.appendQueryParameter(key, value);
 			}
+		}
+		String pinValue = params.getParams().get("pin");
+		if (!Algorithms.isEmpty(pinValue)) {
+			builder.appendQueryParameter("pin", pinValue);
 		}
 
 		if (!Algorithms.isEmpty(params.frag)) {
@@ -254,12 +290,14 @@ public class ShareMenu extends BaseMenuController {
 	public void saveMenu(@NonNull Bundle bundle) {
 		bundle.putSerializable(KEY_SHARE_MENU_LATLON, latLon);
 		bundle.putString(KEY_SHARE_MENU_POINT_TITLE, title);
+		bundle.putBoolean(KEY_SHARE_MENU_IS_FAVORITE, isFavorite);
 	}
 
 	@NonNull
 	public static ShareMenu restoreMenu(@NonNull Bundle bundle, @NonNull MapActivity activity) {
 		ShareMenu menu = new ShareMenu(activity);
 		menu.title = bundle.getString(KEY_SHARE_MENU_POINT_TITLE);
+		menu.isFavorite = bundle.getBoolean(KEY_SHARE_MENU_IS_FAVORITE);
 		menu.latLon = AndroidUtils.getSerializable(bundle, KEY_SHARE_MENU_LATLON, LatLon.class);
 		return menu;
 	}
@@ -291,7 +329,7 @@ public class ShareMenu extends BaseMenuController {
 	}
 
 	public static void copyToClipboardWithToast(@NonNull Context context, @NonNull String text,
-			boolean longToast) {
+	                                            boolean longToast) {
 		copyToClipboard(context, text);
 
 		String message = context.getString(R.string.copied_to_clipboard) + ":\n" + text;
@@ -308,7 +346,7 @@ public class ShareMenu extends BaseMenuController {
 		return false;
 	}
 
-	public static class NativeShareDialogBuilder{
+	public static class NativeShareDialogBuilder {
 
 		private List<ChooserAction> chooserActions = new ArrayList<>();
 		private File file = null;
@@ -320,10 +358,16 @@ public class ShareMenu extends BaseMenuController {
 		private boolean newTask = false;
 		private boolean newDocument = false;
 
-		public NativeShareDialogBuilder() {}
+		public NativeShareDialogBuilder() {
+		}
 
 		public NativeShareDialogBuilder addFileWithSaveAction(@NonNull File file, @NonNull OsmandApplication app,
 		                                                      @NonNull Activity activity, boolean singleTop) {
+			return addFileWithSaveAction(file, app, activity, null, singleTop);
+		}
+
+		public NativeShareDialogBuilder addFileWithSaveAction(@NonNull File file, @NonNull OsmandApplication app,
+		                                                      @NonNull Activity activity, @Nullable String text, boolean singleTop) {
 			this.file = file;
 
 			if (Build.VERSION.SDK_INT >= 34) {
@@ -337,19 +381,32 @@ public class ShareMenu extends BaseMenuController {
 					intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 				}
 
-				ShareItem item = SAVE_AS_FILE;
-				intent.putExtra(KEY_SHARE_ACTION_ID, item.ordinal());
-				PendingIntent pendingIntent = PendingIntent.getActivity(
+				ShareItem saveFileItem = SAVE_AS_FILE;
+				intent.putExtra(KEY_SHARE_ACTION_ID, saveFileItem.ordinal());
+				PendingIntent savePendingIntent = PendingIntent.getActivity(
 						app,
-						0,
+						saveFileItem.ordinal(),
 						intent,
 						PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
 				);
-
-				ChooserAction saveToDeviceAction = new ChooserAction.Builder(Icon.createWithResource(app, item.getIconId()),
-						app.getString(item.getTitleId()), pendingIntent).build();
-
+				ChooserAction saveToDeviceAction = new ChooserAction.Builder(Icon.createWithResource(app, saveFileItem.getIconId()),
+						app.getString(saveFileItem.getTitleId()), savePendingIntent).build();
 				chooserActions.add(saveToDeviceAction);
+
+				if (!Algorithms.isEmpty(text)) {
+					intent.putExtra(KEY_SHARE_LIST, text);
+					ShareItem copyListItem = COPY_LIST;
+					intent.putExtra(KEY_SHARE_ACTION_ID, copyListItem.ordinal());
+					PendingIntent copyListPendingIntent = PendingIntent.getActivity(
+							app,
+							copyListItem.ordinal(),
+							intent,
+							PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+					);
+					ChooserAction copyListActionAction = new ChooserAction.Builder(Icon.createWithResource(app, copyListItem.getIconId()),
+							app.getString(copyListItem.getTitleId()), copyListPendingIntent).build();
+					chooserActions.add(copyListActionAction);
+				}
 			}
 
 			return this;

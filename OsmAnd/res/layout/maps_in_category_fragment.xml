@@ -15,6 +15,7 @@
             android:background="?attr/pstsTabBackground"
             android:theme="?attr/toolbar_theme"
             android:padding="0dp" />
+
     </com.google.android.material.appbar.AppBarLayout>
 
     <include
@@ -24,7 +25,7 @@
     <include layout="@layout/progress_with_two_texts"/>
 
     <ExpandableListView
-        android:id="@android:id/list"
+        android:id="@+id/category_list"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_marginLeft="0dp"
@@ -36,4 +37,5 @@
         android:groupIndicator="@android:color/transparent"
         android:layout_marginStart="0dp"
         android:layout_marginEnd="0dp" />
+
 </LinearLayout>

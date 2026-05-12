@@ -158,8 +158,19 @@ public class AmenitySearcher {
 
     public List<Amenity> searchAmenities(SearchPoiTypeFilter filter, QuadRect rect, boolean includeTravel,
             Predicate<String> travelFileVisibility, ResultMatcher<Amenity> matcher) {
+        return searchAmenities(filter, rect, includeTravel, travelFileVisibility, matcher, null);
+    }
+
+    public List<Amenity> searchWorldMapAmenities(SearchPoiTypeFilter filter, QuadRect rect, boolean includeTravel,
+            Predicate<String> travelFileVisibility, ResultMatcher<Amenity> matcher) {
+        return searchAmenities(filter, rect, includeTravel, travelFileVisibility, matcher, AmenityIndexRepository::isWorldMap);
+    }
+
+    private List<Amenity> searchAmenities(SearchPoiTypeFilter filter, QuadRect rect, boolean includeTravel,
+            Predicate<String> travelFileVisibility, ResultMatcher<Amenity> matcher,
+            Predicate<AmenityIndexRepository> repositoryFilter) {
         return searchAmenities(filter, null, rect.top, rect.left, rect.bottom, rect.right,
-                -1, includeTravel, travelFileVisibility, matcher);
+                -1, includeTravel, travelFileVisibility, matcher, repositoryFilter, null, -1);
     }
 
     public List<Amenity> searchAmenities(BinaryMapIndexReader.SearchPoiTypeFilter filter,
@@ -168,7 +179,19 @@ public class AmenitySearcher {
                                          double rightLongitude, int zoom, boolean includeTravel,
                                          Predicate<String> travelFileVisibility,
                                          ResultMatcher<Amenity> matcher) {
+        return searchAmenities(filter, additionalFilter, topLatitude, leftLongitude, bottomLatitude, rightLongitude,
+                zoom, includeTravel, travelFileVisibility, matcher, null, null, -1);
+    }
 
+    public List<Amenity> searchAmenities(BinaryMapIndexReader.SearchPoiTypeFilter filter,
+                                         BinaryMapIndexReader.SearchPoiAdditionalFilter additionalFilter,
+                                         double topLatitude, double leftLongitude, double bottomLatitude,
+                                         double rightLongitude, int zoom, boolean includeTravel,
+                                         Predicate<String> travelFileVisibility,
+                                         ResultMatcher<Amenity> matcher,
+                                         Predicate<AmenityIndexRepository> repositoryFilter,
+                                         Comparator<Amenity> comparator,
+                                         int searchResultsLimit) {
         Set<Long> closedAmenities = new HashSet<>();
         List<Amenity> actualAmenities = new ArrayList<>();
 
@@ -176,6 +199,7 @@ public class AmenitySearcher {
         if (isEmpty && additionalFilter != null) {
             filter = null;
         }
+        PriorityQueue<Amenity> priorityQueue = comparator != null ? new PriorityQueue<>(searchResultsLimit, comparator) : null;
         if (!isEmpty || additionalFilter != null) {
             int top31 = MapUtils.get31TileNumberY(topLatitude);
             int left31 = MapUtils.get31TileNumberX(leftLongitude);
@@ -188,10 +212,11 @@ public class AmenitySearcher {
                 if (matcher != null && matcher.isCancelled()) {
                     break;
                 }
-                if (repo.checkContainsInt(top31, left31, bottom31, right31)) {
+                if ((repositoryFilter == null || repositoryFilter.test(repo))
+                        && repo.checkContainsInt(top31, left31, bottom31, right31)) {
                     List<Amenity> foundAmenities = repo.searchAmenities(top31, left31, bottom31, right31,
-                            zoom, filter, additionalFilter, matcher);
-                    if (foundAmenities != null) {
+                            zoom, filter, additionalFilter, matcher, priorityQueue, searchResultsLimit);
+                    if (foundAmenities != null && priorityQueue == null) {
                         for (Amenity amenity : foundAmenities) {
                             Long id = amenity.getId();
                             if (amenity.isClosed()) {
@@ -203,6 +228,19 @@ public class AmenitySearcher {
                     }
                 }
             }
+        }
+        if (priorityQueue != null) {
+            actualAmenities = new ArrayList<>(priorityQueue.size());
+            while (!priorityQueue.isEmpty()) {
+                Amenity am = priorityQueue.poll();
+                Long id = am.getId();
+                if (am.isClosed()) {
+                    closedAmenities.add(id);
+                } else if (!closedAmenities.contains(id)) {
+                    actualAmenities.add(am);
+                }
+            }
+            Collections.reverse(actualAmenities);
         }
 
         return actualAmenities;
@@ -224,9 +262,16 @@ public class AmenitySearcher {
                 completeGeometry(detailsObject, detailsObject.getObjects().get(0));
                 return detailsObject;
             }
+            BaseDetailsObject searched = null;
             if (!detailsObject.getObjects().isEmpty()) {
                 Object obj = detailsObject.getObjects().get(0);
-                return searchDetailedObject(obj, settings);
+                searched = searchDetailedObject(obj, settings);
+            }
+            if (searched != null) {
+                return searched;
+            } else if (detailsObject.isObjectCombined()) {
+                completeGeometry(detailsObject, detailsObject.getObjects().get(0));
+                return detailsObject;
             }
         }
         BaseDetailsObject detailsObject = null;
@@ -414,6 +459,74 @@ public class AmenitySearcher {
             }
         }
         return false;
+    }
+
+    public List<Amenity> mergeAmenities(List<Amenity> amenities, Settings settings) {
+        if (amenities == null || amenities.size() < 2) {
+            return amenities;
+        }
+        String lang = settings.language.get();
+        List<Amenity> result = new ArrayList<>(amenities.size());
+        Map<Long, Amenity> osmMap = new HashMap<>(amenities.size());
+        Map<String, Amenity> wikiMap = new HashMap<>(amenities.size());
+        IdentityHashMap<Amenity, Amenity> redirects = new IdentityHashMap<>();
+
+        for (Amenity amenity : amenities) {
+            if (amenity.isRouteTrack()) {
+                result.add(amenity);
+                continue;
+            }
+            Long osmId = amenity.getOsmId();
+            osmId = (osmId != null && osmId < 0) ? null : osmId;
+
+            String wikidata = amenity.getWikidata();
+            wikidata = Algorithms.isEmpty(wikidata) ? null : wikidata;
+
+            Amenity byOsm = resolveRedirect(osmId != null ? osmMap.get(osmId) : null, redirects);
+            Amenity byWiki = resolveRedirect(wikidata != null ? wikiMap.get(wikidata) : null, redirects);
+
+            if (byOsm == null && byWiki == null) {
+                result.add(amenity);
+                if (osmId != null) {
+                    osmMap.put(osmId, amenity);
+                }
+                if (wikidata != null) {
+                    wikiMap.put(wikidata, amenity);
+                }
+
+            } else {
+                Amenity target = (byOsm != null) ? byOsm : byWiki;
+                if (byOsm != null && byWiki != null && byOsm != byWiki) {
+                    BaseDetailsObject.mergeAmenityData(byOsm, byWiki, lang, false);
+                    redirects.put(byWiki, byOsm);
+                }
+                BaseDetailsObject.mergeAmenityData(target, amenity, lang, false);
+
+                if (osmId != null) {
+                    osmMap.put(osmId, target);
+                }
+                if (wikidata != null) {
+                    wikiMap.put(wikidata, target);
+                }
+            }
+        }
+        if (redirects.isEmpty()) {
+            return result;
+        }
+        List<Amenity> compact = new ArrayList<>(result.size() - redirects.size());
+        for (Amenity a : result) {
+            if (!redirects.containsKey(a)) {
+                compact.add(a);
+            }
+        }
+        return compact;
+    }
+
+    private Amenity resolveRedirect(Amenity amenity, IdentityHashMap<Amenity, Amenity> redirects) {
+        while (amenity != null && redirects.containsKey(amenity)) {
+            amenity = redirects.get(amenity);
+        }
+        return amenity;
     }
 
     public void addAmenityRepository(String fileName, AmenityIndexRepository repository) {

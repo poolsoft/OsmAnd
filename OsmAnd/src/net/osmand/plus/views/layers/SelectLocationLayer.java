@@ -3,7 +3,6 @@ package net.osmand.plus.views.layers;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Paint.Align;
@@ -19,11 +18,14 @@ import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
 import net.osmand.plus.base.containers.ShiftedBitmap;
 import net.osmand.plus.dialogs.selectlocation.SelectLocationController;
+import net.osmand.plus.utils.UiUtilities;
 import net.osmand.plus.views.OsmandMapTileView;
 import net.osmand.plus.views.PointImageDrawable;
 import net.osmand.plus.views.layers.base.OsmandMapLayer;
 
 public class SelectLocationLayer extends OsmandMapLayer {
+
+	private static final float CAPTION_TEXT_SIZE = 18f;
 
 	private final Paint bitmapPaint;
 	private final Paint mTextPaint;
@@ -47,8 +49,8 @@ public class SelectLocationLayer extends OsmandMapLayer {
 	@Override
 	public void initLayer(@NonNull OsmandMapTileView view) {
 		super.initLayer(view);
-		defaultIconDay = BitmapFactory.decodeResource(view.getResources(), R.drawable.map_ruler_center_day);
-		defaultIconNight = BitmapFactory.decodeResource(view.getResources(), R.drawable.map_ruler_center_night);
+		defaultIconDay = UiUtilities.decodeResource(view.getResources(), R.drawable.map_ruler_center_day);
+		defaultIconNight = UiUtilities.decodeResource(view.getResources(), R.drawable.map_ruler_center_night);
 	}
 
 	@Override
@@ -87,8 +89,9 @@ public class SelectLocationLayer extends OsmandMapLayer {
 	}
 
 	private void updateTextSize() {
-		mTextPaint.setTextSize(18f * Resources.getSystem().getDisplayMetrics().scaledDensity
-				* getApplication().getOsmandMap().getCarDensityScaleCoef());
+		float density = Resources.getSystem().getDisplayMetrics().density;
+		float textSize = CAPTION_TEXT_SIZE * textScale * density;
+		mTextPaint.setTextSize(textSize);
 	}
 
 	@Override

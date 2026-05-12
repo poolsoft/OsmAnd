@@ -319,7 +319,6 @@
     <string name="poi_traffic_calming_choker">Lämmataja</string>
     <string name="poi_traffic_signals">Stopptuli</string>
     <string name="poi_car_repair">Autoremont</string>
-    <string name="poi_service_tyres">Rehvid;Rehv</string>
     <string name="poi_vehicle_inspection">Sõidukite tehnoülevaatus</string>
     <string name="poi_car_wash">Autopesula</string>
     <string name="poi_fuel">Tankla; Bensiinijaam</string>
@@ -671,7 +670,7 @@
     <string name="poi_horse_racing">Traavivõistlused</string>
     <string name="poi_ice_skating">Uisutamine</string>
     <string name="poi_ice_stock">Jäävaru</string>
-    <string name="poi_korfbal">Korfpall</string>
+    <string name="poi_korfball">Korfpall</string>
     <string name="poi_orienteering">Orienteerumine</string>
     <string name="poi_paddle_tennis">Mõlatennis</string>
     <string name="poi_paragliding">Paraliuglemine</string>
@@ -912,7 +911,7 @@
     <string name="poi_craft_stand_builder">Messibokside ehitaja</string>
     <string name="poi_craft_stonemason">Kiviraidur</string>
     <string name="poi_craft_sun_protection">Päikesekaitse käsitöö</string>
-    <string name="poi_craft_sweep">Korstnapühkija</string>
+    <string name="poi_craft_chimney_sweeper">Korstnapühkija</string>
     <string name="poi_craft_tailor">Meesteriiete rätsep</string>
     <string name="poi_craft_tiler">Plaatija</string>
     <string name="poi_craft_tinsmith">Plekksepp</string>
@@ -1348,7 +1347,7 @@
     <string name="poi_bicycle_parking_anchors">Ankrud</string>
     <string name="poi_services">Teeninduspiirkond</string>
     <string name="poi_mini_roundabout">Väike ringristmik</string>
-    <string name="poi_railway_crossing">Raudtee ülesõit</string>
+    <string name="poi_railway_crossing">Raudteeülesõit</string>
     <string name="poi_railway_level_crossing">Samatasandiline raudteeülesõit</string>
     <string name="poi_bird_hide">Linnuvaatlushoone</string>
     <string name="poi_horse_riding">Ratsutamine</string>
@@ -1894,7 +1893,7 @@
     <string name="poi_route_light_rail_ref">Kergraudtee</string>
     <string name="poi_route_monorail_ref">Monorelss</string>
     <string name="poi_route_funicular_ref">Köisraudtee</string>
-    <string name="poi_route_railway_ref">Raudtee marsruut</string>
+    <string name="poi_route_railway_ref">Raudteemarsruut</string>
     <string name="poi_historic_yes">Ajalooline objekt</string>
     <string name="poi_surveillance_yes">Valvetehnika: jah</string>
     <string name="poi_service_bicycle_retail_yes">Jaemüük;Jalgrataste jaemüük;Rataste müük</string>
@@ -1921,7 +1920,6 @@
     <string name="poi_training_art">Koolitus: kunst</string>
     <string name="poi_training_cooking">Koolitus: toiduvalmistamine</string>
     <string name="poi_training_computer">Koolitus: arvuti</string>
-    <string name="poi_training_yoga">Koolitus: jooga</string>
     <string name="poi_training_martial_art">Koolitus: võitluskunst</string>
     <string name="poi_training_aviation">Koolitus: lennundus</string>
     <string name="poi_training_hairdressing">Koolitus: juuksur</string>
@@ -2940,7 +2938,6 @@
     <string name="poi_cuisine_yogurt">Jogurt</string>
     <string name="poi_cuisine_gyros">Güros</string>
     <string name="poi_cuisine_empanada">Empanada</string>
-    <string name="poi_cuisine_crepes">Krepid</string>
     <string name="poi_cuisine_yakiniku">Yakiniku</string>
     <string name="poi_cuisine_suki">Suki</string>
     <string name="poi_cuisine_udon">Udon</string>
@@ -4989,7 +4986,6 @@
     <string name="poi_consulate">Konsulaat</string>
     <string name="poi_aerodrome_type_airfield">Lennuväli</string>
     <string name="poi_hazard_landslide">Ohutegur: maalihe</string>
-    <string name="poi_hazard_additional_yes">Oht</string>
     <string name="poi_hazard_falling_rocks">Langevad kivid</string>
     <string name="poi_hazard_contamination">Saastumine</string>
     <string name="poi_hazard_yes">Oht</string>

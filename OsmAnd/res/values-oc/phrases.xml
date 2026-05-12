@@ -272,7 +272,6 @@
     <string name="poi_traffic_calming_choker">Restrechiment d’alentiment</string>
     <string name="poi_traffic_signals">Semafòr (fuòcs de circulacion)</string>
     <string name="poi_car_repair">Reparacion automobila</string>
-    <string name="poi_service_tyres">Gomista - Pneumatics</string>
     <string name="poi_vehicle_inspection">Contròla automobil</string>
     <string name="poi_car_wash">Lavatge automobil</string>
     <string name="poi_fuel">Pompa de gasolina, Estacion servici, Recargament</string>
@@ -652,7 +651,7 @@
     <string name="poi_bookmaker">Escomessas (Bookmaker)</string>
     <string name="poi_tax_advisor">Conselhier fiscau</string>
     <string name="poi_ice_stock">Icestock ( palets sus glaç)</string>
-    <string name="poi_korfbal">Corfbòl (basquet olandés)</string>
+    <string name="poi_korfball">Corfbòl (basquet olandés)</string>
     <string name="poi_sport_motor">Espòrt automobile</string>
     <string name="poi_sport_multi">Multi Espòrt</string>
     <string name="poi_orienteering">Corsa d’orientacion</string>
@@ -1250,7 +1249,7 @@
     <string name="poi_craft_scaffolder">Estatgieras</string>
     <string name="poi_craft_sculptor">Escultor</string>
     <string name="poi_craft_shoemaker">Sabatier</string>
-    <string name="poi_craft_sweep">Rasclaire de chaminèa</string>
+    <string name="poi_craft_chimney_sweeper">Rasclaire de chaminèa</string>
     <string name="poi_craft_watchmaker">Relotgier</string>
     <string name="poi_craft_window_construction">Construccion de fenèstras</string>
     <string name="poi_craft_computer">Reparacion d\'ordinators</string>

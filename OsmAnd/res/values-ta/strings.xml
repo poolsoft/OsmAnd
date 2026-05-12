@@ -2704,7 +2704,6 @@
     <string name="backup_delete_old_data">பழைய பதிப்புகளை அகற்று</string>
     <string name="logout_from_osmand_cloud_decsr">வெளியேறு?\n தரவை காப்புப் பிரதி எடுக்க அல்லது மீட்டமைக்க நீங்கள் மீண்டும் உள்நுழைய வேண்டும்.</string>
     <string name="are_you_sure">நீங்கள் உறுதியாக இருக்கிறீர்களா?</string>
-    <string name="backup_deleting_all_data">எல்லா தரவையும் நீக்குதல்…</string>
     <string name="backup_delete_all_data_warning">பதிப்பு வரலாறு உட்பட ஆச்மண்ட் கிளவுட்டில் முன்பு பதிவேற்றப்பட்ட எல்லா தரவையும் நீக்க உள்ளீர்கள்.\n\n நீக்கப்பட்ட தரவை நீங்கள் மீட்டெடுக்க முடியாது.</string>
     <string name="backup_delete_old_data_warning">முன்னர் ஏற்றப்பட்ட தரவுகளுக்கான மாற்ற வரலாற்றை நீக்க உள்ளீர்கள்.\n\n தரவின் தற்போதைய பதிப்பு சேவையகத்தில் சேமிக்கப்படும், ஆனால் நீங்கள் முன்பு செய்யப்பட்ட மாற்றங்களுக்கு திரும்ப முடியாது.</string>
     <string name="delete_all_confirmation">ஆம், அனைத்தையும் நீக்கு</string>
@@ -3447,7 +3446,6 @@
     <string name="app_mode_baby_transport">குழந்தை போக்குவரத்து</string>
     <string name="release_4_6">And ஆண்ட்ராய்டு Auto: 3D பயன்முறையைச் சேர்க்கப்பட்டது\n\n • தடங்கள்: அறிமுகப்படுத்தப்பட்ட வடிப்பான்கள் மற்றும் அறிவுள்ள கோப்புறைகள், பெரிய கோப்புகளுக்கான உகந்த நினைவகம்\n\n • அனைத்து விட்செட்டுகளுக்கும் இடமளிக்க மேம்பட்ட மேல் மற்றும் கீழ் விட்செட் பேனல்கள்\n\n Local மேம்பட்ட உள்ளக வள மேலாண்மை\n\n Conterge வெளிப்புற கட்டுப்படுத்திகளுக்கான தனிப்பயனாக்கக்கூடிய பொத்தான் மேப்பிங்\n\n • புதிய விட்செட்டுகள்: \"கிளைடு விகிதம்\" மற்றும் \"சூரிய நிலை\"\n\n • OSMand Cloud: இப்போது நீக்கப்பட்ட கோப்புகளை அணுகவும்\n\n St புதிய சமச்சீர் சாய்வுடன் சாய்வு பயன்முறையில் மேம்பட்ட டிராக் வண்ணம்\n\n Fact வெளிப்படையான நிலை பட்டியுடன் தீர்க்கப்பட்ட சிக்கல்கள்\n\n Ant ANT+ வெப்பநிலை விட்செட்டுக்கு உதவி சேர்க்கப்பட்டது\n\n \"கிடைக்கக்கூடிய ரேம்\" விட்செட்டை அறிமுகப்படுத்தியது</string>
     <string name="track_filter_range_selected_format">%s - %s, %s</string>
-    <string name="widget_available_ram_desc">OSMand க்கு ஒதுக்கப்பட்ட நினைவகம் கிடைக்கும் காட்சிகள்.</string>
     <string name="no_poi_for_category">போய் கண்டுபிடிக்கப்படவில்லை</string>
     <string name="number_of_tracks">%1$s தடங்கள்</string>
     <string name="shared_string_not_checked">சரிபார்க்கப்படவில்லை</string>
@@ -3523,7 +3521,6 @@
     <string name="on_hold_since">%1$s முதல் நிறுத்தி வைக்கவும்</string>
     <string name="backup_setup">காப்புப்பிரதியை அமைக்கவும்</string>
     <string name="backup_do_not_have_any">உங்களிடம் இன்னும் நிகழ்நிலை காப்புப்பிரதி இல்லை</string>
-    <string name="backup_deleted_all_data">எல்லா தரவையும் நீக்கியது.</string>
     <string name="hillshade_slope">இல்சேட், சாய்வு</string>
     <string name="cancel_anytime_in_gplay">Google Play இல் எப்போது வேண்டுமானாலும் ரத்துசெய்.</string>
     <string name="continue_with">%1$s உடன் தொடரவும்</string>
@@ -4944,7 +4941,6 @@
     <string name="read_more">மேலும் வாசிக்க</string>
     <string name="world_map_download_descr">உலக பேச்மேப் (முழு உலகையும் குறைந்த சூம் மட்டத்தில் உள்ளடக்கியது) காணவில்லை அல்லது காலாவதியானது. உலகளாவிய கண்ணோட்டத்திற்கு அதைப் பதிவிறக்குவதைக் கவனியுங்கள்.</string>
     <string name="simulate_initial_startup_descr">முதல் பயன்பாட்டு தொடக்கத்தைக் குறிக்கும் கொடியை அமைக்கிறது, மற்ற எல்லா அமைப்புகளையும் மாற்றாமல் வைத்திருக்கிறது.</string>
-    <string name="widget_available_ram">கிடைக்கும் ரேம்</string>
     <string name="about_osmand">ஆச்மண்ட் பற்றி</string>
     <string name="send_crash_log_descr">செயலிழப்புகள் பற்றிய தகவல்கள் மட்டுமே உள்ளன</string>
     <string name="ant_write_to_gpx">கண்காணிக்க தரவை எழுதுங்கள்</string>
@@ -5092,7 +5088,6 @@
     <string name="auto_follow_route_navigation">ஆட்டோ-சென்டர் நாவ் மட்டுமே</string>
     <string name="switch_folder">கோப்புறையை மாற்றவும்</string>
     <string name="measure_distance_item">தூரத்தை அளவிடவும்</string>
-    <string name="shared_string_all_world">எல்லா உலகமும்</string>
     <string name="map_tile_source_descr">நிகழ்நிலை அல்லது தற்காலிக சேமிக்கப்பட்ட வரைபட ஓடுகளின் மூலத்தைத் தேர்வுசெய்க.</string>
     <string name="building_number">கட்டிட எண்</string>
     <string name="icon_group_education">கல்வி</string>

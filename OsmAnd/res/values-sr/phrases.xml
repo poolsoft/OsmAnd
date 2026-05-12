@@ -219,7 +219,6 @@
     <string name="poi_traffic_calming_island">Саобраћајно острво</string>
     <string name="poi_traffic_signals">Стоп светло</string>
     <string name="poi_car_repair">Поправка кола</string>
-    <string name="poi_service_tyres">Гуме;Гума;Гуме</string>
     <string name="poi_vehicle_inspection">Преглед возила</string>
     <string name="poi_car_wash">Прање кола</string>
     <string name="poi_fuel">Бензинска пумпа;Пумпа за плин;Станица за пуњење</string>
@@ -538,7 +537,7 @@
     <string name="poi_hockey">Хокеј</string>
     <string name="poi_horse_racing">Трке коња</string>
     <string name="poi_ice_skating">Скијање на леду</string>
-    <string name="poi_korfbal">Корфбол</string>
+    <string name="poi_korfball">Корфбол</string>
     <string name="poi_sport_motor">Мото трке</string>
     <string name="poi_sport_multi">Више спортова</string>
     <string name="poi_orienteering">Оријентиринг</string>
@@ -1636,7 +1635,7 @@
     <string name="poi_craft_stand_builder">Конструктор штандова</string>
     <string name="poi_craft_stonemason">Каменорезаз</string>
     <string name="poi_craft_sun_protection">Конструктор сунцобрана</string>
-    <string name="poi_craft_sweep">Чистач</string>
+    <string name="poi_craft_chimney_sweeper">Чистач</string>
     <string name="poi_craft_tiler">Паркетар</string>
     <string name="poi_craft_tinsmith">Ковач посуђа</string>
     <string name="poi_craft_upholsterer">Тапетар</string>
@@ -2038,7 +2037,6 @@
     <string name="poi_training_art">Тренинг: уметност</string>
     <string name="poi_training_cooking">Тренинг: кување</string>
     <string name="poi_training_computer">Тренинг: рачунар</string>
-    <string name="poi_training_yoga">Тренинг: јога</string>
     <string name="poi_training_martial_art">Тренинг: борилачке вештине</string>
     <string name="poi_training_aviation">Тренинг: авијација</string>
     <string name="poi_training_hairdressing">Тренинг: шишање</string>
@@ -2073,7 +2071,7 @@
     <string name="poi_office_camping">Камп канцеларија</string>
     <string name="poi_model_aerodrome">Модел аеродрома</string>
     <string name="poi_guide">Канцеларија водича</string>
-    <string name="poi_quango">КАНВО</string>
+    <string name="poi_quango">Кванго</string>
     <string name="poi_consulting">Саветодавна канцеларија</string>
     <string name="poi_cooperative">Кооперативна канцеларија</string>
     <string name="poi_office_forestry">Шумарска канцеларија</string>
@@ -2343,7 +2341,7 @@
     <string name="poi_fitness_centre">Теретана</string>
     <string name="poi_fitness">Фитнес</string>
     <string name="poi_car_wash_yes">Да; Прање кола</string>
-    <string name="poi_cuisine">Тип кухиње</string>
+    <string name="poi_cuisine">Кухиња</string>
     <string name="poi_cuisine_pizza">Пице</string>
     <string name="poi_cuisine_burger">Пљескавице</string>
     <string name="poi_cuisine_coffee_shop">Кафа</string>
@@ -2358,7 +2356,7 @@
     <string name="poi_cuisine_noodle">Нудле</string>
     <string name="poi_cuisine_donut">Крофне</string>
     <string name="poi_cuisine_ramen">Рамен</string>
-    <string name="poi_cuisine_crepe">Палачинке</string>
+    <string name="poi_cuisine_crepe">Палачинка;Палачинке</string>
     <string name="poi_cuisine_breakfast">Доручак</string>
     <string name="poi_cuisine_steak">Шницле</string>
     <string name="poi_cuisine_tapas">Тапас</string>
@@ -2389,7 +2387,6 @@
     <string name="poi_cuisine_souvlaki">Сувлаки</string>
     <string name="poi_cuisine_yogurt">Јогурт</string>
     <string name="poi_cuisine_gyros">Гирос</string>
-    <string name="poi_cuisine_crepes">Палачинке</string>
     <string name="poi_cuisine_yakiniku">Јакинику</string>
     <string name="poi_cuisine_suki">Суки</string>
     <string name="poi_cuisine_udon">Удон</string>
@@ -3776,7 +3773,7 @@
     <string name="poi_video_no">Не</string>
     <string name="poi_video_yes">Да; Видео</string>
     <string name="poi_booth">Тип кабине</string>
-    <string name="poi_covered_booth">Кабина</string>
+    <string name="poi_covered_booth">Да</string>
     <string name="poi_sms_no">Не</string>
     <string name="poi_sms_yes">Да; СМС</string>
     <string name="poi_dive_centre">Ронилачки центар</string>
@@ -4006,9 +4003,9 @@
     <string name="poi_authentication_chip_card_no">Провера идентитета картицом са чипом: не</string>
     <string name="poi_authentication_phone_call_number">Телефонски број за проверу идентитета</string>
     <string name="poi_authentication_short_message_yes">Да</string>
-    <string name="poi_authentication_short_message_no">Провера идентитета SMS-ом: не</string>
-    <string name="poi_authentication_short_message_number">Број телефона SMS-а за проверу идентитета</string>
-    <string name="poi_authentication_short_message_text">Текст SMS поруке приликом провере идентитета</string>
+    <string name="poi_authentication_short_message_no">Ауторизација кратком поруком: не</string>
+    <string name="poi_authentication_short_message_number">Број кратке поруке који се користи за ауторизацију</string>
+    <string name="poi_authentication_short_message_text">Кратка порука која се користи за аутентификацију</string>
     <string name="poi_authentication_none_no">Провера идентитета није потребна: не</string>
     <string name="poi_authentication_none_yes">Да; Нема аутентификације</string>
     <string name="poi_permanent_camping_yes">Да; Трајно камповање</string>
@@ -4990,7 +4987,6 @@
     <string name="poi_aerodrome_type_airfield">Писта</string>
     <string name="poi_consulate">Конзулат</string>
     <string name="poi_hazard_landslide">Одрон</string>
-    <string name="poi_hazard_additional_yes">Опасност</string>
     <string name="poi_hazard_falling_rocks">Камење које пада</string>
     <string name="poi_hazard_contamination">Контаминација</string>
     <string name="poi_hazard_yes">Опасност</string>
@@ -5159,8 +5155,20 @@
     <string name="poi_route_activity_type_skiing">Скијашке руте</string>
     <string name="poi_sample_collection_filter">Прикупљање узорака</string>
     <string name="x">Екс (бивши Твитер)</string>
-    <string name="poi_sample_collection">Прикупљање узорака</string>
+    <string name="poi_sample_collection">Прикупљање узорака; Крв; Лабораторија; Тест</string>
     <string name="poi_sample_collection_yes">Да</string>
     <string name="poi_sample_collection_covid19">Ковид19</string>
     <string name="poi_sample_collection_blood">Крв</string>
+    <string name="poi_yoga">Јога</string>
+    <string name="poi_memorial_type">Тип споменика</string>
+    <string name="poi_covered_booth_filter">Кабина</string>
+    <string name="poi_rapids_filter">Нивои брзака</string>
+    <string name="poi_rapids_grade_0">0 (мирна вода)</string>
+    <string name="poi_rapids_grade_1">1 (лаки)</string>
+    <string name="poi_rapids_grade_2">2 (почетнички)</string>
+    <string name="poi_rapids_grade_3">3 (средњи)</string>
+    <string name="poi_rapids_grade_4">4 (напредни)</string>
+    <string name="poi_rapids_grade_5">5 (стручни)</string>
+    <string name="poi_rapids_grade_6">6 (екстремно)</string>
+    <string name="poi_rapids_grade_x">X (не може се кретати)</string>
 </resources>

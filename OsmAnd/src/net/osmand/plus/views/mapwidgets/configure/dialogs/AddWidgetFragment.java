@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -26,6 +27,7 @@ import net.osmand.aidl.AidlMapWidgetWrapper;
 import net.osmand.aidl.OsmandAidlApi;
 import net.osmand.plus.R;
 import net.osmand.plus.activities.MapActivity;
+import net.osmand.plus.base.BaseFullScreenFragment;
 import net.osmand.plus.chooseplan.ChoosePlanFragment;
 import net.osmand.plus.chooseplan.OsmAndFeature;
 import net.osmand.plus.helpers.AndroidUiHelper;
@@ -47,11 +49,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class AddWidgetFragment extends BaseWidgetFragment {
+public class AddWidgetFragment extends BaseFullScreenFragment {
 
 	public static final String TAG = AddWidgetFragment.class.getSimpleName();
 
-	private static final String KEY_APP_MODE = "app_mode";
 	private static final String KEY_SELECTED_WIDGETS_IDS = "selected_widgets_ids";
 	private static final String KEY_ALREADY_SELECTED_WIDGETS_IDS = "already_selected_widgets_ids";
 
@@ -61,10 +62,14 @@ public class AddWidgetFragment extends BaseWidgetFragment {
 
 	private View view;
 
-	@Nullable
+	public boolean getContentStatusBarNightMode() {
+		return nightMode;
+	}
+
 	@Override
-	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-		updateNightMode();
+	public void onCreate(@Nullable Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
 		Bundle args = getArguments();
 		if (savedInstanceState != null) {
 			initFromBundle(savedInstanceState);
@@ -72,6 +77,12 @@ public class AddWidgetFragment extends BaseWidgetFragment {
 			initFromBundle(args);
 			selectWidgetByDefault();
 		}
+	}
+
+	@Nullable
+	@Override
+	public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+		updateNightMode();
 
 		view = inflate(R.layout.base_widget_fragment_layout, container, false);
 		AndroidUtils.addStatusBarPadding21v(requireMyActivity(), view);
@@ -101,15 +112,11 @@ public class AddWidgetFragment extends BaseWidgetFragment {
 	}
 
 	private void initFromBundle(@NonNull Bundle bundle) {
-		String appModeKey = bundle.getString(KEY_APP_MODE);
-		appMode = ApplicationMode.valueOfStringKey(appModeKey, app.getSettings().getApplicationMode());
-
 		widgetsDataHolder = new WidgetDataHolder(app, bundle);
 
 		if (bundle.containsKey(KEY_ALREADY_SELECTED_WIDGETS_IDS)) {
 			alreadySelectedWidgetsIds = (List<String>) AndroidUtils.getSerializable(bundle, KEY_ALREADY_SELECTED_WIDGETS_IDS, ArrayList.class);
 		}
-
 		if (bundle.containsKey(KEY_SELECTED_WIDGETS_IDS)) {
 			selectedWidgetsIds = (Map<Integer, String>) AndroidUtils.getSerializable(bundle, KEY_SELECTED_WIDGETS_IDS, TreeMap.class);
 		}
@@ -185,6 +192,12 @@ public class AddWidgetFragment extends BaseWidgetFragment {
 		}
 	}
 
+	private void addVerticalSpace(@NonNull ViewGroup container, int space) {
+		View spaceView = new View(getContext());
+		spaceView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, space));
+		container.addView(spaceView);
+	}
+
 	private void inflateAidlWidget(@NonNull AidlMapWidgetWrapper aidlWidgetData) {
 		ViewGroup container = view.findViewById(R.id.widgets_container);
 		LayoutInflater inflater = UiUtilities.getInflater(requireContext(), nightMode);
@@ -254,20 +267,12 @@ public class AddWidgetFragment extends BaseWidgetFragment {
 	@Override
 	public void onSaveInstanceState(@NonNull Bundle outState) {
 		super.onSaveInstanceState(outState);
-		outState.putString(KEY_APP_MODE, appMode.getStringKey());
 		outState.putSerializable(KEY_SELECTED_WIDGETS_IDS, (Serializable) selectedWidgetsIds);
 		outState.putSerializable(KEY_ALREADY_SELECTED_WIDGETS_IDS, (Serializable) alreadySelectedWidgetsIds);
-		widgetsDataHolder.saveState(outState);
-	}
 
-	@Override
-	public void onItemPurchased(String sku, boolean active) {
-		recreateFragment();
-	}
-
-	@Override
-	protected String getFragmentTag() {
-		return TAG;
+		if (widgetsDataHolder != null) {
+			widgetsDataHolder.saveState(outState);
+		}
 	}
 
 	public static void showGroupDialog(@NonNull FragmentManager manager,
@@ -277,7 +282,7 @@ public class AddWidgetFragment extends BaseWidgetFragment {
 	                                   @NonNull WidgetGroup widgetGroup,
 	                                   @Nullable List<String> alreadySelectedWidgetsIds) {
 		Bundle args = new Bundle();
-		args.putString(KEY_APP_MODE, appMode.getStringKey());
+		args.putString(APP_MODE_KEY, appMode.getStringKey());
 		args.putString(KEY_WIDGETS_PANEL_ID, widgetsPanel.name());
 		args.putString(KEY_GROUP_NAME, widgetGroup.name());
 		args.putSerializable(KEY_ALREADY_SELECTED_WIDGETS_IDS, (Serializable) alreadySelectedWidgetsIds);
@@ -287,9 +292,6 @@ public class AddWidgetFragment extends BaseWidgetFragment {
 		showInstance(manager, fragment);
 	}
 
-	/**
-	 * @see AddWidgetListener#showGroupDialog
-	 */
 	public static void showWidgetDialog(@NonNull FragmentManager manager,
 	                                    @Nullable Fragment target,
 	                                    @NonNull ApplicationMode appMode,
@@ -297,7 +299,7 @@ public class AddWidgetFragment extends BaseWidgetFragment {
 	                                    @NonNull WidgetType widgetType,
 	                                    @Nullable List<String> alreadySelectedWidgetsIds) {
 		Bundle args = new Bundle();
-		args.putString(KEY_APP_MODE, appMode.getStringKey());
+		args.putString(APP_MODE_KEY, appMode.getStringKey());
 		args.putString(KEY_WIDGETS_PANEL_ID, widgetsPanel.name());
 		args.putString(KEY_WIDGET_TYPE, widgetType.name());
 		args.putSerializable(KEY_ALREADY_SELECTED_WIDGETS_IDS, (Serializable) alreadySelectedWidgetsIds);
@@ -307,9 +309,6 @@ public class AddWidgetFragment extends BaseWidgetFragment {
 		showInstance(manager, fragment);
 	}
 
-	/**
-	 * @see AddWidgetListener#showGroupDialog
-	 */
 	public static void showExternalWidgetDialog(@NonNull FragmentManager manager,
 	                                            @Nullable Fragment target,
 	                                            @NonNull ApplicationMode appMode,
@@ -318,7 +317,7 @@ public class AddWidgetFragment extends BaseWidgetFragment {
 	                                            @NonNull String externalProviderPackage,
 	                                            @Nullable List<String> alreadySelectedWidgetsIds) {
 		Bundle args = new Bundle();
-		args.putString(KEY_APP_MODE, appMode.getStringKey());
+		args.putString(APP_MODE_KEY, appMode.getStringKey());
 		args.putString(KEY_WIDGETS_PANEL_ID, widgetsPanel.name());
 		args.putString(KEY_EXTERNAL_WIDGET_ID, widgetId);
 		args.putString(KEY_EXTERNAL_PROVIDER_PACKAGE, externalProviderPackage);

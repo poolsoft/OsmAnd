@@ -2,6 +2,7 @@ package net.osmand.plus.views.layers;
 
 import static net.osmand.plus.configmap.ConfigureMapMenu.CURRENT_TRACK_COLOR_ATTR;
 import static net.osmand.plus.configmap.ConfigureMapMenu.CURRENT_TRACK_WIDTH_ATTR;
+import static net.osmand.plus.track.GpxSplitType.NO_SPLIT;
 
 import android.content.Context;
 import android.graphics.*;
@@ -54,10 +55,12 @@ import net.osmand.plus.track.fragments.GpsFilterFragment;
 import net.osmand.plus.track.fragments.TrackAppearanceFragment;
 import net.osmand.plus.track.fragments.TrackMenuFragment;
 import net.osmand.plus.track.helpers.*;
+import net.osmand.plus.track.helpers.GpxDisplayHelper.GpxSplitParams;
 import net.osmand.plus.track.helpers.ParseGpxRouteTask.ParseGpxRouteListener;
 import net.osmand.plus.track.helpers.save.SaveGpxHelper;
 import net.osmand.plus.utils.AndroidUtils;
 import net.osmand.plus.utils.ColorUtilities;
+import net.osmand.plus.utils.FileUtils.RenameCallback;
 import net.osmand.plus.utils.NativeUtilities;
 import net.osmand.plus.utils.UiUtilities;
 import net.osmand.plus.views.OsmandMapTileView;
@@ -86,11 +89,13 @@ import net.osmand.shared.gpx.GpxDbHelper;
 import net.osmand.shared.gpx.primitives.TrkSegment;
 import net.osmand.shared.gpx.primitives.WptPt;
 import net.osmand.shared.io.KFile;
+import net.osmand.shared.palette.data.PaletteChangeEvent;
 import net.osmand.shared.routing.ColoringType;
 import net.osmand.util.Algorithms;
 import net.osmand.util.MapUtils;
 
 import org.apache.commons.logging.Log;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -98,13 +103,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IMoveObjectProvider, MapTextProvider<WptPt> {
+public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IMoveObjectProvider, MapTextProvider<WptPt>, RenameCallback {
 
 	private static final Log log = PlatformUtil.getLog(GPXLayer.class);
 
 	private static final int DEFAULT_WIDTH_MULTIPLIER = 7;
 	private static final int START_ZOOM = 7;
 	private static final int MAX_SUPPORTED_TRACK_WIDTH_DP = 48;
+	private static final long MANY_POINTS_VISIBLE_WARNING_THRESHOLD = 500_000L;
 
 	private Paint paint;
 	private Paint borderPaint;
@@ -140,6 +146,7 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 	private OsmandApplication app;
 	private OsmandSettings settings;
 	private GpxDbHelper gpxDbHelper;
+	private GpxDisplayHelper gpxDisplayHelper;
 	private MapMarkersHelper mapMarkersHelper;
 	private GpxSelectionHelper selectedGpxHelper;
 
@@ -148,7 +155,7 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 
 	private Map<SelectedGpxFile, Long> visibleGPXFilesMap = new HashMap<>();
 	private final Map<String, CachedTrack> segmentsCache = new ConcurrentHashMap<>();
-	private final Map<String, Set<TrkSegment>> renderedSegmentsCache = new HashMap<>();
+	private final Map<String, Set<TrkSegment>> renderedSegmentsCache = new ConcurrentHashMap<>();
 	private SelectedGpxFile tmpVisibleTrack;
 
 	private final List<WptPt> pointsCache = new ArrayList<>();
@@ -178,6 +185,7 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 	private net.osmand.core.jni.MapMarker highlightedPointMarker;
 	private LatLon highlightedPointLocationCached;
 	private long trackMarkersChangedTime;
+	private boolean manyPointsWarningShown;
 
 	private ContextMenuLayer contextMenuLayer;
 
@@ -208,6 +216,7 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 		app = view.getApplication();
 		settings = app.getSettings();
 		gpxDbHelper = app.getGpxDbHelper();
+		gpxDisplayHelper = app.getGpxDisplayHelper();
 		mapMarkersHelper = app.getMapMarkersHelper();
 		selectedGpxHelper = app.getSelectedGpxHelper();
 		osmandRenderer = app.getResourceManager().getRenderer().getRenderer();
@@ -314,7 +323,9 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 
 		Map<SelectedGpxFile, Long> visibleGPXFilesMap = new HashMap<>();
 		boolean pointsModified = false;
+		long pointsToDisplayCount = 0;
 		for (SelectedGpxFile selectedGpxFile : visibleGPXFiles) {
+			pointsToDisplayCount += selectedGpxFile.getPointsToDisplayCount();
 			Long pointsModifiedTime = this.visibleGPXFilesMap.get(selectedGpxFile);
 			long newPointsModifiedTime = selectedGpxFile.getPointsModifiedTime();
 			if (pointsModifiedTime == null || pointsModifiedTime != newPointsModifiedTime) {
@@ -323,6 +334,8 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 			visibleGPXFilesMap.put(selectedGpxFile, newPointsModifiedTime);
 		}
 		this.visibleGPXFilesMap = visibleGPXFilesMap;
+		showManyPointsVisibleWarningIfNeeded(pointsToDisplayCount);
+
 		boolean nightMode = settings != null && settings.isNightMode();
 		boolean nightModeChanged = this.nightMode != nightMode;
 		this.nightMode = nightMode;
@@ -356,8 +369,19 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 				textLayer.putData(this, pointsCache);
 			}
 		}
+		cleanupOldRenderedSegments(visibleGPXFiles);
+
 		setInvalidated(false);
 		mapActivityInvalidated = false;
+	}
+
+	public void onPaletteChanged(@NonNull PaletteChangeEvent event) {
+		if (event instanceof PaletteChangeEvent.Updated updated) {
+			String paletteName = updated.getItem().getId();
+			for (CachedTrack cachedTrack : segmentsCache.values()) {
+				cachedTrack.onPaletteUpdated(paletteName);
+			}
+		}
 	}
 
 	private boolean updateTmpVisibleTrack(@NonNull List<SelectedGpxFile> visibleGPXFiles) {
@@ -401,6 +425,13 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 			}
 		}
 		return null;
+	}
+
+	private void showManyPointsVisibleWarningIfNeeded(long total) {
+		if (!manyPointsWarningShown && total > MANY_POINTS_VISIBLE_WARNING_THRESHOLD) {
+			app.showToastMessage(R.string.gpx_too_many_points_visible_warning);
+			manyPointsWarningShown = true;
+		}
 	}
 
 	private boolean updatePaints(int color, String width, boolean routePoints, boolean currentTrack, DrawSettings drawSettings, RotatedTileBox tileBox) {
@@ -514,15 +545,15 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 	private void drawSelectedFilesSplits(@NonNull Canvas canvas, @NonNull RotatedTileBox tileBox,
 	                                     @NonNull List<SelectedGpxFile> selectedGPXFiles) {
 		if (tileBox.getZoom() >= START_ZOOM) {
-			// request to load
 			for (SelectedGpxFile selectedGpxFile : selectedGPXFiles) {
-				List<GpxDisplayGroup> groups = selectedGpxFile.getSplitGroups(app);
+				List<GpxDisplayGroup> groups = getSplitGroups(selectedGpxFile);
 				if (!Algorithms.isEmpty(groups)) {
 					GpxFile gpxFile = selectedGpxFile.getGpxFile();
 					KFile file = new KFile(gpxFile.getPath());
+					KFile dir = file.getParentFile();
 					boolean selected = isGpxFileSelected(gpxFile);
 					GpxDataItem gpxItem = gpxDbHelper.getItem(file);
-					GpxDirItem dirItem = gpxDbHelper.getGpxDirItem(file);
+					GpxDirItem dirItem = dir != null ? gpxDbHelper.getGpxDirItem(dir) : null;
 
 					int color = appearanceHelper.getTrackColor(gpxFile, cachedColor, gpxItem, dirItem, selected);
 					paintInnerRect.setColor(color);
@@ -550,9 +581,10 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 				GpxFile gpxFile = selectedGpxFile.getGpxFile();
 				String path = gpxFile.getPath();
 				KFile file = new KFile(path);
+				KFile dir = file.getParentFile();
 				boolean selected = isGpxFileSelected(gpxFile);
 				GpxDataItem gpxItem = gpxDbHelper.getItem(file);
-				GpxDirItem dirItem = gpxDbHelper.getGpxDirItem(file);
+				GpxDirItem dirItem = dir != null ? gpxDbHelper.getGpxDirItem(dir) : null;
 
 				Gpx3DLinePositionType trackLinePosition = appearanceHelper.getTrackLinePositionType(gpxFile, gpxItem, dirItem, selected);
 				Gpx3DLinePositionType cachedTrackLinePositionType = cachedTracksWith3dLinePosition.get(path);
@@ -585,7 +617,7 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 						}
 					}
 				}
-				List<GpxDisplayGroup> groups = selectedGpxFile.getSplitGroups(app);
+				List<GpxDisplayGroup> groups = getSplitGroups(selectedGpxFile);
 				if (!Algorithms.isEmpty(groups)) {
 					List<GpxDisplayItem> items = groups.get(0).getDisplayItems();
 					for (GpxDisplayItem item : items) {
@@ -611,9 +643,10 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 
 				GpxFile gpxFile = selectedGpxFile.getGpxFile();
 				KFile file = new KFile(gpxFile.getPath());
+				KFile dir = file.getParentFile();
 				boolean selected = isGpxFileSelected(gpxFile);
 				GpxDataItem gpxItem = gpxDbHelper.getItem(file);
-				GpxDirItem dirItem = gpxDbHelper.getGpxDirItem(file);
+				GpxDirItem dirItem = dir != null ? gpxDbHelper.getGpxDirItem(dir) : null;
 
 				Track3DStyle track3DStyle = appearanceHelper.getTrack3DStyle(gpxFile, gpxItem, dirItem, selected);
 				Gpx3DLinePositionType trackLinePosition = track3DStyle.getLinePositionType();
@@ -634,7 +667,7 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 						}
 					}
 				}
-				List<GpxDisplayGroup> groups = selectedGpxFile.getSplitGroups(app);
+				List<GpxDisplayGroup> groups = getSplitGroups(selectedGpxFile);
 				if (!Algorithms.isEmpty(groups)) {
 					int trackColor = appearanceHelper.getTrackColor(gpxFile, cachedColor, gpxItem, dirItem, selected);
 					List<GpxDisplayItem> items = groups.get(0).getDisplayItems();
@@ -657,7 +690,7 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 					}
 				}
 				if (!startFinishPoints.isEmpty() || !splitLabels.isEmpty()) {
-					GpxAdditionalIconsProvider additionalIconsProvider = new GpxAdditionalIconsProvider(getPointsOrder() - selectedGPXFiles.size() - 101, tileBox.getDensity(),
+					GpxAdditionalIconsProvider additionalIconsProvider = new GpxAdditionalIconsProvider(getPointsOrder() - selectedGPXFiles.size() - 800, tileBox.getDensity(),
 							startFinishPoints, splitLabels,
 							NativeUtilities.createSkImageFromBitmap(startPointImage),
 							NativeUtilities.createSkImageFromBitmap(finishPointImage),
@@ -673,6 +706,12 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 			splitLabelsCountCached = 0;
 			clearSelectedFilesSplits();
 		}
+	}
+
+	@Nullable
+	private List<GpxDisplayGroup> getSplitGroups(@NonNull SelectedGpxFile selectedGpxFile) {
+		GpxSplitParams params = gpxDisplayHelper.getGpxSplitParams(selectedGpxFile);
+		return params != null && params.splitType() != NO_SPLIT ? selectedGpxFile.getSplitGroups(app) : null;
 	}
 
 	private boolean updateBitmaps() {
@@ -768,9 +807,10 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 			for (SelectedGpxFile selectedGpxFile : selectedGPXFiles) {
 				GpxFile gpxFile = selectedGpxFile.getGpxFile();
 				KFile file = new KFile(gpxFile.getPath());
+				KFile dir = file.getParentFile();
 				boolean selected = isGpxFileSelected(gpxFile);
 				GpxDataItem gpxItem = gpxDbHelper.getItem(file);
-				GpxDirItem dirItem = gpxDbHelper.getGpxDirItem(file);
+				GpxDirItem dirItem = dir != null ? gpxDbHelper.getGpxDirItem(dir) : null;
 
 				CachedTrack cachedTrack = getCachedTrack(selectedGpxFile);
 
@@ -807,9 +847,10 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 			for (SelectedGpxFile selectedGpxFile : selectedGPXFiles) {
 				GpxFile gpxFile = selectedGpxFile.getGpxFile();
 				KFile file = new KFile(gpxFile.getPath());
+				KFile dir = file.getParentFile();
 				boolean selected = isGpxFileSelected(gpxFile);
 				GpxDataItem gpxItem = gpxDbHelper.getItem(file);
-				GpxDirItem dirItem = gpxDbHelper.getGpxDirItem(file);
+				GpxDirItem dirItem = dir != null ? gpxDbHelper.getGpxDirItem(dir) : null;
 
 				if (appearanceHelper.isShowStartFinishForTrack(gpxFile, gpxItem, dirItem, selected)) {
 					List<TrkSegment> segments = selectedGpxFile.getPointsToDisplay();
@@ -1055,9 +1096,10 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 				if (pointColor == 0) {
 					GpxFile gpxFile = trackChartPoints.getGpx();
 					KFile file = new KFile(gpxFile.getPath());
+					KFile dir = file.getParentFile();
 					boolean selected = isGpxFileSelected(gpxFile);
 					GpxDataItem gpxItem = gpxDbHelper.getItem(file);
-					GpxDirItem dirItem = gpxDbHelper.getGpxDirItem(file);
+					GpxDirItem dirItem = dir != null ? gpxDbHelper.getGpxDirItem(dir) : null;
 					pointColor = appearanceHelper.getTrackColor(gpxFile, cachedColor, gpxItem, dirItem, selected);
 					trackChartPoints.setSegmentColor(pointColor);
 				}
@@ -1081,9 +1123,10 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 				if (pointColor == 0) {
 					GpxFile gpxFile = trackChartPoints.getGpx();
 					KFile file = new KFile(gpxFile.getPath());
+					KFile dir = file.getParentFile();
 					boolean selected = isGpxFileSelected(gpxFile);
 					GpxDataItem gpxItem = gpxDbHelper.getItem(file);
-					GpxDirItem dirItem = gpxDbHelper.getGpxDirItem(file);
+					GpxDirItem dirItem = dir != null ? gpxDbHelper.getGpxDirItem(dir) : null;
 					pointColor = appearanceHelper.getTrackColor(gpxFile, cachedColor, gpxItem, dirItem, selected);
 				}
 				Bitmap pointBitmap = chartPointsHelper.createXAxisPointBitmap(pointColor, tileBox.getDensity());
@@ -1168,8 +1211,9 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 		for (SelectedGpxFile selectedGpxFile : selectedGPXFiles) {
 			GpxFile gpxFile = selectedGpxFile.getGpxFile();
 			KFile file = new KFile(gpxFile.getPath());
+			KFile dir = file.getParentFile();
 			GpxDataItem gpxItem = gpxDbHelper.getItem(file);
-			GpxDirItem dirItem = gpxDbHelper.getGpxDirItem(file);
+			GpxDirItem dirItem = dir != null ? gpxDbHelper.getGpxDirItem(dir) : null;
 			String width = appearanceHelper.getTrackWidth(gpxFile, defaultWidthPref.get(), gpxItem, dirItem);
 			cachedTrackWidth.putIfAbsent(width, null);
 			if (selectedGpxFile.isShowCurrentTrack()) {
@@ -1182,7 +1226,6 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 		if (currentTrack != null) {
 			drawSelectedFileSegments(currentTrack, true, canvas, tileBox, settings, baseOrder);
 		}
-		cleanupOldRenderedSegments(selectedGPXFiles);
 	}
 
 	private void drawSelectedFileSegments(SelectedGpxFile selectedGpxFile, boolean currentTrack,
@@ -1198,9 +1241,10 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 			return;
 		}
 		KFile file = new KFile(gpxFile.getPath());
+		KFile dir = file.getParentFile();
 		boolean selected = isGpxFileSelected(gpxFile);
 		GpxDataItem gpxItem = gpxDbHelper.getItem(file);
-		GpxDirItem dirItem = gpxDbHelper.getGpxDirItem(file);
+		GpxDirItem dirItem = dir != null ? gpxDbHelper.getGpxDirItem(dir) : null;
 
 		CachedTrack cachedTrack = getCachedTrack(selectedGpxFile);
 		String coloringTypeName = appearanceHelper.getAvailableOrDefaultColoringType(cachedTrack, gpxItem, dirItem, selected);
@@ -1289,8 +1333,13 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 				updated |= renderableSegment.setTrackParams(color, width, coloringType, routeIndoAttribute, colorPalette);
 				if (hasMapRenderer || coloringType.isRouteInfoAttribute()) {
 					boolean showArrows = appearanceHelper.isShowArrowsForTrack(gpxFile, gpxItem, dirItem, selected);
-					if (coloringType.isRouteInfoAttribute() || currentTrack) {
+					if (coloringType.isRouteInfoAttribute()) {
 						updated |= renderableSegment.setRoute(getCachedRouteSegments(cachedTrack, segmentIdx));
+					}
+					boolean boundsChanged = false;
+					if (currentTrack) {
+						boundsChanged = renderableSegment.updateBounds();
+						updated |= boundsChanged;
 					}
 					updated |= renderableSegment.setDrawArrows(showArrows);
 					updated |= renderableSegment.setTrack3DStyle(track3DStyle);
@@ -1300,8 +1349,9 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 						if (pathEffect instanceof OsmandDashPathEffect) {
 							intervals = ((OsmandDashPathEffect) pathEffect).getIntervals();
 						}
-						renderableSegment.drawGeometry(canvas, tileBox, correctedQuadRect,
-								paint.getColor(), paint.getStrokeWidth(), intervals, showArrows, track3DStyle, invalidated);
+						boolean recreateSegments = invalidated || boundsChanged;
+						renderableSegment.drawGeometry(canvas, tileBox, correctedQuadRect, paint.getColor(),
+								paint.getStrokeWidth(), intervals, showArrows, track3DStyle, recreateSegments);
 						renderedSegments.add(ts);
 					}
 				} else {
@@ -1359,7 +1409,7 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 		if (routeSegments == null) {
 			loadRouteSegments(cachedTrack, nonEmptySegmentIdx);
 		}
-		return routeSegments != null ? routeSegments : new ArrayList<>();
+		return routeSegments != null ? routeSegments : Collections.emptyList();
 	}
 
 	private void loadRouteSegments(@NonNull CachedTrack cachedTrack, int nonEmptySegmentIdx) {
@@ -1744,18 +1794,35 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 	}
 
 	private void cleanupOldRenderedSegments(@NonNull List<SelectedGpxFile> selectedGPXFiles) {
-		Set<String> selectedPaths = new HashSet<>();
-		for (SelectedGpxFile selectedGpxFile : selectedGPXFiles) {
-			selectedPaths.add(selectedGpxFile.getGpxFile().getPath());
-		}
-		List<String> pathsToRemove = new ArrayList<>();
-		for (String path : renderedSegmentsCache.keySet()) {
-			if (!selectedPaths.contains(path)) {
-				pathsToRemove.add(path);
+		if (!Algorithms.isEmpty(renderedSegmentsCache)) {
+			Set<String> selectedPaths = new HashSet<>();
+			for (SelectedGpxFile selectedGpxFile : selectedGPXFiles) {
+				selectedPaths.add(selectedGpxFile.getGpxFile().getPath());
+			}
+			List<String> pathsToRemove = new ArrayList<>();
+			for (String path : renderedSegmentsCache.keySet()) {
+				if (!selectedPaths.contains(path)) {
+					pathsToRemove.add(path);
+				}
+			}
+			for (String path : pathsToRemove) {
+				removeSelectedFilesSegments(path);
 			}
 		}
-		for (String path : pathsToRemove) {
-			removeSelectedFilesSegments(path);
+	}
+
+	@Override
+	public void fileRenamed(@NonNull File src, @NonNull File dest) {
+		String oldPath = src.getAbsolutePath();
+		String newPath = dest.getAbsolutePath();
+
+		Set<TrkSegment> segments = renderedSegmentsCache.remove(oldPath);
+		if (segments != null) {
+			renderedSegmentsCache.put(newPath, segments);
+		}
+		CachedTrack cachedTrack = segmentsCache.remove(oldPath);
+		if (cachedTrack != null) {
+			segmentsCache.put(newPath, cachedTrack);
 		}
 	}
 

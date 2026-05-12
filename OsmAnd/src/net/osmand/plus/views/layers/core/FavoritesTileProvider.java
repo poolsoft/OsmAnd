@@ -45,6 +45,7 @@ public class FavoritesTileProvider extends interface_MapTiledCollectionProvider 
 		this.textStyle = textStyle;
 		this.density = density;
 		this.offset = new PointI(0, 0);
+		this.swigTakeOwnership();
 	}
 
 	public void drawSymbols(@NonNull MapRendererView mapRenderer) {
@@ -174,6 +175,11 @@ public class FavoritesTileProvider extends interface_MapTiledCollectionProvider 
 	@Override
 	public PointI getPinIconOffset() {
 		return offset;
+	}
+
+	@Override
+	public boolean waitForLoading() {
+		return true;
 	}
 
 	public void addToData(@NonNull FavouritePoint favorite, int color, boolean withShadow,

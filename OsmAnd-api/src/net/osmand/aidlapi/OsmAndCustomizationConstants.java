@@ -143,7 +143,7 @@ public interface OsmAndCustomizationConstants {
 	String PLUGIN_ANT_PLUS = "osmand.antplus";
 	String PLUGIN_VEHICLE_METRICS = "osmand.vehicle.metrics";
 	String PLUGIN_WEATHER = "osmand.weather";
-	String PLUGIN_STAR_WATCHER = "osmand.starwatcher";
+	String PLUGIN_ASTRONOMY = "osmand.astronomy";
 
 	//Settings:
 	String SETTINGS_ID = "settings.";
@@ -207,6 +207,7 @@ public interface OsmAndCustomizationConstants {
 	String FRAGMENT_TRIPLTEK_PROMO_ID = FRAGMENT_ID + "tripltek_promo";
 	String FRAGMENT_HUGEROCK_PROMO_ID = FRAGMENT_ID + "hugerock_promo";
 	String FRAGMENT_HMD_PROMO_ID = FRAGMENT_ID + "hmd_promo";
+	String FRAGMENT_ROUTE_INFO_MENU_ID = FRAGMENT_ID + "route_info_menu";
 
 	//Map Context Menu rows:
 	String MAP_CONTEXT_MENU_ROWS = "context.menu.rows.";

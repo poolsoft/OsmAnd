@@ -8,6 +8,7 @@ import static net.osmand.plus.charts.GPXDataSetType.SLOPE;
 import static net.osmand.plus.charts.GPXDataSetType.SPEED;
 
 import android.content.Context;
+import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,6 +16,7 @@ import androidx.fragment.app.FragmentActivity;
 
 import net.osmand.data.PointDescription;
 import net.osmand.plus.charts.ChartUtils;
+import net.osmand.plus.settings.backend.OsmandSettings;
 import net.osmand.shared.gpx.GpxFile;
 import net.osmand.shared.gpx.GpxTrackAnalysis;
 import net.osmand.shared.gpx.primitives.Track;
@@ -36,11 +38,14 @@ public class OpenGpxDetailsTask extends BaseLoadAsyncTask<Void, Void, GpxDisplay
 
 	private final GpxFile gpxFile;
 	private final WptPt selectedPoint;
+	private final Bundle previousIntentBundle;
 
-	public OpenGpxDetailsTask(@NonNull FragmentActivity activity, @NonNull GpxFile gpxFile, @Nullable WptPt selectedPoint) {
+	public OpenGpxDetailsTask(@NonNull FragmentActivity activity, @NonNull GpxFile gpxFile,
+	                          @Nullable WptPt selectedPoint, @Nullable Bundle previousIntentBundle) {
 		super(activity);
 		this.gpxFile = gpxFile;
 		this.selectedPoint = selectedPoint;
+		this.previousIntentBundle = previousIntentBundle;
 	}
 
 	@Nullable
@@ -95,18 +100,19 @@ public class OpenGpxDetailsTask extends BaseLoadAsyncTask<Void, Void, GpxDisplay
 					gpxItem);
 
 			FragmentActivity activity = activityRef.get();
-			if (activity instanceof MapActivity) {
-				MapActivity mapActivity = (MapActivity) activity;
+			if (activity instanceof MapActivity mapActivity) {
 				mapActivity.getContextMenu().hide();
 				mapActivity.getDashboard().hideDashboard();
 			}
 			Context context = activity != null ? activity : app;
-			MapActivity.launchMapActivityMoveToTop(context);
+			MapActivity.launchMapActivityMoveToTop(context, previousIntentBundle, null, null);
 		}
 	}
 
 	private void setItemChartType(@NonNull GpxDisplayItem gpxItem) {
-		List<GPXDataSetType> result = getSavedSupportedTypes(gpxItem);
+		gpxItem.chartAxisType = ChartUtils.getSavedGeneralXAxis(settings, gpxItem.analysis);
+
+		List<GPXDataSetType> result = getSavedSupportedTypes(gpxItem, settings);
 
 		if (Algorithms.isEmpty(result)) {
 			result = getDefaultTypes(gpxItem.analysis);
@@ -118,7 +124,7 @@ public class OpenGpxDetailsTask extends BaseLoadAsyncTask<Void, Void, GpxDisplay
 	}
 
 	@NonNull
-	private List<GPXDataSetType> getSavedSupportedTypes(@NonNull GpxDisplayItem gpxItem) {
+	public static List<GPXDataSetType> getSavedSupportedTypes(@NonNull GpxDisplayItem gpxItem, @NonNull OsmandSettings settings) {
 		List<GPXDataSetType> result = new ArrayList<>();
 		List<GPXDataSetType> savedTypes = ChartUtils.getSavedGeneralYAxis(settings);
 
@@ -141,7 +147,7 @@ public class OpenGpxDetailsTask extends BaseLoadAsyncTask<Void, Void, GpxDisplay
 	}
 
 	@NonNull
-	private List<GPXDataSetType> getSupportedTypes(@NonNull GpxTrackAnalysis analysis) {
+	public static List<GPXDataSetType> getSupportedTypes(@NonNull GpxTrackAnalysis analysis) {
 		List<GPXDataSetType> result = new ArrayList<>();
 
 		result.addAll(getAvailableDefaultYTypes(analysis));
@@ -152,7 +158,7 @@ public class OpenGpxDetailsTask extends BaseLoadAsyncTask<Void, Void, GpxDisplay
 
 
 	@NonNull
-	private List<GPXDataSetType> getDefaultTypes(@NonNull GpxTrackAnalysis analysis) {
+	public static List<GPXDataSetType> getDefaultTypes(@NonNull GpxTrackAnalysis analysis) {
 		List<GPXDataSetType> result = new ArrayList<>();
 
 		if (analysis.hasElevationData()) {
@@ -168,7 +174,7 @@ public class OpenGpxDetailsTask extends BaseLoadAsyncTask<Void, Void, GpxDisplay
 		return result;
 	}
 
-	private List<GPXDataSetType> limit(@NonNull List<GPXDataSetType> list) {
+	public static List<GPXDataSetType> limit(@NonNull List<GPXDataSetType> list) {
 		if (list.size() <= MAX_CHART_TYPES) {
 			return list;
 		}

@@ -1,7 +1,9 @@
 package net.osmand.plus.download;
 
+import static net.osmand.IndexConstants.ASTRO_DIR;
 import static net.osmand.IndexConstants.BINARY_MAP_INDEX_EXT;
 import static net.osmand.IndexConstants.INDEX_DOWNLOAD_DOMAIN;
+import static net.osmand.IndexConstants.STAR_MAP_INDEX_EXT_GZ;
 import static net.osmand.IndexConstants.WEATHER_FORECAST_DIR;
 import static net.osmand.IndexConstants.WEATHER_MAP_INDEX_EXT;
 import static net.osmand.IndexConstants.ZIP_EXT;
@@ -78,6 +80,8 @@ public class DownloadActivityType {
 			new DownloadActivityType(R.string.weather_forecast, R.drawable.ic_action_umbrella, "weather", 90);
 	public static final DownloadActivityType GEOTIFF_FILE =
 			new DownloadActivityType(R.string.terrain_map, R.drawable.ic_action_terrain, "geotiff", 85);
+	public static final DownloadActivityType STAR_MAP_FILE =
+			new DownloadActivityType(R.string.star_map, R.drawable.ic_action_stars, "starmap", 95);
 
 	private final int stringResource;
 	private final int iconResource;
@@ -180,6 +184,8 @@ public class DownloadActivityType {
 			return fileName.endsWith(addVersionToExt(IndexConstants.BINARY_DEPTH_MAP_INDEX_EXT_ZIP, IndexConstants.BINARY_MAP_VERSION));
 		} else if (WEATHER_FORECAST == this) {
 			return fileName.endsWith(WEATHER_MAP_INDEX_EXT);
+		} else if (STAR_MAP_FILE == this) {
+			return fileName.endsWith(STAR_MAP_INDEX_EXT_GZ);
 		}
 		return false;
 	}
@@ -229,6 +235,8 @@ public class DownloadActivityType {
 			return app.getAppPath(IndexConstants.NAUTICAL_INDEX_DIR);
 		} else if (WEATHER_FORECAST == this) {
 			return app.getAppPath(WEATHER_FORECAST_DIR);
+		} else if (STAR_MAP_FILE == this) {
+			return app.getAppPath(ASTRO_DIR);
 		}
 		throw new UnsupportedOperationException();
 	}
@@ -295,6 +303,8 @@ public class DownloadActivityType {
 			return IndexConstants.BINARY_DEPTH_MAP_INDEX_EXT;
 		} else if (WEATHER_FORECAST == this) {
 			return IndexConstants.WEATHER_EXT;
+		} else if (STAR_MAP_FILE == this) {
+			return IndexConstants.STAR_MAP_INDEX_EXT;
 		}
 		throw new UnsupportedOperationException();
 	}
@@ -421,6 +431,9 @@ public class DownloadActivityType {
 		if (this == WEATHER_FORECAST) {
 			return FileNameTranslationHelper.getFileName(ctx, osmandRegions, downloadItem.getFileName());
 		}
+		if (this == STAR_MAP_FILE) {
+			return FileNameTranslationHelper.getFileName(ctx, osmandRegions, downloadItem.getFileName());
+		}
 		String basename = getBasename(downloadItem);
 		if (basename.endsWith(FileNameTranslationHelper.WIKI_NAME)) {
 			return FileNameTranslationHelper.getWikiName(ctx, basename);
@@ -499,6 +512,9 @@ public class DownloadActivityType {
 		} else if (this == WEATHER_FORECAST) {
 			return fileName.substring(0, fileName.length() - ZIP_EXT.length())
 					.replace(FileNameTranslationHelper.WEATHER + "_", "");
+		} else if (this == STAR_MAP_FILE) {
+			return fileName.substring(0, fileName.length() - IndexConstants.STAR_MAP_INDEX_EXT_GZ.length())
+					+ IndexConstants.STAR_MAP_INDEX_EXT;
 		} else if (fileName.endsWith(IndexConstants.BINARY_MAP_INDEX_EXT)
 				|| fileName.endsWith(IndexConstants.BINARY_MAP_INDEX_EXT_ZIP)) {
 			int l = fileName.lastIndexOf('_');

@@ -4,6 +4,9 @@ import net.osmand.shared.io.KFile
 import net.osmand.shared.util.LoggerFactory
 import okio.IOException
 import okio.buffer
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 class ColorPalette {
 
@@ -49,6 +52,14 @@ class ColorPalette {
 			)
 		)
 
+		val BIPOLAR_MIN_MAX_PALETTE = parsePalette(
+			arrayOf(
+				doubleArrayOf(-1.0, GREEN.toDouble()),
+				doubleArrayOf(0.0, LIGHT_GREY.toDouble()),
+				doubleArrayOf(1.0, RED.toDouble())
+			)
+		)
+
 		fun rgbaToDecimal(r: Int, g: Int, b: Int, a: Int): Int {
 			return (a and 0xFF shl 24) or (r and 0xFF shl 16) or (g and 0xFF shl 8) or (b and 0xFF shl 0)
 		}
@@ -71,7 +82,7 @@ class ColorPalette {
 				}
 				c?.let { palette.colors.add(it) }
 			}
-			palette.sortPalette()
+			palette.normalize()
 			return palette
 		}
 
@@ -111,47 +122,129 @@ class ColorPalette {
 			while (true) {
 				line = buf.readUtf8Line()
 				if (line == null) break
-				val t = line.trim { it <= ' ' }
-				if (t.startsWith("#")) {
-					continue
-				}
-				val values = t.split(",".toRegex()).dropLastWhile { it.isEmpty() }
-					.toTypedArray()
-				if (values.size >= 4) {
-					try {
-						val rgba: ColorValue =
-							ColorValue.rgba(
-								values[0].toDouble(),
-								values[1].toInt(),
-								values[2].toInt(),
-								values[3].toInt(),
-								if (values.size >= 4) values[4].toInt() else 255
-							)
-						palette.colors.add(rgba)
-					} catch (e: NumberFormatException) {
-						LOG.error(e.message, e)
-					}
+
+				val colorValue = parseColorValue(line)
+				if (colorValue != null) {
+					palette.colors.add(colorValue)
 				}
 			}
-			palette.sortPalette()
+			palette.normalize()
 			return palette
+		}
+
+		fun parseColorValue(line: String): ColorValue? {
+			val t = line.trim { it <= ' ' }
+			if (t.isEmpty() || t.startsWith("#")) {
+				return null
+			}
+
+			val values = t.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+
+			if (values.size >= 4) {
+				try {
+					val alpha = if (values.size > 4) values[4].trim().toInt() else 255
+
+					return ColorValue.rgba(
+						values[0].trim().toDouble(),
+						values[1].trim().toInt(),
+						values[2].trim().toInt(),
+						values[3].trim().toInt(),
+						alpha
+					)
+				} catch (e: NumberFormatException) {
+					LOG.error(e.message, e)
+				}
+			}
+			return null
+		}
+
+		fun formatColorValue(v: ColorValue): String {
+			return StringBuilder()
+				.append(v.value).append(",")
+				.append(v.r).append(",")
+				.append(v.g).append(",")
+				.append(v.b).append(",")
+				.append(v.a)
+				.toString()
+		}
+
+		fun colorToHex(color: Int): String {
+			return "#" + color.toUInt().toString(16).padStart(8, '0').uppercase()
 		}
 	}
 
 	val colors = mutableListOf<ColorValue>()
+	var noDataColor: Int? = null
 
 	constructor()
 
-	constructor(c: ColorPalette, minVal: Double, maxVal: Double) {
+	/**
+	 * Creates a new palette by scaling a base relative palette to fit actual data extremes.
+	 * This is primarily used for generating relative palettes tailored to a specific track.
+	 *
+	 * @param c The base relative palette (typically normalized from 0.0 to 1.0, or -1.0 to 1.0).
+	 * @param minVal The actual minimum value found in the track data.
+	 * @param maxVal The actual maximum value found in the track data.
+	 * @param isBipolar If true, applies independent zero-anchored scaling for negative and positive values.
+	 */
+	constructor(c: ColorPalette, minVal: Double, maxVal: Double, isBipolar: Boolean = false) {
+		// Fallback scale for absent negative/positive side.
+		// Safe because input values will also stay on the existing side of zero.
+		val scaleLeft = if (minVal < 0.0) abs(minVal) else max(maxVal, 1.0)
+		val scaleRight = if (maxVal > 0.0) maxVal else max(abs(minVal), 1.0)
+
 		for (cv in c.colors) {
-			val value = cv.value * (maxVal - minVal) + minVal
+			val value = if (isBipolar) {
+				when {
+					cv.value < 0.0 -> abs(cv.value) * -scaleLeft
+					cv.value > 0.0 -> cv.value * scaleRight
+					else -> 0.0
+				}
+			} else {
+				cv.value * (maxVal - minVal) + minVal
+			}
 			colors.add(ColorValue(value, cv.clr))
 		}
+		noDataColor = c.noDataColor
+	}
+
+	/**
+	 * Creates a new palette adjusted to the [min, max] range.
+	 * - If the range is smaller than the palette, it "slices" the palette.
+	 * - If the range is larger, it extends the edge colors to the new limits.
+	 */
+	fun adjustToRange(min: Double, max: Double): ColorPalette {
+		val newPalette = ColorPalette()
+
+		if (colors.isEmpty()) {
+			return newPalette
+		}
+
+		// 1. Add start point.
+		// getColorByValue() handles interpolation or returns the first color if min < palette.min
+		newPalette.addPoint(min, getColorByValue(min))
+
+		// 2. Keep intermediate points to preserve gradient structure
+		for (cv in colors) {
+			if (cv.value > min && cv.value < max) {
+				newPalette.colors.add(cv)
+			}
+		}
+
+		// 3. Add end point
+		newPalette.addPoint(max, getColorByValue(max))
+
+		return newPalette
+	}
+
+	fun addPoint(value: Double, color: Int) {
+		colors.add(ColorValue(value, color))
+		normalize()
 	}
 
 	fun getColorByValue(value: Double): Int {
 		if (value.isNaN()) {
-			return LIGHT_GREY
+			return noDataColor ?: LIGHT_GREY
 		}
 		for (i in 0 until colors.size - 1) {
 			val min = colors[i]
@@ -183,15 +276,35 @@ class ColorPalette {
 
 	fun writeColorPalette(): String {
 		val bld = StringBuilder()
+		val noDataColor = noDataColor
+		if (noDataColor != null) {
+			val noDataVal = ColorValue(Double.NaN, noDataColor)
+			bld.append(formatColorValue(noDataVal)).append("\n")
+		}
 		for (v in colors) {
-			bld.append(v.value).append(",")
-			bld.append(v.r).append(",").append(v.g).append(",").append(v.b).append(",").append(v.a)
-				.append("\n")
+			bld.append(formatColorValue(v)).append("\n")
 		}
 		return bld.toString().trim()
 	}
 
-	private fun sortPalette() {
+	fun isValid() = colors.size >= 2
+
+	/**
+	 * Normalizes the palette data:
+	 * 1. Extracts "No Data" values (NaN) into [noDataColor].
+	 * 2. Sorts the remaining gradient points by value.
+	 *
+	 * Should be called after parsing or modifying colors to ensure the palette is valid for interpolation.
+	 */
+	private fun normalize() {
+		val iterator = colors.iterator()
+		while (iterator.hasNext()) {
+			val cv = iterator.next()
+			if (cv.value.isNaN()) {
+				noDataColor = cv.clr
+				iterator.remove()
+			}
+		}
 		colors.sortWith(compareBy { it.value })
 	}
 

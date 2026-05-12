@@ -18,13 +18,15 @@ import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
 import net.osmand.plus.base.dialog.BaseDialogController;
 import net.osmand.plus.base.dialog.DialogManager;
-import net.osmand.plus.card.color.palette.main.ColorsPaletteController;
-import net.osmand.plus.card.color.palette.main.data.ColorsCollection;
-import net.osmand.plus.card.color.palette.main.data.FileColorsCollection;
+import net.osmand.plus.card.color.palette.solid.SolidPaletteController;
 import net.osmand.plus.card.icon.CircleIconPaletteElements;
+import net.osmand.plus.card.icon.IIconsPalette;
 import net.osmand.plus.card.icon.IconsPaletteController;
 import net.osmand.plus.card.icon.IconsPaletteElements;
 import net.osmand.plus.helpers.Model3dHelper;
+import net.osmand.plus.mapcontextmenu.editors.icon.EditorIconPaletteFragment;
+import net.osmand.plus.mapcontextmenu.editors.icon.ProfileEditorIconController;
+import net.osmand.plus.palette.contract.IExternalPaletteListener;
 import net.osmand.plus.profiles.LocationIcon;
 import net.osmand.plus.profiles.ProfileIcons;
 import net.osmand.plus.settings.backend.ApplicationMode;
@@ -37,18 +39,22 @@ import net.osmand.plus.settings.fragments.ProfileOptionsDialogController;
 import net.osmand.plus.settings.fragments.profileappearance.elements.LocationIconPaletteElements;
 import net.osmand.plus.utils.FileUtils;
 import net.osmand.plus.utils.UiUtilities;
+import net.osmand.shared.palette.domain.PaletteItem;
 import net.osmand.util.Algorithms;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
 public class ProfileAppearanceController extends BaseDialogController {
 
 	private static final String PROCESS_ID = "adjust_profile_appearance";
+	private static final int LAST_USED_ICONS_LIMIT = 12;
 
 	private IProfileAppearanceScreen screen;
 	private SettingsExportListener exportListener;
@@ -56,8 +62,8 @@ public class ProfileAppearanceController extends BaseDialogController {
 	private ApplicationProfileObject profile;
 	private ApplicationProfileObject changedProfile;
 
-	private ColorsPaletteController colorsCardController;
-	private IconsPaletteController<Integer> profileIconCardController;
+	private SolidPaletteController colorsCardController;
+	private ProfileMainIconCardController profileIconCardController;
 	private IconsPaletteController<String> restingIconCardController;
 	private IconsPaletteController<String> navigationIconCardController;
 	private ProfileOptionsDialogController profileOptionsDialogController;
@@ -185,7 +191,7 @@ public class ProfileAppearanceController extends BaseDialogController {
 		if (activity != null) {
 			screen.hideKeyboard();
 			if (hasChanges() && checkProfileName(activity)) {
-				getColorsCardController().refreshLastUsedTime();
+				getColorsCardController().renewLastUsedTime();
 				saveProfile();
 			}
 		}
@@ -230,6 +236,7 @@ public class ProfileAppearanceController extends BaseDialogController {
 	}
 
 	private void saveProfile() {
+		addProfileIconToLastUsed();
 		profile = changedProfile;
 		if (isNewProfile) {
 			DialogInterface.OnShowListener showListener = dialog -> app.runInUIThread(() -> {
@@ -240,7 +247,7 @@ public class ProfileAppearanceController extends BaseDialogController {
 		} else {
 			ApplicationMode mode = screen.getSelectedAppMode();
 			mode.setParentAppMode(changedProfile.parent);
-			mode.setIconResName(ProfileIcons.getResStringByResId(changedProfile.iconRes));
+			mode.setIconResName(ProfileIcons.getResStringByResId(app, changedProfile.iconRes));
 			mode.setUserProfileName(changedProfile.name.trim());
 			mode.setRoutingProfile(changedProfile.routingProfile);
 			mode.setRouteService(changedProfile.routeService);
@@ -259,7 +266,7 @@ public class ProfileAppearanceController extends BaseDialogController {
 
 		ApplicationMode.ApplicationModeBuilder builder = ApplicationMode
 				.createCustomMode(changedProfile.parent, changedProfile.stringKey, app)
-				.setIconResName(ProfileIcons.getResStringByResId(changedProfile.iconRes))
+				.setIconResName(ProfileIcons.getResStringByResId(app, changedProfile.iconRes))
 				.setUserProfileName(changedProfile.name.trim())
 				.setRoutingProfile(changedProfile.routingProfile)
 				.setRouteService(changedProfile.routeService)
@@ -330,14 +337,13 @@ public class ProfileAppearanceController extends BaseDialogController {
 	}
 
 	@NonNull
-	public ColorsPaletteController getColorsCardController() {
+	public SolidPaletteController getColorsCardController() {
 		if (colorsCardController == null) {
 			boolean nightMode = isNightMode();
 			int selectedColor = changedProfile.getActualColor(app, nightMode);
-			ColorsCollection colorsCollection = new FileColorsCollection(app);
-			colorsCardController = new ColorsPaletteController(app, colorsCollection, selectedColor) {
+			colorsCardController = new SolidPaletteController(app, selectedColor) {
 				@Override
-				public void onAllColorsScreenClosed() {
+				public void onPaletteScreenClosed() {
 					if (screen != null) {
 						screen.updateStatusBar();
 					}
@@ -345,8 +351,9 @@ public class ProfileAppearanceController extends BaseDialogController {
 
 				@Override
 				public int getControlsAccentColor(boolean nightMode) {
-					if (selectedPaletteColor != null) {
-						return selectedPaletteColor.getColor();
+					PaletteItem item = getSelectedItem();
+					if (item instanceof PaletteItem.Solid solidItem) {
+						return solidItem.getColorInt();
 					}
 					return super.getControlsAccentColor(nightMode);
 				}
@@ -356,12 +363,21 @@ public class ProfileAppearanceController extends BaseDialogController {
 					return true;
 				}
 			};
-			colorsCardController.setPaletteListener(paletteColor -> {
-				int colorInt = paletteColor.getColor();
-				changedProfile.color = changedProfile.getProfileColorByColorValue(app, colorInt);
-				changedProfile.customColor = changedProfile.color == null ? colorInt : null;
-				updateColorItems();
-				screen.updateApplyButtonEnable();
+			colorsCardController.setPaletteListener(new IExternalPaletteListener() {
+				@Override
+				public void onPaletteItemSelected(@NonNull PaletteItem item) {
+					if (item instanceof PaletteItem.Solid solidItem) {
+						int colorInt = solidItem.getColorInt();
+						changedProfile.color = changedProfile.getProfileColorByColorValue(app, colorInt);
+						changedProfile.customColor = changedProfile.color == null ? colorInt : null;
+						updateColorItems();
+						screen.updateApplyButtonEnable();
+					}
+				}
+
+				@Override
+				public void onPaletteItemAdded(@Nullable PaletteItem oldItem, @NonNull PaletteItem newItem) {
+				}
 			});
 		}
 		return colorsCardController;
@@ -383,28 +399,56 @@ public class ProfileAppearanceController extends BaseDialogController {
 	@NonNull
 	public IconsPaletteController<Integer> getProfileIconCardController() {
 		if (profileIconCardController == null) {
-			profileIconCardController = new ProfileIconsController<>(app, ProfileIcons.getIcons(), changedProfile.iconRes) {
-				@Override
-				protected IconsPaletteElements<Integer> createPaletteElements(@NonNull Context context, boolean nightMode) {
-					return new CircleIconPaletteElements<>(context, nightMode) {
-						@Override
-						protected Drawable getIconDrawable(@NonNull Integer iconId, boolean isSelected) {
-							return getContentIcon(iconId);
-						}
-					};
-				}
-
-				@Override
-				public String getPaletteTitle() {
-					return getString(R.string.profile_icon);
-				}
-			};
-			profileIconCardController.setPaletteListener(icon -> {
-				changedProfile.iconRes = icon;
-				screen.updateApplyButtonEnable();
-			});
+			profileIconCardController = new ProfileMainIconCardController(collectProfileIconCardIcons(changedProfile.iconRes), changedProfile.iconRes);
+			profileIconCardController.setPaletteListener(this::onProfileIconSelected);
 		}
 		return profileIconCardController;
+	}
+
+	private void onProfileIconSelected(@NonNull Integer icon) {
+		changedProfile.iconRes = icon;
+		if (profileIconCardController != null) {
+			profileIconCardController.updateAvailableIcons(collectProfileIconCardIcons(icon), icon);
+		}
+		screen.updateApplyButtonEnable();
+	}
+
+	@NonNull
+	private List<Integer> collectProfileIconCardIcons(int selectedIcon) {
+		List<Integer> iconIds = ProfileIcons.getIcons(app);
+		if (selectedIcon != 0 && !iconIds.contains(selectedIcon)) {
+			iconIds.add(0, selectedIcon);
+		}
+		return iconIds;
+	}
+
+	private void addProfileIconToLastUsed() {
+		String iconKey = ProfileIcons.getPickerIconKey(app, changedProfile.iconRes);
+		if (Algorithms.isEmpty(iconKey)) {
+			return;
+		}
+		List<String> lastUsedIcons = app.getSettings().LAST_USED_PROFILE_ICONS.getStringsList();
+		List<String> updatedIcons = lastUsedIcons != null ? new ArrayList<>(lastUsedIcons) : new ArrayList<>();
+		updatedIcons.remove(iconKey);
+		updatedIcons.add(0, iconKey);
+		if (updatedIcons.size() > LAST_USED_ICONS_LIMIT) {
+			updatedIcons = new ArrayList<>(updatedIcons.subList(0, LAST_USED_ICONS_LIMIT));
+		}
+		app.getSettings().LAST_USED_PROFILE_ICONS.setStringsList(updatedIcons);
+	}
+
+	private void openProfileIconPalette(@NonNull FragmentActivity activity) {
+		ProfileEditorIconController controller = new ProfileEditorIconController(app);
+		controller.setSelectedIconKey(ProfileIcons.getPickerIconKey(app, changedProfile.iconRes));
+		controller.init();
+		controller.updateAccentColor(getColorsCardController().getControlsAccentColor(isNightMode()));
+		controller.setIconsPaletteListener(iconKey -> {
+			int iconRes = ProfileIcons.getDrawableResByPickerIconKey(app, iconKey);
+			if (iconRes != 0) {
+				onProfileIconSelected(iconRes);
+			}
+		});
+		EditorIconPaletteFragment.showInstance(activity, controller.getScreenController());
 	}
 
 	@NonNull
@@ -589,6 +633,48 @@ public class ProfileAppearanceController extends BaseDialogController {
 			return true;
 		}
 
+	}
+
+	private class ProfileMainIconCardController extends ProfileIconsController<Integer> {
+
+		public ProfileMainIconCardController(@NonNull List<Integer> icons, @NonNull Integer selectedIcon) {
+			super(ProfileAppearanceController.this.app, icons, selectedIcon);
+		}
+
+		@NonNull
+		@Override
+		protected IconsPaletteElements<Integer> createPaletteElements(@NonNull Context context, boolean nightMode) {
+			return new CircleIconPaletteElements<>(context, nightMode) {
+				@Override
+				protected Drawable getIconDrawable(@NonNull Integer iconId, boolean isSelected) {
+					return getContentIcon(iconId);
+				}
+			};
+		}
+
+		@Override
+		public String getPaletteTitle() {
+			return getString(R.string.profile_icon);
+		}
+
+		@Override
+		public void onAllIconsButtonClicked(@NonNull FragmentActivity activity) {
+			openProfileIconPalette(activity);
+		}
+
+		public void updateAvailableIcons(@NonNull List<Integer> icons, @NonNull Integer targetIcon) {
+			setIcons(icons);
+			selectedIcon = targetIcon;
+			Iterator<WeakReference<IIconsPalette<Integer>>> iterator = palettes.iterator();
+			while (iterator.hasNext()) {
+				IIconsPalette<Integer> palette = iterator.next().get();
+				if (palette != null) {
+					palette.updatePaletteIcons(targetIcon);
+				} else {
+					iterator.remove();
+				}
+			}
+		}
 	}
 
 	@NonNull

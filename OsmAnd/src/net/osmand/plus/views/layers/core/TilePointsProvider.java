@@ -106,6 +106,7 @@ public class TilePointsProvider<T extends TilePointsProvider.ICollectionPoint> e
 		this.minZoom = minZoom;
 		this.maxZoom = maxZoom;
 		this.offset = new PointI(0, 0);
+		this.swigTakeOwnership();
 	}
 
 	public void drawSymbols(@NonNull MapRendererView mapRenderer) {
@@ -221,5 +222,10 @@ public class TilePointsProvider<T extends TilePointsProvider.ICollectionPoint> e
 	@Override
 	public PointI getPinIconOffset() {
 		return offset;
+	}
+
+	@Override
+	public boolean waitForLoading() {
+		return true;
 	}
 }

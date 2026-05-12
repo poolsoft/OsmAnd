@@ -183,7 +183,7 @@
     <string name="poi_photo">Fotobutikk</string>
     <string name="poi_craft_photographer">Fotograf</string>
     <string name="poi_craft_photographic_laboratory">Fotolaboratorium</string>
-    <string name="poi_hiking_routes">Vandreruter</string>
+    <string name="poi_hiking_routes">Fotturruter</string>
     <string name="poi_school">Skole</string>
     <string name="poi_embassy">Ambassade</string>
     <string name="poi_prison">Fengsel</string>
@@ -379,7 +379,7 @@
     <string name="poi_cuisine">Kjøkken</string>
     <string name="poi_information_trail_blaze">Stimerking</string>
     <string name="poi_information_map">Kart</string>
-    <string name="poi_information_hikingmap">Vandrekart</string>
+    <string name="poi_information_hikingmap">Fotturkart</string>
     <string name="poi_cuisine_regional">Regionalt</string>
     <string name="poi_cuisine_italian">Italiensk</string>
     <string name="poi_cuisine_chinese">Kinesisk</string>
@@ -720,7 +720,6 @@
     <string name="poi_ambulance_station">Ambulansestasjon</string>
     <string name="poi_mountain_pass">Fjellpass</string>
     <string name="poi_traffic_calming_chicane">Sjikane</string>
-    <string name="poi_service_tyres">Dekk</string>
     <string name="poi_vehicle_inspection">Kjøretøykontroll</string>
     <string name="poi_fuel_diesel">Diesel</string>
     <string name="poi_fuel_ethanol">Etanol</string>
@@ -907,7 +906,7 @@
     <string name="poi_craft_roofer">Taktekker</string>
     <string name="poi_craft_saddler">Sadelmaker</string>
     <string name="poi_craft_sailmaker">Seglmaker</string>
-    <string name="poi_craft_sawmill">Sagverk</string>
+    <string name="poi_craft_sawmill">Sagbruk</string>
     <string name="poi_craft_sculptor">Billedhugger</string>
     <string name="poi_craft_shoemaker">Skomaker</string>
     <string name="poi_craft_stonemason">Steinhugger</string>
@@ -1112,7 +1111,7 @@
     <string name="poi_capacity_women_yes">Plasser forbeholdt kvinner</string>
     <string name="poi_capacity_women_no">Ingen plasser forbeholdt kvinner</string>
     <string name="poi_capacity_women">Plasser forbeholdt kvinner</string>
-    <string name="poi_capacity_pupils">PLasser forbeholdt studenter</string>
+    <string name="poi_capacity_pupils">Plasser forbeholdt studenter</string>
     <string name="poi_capacity_teachers">Plasser forbeholdt lærere</string>
     <string name="poi_capacity_parent_yes">Plasser forbeholdt foreldre</string>
     <string name="poi_capacity_parent_no">Ingen plasser forbeholdt foreldre</string>
@@ -1778,7 +1777,7 @@
     <string name="poi_parking_fee_filter">Parkeringsavgift</string>
     <string name="poi_runway">Landingsbane</string>
     <string name="poi_power_substation">Trafostasjon</string>
-    <string name="poi_power_pole">Elverksstolpe</string>
+    <string name="poi_power_pole">Strømstolpe</string>
     <string name="poi_waste_disposal">Avfallshåndtering</string>
     <string name="poi_paediatrics">Pediatri</string>
     <string name="poi_denomination_russian_orthodox">Russisk-ortodoks</string>
@@ -1847,7 +1846,7 @@
     <string name="poi_silo">Silo</string>
     <string name="poi_ice_skating">Skøyteløp</string>
     <string name="poi_ice_stock">Islager</string>
-    <string name="poi_korfbal">Kurvball</string>
+    <string name="poi_korfball">Kurvball</string>
     <string name="poi_skating">Isløp</string>
     <string name="poi_historic_tank">Historisk panservogn</string>
     <string name="poi_theme_park">Fornøyelsespark</string>
@@ -2005,4 +2004,30 @@
     <string name="poi_sample_collection_yes">Ja</string>
     <string name="poi_hazard_yes">Fare</string>
     <string name="poi_information_guidepost">Turskilt</string>
+    <string name="poi_industrial_sawmill">Type: sagbruk</string>
+    <string name="poi_craft_chimney_sweeper">Skorsteinsfeier</string>
+    <string name="poi_network_foot">Rutenettverk (fotturer)</string>
+    <string name="poi_network_cycling">Rutenettverk (sykling)</string>
+    <string name="poi_memorial_type">Minnesmerketype</string>
+    <string name="poi_memorial_war">Krigsminnesmerke</string>
+    <string name="poi_route_activity_type_hiking">Fotturruter</string>
+    <string name="poi_information_route_marker">Rutemarkør</string>
+    <string name="poi_sms_no">Nei</string>
+    <string name="poi_covered_booth">Ja</string>
+    <string name="poi_video_no">Nei</string>
+    <string name="poi_recycling_textiles">Tekstiler</string>
+    <string name="poi_recycling_toys">Leketøy</string>
+    <string name="poi_cutline">Gate</string>
+    <string name="poi_waste_oil">Olje</string>
+    <string name="poi_waste_organic">Organisk</string>
+    <string name="poi_waste_cigarettes">Sigaretter</string>
+    <string name="poi_recycling_second_hand">Brukt</string>
+    <string name="poi_recycling_small_metal">Små metalldeler</string>
+    <string name="poi_recycling_refund_bottles">Panteflasker</string>
+    <string name="poi_flagpole">Flaggstang</string>
+    <string name="poi_video_yes">Ja;Video</string>
+    <string name="poi_piste_downhill">Utforløype;Skiløype;Skibakke</string>
+    <string name="poi_skiing">Ski</string>
+    <string name="poi_route_activity_type_waterskiing">Vannski</string>
+    <string name="poi_sample_collection">Prøvetaking;Blod;Laboratorie;Test</string>
 </resources>

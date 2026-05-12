@@ -131,7 +131,7 @@
     <string name="logout_from_osmand_telegram">Выйти из OsmAnd Tracker?</string>
     <string name="shared_string_login">Войти</string>
     <string name="shared_string_logout">Выйти</string>
-    <string name="logout_from_osmand_telegram_descr">Вы уверены, что хотите выйти из OsmAnd Tracker\? Выйдя из приложения, вы не сможете делиться местоположением или не видеть местоположения других.</string>
+    <string name="logout_from_osmand_telegram_descr">Вы уверены, что хотите выйти из OsmAnd Tracker и перестать делиться местоположением или не видеть местоположения других?</string>
     <string name="not_found_yet">Не найдено</string>
     <string name="re_send_location">Отправить местоположение</string>
     <string name="last_available_location">Последнее местоположение</string>
@@ -276,7 +276,5 @@
     <string name="shared_string_error">Ошибка</string>
     <string name="send_live_location_error">Ошибка отправки текущего местоположения: %1$s</string>
     <string name="location_source">Источник местоположения</string>
-    <string name="location_source_summary">По умолчанию для определения местоположения OsmAnd, установленный с помощью Google Play, использует Google Play Services.
-\n
-\nЕсли местоположение определяется неточно или если пользуетесь устройством без Google Play Services, можно попытаться переключиться на Android API</string>
+    <string name="location_source_summary">По умолчанию OsmAnd, установленный из Google Play, использует сервисы Google Play для определения местоположения. \n\n Если вы получаете неточные данные о местоположении или используете устройство без сервисов Google Play, попробуйте переключиться на Android API</string>
 </resources>

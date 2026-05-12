@@ -117,7 +117,7 @@ import net.osmand.shared.wiki.WikiHelper;
 import net.osmand.shared.wiki.WikiImage;
 import net.osmand.util.Algorithms;
 import net.osmand.util.MapUtils;
-import net.osmand.wiki.WikiCoreHelper;
+import net.osmand.shared.wiki.WikiCoreHelper;
 
 import org.apache.commons.logging.Log;
 
@@ -276,6 +276,17 @@ public class MenuBuilder {
 
 	public void setMapContextMenu(@Nullable MapContextMenu mapContextMenu) {
 		this.mapContextMenu = mapContextMenu;
+	}
+
+	protected void requestMenuRelayout(@NonNull View anchor) {
+		if (!isHidden()) {
+			anchor.post(() -> {
+				MapContextMenu mapContextMenu = getMapContextMenu();
+				if (!isHidden() && mapContextMenu != null) {
+					mapContextMenu.updateLayout();
+				}
+			});
+		}
 	}
 
 	public boolean isShowNearestWiki() {
@@ -541,6 +552,7 @@ public class MenuBuilder {
 				viewGroup.addView(amenitiesRow, insertIndex);
 
 				buildNearestRowDividerIfMissing(viewGroup, insertIndex);
+				requestMenuRelayout(viewGroup);
 			}
 		});
 	}
@@ -572,6 +584,7 @@ public class MenuBuilder {
 					viewGroup.addView(amenitiesRow, insertIndex);
 
 					buildNearestRowDividerIfMissing(viewGroup, insertIndex);
+					requestMenuRelayout(viewGroup);
 				}
 			});
 		}
@@ -622,6 +635,7 @@ public class MenuBuilder {
 				.setCollapsable(true).setCollapsableView(collapsableView).build());
 		viewGroup1.addView(amenitiesRow, position);
 		buildNearestRowDividerIfMissing(viewGroup1, position);
+		requestMenuRelayout(viewGroup1);
 	}
 
 	protected View createRowContainer(Context context, String tag) {
@@ -680,7 +694,7 @@ public class MenuBuilder {
 		Map<Integer, String> locationData = PointDescription.getLocationData(mapActivity, latLon.getLatitude(), latLon.getLongitude(), true);
 		String title = Objects.requireNonNull(locationData.remove(PointDescription.LOCATION_LIST_HEADER));
 		buildRow(view, new BuildRowAttrs.Builder().setText(title).setIconId(R.drawable.ic_action_get_my_location)
-				.setTextPrefix(app.getString(R.string.coordinates)).setCollapsable(true)
+				.setTextPrefix(app.getString(R.string.coordinates)).setClipboardText(title).setCollapsable(true)
 				.setCollapsableView(getLocationCollapsableView(locationData))
 				.setTextLinesLimit(1).build());
 	}
@@ -734,7 +748,7 @@ public class MenuBuilder {
 			CacheReadTask cacheReadTask = new CacheReadTask(cacheManager, rawKey, json -> {
 				if (!Algorithms.isEmpty(json)) {
 					ImageCardsHolder holder = new ImageCardsHolder(latLon, params);
-					List<WikiImage> wikimediaImageList = WikiCoreHelper.getImagesFromJson(json, wikiTagData.getWikiImages());
+					List<WikiImage> wikimediaImageList = WikiCoreHelper.INSTANCE.getImagesFromJson(json, wikiTagData.getWikiImages());
 					for (WikiImage wikiImage : wikimediaImageList) {
 						holder.addCard(WIKIMEDIA, new WikiImageCard(mapActivity, wikiImage));
 					}
@@ -843,6 +857,7 @@ public class MenuBuilder {
 		}
 		String textPrefix = attrs.getTextPrefix();
 		String text = attrs.getText();
+		String clipboardText = attrs.getClipboardText();
 		String secondaryText = attrs.getSecondaryText();
 
 		LinearLayout baseView = new LinearLayout(view.getContext());
@@ -856,7 +871,9 @@ public class MenuBuilder {
 		ll.setLayoutParams(llParams);
 		ll.setBackgroundResource(AndroidUtils.resolveAttribute(view.getContext(), android.R.attr.selectableItemBackground));
 		ll.setOnLongClickListener(v -> {
-			String textToCopy = Algorithms.isEmpty(textPrefix) ? text : textPrefix + ": " + text;
+			String textToCopy = clipboardText != null
+					? clipboardText
+					: (Algorithms.isEmpty(textPrefix) ? text : textPrefix + ": " + text);
 			copyToClipboard(textToCopy, view.getContext());
 			return true;
 		});

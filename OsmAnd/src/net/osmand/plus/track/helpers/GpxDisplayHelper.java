@@ -74,7 +74,7 @@ public class GpxDisplayHelper {
 		String name = getGroupName(app, gpxFile);
 		if (gpxFile.getTracks().size() > 0) {
 			for (int i = 0; i < gpxFile.getTracks().size(); i++) {
-				TrackDisplayGroup group = buildTrackDisplayGroup(gpxFile, i, name);
+				TrackDisplayGroup group = buildTrackDisplayGroup(gpxFile, i, name, false);
 				if (processTrack) {
 					GpxDataItem dataItem = !Algorithms.isEmpty(gpxFile.getPath())
 							? app.getGpxDbHelper().getItem(new KFile(gpxFile.getPath())) : null;
@@ -101,13 +101,15 @@ public class GpxDisplayHelper {
 
 	@NonNull
 	public TrackDisplayGroup buildTrackDisplayGroup(@NonNull GpxFile gpxFile) {
-		return buildTrackDisplayGroup(gpxFile, 0, "");
+		return buildTrackDisplayGroup(gpxFile, 0, "", true);
 	}
 
 	@NonNull
-	private TrackDisplayGroup buildTrackDisplayGroup(@NonNull GpxFile gpxFile, int trackIndex, @NonNull String name) {
+	private TrackDisplayGroup buildTrackDisplayGroup(@NonNull GpxFile gpxFile, int trackIndex, @NonNull String name,
+	                                                 boolean overrideIsGeneralTrack) {
 		Track track = gpxFile.getTracks().get(trackIndex);
-		TrackDisplayGroup group = new TrackDisplayGroup(gpxFile, track, track.getGeneralTrack(), trackIndex);
+		boolean isGeneralTrack = overrideIsGeneralTrack || track.getGeneralTrack();
+		TrackDisplayGroup group = new TrackDisplayGroup(gpxFile, track, isGeneralTrack, trackIndex);
 		group.applyName(app, name);
 		group.setColor(track.getColor(gpxFile.getColor(0)));
 		String description = "";
@@ -240,8 +242,15 @@ public class GpxDisplayHelper {
 		}
 	}
 
+	@Nullable
+	public GpxSplitParams getGpxSplitParams(@NonNull SelectedGpxFile selectedGpxFile) {
+		GpxFile gpxFile = selectedGpxFile.getGpxFile();
+		GpxDataItem item = app.getGpxDbHelper().getItem(new KFile(gpxFile.getPath()));
+		return item != null ? getGpxSplitParams(item) : null;
+	}
+
 	@NonNull
-	private GpxSplitParams getGpxSplitParams(@NonNull GpxDataItem item) {
+	public GpxSplitParams getGpxSplitParams(@NonNull GpxDataItem item) {
 		Boolean joinSegments = appearanceHelper.requireParameter(item, JOIN_SEGMENTS);
 		Double splitInterval = appearanceHelper.requireParameter(item, SPLIT_INTERVAL);
 		GpxSplitType splitType = GpxSplitType.getSplitTypeByTypeId(appearanceHelper.requireParameter(item, SPLIT_TYPE));

@@ -114,12 +114,17 @@ public class LocationParser {
 			return null;
 		}
 		// detect UTM
-		if (all.size() == 4 && d.size() == 3 && all.get(1) instanceof String && ((String) all.get(1)).length() == 1) {
-			char ch = all.get(1).toString().charAt(0);
+		if (all.size() == 4 && d.size() == 3 && all.get(1) instanceof String str && str.length() == 1) {
+			char ch = str.charAt(0);
 			if (Character.isLetter(ch)) {
-				UTMPoint upoint = new UTMPoint(d.get(2), d.get(1), d.get(0).intValue(), ch);
-				LatLonPoint ll = upoint.toLatLonPoint();
-				return validateAndCreateLatLon(ll.getLatitude(), ll.getLongitude());
+				// UTMPoint accepts only 'N' or 'S'; UTM band letters C-X must be mapped to hemisphere
+				char hemisphere = utmZoneLetterToHemisphere(ch);
+				if (hemisphere != 0) {
+					// UTMPoint(northing, easting, zoneNumber, zoneLetter) - zoneLetter is N or S
+					UTMPoint uPoint = new UTMPoint(d.get(2), d.get(1), d.get(0).intValue(), hemisphere);
+					LatLonPoint ll = uPoint.toLatLonPoint();
+					return validateAndCreateLatLon(ll.getLatitude(), ll.getLongitude());
+				}
 			}
 		}
 
@@ -286,6 +291,19 @@ public class LocationParser {
 		return ll;
 	}
 
+	/**
+	 * Converts UTM zone letter to hemisphere 'N' or 'S'.
+	 * https://www.maptools.com/tutorials/grid_zone_details
+	 * @return 'N' for northern bands (N,P,Q,R,S,T,U,V,W,X), 'S' for southern (C,D,E,F,G,H,J,K,L,M), or 0 if invalid
+	 */
+	private static char utmZoneLetterToHemisphere(char zoneLetter) {
+		char upper = Character.toUpperCase(zoneLetter);
+		if (upper >= 'C' && upper <= 'X' && upper != 'I' && upper != 'O') {
+			return upper >= 'N' ? 'N' : 'S';
+		}
+		return 0;
+	}
+
 	private static LatLon validateAndCreateLatLon(double lat, double lon) {
 		if (Math.abs(lat) <= 90 && Math.abs(lon) <= 180) {
 			return new LatLon(lat, lon);
@@ -298,6 +316,19 @@ public class LocationParser {
 			char ch = Character.toLowerCase(locPhrase.charAt(0));
 			if (ch == '(' && locPhrase.length() > 1) {
 				ch = Character.toLowerCase(locPhrase.charAt(1)); // (0.1234,5.6789)
+			}
+			int cntLetter = 0;
+			int cntDigits = 0;
+			for (int i = 0; i < locPhrase.length(); i++) {
+				char c = Character.toLowerCase(locPhrase.charAt(i));
+				if (Character.isLetter(c) && c != 's' && c != 'n' && c != 'w' && c != 'e')
+					cntLetter++;
+				if (Character.isDigit(c))
+					cntDigits++;
+			}
+			if (!locPhrase.contains("://") && cntLetter > cntDigits) {
+				// 5c Hazelmere road, nw6 6
+				return false;
 			}
 			return ch == '-' || Character.isDigit(ch) || ch == 's' || ch == 'n' || locPhrase.contains("://");
 		}

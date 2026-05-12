@@ -751,8 +751,11 @@ public class MeasurementEditingContext implements IRouteSettingsListener {
 
 	@NonNull
 	private ApplicationMode getPointAppMode(int pointPosition) {
-		String profileType = getPoints().get(pointPosition).getProfileType();
-		return ApplicationMode.valueOfStringKey(profileType, DEFAULT_APP_MODE);
+		List<WptPt> points = getPoints();
+		if (pointPosition < 0 || pointPosition >= points.size()){
+			return DEFAULT_APP_MODE;
+		}
+		return ApplicationMode.valueOfStringKey(points.get(pointPosition).getProfileType(), DEFAULT_APP_MODE);
 	}
 
 	public void scheduleRouteCalculateIfNotEmpty() {
@@ -1011,7 +1014,7 @@ public class MeasurementEditingContext implements IRouteSettingsListener {
 				if (lastGpxPoint) {
 					wp2.setLat(points.get(points.size() - 1).getLatitude());
 					wp2.setLon(points.get(points.size() - 1).getLongitude());
-					routePoints.add(wp2);
+					routePoints.add(wp2); // wp2 may duplicate wp1 at the end
 				} else {
 					GpxPoint gp2 = gpxPoints.get(i + 1);
 					wp2.setLat(gp2.loc.getLatitude());
@@ -1019,7 +1022,7 @@ public class MeasurementEditingContext implements IRouteSettingsListener {
 				}
 				wp2.setProfileType(mode.getStringKey());
 				Pair<WptPt, WptPt> pair = new Pair<>(wp1, wp2);
-				roadSegmentData.put(pair, new RoadSegmentData(appMode, pair.first, pair.second, points, segments));
+				roadSegmentData.putIfAbsent(pair, new RoadSegmentData(appMode, pair.first, pair.second, points, segments));
 			}
 			if (lastGpxPoint) {
 				break;

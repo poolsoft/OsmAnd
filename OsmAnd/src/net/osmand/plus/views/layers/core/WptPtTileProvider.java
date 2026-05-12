@@ -46,6 +46,7 @@ public class WptPtTileProvider extends interface_MapTiledCollectionProvider {
       this.textStyle = textStyle != null ? textStyle : new TextRasterizer.Style();
       this.density = density;
       offset = new PointI(0,0);
+      this.swigTakeOwnership();
    }
 
    public void drawSymbols(@NonNull MapRendererView mapRenderer) {
@@ -181,12 +182,17 @@ public class WptPtTileProvider extends interface_MapTiledCollectionProvider {
       return MapMarker.PinIconHorisontalAlignment.CenterHorizontal;
    }
 
-   @Override
-   public PointI getPinIconOffset() {
-      return offset;
-   }
+	@Override
+	public PointI getPinIconOffset() {
+		return offset;
+	}
 
-   public void addToData(@NonNull WptPt wptPt, int color, boolean withShadow,
+	@Override
+	public boolean waitForLoading() {
+		return true;
+	}
+
+	public void addToData(@NonNull WptPt wptPt, int color, boolean withShadow,
                          boolean hasMarker, boolean history, float textScale) throws IllegalStateException {
       if (providerInstance != null) {
          throw new IllegalStateException("Provider already instantiated. Data cannot be modified at this stage.");

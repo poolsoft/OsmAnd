@@ -16,11 +16,11 @@ import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.resources.BinaryMapReaderResource;
 import net.osmand.plus.resources.ResourceManager.BinaryMapReaderResourceType;
 import net.osmand.plus.settings.backend.ApplicationMode;
-import net.osmand.router.GeneralRouter.GeneralRouterProfile;
 import net.osmand.router.RoutePlannerFrontEnd;
 import net.osmand.router.RoutingConfiguration;
 import net.osmand.router.RoutingConfiguration.RoutingMemoryLimits;
 import net.osmand.router.RoutingContext;
+import net.osmand.shared.routing.GeneralRouterProfile;
 import net.osmand.util.MapUtils;
 
 import org.apache.commons.logging.Log;
@@ -192,7 +192,7 @@ public class CurrentPositionHelper {
 													boolean allowEmptyNames,
 													@Nullable ApplicationMode appMode) {
 
-		List<BinaryMapReaderResource> checkReaders = checkReaders(lat, lon, usedReaders);
+		List<BinaryMapReaderResource> checkReaders = checkReaders(lat, lon, usedReaders, geocoding);
 		if (appMode == null) {
 			appMode = app.getSettings().getApplicationMode();
 		}
@@ -211,7 +211,7 @@ public class CurrentPositionHelper {
 	}
 	
 	private List<BinaryMapReaderResource> checkReaders(double lat, double lon,
-			List<BinaryMapReaderResource> ur) {
+			List<BinaryMapReaderResource> ur, boolean requireAddressData) {
 		List<BinaryMapReaderResource> res = ur;
 		for(BinaryMapReaderResource t : ur ) {
 			if(t.isClosed()) {
@@ -224,7 +224,8 @@ public class CurrentPositionHelper {
 		for(BinaryMapReaderResource r : app.getResourceManager().getFileReaders()) {
 			if (!r.isClosed()) {
 				BinaryMapIndexReader shallowReader = r.getShallowReader();
-				if (shallowReader != null && shallowReader.containsRouteData(x31, y31, x31, y31, 15)) {
+				if (shallowReader != null && shallowReader.containsRouteData(x31, y31, x31, y31, 15)
+						&& (!requireAddressData || shallowReader.containsAddressData())) {
 					if (!res.contains(r)) {
 						res = new ArrayList<>(res);
 						res.add(r);
