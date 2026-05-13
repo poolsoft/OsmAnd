@@ -9,7 +9,6 @@
     <dimen name="dock_clock_text_size">24sp</dimen>
     <dimen name="dock_music_height">48dp</dimen>
     <dimen name="dock_music_min_width">140dp</dimen>
-    <dimen name="dock_label_text_size">10sp</dimen>
 
     <!-- ANA EKRAN (activity_car_launcher) -->
     <dimen name="map_margin_top">32dp</dimen>
@@ -27,21 +26,7 @@
     <dimen name="weather_padding">16dp</dimen>
 
     <!-- WIDGET GENEL -->
-    <dimen name="widget_corner_radius">14dp</dimen>
-    <dimen name="widget_padding">10dp</dimen>
-    <dimen name="widget_margin">4dp</dimen>
-
-    <!-- WIDGET METİN BOYUTLARI -->
-    <!-- Araba kullanimi icin buyuk ve okunakli -->
-    <dimen name="widget_value_text_size">26sp</dimen>
-    <dimen name="widget_label_text_size">10sp</dimen>
-    <dimen name="widget_title_text_size">11sp</dimen>
-    <dimen name="widget_unit_text_size">12sp</dimen>
-    <dimen name="widget_subtext_size">12sp</dimen>
-
-    <!-- DOKUNMA HEDEFLERI (araba icin min 48dp) -->
-    <dimen name="touch_target_min">48dp</dimen>
-    <dimen name="touch_target_icon">44dp</dimen>
-    <dimen name="touch_target_small">40dp</dimen>
+    <dimen name="widget_corner_radius">12dp</dimen>
+    <dimen name="widget_padding">8dp</dimen>
 
 </resources>
