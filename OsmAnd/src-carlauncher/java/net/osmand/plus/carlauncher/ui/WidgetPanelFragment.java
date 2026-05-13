@@ -329,8 +329,13 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             
             boolean isHorizontalScroll = isSystemPortrait;
             
+            java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> visibleWidgets = widgetManager.getVisibleWidgets();
+            for (net.osmand.plus.carlauncher.widgets.BaseWidget w : visibleWidgets) {
+                if (getActivity() != null) w.setContext(getActivity());
+            }
+
             WidgetListAdapter adapter = new WidgetListAdapter(
-                widgetManager.getVisibleWidgets(), 
+                visibleWidgets, 
                 isHorizontalScroll, 
                 new WidgetListAdapter.OnWidgetActionListener() {
                     @Override public void onWidgetLongClicked(View view, net.osmand.plus.carlauncher.widgets.BaseWidget widget) { }

@@ -211,7 +211,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                         net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.START, dpToPx(8));
                 
                 set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP,
-                        androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP);
+                        androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP, dpToPx(24));
                 set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM,
                         androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
                 

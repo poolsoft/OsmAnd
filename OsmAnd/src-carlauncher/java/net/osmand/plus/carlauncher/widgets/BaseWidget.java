@@ -23,6 +23,13 @@ public abstract class BaseWidget {
         this.context = context;
     }
 
+    /**
+     * Guvenli bir sekilde Activity Context'ini dondurur.
+     */
+    public Context getContext() {
+        return context;
+    }
+
     public enum WidgetSize {
         SMALL, MEDIUM, LARGE
     }
