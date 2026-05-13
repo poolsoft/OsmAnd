@@ -75,12 +75,12 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
         // --- Kaynak butonu ---
         view.findViewById(net.osmand.plus.R.id.btn_set_source)
                 .setOnClickListener(v -> AntennaPointPickerDialog.show(
-                        context, manager, true, null));
+                        v.getContext(), manager, true, null));
 
         // --- Hedef butonu ---
         view.findViewById(net.osmand.plus.R.id.btn_set_target)
                 .setOnClickListener(v -> AntennaPointPickerDialog.show(
-                        context, manager, false, null));
+                        v.getContext(), manager, false, null));
 
         // --- Hizalama ekrani ---
         view.findViewById(net.osmand.plus.R.id.btn_align).setOnClickListener(v -> {

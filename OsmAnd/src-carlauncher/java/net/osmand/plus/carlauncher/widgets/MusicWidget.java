@@ -62,18 +62,18 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         appIconView.setOnClickListener(v -> {
             String pkg = musicManager.getPreferredPackage();
             if (pkg != null) {
-                Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(pkg);
+                Intent launchIntent = v.getContext().getPackageManager().getLaunchIntentForPackage(pkg);
                 if (launchIntent != null) {
                     launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     launchIntent.addFlags(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT);
-                    context.startActivity(launchIntent);
+                    v.getContext().startActivity(launchIntent);
                 }
             } else {
-                showMusicAppPicker();
+                showMusicAppPicker(v);
             }
         });
         appIconView.setOnLongClickListener(v -> {
-            showMusicAppPicker();
+            showMusicAppPicker(v);
             return true;
         });
 
@@ -103,18 +103,19 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         return rootView;
     }
 
-    private void showMusicAppPicker() {
+    private void showMusicAppPicker(View v) {
+        Context activityContext = v.getContext();
         if (!musicManager.checkNotificationAccess()) {
-             android.widget.Toast.makeText(context, "Lütfen 'Bildirim Erişimi' iznini verin.", android.widget.Toast.LENGTH_LONG).show();
+             android.widget.Toast.makeText(activityContext, "Lütfen 'Bildirim Erişimi' iznini verin.", android.widget.Toast.LENGTH_LONG).show();
              try {
-                context.startActivity(new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                activityContext.startActivity(new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
              } catch (Exception e) {
-                 android.widget.Toast.makeText(context, "Ayarlar açılamadı, manuel gidin.", android.widget.Toast.LENGTH_SHORT).show();
+                  android.widget.Toast.makeText(activityContext, "Ayarlar açılamadı, manuel gidin.", android.widget.Toast.LENGTH_SHORT).show();
              }
              return;
         }
 
-        new net.osmand.plus.carlauncher.dock.AppPickerDialog(context, true, (packageName, appName, icon) -> {
+        new net.osmand.plus.carlauncher.dock.AppPickerDialog(activityContext, true, (packageName, appName, icon) -> {
             musicManager.setPreferredPackage(packageName);
             updateAppIcon(packageName);
         }).show();
