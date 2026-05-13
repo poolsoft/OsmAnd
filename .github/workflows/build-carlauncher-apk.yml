@@ -77,15 +77,25 @@ jobs:
       working-directory: ./android
       run: cp OsmAnd/build/outputs/apk/carlauncherLegacyFat/debug/OsmAnd-carlauncher-legacy-fat-debug.apk CarLauncher.apk
 
-    - name: Create Release
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: CarLauncher-APK
+        path: android/CarLauncher.apk
+
+    - name: Update Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v${{ env.VERSION_NAME }}
-        name: Release ${{ env.VERSION_NAME }}
+        tag_name: latest
+        name: Latest CarLauncher Build
+        body: |
+          Son derleme: ${{ env.VERSION_NAME }}
+          Commit: ${{ github.sha }}
         files: |
           android/CarLauncher.apk
           android/version.json
         draft: false
         prerelease: false
+        make_latest: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
