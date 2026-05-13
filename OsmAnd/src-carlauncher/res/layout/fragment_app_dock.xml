@@ -1,39 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/dock_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/transparent"
-    android:paddingStart="4dp"
-    android:paddingEnd="4dp">
+    android:background="@drawable/bg_dock_modern"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp">
 
     <!-- 1. App Drawer Button (Left) -->
     <ImageButton
         android:id="@+id/btn_app_list"
-        android:layout_width="@dimen/dock_icon_size"
-        android:layout_height="@dimen/dock_icon_size"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
         android:background="?attr/selectableItemBackgroundBorderless" 
         android:contentDescription="Apps"
-        android:padding="@dimen/dock_icon_padding"
+        android:padding="14dp"
         android:scaleType="fitCenter"
         android:src="@drawable/dashboard_grid"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:tint="#FFFFFF" />
+        app:tint="@color/cl_primary" />
 
     <!-- SEPARATOR -->
     <View
         android:id="@+id/sep_1"
         android:layout_width="1dp"
-        android:layout_height="32dp"
-        android:background="#33FFFFFF"
+        android:layout_height="24dp"
+        android:background="@color/cl_divider"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@id/btn_app_list"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginStart="4dp"/>
 
-    <!-- 3. Shortcuts RecyclerView (Variable Width) -->
+    <!-- 3. Shortcuts RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dock_recycler"
         android:layout_width="0dp"
@@ -41,52 +42,48 @@
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@id/sep_1"
         app:layout_constraintEnd_toStartOf="@id/mini_music_container"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- 4. Mini Music Player (Right Side) -->
+    <!-- 4. Mini Music Player (Modernized) -->
     <LinearLayout
         android:id="@+id/mini_music_container"
         android:layout_width="wrap_content"
-        android:layout_height="@dimen/dock_music_height"
+        android:layout_height="44dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@drawable/bg_card_rounded_black" 
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        android:layout_marginEnd="8dp"
-        android:minWidth="@dimen/dock_music_min_width"
-        android:visibility="visible"
-        android:elevation="2dp"
+        android:background="@drawable/bg_widget_modern" 
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:layout_marginEnd="12dp"
+        android:minWidth="160dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/clock_settings_container"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/mini_music_icon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:src="@android:drawable/ic_media_play"
-            android:background="@drawable/bg_circle_translucent_white"
-            android:padding="6dp"
-            app:tint="#FFFFFF"/>
+            app:tint="@color/cl_accent_orange"/>
 
         <TextView
             android:id="@+id/mini_music_title"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Muzik Secin"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
+            android:layout_weight="1"
+            android:text="Muzik"
+            android:textColor="@color/cl_text_primary"
+            android:textSize="13sp"
+            android:fontFamily="sans-serif-medium"
             android:maxLines="1"
             android:ellipsize="marquee"
             android:singleLine="true"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
-            android:maxWidth="110dp"/>
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"/>
 
         <ImageButton
             android:id="@+id/mini_btn_play"
@@ -95,8 +92,7 @@
             android:src="@android:drawable/ic_media_play"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="6dp"
-            android:scaleType="fitCenter"
-            app:tint="#00FFFF"/>
+            app:tint="@color/cl_primary"/>
 
         <ImageButton
             android:id="@+id/mini_btn_next"
@@ -105,13 +101,11 @@
             android:src="@android:drawable/ic_media_next"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="6dp"
-            android:scaleType="fitCenter"
-            android:layout_marginStart="2dp"
-            app:tint="#FFFFFF"/>
+            app:tint="@color/cl_text_secondary"/>
 
     </LinearLayout>
 
-    <!-- 5. Clock + Layout Toggle Container (Far Right) -->
+    <!-- 5. Clock + Layout Toggle -->
     <LinearLayout
         android:id="@+id/clock_settings_container"
         android:layout_width="wrap_content"
@@ -120,7 +114,7 @@
         android:gravity="center_vertical"
         android:background="?attr/selectableItemBackground"
         android:paddingStart="12dp"
-        android:paddingEnd="16dp"
+        android:paddingEnd="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -130,22 +124,20 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="12:00"
-            android:textColor="#FFFFFF"
-            android:textSize="@dimen/dock_clock_text_size"
+            android:textColor="@color/cl_text_primary"
+            android:textSize="22sp"
             android:textStyle="bold"
-            android:layout_gravity="center_vertical" />
+            android:fontFamily="sans-serif-medium"/>
 
         <ImageButton
             android:id="@+id/btn_layout_toggle"
-            android:layout_width="@dimen/dock_icon_size"
-            android:layout_height="@dimen/dock_icon_size"
-            android:layout_marginStart="8dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="4dp"
             android:src="@drawable/ic_action_view_as_list"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="4dp"
-            android:scaleType="fitCenter"
-            app:tint="#AAAAAA"
-            android:contentDescription="Layout Toggle" />
+            android:padding="12dp"
+            app:tint="@color/cl_text_hint"/>
 
     </LinearLayout>
 

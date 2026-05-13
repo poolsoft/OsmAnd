@@ -43,6 +43,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceFragmentCompat.OnPreferenceStartFragmentCallback;
+import androidx.preference.PreferenceManager;
 
 import com.github.ksoichiro.android.observablescrollview.ObservableScrollView;
 
@@ -706,7 +707,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         if (rootLayout == null || widgetPanel == null) return;
         
         CarLauncherSettings settings = new CarLauncherSettings(this); // Moved to top
-        android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        android.content.SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
         boolean isPortrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
         

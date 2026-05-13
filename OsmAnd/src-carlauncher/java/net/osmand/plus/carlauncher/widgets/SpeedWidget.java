@@ -11,6 +11,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import net.osmand.plus.R;
 
 import net.osmand.Location;
 import net.osmand.plus.OsmAndLocationProvider;
@@ -38,6 +40,7 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
 
     // Digital UI
     private TextView speedText;
+    private TextView unitText;
     private TextView limitText;
     private LinearLayout limitContainer;
 
@@ -96,8 +99,13 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         speedContainer.setOrientation(LinearLayout.VERTICAL);
         speedContainer.setGravity(Gravity.CENTER);
 
+        // Value + Unit Horizontal
+        LinearLayout valueUnitLayout = new LinearLayout(context);
+        valueUnitLayout.setOrientation(LinearLayout.HORIZONTAL);
+        valueUnitLayout.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+
         speedText = new TextView(context);
-        speedText.setTextColor(Color.parseColor("#6582c1ff"));
+        speedText.setTextColor(ContextCompat.getColor(context, R.color.cl_primary));
         speedText.setTextSize(64);
         speedText.setGravity(Gravity.CENTER);
         speedText.setText("--");
@@ -109,8 +117,17 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
             speedText.setTypeface(Typeface.DEFAULT_BOLD);
         }
         
-        speedContainer.addView(speedText);
-        contentLayout.addView(speedContainer); // Re-add speed container
+        unitText = new TextView(context);
+        unitText.setTextSize(14);
+        unitText.setTextColor(ContextCompat.getColor(context, R.color.cl_text_secondary));
+        unitText.setPadding(dpToPx(4), 0, 0, dpToPx(12)); // Bottom align offset
+        unitText.setText("km/h");
+
+        valueUnitLayout.addView(speedText);
+        valueUnitLayout.addView(unitText);
+        
+        speedContainer.addView(valueUnitLayout);
+        contentLayout.addView(speedContainer);
 
         root.addView(contentLayout);
         digitalView = contentLayout;
@@ -184,7 +201,11 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         if (speedText != null) {
              FormattedValue formatted = OsmAndFormatter.getFormattedSpeedValue(currentSpeed, app);
              final String val = formatted.value;
-             speedText.post(() -> speedText.setText(val));
+             final String unit = formatted.unit;
+             speedText.post(() -> {
+                 speedText.setText(val);
+                 if (unitText != null) unitText.setText(unit);
+             });
         }
 
         // 2. Analog View Update
@@ -222,37 +243,37 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
                      // Let's use simplified km/h based logic for visual check
                      float diffKmh = diff * 3.6f;
                      
-                     int defaultColor = Color.parseColor("#6582c1ff"); // White
-                     int warningColor = Color.parseColor("#FFD54F"); // Amber
-                     int dangerColor = Color.parseColor("#FF5252"); // Red
+                     int defaultColor = ContextCompat.getColor(context, R.color.cl_primary);
+                     int warningColor = ContextCompat.getColor(context, R.color.cl_accent_orange);
+                     int dangerColor = ContextCompat.getColor(context, R.color.cl_danger);
                      
                      if (diffKmh > 5) { // +5 km/h over
                          if (speedText != null) speedText.setTextColor(dangerColor);
                          
-                         // Limit Box Danger
+                         // Limit Box Danger (Red Circle)
                          android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
                          gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-                         gd.setColor(Color.parseColor("#CCFF0000"));
-                         gd.setStroke(dpToPx(4), Color.RED);
+                         gd.setColor(Color.WHITE);
+                         gd.setStroke(dpToPx(6), dangerColor);
                          limitText.setBackground(gd);
-                         limitText.setTextColor(Color.WHITE);
+                         limitText.setTextColor(Color.BLACK);
                          
                      } else if (diffKmh > 0) { // 0-5 km/h over
                          if (speedText != null) speedText.setTextColor(warningColor);
                          
                          // Limit Box Warning
-                         limitText.setBackgroundResource(net.osmand.plus.R.drawable.bg_speed_limit);
-                         limitText.setTextColor(Color.RED); // Text Red
+                         limitText.setBackgroundResource(R.drawable.bg_speed_limit);
+                         limitText.setTextColor(Color.RED); 
                      } else {
                          // Normal
                          if (speedText != null) speedText.setTextColor(defaultColor);
-                         limitText.setBackgroundResource(net.osmand.plus.R.drawable.bg_speed_limit);
+                         limitText.setBackgroundResource(R.drawable.bg_speed_limit);
                          limitText.setTextColor(Color.BLACK);
                      }
 
                  } else {
                      limitContainer.setVisibility(View.GONE);
-                     if (speedText != null) speedText.setTextColor(Color.parseColor("#6582c1ff"));
+                     if (speedText != null) speedText.setTextColor(ContextCompat.getColor(context, R.color.cl_primary));
                  }
              }
         }
