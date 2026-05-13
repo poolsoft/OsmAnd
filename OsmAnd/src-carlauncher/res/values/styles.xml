@@ -1,40 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Car Launcher merkezi stil sistemi.
+     Widget layout dosyalari style="@style/..." ile bu stillerden yararlanmali. -->
 <resources>
 
-    <!-- Base Application Theme -->
-    <style name="Theme.CarLauncher" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowBackground">@color/cyber_bg_end</item>
-        <item name="colorPrimary">@color/cyber_neon_blue</item>
-        <item name="colorPrimaryDark">@color/cyber_bg_end</item>
-        <item name="colorAccent">@color/cyber_neon_blue</item>
-        <item name="android:textColor">@color/cyber_text_primary</item>
-    </style>
+    <!-- ================================================ -->
+    <!-- WIDGET METIN STİLLERİ                            -->
+    <!-- ================================================ -->
 
-    <!-- Widget Text Styles -->
-    <style name="WidgetTitleText">
-        <item name="android:textColor">@color/cyber_text_secondary</item>
-        <item name="android:textSize">12sp</item>
-        <item name="android:textAllCaps">true</item>
-        <item name="android:letterSpacing">0.1</item>
+    <!-- Widget baslik etiketi (kucuk, uppercase) — orn: "KAYNAK", "HIZ" -->
+    <style name="CarWidget.Label">
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@color/cl_text_hint</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:gravity">center</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textAllCaps">false</item>
     </style>
 
-    <style name="WidgetValueText">
-        <item name="android:textColor">@color/cyber_text_primary</item>
-        <item name="android:textSize">32sp</item>
+    <!-- Widget ana deger metni — orn: "120", "270°" -->
+    <style name="CarWidget.Value">
+        <item name="android:textSize">26sp</item>
+        <item name="android:textColor">@color/cl_text_primary</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <!-- Widget birim metni — orn: "km/h", "°" -->
+    <style name="CarWidget.Unit">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/cl_text_secondary</item>
         <item name="android:textStyle">normal</item>
-        <item name="android:fontFamily">sans-serif-thin</item> <!-- Modern ince font -->
-        <item name="android:gravity">center</item>
-    </style>
-    
-    <style name="WidgetValueText.Huge">
-        <item name="android:textSize">72sp</item>
     </style>
 
-    <style name="WidgetInfoText">
-        <item name="android:textColor">@color/cyber_text_tertiary</item>
-        <item name="android:textSize">14sp</item>
+    <!-- Widget ikincil bilgi — orn: "Azimut", "Mesafe" -->
+    <style name="CarWidget.SubText">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/cl_text_secondary</item>
+    </style>
+
+    <!-- Widget baslik satiri metni — orn: "ANTEN HIZALAMA" -->
+    <style name="CarWidget.Title">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">@color/cl_text_hint</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.1</item>
+    </style>
+
+    <!-- ================================================ -->
+    <!-- BUTON STİLLERİ                                   -->
+    <!-- ================================================ -->
+
+    <!-- Araba uyumlu buton — min 48dp dokunma alani -->
+    <style name="CarWidget.Button">
+        <item name="android:minWidth">48dp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:background">@drawable/ripple_bg</item>
+        <item name="android:gravity">center</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <!-- Kucuk ikon buton (toolbar'da) -->
+    <style name="CarWidget.IconButton">
+        <item name="android:layout_width">44dp</item>
+        <item name="android:layout_height">44dp</item>
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:padding">8dp</item>
+    </style>
+
+    <!-- ================================================ -->
+    <!-- LAYOUT STİLLERİ                                  -->
+    <!-- ================================================ -->
+
+    <!-- Widget kart blogu — ic kart gibi gorunen alan -->
+    <style name="CarWidget.Card">
+        <item name="android:background">@drawable/bg_card_rounded_black</item>
+        <item name="android:padding">8dp</item>
+    </style>
+
+    <!-- Dock ikonlari altindaki etiket -->
+    <style name="DockIcon.Label">
+        <item name="android:textSize">@dimen/dock_label_text_size</item>
+        <item name="android:textColor">@color/cl_text_secondary</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
         <item name="android:gravity">center</item>
     </style>
 
