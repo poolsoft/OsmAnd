@@ -7,6 +7,7 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import net.osmand.plus.carlauncher.widgets.BaseWidget;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -42,14 +43,27 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
         return null;
     }
 
-    public void setUnitSize(int unitSize, boolean isHorizontalScroll) {
-        this.unitSize = unitSize;
-        this.isHorizontalScroll = isHorizontalScroll;
-        notifyDataSetChanged();
+    public void setUnitSize(int newSize, boolean newHorizontal) {
+        boolean changed = (this.unitSize != newSize || this.isHorizontalScroll != newHorizontal);
+        this.unitSize = newSize;
+        this.isHorizontalScroll = newHorizontal;
+        // Sadece deger degistiyse yenile
+        if (changed) notifyDataSetChanged();
     }
-    
+
     public void setMetroMode(boolean isMetro) {
+        boolean changed = (this.isMetroMode != isMetro);
         this.isMetroMode = isMetro;
+        if (changed) notifyDataSetChanged();
+    }
+
+    /**
+     * Mevcut adapter'i tamamen yeniden olusturmak yerine listeyi guncelle.
+     * onResume'da adapter'i resetlemek yerine bu cagrilmali.
+     */
+    public void refresh(List<BaseWidget> newWidgets) {
+        this.widgets.clear();
+        this.widgets.addAll(newWidgets);
         notifyDataSetChanged();
     }
     

@@ -74,11 +74,10 @@ public class WidgetManager {
      * This prevents duplication when singleton persists across app "restarts".
      */
     public void forceResetForNewSession() {
-        android.util.Log.d("WidgetDebug", "Force reset for new Fragment session.");
         allWidgets.clear();
         visibleWidgets.clear();
         isStarted = false;
-        configLoaded = false; // CRITICAL: Reset flag so config can be reloaded
+        configLoaded = false;
     }
 
     /**
@@ -96,22 +95,16 @@ public class WidgetManager {
      * Widget ekle.
      */
     public void addWidget(@NonNull BaseWidget widget) {
-        // Prevent duplicates strictly by ID
         if (findWidgetById(widget.getId()) != null) {
-             android.util.Log.d("WidgetDebug", "addWidget: Duplicate detected, skipping " + widget.getId());
-             return;
+            return; // Duplicate — sessizce atla
         }
-
         if (!allWidgets.contains(widget)) {
-            android.util.Log.d("WidgetDebug", "addWidget: " + widget.getId());
             allWidgets.add(widget);
             updateVisibleWidgets();
             if (isStarted) {
                 widget.onStart();
             }
-            saveWidgetConfig(); // SAVE ON ADD
-        } else {
-             android.util.Log.d("WidgetDebug", "addWidget: Already reference " + widget.getId());
+            saveWidgetConfig();
         }
     }
 

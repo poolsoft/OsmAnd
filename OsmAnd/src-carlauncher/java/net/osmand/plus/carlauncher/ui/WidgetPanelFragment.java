@@ -13,7 +13,8 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
+
 import net.osmand.plus.carlauncher.widgets.BaseWidget;
 import net.osmand.plus.carlauncher.widgets.WidgetManager;
 import net.osmand.plus.carlauncher.widgets.SpeedWidget;
@@ -54,8 +55,9 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             widgetManager.forceResetForNewSession(); // Clean start
             widgetManager.updateActivityContext(getContext());
             
-            android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(getContext());
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
             isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
+
             
             if (!widgetManager.loadWidgetConfig()) {
                 initializeWidgets(); // Load default if empty
@@ -149,9 +151,11 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                 } else if (id == 2) { // Pin
                     isPinned = !isPinned;
                     item.setChecked(isPinned);
-                    android.preference.PreferenceManager.getDefaultSharedPreferences(getContext())
+                    PreferenceManager.getDefaultSharedPreferences(getContext())
                         .edit().putBoolean(PREF_IS_PINNED, isPinned).apply();
+
                     if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+
                         ((net.osmand.plus.activities.MapActivity) getActivity()).updateWidgetPanelMode();
                     }
                     return true;
@@ -404,7 +408,8 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     public void onResume() {
         super.onResume();
         if (getContext() != null) {
-            PreferenceManager.getDefaultSharedPreferences(getContext()).registerOnSharedPreferenceChangeListener(this);
+            PreferenceManager.getDefaultSharedPreferences(getContext())
+                    .registerOnSharedPreferenceChangeListener(this);
         }
         if (getContext() != null) {
             WidgetManager wm = WidgetManager.getInstance(getContext());
@@ -415,20 +420,30 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         }
         if (widgetManager != null) {
             widgetManager.startAllWidgets();
-            applyWidgetsToView();
+            // Adapter mevcutsa yeniden olusturma — sadece listeyi guncelle (RAM tasarrufu)
+            if (listRecyclerView != null && listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
+                ((WidgetListAdapter) listRecyclerView.getAdapter())
+                        .refresh(widgetManager.getVisibleWidgets());
+                updateLayoutConfiguration();
+            } else {
+                applyWidgetsToView();
+            }
         }
     }
+
 
     @Override
     public void onPause() {
         super.onPause();
         if (getContext() != null) {
-            PreferenceManager.getDefaultSharedPreferences(getContext()).unregisterOnSharedPreferenceChangeListener(this);
+            PreferenceManager.getDefaultSharedPreferences(getContext())
+                    .unregisterOnSharedPreferenceChangeListener(this);
         }
         if (widgetManager != null) {
             widgetManager.stopAllWidgets();
         }
     }
+
 
     private void initializeWidgets() {
         if (widgetManager == null || app == null) return;
