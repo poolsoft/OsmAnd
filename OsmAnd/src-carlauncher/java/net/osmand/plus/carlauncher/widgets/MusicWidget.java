@@ -171,86 +171,8 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
             visualizerView.setVisibility(isSmall ? View.INVISIBLE : View.VISIBLE);
         }
 
-        // Constraints Logic
-        if (rootView instanceof androidx.constraintlayout.widget.ConstraintLayout) {
-            androidx.constraintlayout.widget.ConstraintLayout layout = (androidx.constraintlayout.widget.ConstraintLayout) rootView;
-            androidx.constraintlayout.widget.ConstraintSet set = new androidx.constraintlayout.widget.ConstraintSet();
-            set.clone(layout);
-
-            // Common clean up
-            set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP);
-            set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-            set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.START);
-            set.clear(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.END);
-            
-            set.clear(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.TOP);
-            set.clear(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-            set.clear(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.START);
-            set.clear(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.END);
-
-            if (isSmall) {
-                // --- Horizontal Layout (Row) ---
-                
-                // 1. Icon (Left, Centered Vertical)
-                // Existing: app:layout_constraintStart_toStartOf="parent", app:layout_constraintTop_toTopOf="parent"
-                // Assuming margin top/start from XML is okay (12dp).
-                
-                // 2. Play Button (Right, Centered Vertical)
-                set.connect(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.END,
-                        androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END, dpToPx(12));
-                set.connect(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.TOP,
-                        androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP);
-                set.connect(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM,
-                        androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-                set.setMargin(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 0); // Reset bottom margin
-                
-                // 3. Track Title (Icon ve Play arasinda, Dikey Ortali)
-                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.START,
-                        net.osmand.plus.R.id.header_container, androidx.constraintlayout.widget.ConstraintSet.END, dpToPx(8));
-                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.END,
-                        net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.START, dpToPx(8));
-                
-                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP,
-                        androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP, dpToPx(24));
-                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM,
-                        androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-                
-                // Track Title'i genislik olarak 0dp (match constraint) yap ki Icon ve Button arasina yayilsin
-                set.constrainWidth(net.osmand.plus.R.id.widget_track_title, 0);
-                set.centerVertically(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID);
-
-            } else {
-                // --- Vertical Layout (Stack) ---
-                
-                // Re-apply Portrait/Vertical constraints
-                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.START,
-                         androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.START);
-                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.END,
-                         androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
-                         
-                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.TOP,
-                        net.osmand.plus.R.id.widget_app_icon, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-                set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM,
-                        net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.TOP);
-                
-                set.connect(net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.TOP,
-                        net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-                set.connect(net.osmand.plus.R.id.widget_track_artist, androidx.constraintlayout.widget.ConstraintSet.BOTTOM,
-                        net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.TOP);
-                        
-                set.setVerticalChainStyle(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.CHAIN_PACKED);
-                
-                // Play Button Bottom
-                set.connect(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.START,
-                         androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.START);
-                set.connect(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.END,
-                         androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
-                set.connect(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM,
-                        androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-                set.setMargin(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, dpToPx(12));
-            }
-            set.applyTo(layout);
-        }
+        // --- Music Layout is now handled by XML (widget_music_modern.xml) ---
+        // Programmatic constraints removed to avoid portrait/landscape conflicts.
 
         if (newSize == WidgetSize.LARGE) {
             if (title != null) title.setTextSize(18);

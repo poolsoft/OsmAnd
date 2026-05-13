@@ -6,7 +6,7 @@
     android:minHeight="120dp"
     android:clipToOutline="true">
 
-    <!-- 1. Albüm Kapağı (En Alt) -->
+    <!-- Albüm Kapağı Arka Plan -->
     <ImageView
         android:id="@+id/widget_album_art"
         android:layout_width="0dp"
@@ -19,7 +19,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- 2. Cam Efekti Katmanı -->
+    <!-- Cam Efekti -->
     <View
         android:id="@+id/widget_glass_layer"
         android:layout_width="0dp"
@@ -30,109 +30,91 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- 3. Visualizer (Camın arkasında gibi durması için alpha veriyoruz) -->
-    <net.osmand.plus.carlauncher.widgets.MusicVisualizerView
-        android:id="@+id/widget_visualizer"
-        android:layout_width="0dp"
-        android:layout_height="64dp"
-        android:alpha="0.4"
-        app:layout_constraintBottom_toBottomOf="parent"
+    <!-- App Icon (Header) -->
+    <ImageView
+        android:id="@+id/widget_app_icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_margin="12dp"
+        android:src="@android:drawable/ic_media_play"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- 4. Uygulama Logosu ve Baslik -->
-    <LinearLayout
-        android:id="@+id/header_container"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginStart="14dp"
-        android:layout_marginTop="14dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ImageView
-            android:id="@+id/widget_app_icon"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@android:drawable/ic_media_play"
-            app:tint="@color/cl_accent_orange" />
-
-        <TextView
-            android:id="@+id/widget_title"
-            style="@style/CarWidget.Title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="MUZIK"
-            android:layout_marginStart="8dp" />
-    </LinearLayout>
-
-    <!-- 5. Parca Bilgileri -->
+    <!-- Track Title -->
     <TextView
         android:id="@+id/widget_track_title"
-        style="@style/CarWidget.Value"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
         android:text="Parça Adı"
-        android:gravity="center"
-        android:textSize="20sp"
-        android:layout_marginHorizontal="20dp"
-        app:layout_constraintStart_toStartOf="parent"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:ellipsize="end"
+        android:maxLines="1"
+        app:layout_constraintStart_toEndOf="@id/widget_app_icon"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/widget_track_artist"
-        app:layout_constraintTop_toBottomOf="@id/header_container"
-        app:layout_constraintVertical_chainStyle="packed" />
+        app:layout_constraintTop_toTopOf="@id/widget_app_icon"
+        app:layout_constraintBottom_toBottomOf="@id/widget_app_icon" />
 
+    <!-- Artist -->
     <TextView
         android:id="@+id/widget_track_artist"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Sanatçı"
-        android:textColor="@color/cl_text_secondary"
+        android:textColor="#BBBBBB"
         android:textSize="14sp"
-        android:fontFamily="sans-serif-medium"
-        android:gravity="center"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="2dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@id/widget_track_title"
+        app:layout_constraintEnd_toEndOf="@id/widget_track_title"
         app:layout_constraintTop_toBottomOf="@id/widget_track_title" />
 
-    <!-- 6. Kontroller -->
-    <ImageButton
-        android:id="@+id/widget_btn_play"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:src="@android:drawable/ic_media_play"
-        android:background="@drawable/bg_circle_button"
-        android:backgroundTint="@color/cl_primary"
-        app:tint="#FFFFFF"
-        android:padding="16dp"
-        android:elevation="4dp"
-        android:layout_marginBottom="16dp"
+    <!-- Visualizer -->
+    <net.osmand.plus.carlauncher.widgets.MusicVisualizerView
+        android:id="@+id/widget_visualizer"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <ImageButton
-        android:id="@+id/widget_btn_prev"
-        style="@style/CarWidget.Button"
-        android:src="@android:drawable/ic_media_previous"
-        app:tint="@color/cl_text_primary"
-        android:layout_marginEnd="16dp"
-        app:layout_constraintEnd_toStartOf="@id/widget_btn_play"
-        app:layout_constraintTop_toTopOf="@id/widget_btn_play"
-        app:layout_constraintBottom_toBottomOf="@id/widget_btn_play" />
+    <!-- Kontroller -->
+    <LinearLayout
+        android:id="@+id/controls_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@id/widget_visualizer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <ImageButton
-        android:id="@+id/widget_btn_next"
-        style="@style/CarWidget.Button"
-        android:src="@android:drawable/ic_media_next"
-        app:tint="@color/cl_text_primary"
-        android:layout_marginStart="16dp"
-        app:layout_constraintStart_toEndOf="@id/widget_btn_play"
-        app:layout_constraintTop_toTopOf="@id/widget_btn_play"
-        app:layout_constraintBottom_toBottomOf="@id/widget_btn_play" />
+        <ImageButton
+            android:id="@+id/widget_btn_prev"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_media_previous"
+            app:tint="#FFFFFF" />
+
+        <ImageButton
+            android:id="@+id/widget_btn_play"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginHorizontal="16dp"
+            android:background="@drawable/bg_circle_button"
+            android:backgroundTint="@color/cl_primary"
+            android:src="@android:drawable/ic_media_play"
+            app:tint="#FFFFFF" />
+
+        <ImageButton
+            android:id="@+id/widget_btn_next"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_media_next"
+            app:tint="#FFFFFF" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
