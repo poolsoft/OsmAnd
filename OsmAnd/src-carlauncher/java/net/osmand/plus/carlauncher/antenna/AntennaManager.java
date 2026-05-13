@@ -123,6 +123,20 @@ public class AntennaManager {
         notifyListener();
     }
 
+    /** Sadece kaynak noktayi temizler. */
+    public void clearSource() {
+        this.pointSource = null;
+        savePoints();
+        notifyListener();
+    }
+
+    /** Sadece hedef noktayi temizler. */
+    public void clearTarget() {
+        this.pointTarget = null;
+        savePoints();
+        notifyListener();
+    }
+
     /** Kaynak ve hedef noktaları yer degistirir. */
     public void swapPoints() {
         AntennaPoint temp = this.pointSource;

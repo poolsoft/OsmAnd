@@ -31,12 +31,25 @@
             android:textSize="12sp"
             android:textStyle="bold"/>
 
+        <!-- Harita katmani toggle (goz ikonu) -->
+        <ImageButton
+            android:id="@+id/btn_layer_toggle"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_view"
+            android:tint="#555555"
+            android:padding="4dp"
+            android:scaleType="fitCenter"
+            android:layout_marginEnd="4dp"
+            android:contentDescription="Harita Katmanini Goster/Gizle"/>
+
         <!-- Hizalama penceresi acma butonu -->
         <ImageButton
             android:id="@+id/btn_align"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:background="@drawable/bg_circle_translucent_white"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_compass"
             android:padding="6dp"
             android:scaleType="fitCenter"
