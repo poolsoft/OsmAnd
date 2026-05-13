@@ -1,8 +1,5 @@
 name: Build CarLauncher.apk
 on:
-  push:
-    branches:
-      - right-panel-plugin  # Senin branch'in degistiginde otomatik derle
   workflow_dispatch:
 
 permissions:
