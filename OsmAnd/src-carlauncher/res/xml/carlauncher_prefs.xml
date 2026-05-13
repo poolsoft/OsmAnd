@@ -216,6 +216,12 @@
             android:iconSpaceReserved="false" />
 
         <androidx.preference.Preference
+            android:key="car_launcher_check_updates"
+            android:title="Güncellemeleri Denetle"
+            android:summary="Yeni bir sürüm olup olmadığını kontrol et"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.Preference
             android:key="car_launcher_github"
             android:title="GitHub"
             android:summary="Kaynak kodunu görüntüle"

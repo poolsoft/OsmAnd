@@ -552,10 +552,20 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             githubPref.setOnPreferenceClickListener(preference -> {
                 try {
                     Intent intent = new Intent(Intent.ACTION_VIEW,
-                            Uri.parse("https://github.com/nicksoftware/OsmAnd-CarLauncher"));
+                            Uri.parse("https://github.com/poolsoft/OsmAnd/tree/right-panel-plugin"));
                     startActivity(intent);
                 } catch (Exception e) {
                     Toast.makeText(getContext(), "Tarayıcı açılamadı", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            });
+        }
+
+        Preference checkUpdatePref = findPreference("car_launcher_check_updates");
+        if (checkUpdatePref != null) {
+            checkUpdatePref.setOnPreferenceClickListener(preference -> {
+                if (getContext() != null) {
+                    UpdaterHelper.checkUpdates(getContext(), true);
                 }
                 return true;
             });

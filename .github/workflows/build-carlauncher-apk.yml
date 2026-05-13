@@ -1,15 +1,16 @@
 name: Build CarLauncher.apk
 on:
+  push:
+    branches:
+      - right-panel-plugin  # Senin branch'in degistiginde otomatik derle
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - name: checkout OsmAnd
       uses: actions/checkout@v6
@@ -60,23 +61,32 @@ jobs:
     - name: Grant execute permission for gradlew
       working-directory: ./android
       run: chmod +x gradlew
-    - name: Patch memory requirements
-      working-directory: ./android
-      run: printf "\norg.gradle.jvmargs=-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8\n" >> gradle.properties
-    
-    - name: Set Version Suffix
-      working-directory: ./android
-      run: echo "APK_VERSION_SUFFIX=-$(git log -n 1 --format='%h')" >> $GITHUB_ENV
-    
+
     - name: Build with Gradle
       working-directory: ./android
-      run: ./gradlew assemblecarlauncherLegacyFatDebug -x test --console=plain --no-daemon 2>&1 | grep -iE 'error|exception|fail'
+      run: ./gradlew assemblecarlauncherLegacyFatDebug -x test --no-daemon
+
+    - name: Prepare Release Info
+      working-directory: ./android
+      run: |
+        VERSION_CODE=$(git rev-list --count HEAD)
+        VERSION_NAME="1.0.${VERSION_CODE}"
+        echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_ENV
+        echo "{\"versionCode\": ${VERSION_CODE}, \"versionName\": \"${VERSION_NAME}\", \"apkUrl\": \"https://github.com/${{ github.repository }}/releases/latest/download/CarLauncher.apk\"}" > version.json
+
     - name: Rename APK
       working-directory: ./android
-      run: mv OsmAnd/build/outputs/apk/carlauncherLegacyFat/debug/OsmAnd-carlauncher-legacy-fat-debug.apk OsmAnd/build/outputs/apk/carlauncherLegacyFat/debug/OsmAnd-carlauncher-legacy-fat-debug-$(git log -n 1 --format='%h').apk
-    - name: Archive APK
-      uses: actions/upload-artifact@v6
+      run: cp OsmAnd/build/outputs/apk/carlauncherLegacyFat/debug/OsmAnd-carlauncher-legacy-fat-debug.apk CarLauncher.apk
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
       with:
-        name: CarLauncher-apk
-        path: android/OsmAnd/build/outputs/apk/*/*/*.apk
-        retention-days: 90
+        tag_name: v${{ env.VERSION_NAME }}
+        name: Release ${{ env.VERSION_NAME }}
+        files: |
+          android/CarLauncher.apk
+          android/version.json
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
