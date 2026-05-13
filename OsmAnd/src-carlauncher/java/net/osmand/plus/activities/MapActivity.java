@@ -262,6 +262,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		net.osmand.plus.carlauncher.ui.CrashHandler.init(this);
 		long time = System.currentTimeMillis();
 		app.applyTheme(this);
 		supportRequestWindowFeature(Window.FEATURE_NO_TITLE);

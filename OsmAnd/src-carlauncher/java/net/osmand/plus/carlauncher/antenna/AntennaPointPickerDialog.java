@@ -93,7 +93,12 @@ public class AntennaPointPickerDialog {
     private static void handleGps(Context context, AntennaManager manager, boolean isSource) {
         try {
             OsmandApplication app = (OsmandApplication) context.getApplicationContext();
-            Location loc = app.getLocationProvider().getLastKnownLocation();
+            if (app.getLocationProvider() == null) {
+                Toast.makeText(context, "Konum servisi hazir degil.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            net.osmand.Location loc = app.getLocationProvider().getLastKnownLocation();
             if (loc != null) {
                 LatLon latLon = new LatLon(loc.getLatitude(), loc.getLongitude());
                 double altitude = loc.getAltitude();
@@ -110,6 +115,7 @@ public class AntennaPointPickerDialog {
             }
         } catch (Exception e) {
             Toast.makeText(context, "GPS alinirken hata: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
         }
     }
 

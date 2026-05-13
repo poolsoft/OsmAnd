@@ -207,7 +207,9 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
              // CLASSIC Mode: Slots determines "Items Per Screen" for sizing, NOT columns.
              // Columns should always be 1 (List).
              if (isSystemPortrait) {
-                slots = settings.getPortraitSlotCount();
+                // Portrait mode: Avoid cramming too many widgets
+                slots = Math.min(settings.getPortraitSlotCount(), 3); 
+                if (slots < 2) slots = 2; // Min 2 for better visibility
             } else {
                 slots = settings.getLandscapeSlotCount();
             }
