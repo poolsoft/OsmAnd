@@ -138,16 +138,12 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
                     params.width = unitSize - marginTotal; 
                     params.height = ViewGroup.LayoutParams.MATCH_PARENT;
                 } else {
-                     int multiplier = 1;
-                     // Classic Vertical (Landscape) typically 1x height
-                     BaseWidget w = widgets.get(position);
-                     switch (w.getSize()) {
-                        case MEDIUM: multiplier = 2; break; 
-                        case LARGE: multiplier = 3; break; 
-                        default: multiplier = 1; break;
-                    }
-                     
+                     int multiplier = (widgets.get(position).getSize() == net.osmand.plus.carlauncher.widgets.BaseWidget.WidgetSize.SMALL) ? 1 : 2;
                      params.height = (unitSize * multiplier) - marginTotal;
+                     // Ensure minimum usable height in portrait
+                     if (params.height < dpToPx(holder.itemView.getContext(), 100)) {
+                         params.height = dpToPx(holder.itemView.getContext(), 100);
+                     }
                      params.width = ViewGroup.LayoutParams.MATCH_PARENT;
                 }
             }

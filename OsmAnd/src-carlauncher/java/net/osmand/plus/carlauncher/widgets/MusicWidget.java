@@ -204,12 +204,9 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                         androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
                 set.setMargin(net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, 0); // Reset bottom margin
                 
-                // 3. Track Title (Between Icon and Play Button, Centered Vertical)
-                // Avoid using Artist text in small mode (too cramped), or put it beside?
-                // For "Small" (1 slot ~ 85dp), we have height. But in "4 Slot Density", height is ~60dp.
-                // Let's Center Title.
+                // 3. Track Title (Icon ve Play arasinda, Dikey Ortali)
                 set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.START,
-                        net.osmand.plus.R.id.widget_app_icon, androidx.constraintlayout.widget.ConstraintSet.END, dpToPx(8));
+                        net.osmand.plus.R.id.header_container, androidx.constraintlayout.widget.ConstraintSet.END, dpToPx(8));
                 set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.END,
                         net.osmand.plus.R.id.widget_btn_play, androidx.constraintlayout.widget.ConstraintSet.START, dpToPx(8));
                 
@@ -217,9 +214,10 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                         androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP);
                 set.connect(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.BOTTOM,
                         androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
-                        
-                // Clear Artist constraints or hide it? 
-                // onSizeChanged sets Visibility GONE for Small, so constraints don't matter much if GONE.
+                
+                // Track Title'i genislik olarak 0dp (match constraint) yap ki Icon ve Button arasina yayilsin
+                set.constrainWidth(net.osmand.plus.R.id.widget_track_title, 0);
+                set.centerVertically(net.osmand.plus.R.id.widget_track_title, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID);
 
             } else {
                 // --- Vertical Layout (Stack) ---
