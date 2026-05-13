@@ -19,4 +19,8 @@
     <color name="cl_text_primary">#FFFFFF</color>           <!-- Ana başlıklar -->
     <color name="cl_text_secondary">#99EBEBF5</color>       <!-- Açıklamalar (Opak beyaz) -->
     <color name="cl_text_hint">#48484A</color>              <!-- Pasif/Etiket -->
+
+    <!-- Alias (Eski/Eksik Tanımlar) -->
+    <color name="glass_panel_bg_transparent">@color/cl_surface_overlay</color>
+    <color name="glass_border">@color/cl_border</color>
 </resources>
