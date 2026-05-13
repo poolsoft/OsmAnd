@@ -549,7 +549,17 @@ public class AppDockFragment extends Fragment
                 // In vertical mode, rearrange buttons to be top-to-bottom
                 View container = getView().findViewById(net.osmand.plus.R.id.dock_content_container);
                 if (container instanceof LinearLayout) {
-                    ((LinearLayout) container).setOrientation(isVertical ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+                    LinearLayout ll = (LinearLayout) container;
+                    ll.setOrientation(isVertical ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+                    ll.setGravity(isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL);
+                }
+                
+                // Ensure App List button is centered
+                View appListBtn = getView().findViewById(net.osmand.plus.R.id.btn_app_list);
+                if (appListBtn != null) {
+                    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) appListBtn.getLayoutParams();
+                    lp.gravity = isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL;
+                    appListBtn.setLayoutParams(lp);
                 }
             });
         }
