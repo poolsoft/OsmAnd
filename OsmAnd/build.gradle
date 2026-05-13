@@ -166,8 +166,13 @@ android {
 			applicationId "net.osmand.carlauncher"
 			resValue "string", "app_name", "OsmAnd CarLauncher"
 			resValue "string", "app_edition", System.getenv("APP_EDITION") ? System.getenv("APP_EDITION") : ""
-			// resConfig "en"
-
+			
+			if (project.hasProperty('versionCode')) {
+				versionCode project.versionCode.toInteger()
+			}
+			if (project.hasProperty('versionName')) {
+				versionName project.versionName
+			}
 		}
 
         // Build that includes 3D OpenGL release
