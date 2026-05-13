@@ -24,6 +24,7 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
     private final List<AppShortcut> shortcuts;
     private final OnShortcutListener listener;
     private boolean isEditMode = false;
+    private boolean isVerticalMode = false;
 
     public interface OnShortcutListener {
         void onShortcutClick(AppShortcut shortcut);
@@ -50,6 +51,11 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
         notifyDataSetChanged();
     }
 
+    public void setVerticalMode(boolean verticalMode) {
+        this.isVerticalMode = verticalMode;
+        notifyDataSetChanged();
+    }
+
     public void onItemMove(int fromPosition, int toPosition) {
         if (fromPosition < toPosition) {
             for (int i = fromPosition; i < toPosition; i++) {
@@ -68,15 +74,14 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         // Genislik: ikon boyutu + yatay padding (dimens.xml'den okunur, qualifier sistemi calisir)
         int iconSize = (int) context.getResources().getDimension(net.osmand.plus.R.dimen.dock_icon_size);
-        int itemWidth = iconSize + dpToPx(16); // ikon + yatay bosluk
+        int itemWidth = isVerticalMode ? ViewGroup.LayoutParams.MATCH_PARENT : iconSize + dpToPx(16);
+        int itemHeight = isVerticalMode ? iconSize + dpToPx(16) : ViewGroup.LayoutParams.MATCH_PARENT;
 
         LinearLayout itemView = new LinearLayout(context);
         itemView.setOrientation(LinearLayout.VERTICAL);
-        itemView.setLayoutParams(new RecyclerView.LayoutParams(
-                itemWidth,
-                ViewGroup.LayoutParams.MATCH_PARENT));
+        itemView.setLayoutParams(new RecyclerView.LayoutParams(itemWidth, itemHeight));
         itemView.setGravity(android.view.Gravity.CENTER);
-        itemView.setPadding(dpToPx(4), dpToPx(2), dpToPx(4), dpToPx(2));
+        itemView.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
 
         return new ViewHolder(itemView);
     }

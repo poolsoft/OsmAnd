@@ -19,12 +19,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- Cam Efekti -->
+    <!-- Cam Efekti Arka Plan -->
     <View
         android:id="@+id/widget_glass_layer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@drawable/bg_widget_modern"
+        android:background="@drawable/bg_modern_card"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

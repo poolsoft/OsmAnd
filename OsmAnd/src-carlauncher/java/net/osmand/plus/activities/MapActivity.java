@@ -400,6 +400,14 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			mapViewWithLayers.onCreate(savedInstanceState);
 		}
 		extendedMapActivity.onCreate(this, savedInstanceState);
+
+		// CarLauncher: Listen for settings changes via backstack
+		getSupportFragmentManager().addOnBackStackChangedListener(() -> {
+			if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
+				// Returned to main screen -> Refresh UI
+				applyWidgetPanelState();
+			}
+		});
 	}
 
 	protected int getRootViewId() {
@@ -705,123 +713,142 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 
     private void applyWidgetPanelState() {
-        if (rootLayout == null || widgetPanel == null) return;
-        
-        CarLauncherSettings settings = new CarLauncherSettings(this); // Moved to top
-        android.content.SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
+        if (rootLayout == null || widgetPanel == null || appDock == null) return;
+
+        CarLauncherSettings carSettings = new CarLauncherSettings(this);
+        String dockPos = carSettings.getDockPosition(); // "bottom", "left", "right"
+        String widgetPos = carSettings.getWidgetPanelPosition(); // "right", "bottom", "left"
         boolean isPortrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
         
-        android.util.Log.d("CarLauncher", "applyWidgetPanelState: Open=" + isWidgetPanelOpen + ", Pinned=" + isPinned + ", Portrait=" + isPortrait + ", Mode=" + layoutMode);
+        androidx.constraintlayout.widget.ConstraintSet cs = new androidx.constraintlayout.widget.ConstraintSet();
+        cs.clone(rootLayout);
+
+        // --- DOCK KONUMLANDIRMA ---
+        cs.clear(R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
+        cs.clear(R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+        cs.clear(R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.START);
+        cs.clear(R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.END);
+
+        int dockSize = (int) getResources().getDimension(R.dimen.dock_height);
         
-        androidx.constraintlayout.widget.ConstraintSet constraintSet = new androidx.constraintlayout.widget.ConstraintSet();
-        constraintSet.clone(rootLayout);
-        
-        // MODE 0: NORMAL or MODE 2: FULLSCREEN (with Drawer)
-        // If layoutMode is somehow 1, we treat it as closed panel or force change.
-        
-        // MODE 0: NORMAL or MODE 2: FULLSCREEN (with Drawer)
-        if (isPortrait) {
-            // PORTRAIT: Safe Mode - Widgets always visible at bottom or depending on open state if we wanted
-            // Currently treated as always visible in portrait based on prior logic, or we can toggle it?
-            // User requested "Portrait -> Horizontal", implying the list is horizontal.
-            // If we want the panel to be toggleable in portrait too, we should respect isWidgetPanelOpen.
-            // But let's stick to the previous "Always Visible" behavior for Portrait unless requested otherwise.
-            // Wait, previous code had `constraintSet.setVisibility(R.id.widget_panel, View.VISIBLE);` unconditionally.
-            
-            constraintSet.setVisibility(R.id.widget_panel, View.VISIBLE);
-            if (widgetHandle != null) constraintSet.setVisibility(R.id.widget_handle, View.GONE);
-            
-            constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
-            constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP);
-            // Fix: Anchor WidgetPanel to TOP of AppDock, not Parent Bottom, to prevent overlap
-            constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
-            
-            constraintSet.applyTo(rootLayout);
-            
-            // FORCE UPDATE
-            widgetPanel.setVisibility(View.VISIBLE);
-            if (widgetHandle != null) widgetHandle.setVisibility(View.GONE);
-            
+        if ("left".equals(dockPos) && !isPortrait) {
+            cs.connect(R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.START, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.START);
+            cs.connect(R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP);
+            cs.connect(R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+            cs.constrainWidth(R.id.app_dock, dockSize);
+            cs.constrainHeight(R.id.app_dock, 0); // Match Parent
+        } else if ("right".equals(dockPos) && !isPortrait) {
+            cs.connect(R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+            cs.connect(R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP);
+            cs.connect(R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+            cs.constrainWidth(R.id.app_dock, dockSize);
+            cs.constrainHeight(R.id.app_dock, 0);
         } else {
-            // LANDSCAPE: Drawer Logic
-            if (widgetHandle != null) constraintSet.setVisibility(R.id.widget_handle, View.VISIBLE);
-            
-            if (isWidgetPanelOpen) {
-                android.util.Log.d("CarLauncher", "Applied Landscape OPEN Constraints");
-                constraintSet.setVisibility(R.id.widget_panel, View.VISIBLE);
-                
-                if (widgetHandle != null) {
-                    // Update Icon: Forward (>) for Open state
-                    constraintSet.connect(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.END, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.START);
-                    constraintSet.clear(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.START);
-                    
-                    // Apply Vertical Bias
-                    constraintSet.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
-                }
+            // Default: Bottom (or Portrait always bottom)
+            cs.connect(R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+            cs.connect(R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.START, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.START);
+            cs.connect(R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+            cs.constrainHeight(R.id.app_dock, dockSize);
+            cs.constrainWidth(R.id.app_dock, 0);
+        }
 
-                if (isPinned) {
-                     constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.START);
-                } else {
-                     constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
-                }
-                
-                // Ensure Panel is attached to End and Dock
-                constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
-                constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP);
-                constraintSet.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
-                
-                // Dynamic Width Application
-                float percent = settings.getWidgetPanelWidthPercent();
-                int screenWidth = getResources().getDisplayMetrics().widthPixels;
-                int panelWidth = (int) (screenWidth * percent);
-                
-                // Safety clamp
-                if (panelWidth < 100) panelWidth = 100;
-                
-                constraintSet.constrainWidth(R.id.widget_panel, panelWidth);
-                
-                constraintSet.applyTo(rootLayout);
+        // --- WIDGET PANEL KONUMLANDIRMA ---
+        cs.clear(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP);
+        cs.clear(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+        cs.clear(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.START);
+        cs.clear(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.END);
 
-                // FORCE UPDATE
-                widgetPanel.setVisibility(View.VISIBLE);
-                if (widgetHandle != null) {
-                    widgetHandle.setVisibility(View.VISIBLE);
-                    widgetHandle.setRotation(0f); // Reset Rotation
-                    widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_chevron_right); // > (Modern)
-                }
+        if (!isWidgetPanelOpen) {
+            cs.setVisibility(R.id.widget_panel, View.GONE);
+            if (widgetHandle != null) cs.setVisibility(R.id.widget_handle, View.VISIBLE);
+        } else {
+            cs.setVisibility(R.id.widget_panel, View.VISIBLE);
+            float panelPercent = carSettings.getWidgetPanelWidthPercent();
+            int screenWidth = getResources().getDisplayMetrics().widthPixels;
+            int screenHeight = getResources().getDisplayMetrics().heightPixels;
 
+            if ("bottom".equals(widgetPos) || isPortrait) {
+                // Bottom Panel (Paged or Horizontal List)
+                cs.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
+                cs.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.START, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.START);
+                cs.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+                cs.constrainHeight(R.id.widget_panel, (int)(screenHeight * 0.35f)); // Fixed height for bottom
+                cs.constrainWidth(R.id.widget_panel, 0);
+            } else if ("left".equals(widgetPos)) {
+                // Left Panel (Android Auto Style)
+                cs.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.START, "left".equals(dockPos) ? R.id.app_dock : androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, "left".equals(dockPos) ? androidx.constraintlayout.widget.ConstraintSet.END : androidx.constraintlayout.widget.ConstraintSet.START);
+                cs.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP);
+                cs.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? androidx.constraintlayout.widget.ConstraintSet.TOP : androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                cs.constrainWidth(R.id.widget_panel, (int)(screenWidth * panelPercent));
+                cs.constrainHeight(R.id.widget_panel, 0);
             } else {
-                android.util.Log.d("CarLauncher", "Applied Landscape CLOSED Constraints");
-                constraintSet.setVisibility(R.id.widget_panel, View.GONE);
-                
-                if (widgetHandle != null) {
-                    // Update Icon: Back (<) for Closed state
-                    constraintSet.connect(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
-                    constraintSet.clear(R.id.widget_handle, androidx.constraintlayout.widget.ConstraintSet.START);
-                    
-                    // Apply Vertical Bias
-                    constraintSet.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
-                }
-                
-                // Map Full Screen
-                constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
-                
-                constraintSet.applyTo(rootLayout);
-
-                // FORCE UPDATE
-                widgetPanel.setVisibility(View.GONE);
-                if (widgetHandle != null) { 
-                    widgetHandle.setVisibility(View.VISIBLE);
-                    widgetHandle.setRotation(0f); // Reset Rotation
-                    widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_chevron_left); // < (Modern)
-                }
+                // Right Panel (Classic)
+                cs.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.END, "right".equals(dockPos) ? R.id.app_dock : androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, "right".equals(dockPos) ? androidx.constraintlayout.widget.ConstraintSet.START : androidx.constraintlayout.widget.ConstraintSet.END);
+                cs.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP);
+                cs.connect(R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? androidx.constraintlayout.widget.ConstraintSet.TOP : androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+                cs.constrainWidth(R.id.widget_panel, (int)(screenWidth * panelPercent));
+                cs.constrainHeight(R.id.widget_panel, 0);
             }
-            // Map Bottom Fix: Connect to Dock Top
-            constraintSet.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
+        }
+
+        // --- MAP CONTAINER (Fill the rest) ---
+        cs.clear(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.TOP);
+        cs.clear(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+        cs.clear(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.START);
+        cs.clear(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END);
+
+        // Map always connects to parent edges, but margins are handled by ConstraintLayout automatically if connected to panels
+        cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.TOP, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP);
+        
+        // Horizontal Map Connections
+        if (isWidgetPanelOpen && "left".equals(widgetPos)) {
+            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.START, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.END);
+        } else if ("left".equals(dockPos) && !isPortrait) {
+            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.START, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.END);
+        } else {
+            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.START, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.START);
+        }
+
+        if (isWidgetPanelOpen && "right".equals(widgetPos)) {
+            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.START);
+        } else if ("right".equals(dockPos) && !isPortrait) {
+            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.START);
+        } else {
+            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+        }
+
+        // Vertical Map Connections
+        if (isWidgetPanelOpen && ("bottom".equals(widgetPos) || isPortrait)) {
+            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP);
+        } else if ("bottom".equals(dockPos) || isPortrait) {
+            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
+        } else {
+            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+        }
+
+        cs.applyTo(rootLayout);
+        
+        // Handle Icons & UI Updates
+        if (widgetHandle != null) {
+            float bias = carSettings.getWidgetHandleVerticalBias();
+            androidx.constraintlayout.widget.ConstraintLayout.LayoutParams lp = (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) widgetHandle.getLayoutParams();
+            lp.verticalBias = bias;
             
-            // Re-apply to ensure map fix is active if it wasn't
-            constraintSet.applyTo(rootLayout);
+            // Handle position (if panel is on left, handle should be on right of panel or left of map)
+            // For now, keep it simple and update rotation
+            widgetHandle.setImageResource(isWidgetPanelOpen ? net.osmand.plus.R.drawable.ic_chevron_right : net.osmand.plus.R.drawable.ic_chevron_left);
+            widgetHandle.setLayoutParams(lp);
+        }
+        
+        // Dock Fragment Refresh (Horizontal vs Vertical)
+        refreshDockFragment(dockPos, isPortrait);
+    }
+
+    private void refreshDockFragment(String dockPos, boolean isPortrait) {
+        boolean isVertical = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
+        AppDockFragment dock = getAppDockFragment();
+        if (dock != null) {
+            dock.setOrientation(isVertical);
         }
     }
 

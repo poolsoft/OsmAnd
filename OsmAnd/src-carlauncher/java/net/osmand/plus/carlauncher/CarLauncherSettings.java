@@ -38,6 +38,12 @@ public class CarLauncherSettings {
 
     // Dock Keys
     public static final String KEY_MAX_SHORTCUTS = "car_launcher_max_shortcuts";
+    public static final String KEY_DOCK_POSITION = "car_launcher_dock_position"; // "bottom", "left", "right"
+    public static final String KEY_DOCK_STYLE = "car_launcher_dock_style"; // "glass", "solid", "transparent"
+
+    // Widget Panel Keys
+    public static final String KEY_WIDGET_PANEL_POSITION = "widget_panel_position"; // "right", "bottom", "left"
+    public static final String KEY_WIDGET_CARD_STYLE = "widget_card_style"; // "modern", "classic", "minimal"
 
     private final SharedPreferences prefs;
 
@@ -212,7 +218,38 @@ public class CarLauncherSettings {
 
     public void resetDock() {
         // Reset is handled by AppDockManager.clearAllShortcuts()
-        // This method is a placeholder for future use
+    }
+
+    public String getDockPosition() {
+        return prefs.getString(KEY_DOCK_POSITION, "bottom");
+    }
+
+    public void setDockPosition(String pos) {
+        prefs.edit().putString(KEY_DOCK_POSITION, pos).apply();
+    }
+
+    public String getDockStyle() {
+        return prefs.getString(KEY_DOCK_STYLE, "glass");
+    }
+
+    public void setDockStyle(String style) {
+        prefs.edit().putString(KEY_DOCK_STYLE, style).apply();
+    }
+
+    public String getWidgetPanelPosition() {
+        return prefs.getString(KEY_WIDGET_PANEL_POSITION, "right");
+    }
+
+    public void setWidgetPanelPosition(String pos) {
+        prefs.edit().putString(KEY_WIDGET_PANEL_POSITION, pos).apply();
+    }
+
+    public String getWidgetCardStyle() {
+        return prefs.getString(KEY_WIDGET_CARD_STYLE, "modern");
+    }
+
+    public void setWidgetCardStyle(String style) {
+        prefs.edit().putString(KEY_WIDGET_CARD_STYLE, style).apply();
     }
 
     // --- General ---

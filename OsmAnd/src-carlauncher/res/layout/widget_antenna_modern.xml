@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:minHeight="130dp"
     android:orientation="vertical"
-    android:background="@drawable/bg_widget_modern"
+    android:background="@drawable/bg_modern_card"
     android:padding="12dp">
 
     <!-- Baslik Satiri -->

@@ -9,4 +9,40 @@
         <item>0</item>
         <item>1</item>
     </string-array>
+
+    <!-- Dock Konumu -->
+    <string-array name="dock_position_entries">
+        <item>Alt (Varsayılan)</item>
+        <item>Sol (Modern Auto)</item>
+        <item>Sağ</item>
+    </string-array>
+    <string-array name="dock_position_values">
+        <item>bottom</item>
+        <item>left</item>
+        <item>right</item>
+    </string-array>
+
+    <!-- Widget Paneli Konumu -->
+    <string-array name="widget_panel_position_entries">
+        <item>Sağ (Varsayılan)</item>
+        <item>Alt</item>
+        <item>Sol</item>
+    </string-array>
+    <string-array name="widget_panel_position_values">
+        <item>right</item>
+        <item>bottom</item>
+        <item>left</item>
+    </string-array>
+
+    <!-- Widget Kart Stili -->
+    <string-array name="widget_card_style_entries">
+        <item>Modern (Cam Efekti)</item>
+        <item>Klasik (Düz)</item>
+        <item>Minimal (Sadece Değerler)</item>
+    </string-array>
+    <string-array name="widget_card_style_values">
+        <item>modern</item>
+        <item>classic</item>
+        <item>minimal</item>
+    </string-array>
 </resources>

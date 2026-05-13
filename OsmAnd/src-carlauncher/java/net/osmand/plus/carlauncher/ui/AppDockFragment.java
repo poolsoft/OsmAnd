@@ -62,6 +62,7 @@ public class AppDockFragment extends Fragment
     private SharedPreferences prefs;
     private boolean isEditMode = false;
     private int currentOrientation = ORIENTATION_HORIZONTAL; // Varsayilan yatay
+    private boolean isVerticalMode = false;
 
     private OnAppDockListener listener;
     private ImageButton menuButton;
@@ -238,9 +239,8 @@ public class AppDockFragment extends Fragment
             clockContainer.setOnClickListener(null);
         }
 
-        // Setup RecyclerView (Force Horizontal)
-        recyclerView.setLayoutManager(
-                new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        // Setup RecyclerView
+        updateRecyclerViewOrientation(root);
 
         // Long Press on Root & Recycler to add apps
         View.OnLongClickListener longClickListener = v -> {
@@ -517,19 +517,52 @@ public class AppDockFragment extends Fragment
         
         layoutButton.post(() -> {
             switch (mode) {
-                case 0: // Normal (Widgets Visible) -> Show "Map Mode" icon to switch to map
-                     // Icon should indicate the TARGET state or CURRENT state? 
-                     // Usually button shows what it DOES. Click to go to Fullscreen Map.
-                     // So show Map Icon.
+                case 0: // Normal (Widgets Visible)
                     layoutButton.setImageResource(android.R.drawable.ic_menu_mapmode);
                     break;
-                case 2: // Full Screen (Map Only) -> Show "Dashboard" icon to switch to widgets
-                    layoutButton.setImageResource(net.osmand.plus.R.drawable.ic_action_view_as_list); // Or Dashboard icon
+                case 2: // Full Screen (Map Only)
+                    layoutButton.setImageResource(net.osmand.plus.R.drawable.ic_action_view_as_list);
                     break;
                 default: 
                     layoutButton.setImageResource(android.R.drawable.ic_menu_mapmode);
                     break;
             }
         });
+    }
+
+    public void setOrientation(boolean isVertical) {
+        if (this.isVerticalMode == isVertical) return;
+        this.isVerticalMode = isVertical;
+        this.currentOrientation = isVertical ? ORIENTATION_VERTICAL : ORIENTATION_HORIZONTAL;
+        
+        if (getView() != null) {
+            getView().post(() -> {
+                // Re-inflate or update existing view constraints
+                // For simplicity, we trigger a re-layout of the recycler
+                updateRecyclerViewOrientation(getView());
+                
+                // Hide/Show elements based on space
+                if (miniMusicContainer != null) {
+                    miniMusicContainer.setVisibility(isVertical ? View.GONE : View.VISIBLE);
+                }
+                
+                // In vertical mode, rearrange buttons to be top-to-bottom
+                View container = getView().findViewById(net.osmand.plus.R.id.dock_content_container);
+                if (container instanceof LinearLayout) {
+                    ((LinearLayout) container).setOrientation(isVertical ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+                }
+            });
+        }
+    }
+
+    private void updateRecyclerViewOrientation(View root) {
+        if (recyclerView == null) recyclerView = root.findViewById(net.osmand.plus.R.id.dock_recycler);
+        if (recyclerView != null) {
+            recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), 
+                isVerticalMode ? LinearLayoutManager.VERTICAL : LinearLayoutManager.HORIZONTAL, false));
+            if (adapter != null) {
+                adapter.setVerticalMode(isVerticalMode);
+            }
+        }
     }
 }

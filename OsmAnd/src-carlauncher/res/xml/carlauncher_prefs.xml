@@ -180,8 +180,35 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <androidx.preference.PreferenceCategory
         android:key="category_dock"
-        android:title="🚗 Uygulama Dock"
+        android:title="🚗 Uygulama Dock (Sidebar)"
         android:iconSpaceReserved="false">
+
+        <androidx.preference.ListPreference
+            android:key="car_launcher_dock_position"
+            android:title="Dock Konumu"
+            android:summary="%s"
+            android:entries="@array/dock_position_entries"
+            android:entryValues="@array/dock_position_values"
+            android:defaultValue="bottom"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.ListPreference
+            android:key="widget_panel_position"
+            android:title="Widget Paneli Konumu"
+            android:summary="%s"
+            android:entries="@array/widget_panel_position_entries"
+            android:entryValues="@array/widget_panel_position_values"
+            android:defaultValue="right"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.ListPreference
+            android:key="widget_card_style"
+            android:title="Widget Kart Stili"
+            android:summary="%s"
+            android:entries="@array/widget_card_style_entries"
+            android:entryValues="@array/widget_card_style_values"
+            android:defaultValue="modern"
+            android:iconSpaceReserved="false" />
 
         <androidx.preference.SeekBarPreference
             android:key="car_launcher_max_shortcuts"
