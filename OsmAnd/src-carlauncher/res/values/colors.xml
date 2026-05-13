@@ -1,49 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Car Launcher merkezi renk sistemi.
-     Tum widget ve layout dosyalari bu dosyadan referans almali.
-     Dogrudan hex kodu KULLANMA — @color/cl_xxx kullan. -->
 <resources>
+    <!-- Ana Arka Planlar -->
+    <color name="cl_background_deep">#0D0D12</color>       <!-- En alt katman -->
+    <color name="cl_surface">#1C1C1E</color>               <!-- Widget kutu rengi -->
+    <color name="cl_surface_overlay">#CC1C1C1E</color>      <!-- %80 Opak Cam efekti -->
+    <color name="cl_border">#2AFFFFFF</color>               <!-- İnce cam kenarı -->
+    <color name="cl_divider">#1AFFFFFF</color>              <!-- Ayırıcı çizgiler -->
 
-    <!-- === Arka Plan Katmanlari === -->
-    <color name="cl_bg_deep">#0A0A14</color>            <!-- En derin arka plan (Activity) -->
-    <color name="cl_bg_surface">#12121E</color>          <!-- Kart/panel yüzeyi -->
-    <color name="cl_bg_overlay">#CC12121E</color>        <!-- Widget arka plan %80 opak -->
-    <color name="cl_bg_overlay_light">#991A1A2E</color>  <!-- Hafif overlay -->
-    <color name="cl_bg_input">#1A1A2E</color>            <!-- Input / bottom bar -->
+    <!-- Vurgu Renkleri -->
+    <color name="cl_primary">#0A84FF</color>                <!-- Apple/Google Mavisi -->
+    <color name="cl_primary_variant">#5E5CE6</color>        <!-- Morumsu Mavi -->
+    <color name="cl_accent_orange">#FF9F0A</color>          <!-- Uyarı/Navigasyon Turuncusu -->
+    <color name="cl_accent_gold">#FFD60A</color>            <!-- Bilgi/Azimut Sarısı -->
+    <color name="cl_success">#32D74B</color>                <!-- Tamam/Bağlı Yeşili -->
+    <color name="cl_danger">#FF453A</color>                 <!-- Hata/Kritik Kırmızı -->
 
-    <!-- === Kenar / Cam Efekti === -->
-    <color name="cl_border">#1AFFFFFF</color>            <!-- Widget kenari (cam hissi) -->
-    <color name="cl_border_active">#4D4FC3F7</color>     <!-- Aktif / odaklanmis -->
-    <color name="cl_highlight_top">#0DFFFFFF</color>     <!-- Üst highlight (glassmorphism) -->
-
-    <!-- === Ana Vurgu Renkleri === -->
-    <color name="cl_primary">#1A73E8</color>             <!-- Google Auto mavi -->
-    <color name="cl_primary_dark">#1557B0</color>        <!-- Basili/aktif hali -->
-    <color name="cl_accent_cyan">#4FC3F7</color>         <!-- Kaynak nokta, GPS, bilgi -->
-    <color name="cl_accent_orange">#FF6D00</color>       <!-- Navigasyon, uyari, hizalama -->
-    <color name="cl_accent_gold">#FFB300</color>         <!-- Azimut, yön, hedef nokta -->
-    <color name="cl_accent_green">#00C853</color>        <!-- Bagli/OK/swap aktif -->
-    <color name="cl_accent_red">#FF1744</color>          <!-- Hata, temizle -->
-    <color name="cl_accent_purple">#CE93D8</color>       <!-- Koordinat girisi -->
-
-    <!-- === Metin Renkleri === -->
-    <color name="cl_text_primary">#FFFFFFFF</color>      <!-- Ana metin -->
-    <color name="cl_text_secondary">#BFFFFFFF</color>    <!-- Ikincil metin %75 -->
-    <color name="cl_text_hint">#66FFFFFF</color>         <!-- Etiket/hint %40 -->
-    <color name="cl_text_disabled">#40FFFFFF</color>     <!-- Disabled metin %25 -->
-
-    <!-- === Durum Renkleri === -->
-    <color name="cl_status_ok">#00C853</color>
-    <color name="cl_status_warn">#FFB300</color>
-    <color name="cl_status_error">#FF1744</color>
-    <color name="cl_status_info">#4FC3F7</color>
-
-    <!-- === Dock Bar === -->
-    <color name="cl_dock_bg">#E6000000</color>           <!-- Dock arka plan %90 siyah -->
-    <color name="cl_dock_separator">#22FFFFFF</color>    <!-- Dock ayirici cizgi -->
-
-    <!-- === Ripple === -->
-    <color name="cl_ripple">#33FFFFFF</color>            <!-- Dokunma ripple rengi -->
-    <color name="cl_ripple_primary">#334FC3F7</color>    <!-- Birincil ripple -->
-
+    <!-- Metin Renkleri -->
+    <color name="cl_text_primary">#FFFFFF</color>           <!-- Ana başlıklar -->
+    <color name="cl_text_secondary">#99EBEBF5</color>       <!-- Açıklamalar (Opak beyaz) -->
+    <color name="cl_text_hint">#48484A</color>              <!-- Pasif/Etiket -->
 </resources>
