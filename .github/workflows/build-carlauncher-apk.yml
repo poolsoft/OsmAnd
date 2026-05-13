@@ -59,12 +59,19 @@ jobs:
       working-directory: ./android
       run: chmod +x gradlew
 
-    - name: Prepare Version Info
+    - name: Prepare Dynamic Version Info
       working-directory: ./android
       run: |
+        # OsmAnd ana surumunu build.gradle'dan oku
+        BASE_VERSION=$(grep "versionName" OsmAnd/build.gradle | head -n 1 | cut -d'"' -f2)
+        if [ -z "$BASE_VERSION" ]; then BASE_VERSION="5.4.0"; fi
+        
         COMMIT_COUNT=$(git rev-list --count HEAD)
-        VERSION_CODE=$((COMMIT_COUNT + 10000)) # OsmAnd ile cakismamasi icin yuksek bir baslangic
-        VERSION_NAME="1.0.${COMMIT_COUNT}-CL"
+        SHORT_SHA=$(git rev-parse --short HEAD)
+        
+        VERSION_NAME="${BASE_VERSION}-rev${COMMIT_COUNT}-${SHORT_SHA}"
+        VERSION_CODE=$((COMMIT_COUNT + 5000))
+        
         echo "VERSION_CODE=${VERSION_CODE}" >> $GITHUB_ENV
         echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_ENV
         echo "{\"versionCode\": ${VERSION_CODE}, \"versionName\": \"${VERSION_NAME}\", \"apkUrl\": \"https://github.com/${{ github.repository }}/releases/latest/download/CarLauncher.apk\"}" > version.json
