@@ -207,9 +207,8 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
              // CLASSIC Mode: Slots determines "Items Per Screen" for sizing, NOT columns.
              // Columns should always be 1 (List).
              if (isSystemPortrait) {
-                // Portrait mode: Avoid cramming too many widgets
-                slots = Math.min(settings.getPortraitSlotCount(), 3); 
-                if (slots < 2) slots = 2; // Min 2 for better visibility
+                // Portrait mode: Show only 1 widget for maximum clarity
+                slots = 1; 
             } else {
                 slots = settings.getLandscapeSlotCount();
             }
@@ -362,6 +361,17 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                 adapter.setUnitSize(currentUnitSize, isHorizontalScroll);
             }
             listRecyclerView.setAdapter(adapter);
+            
+            // Single Widget Per Screen in Portrait (Snap Helper)
+            if (isHorizontalScroll) {
+                if (listRecyclerView.getOnFlingListener() == null) {
+                    androidx.recyclerview.widget.PagerSnapHelper snapHelper = new androidx.recyclerview.widget.PagerSnapHelper();
+                    snapHelper.attachToRecyclerView(listRecyclerView);
+                }
+            } else {
+                // Clear snap helper if switching to landscape
+                listRecyclerView.setOnFlingListener(null);
+            }
             
              androidx.recyclerview.widget.ItemTouchHelper.Callback callback = new androidx.recyclerview.widget.ItemTouchHelper.Callback() {
                 @Override public boolean isLongPressDragEnabled() { return false; } // Handled manually via onStartDrag
