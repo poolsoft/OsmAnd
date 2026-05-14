@@ -537,29 +537,52 @@ public class AppDockFragment extends Fragment
         
         if (getView() != null) {
             getView().post(() -> {
-                // Re-inflate or update existing view constraints
-                // For simplicity, we trigger a re-layout of the recycler
+                // 1. Update Recycler Orientation
                 updateRecyclerViewOrientation(getView());
                 
-                // Hide/Show elements based on space
+                // 2. Hide/Show elements based on orientation
+                // Hide Music & Clock in Sidebar (Vertical) mode to save space
                 if (miniMusicContainer != null) {
                     miniMusicContainer.setVisibility(isVertical ? View.GONE : View.VISIBLE);
                 }
                 
-                // In vertical mode, rearrange buttons to be top-to-bottom
+                View clockContainer = getView().findViewById(net.osmand.plus.R.id.clock_settings_container);
+                if (clockContainer != null) {
+                    clockContainer.setVisibility(isVertical ? View.GONE : View.VISIBLE);
+                }
+                
+                // 3. Rearrange Main Container
                 View container = getView().findViewById(net.osmand.plus.R.id.dock_content_container);
                 if (container instanceof LinearLayout) {
                     LinearLayout ll = (LinearLayout) container;
                     ll.setOrientation(isVertical ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
                     ll.setGravity(isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL);
+                    
+                    // In vertical mode, take full height to spread icons
+                    ViewGroup.LayoutParams lp = ll.getLayoutParams();
+                    lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                    lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                    ll.setLayoutParams(lp);
                 }
                 
-                // Ensure App List button is centered
-                View appListBtn = getView().findViewById(net.osmand.plus.R.id.btn_app_list);
-                if (appListBtn != null) {
-                    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) appListBtn.getLayoutParams();
-                    lp.gravity = isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL;
-                    appListBtn.setLayoutParams(lp);
+                // 4. Center the App List & Layout Buttons
+                int gravity = isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL;
+                
+                if (appListButton != null) {
+                    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) appListButton.getLayoutParams();
+                    lp.gravity = gravity;
+                    appListButton.setLayoutParams(lp);
+                }
+                
+                if (layoutButton != null) {
+                    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) layoutButton.getLayoutParams();
+                    lp.gravity = gravity;
+                    // Push layout button to bottom in vertical mode
+                    if (isVertical) {
+                        lp.weight = 0;
+                        lp.topMargin = 16;
+                    }
+                    layoutButton.setLayoutParams(lp);
                 }
             });
         }
