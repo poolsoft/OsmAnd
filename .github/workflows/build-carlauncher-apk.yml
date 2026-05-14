@@ -93,6 +93,7 @@ jobs:
         path: android/CarLauncher.apk
 
     - name: Force Update Latest Tag
+      working-directory: ./android
       run: |
         git config --global user.email "action@github.com"
         git config --global user.name "GitHub Action"
