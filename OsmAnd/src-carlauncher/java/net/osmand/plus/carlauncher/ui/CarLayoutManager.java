@@ -3,6 +3,7 @@ package net.osmand.plus.carlauncher.ui;
 import android.content.res.Configuration;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import net.osmand.plus.R;
@@ -21,7 +22,7 @@ public class CarLayoutManager {
     private final View widgetPanel;
     private final View appDock;
     private final View appDrawerContainer;
-    private final View widgetHandle;
+    private final ImageButton widgetHandle;
 
     public CarLayoutManager(MapActivity activity) {
         this.activity = activity;
