@@ -791,46 +791,62 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         }
 
         // --- MAP REGION (Fills the remaining gap) ---
+        // Force top to parent for all modes
         cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.TOP, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP);
         
-        // Start Connection
-        if (isWidgetPanelOpen && "left".equals(widgetPos)) {
-            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.START, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.END);
-        } else if ("left".equals(dockPos)) {
-            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.START, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.END);
-        } else {
+        if (isPortrait) {
+            // Portrait: Map is between top and widget_panel (or app_dock if panel closed)
+            if (isWidgetPanelOpen) {
+                cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP);
+            } else {
+                cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
+            }
             cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.START, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.START);
-        }
-
-        // End Connection
-        if (isWidgetPanelOpen && "right".equals(widgetPos)) {
-            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.START);
-        } else if ("right".equals(dockPos)) {
-            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.START);
-        } else {
             cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
-        }
-
-        // Bottom Connection
-        if (isWidgetPanelOpen && (isPortrait || "bottom".equals(widgetPos))) {
-            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP);
-        } else if (isPortrait || "bottom".equals(dockPos)) {
-            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
         } else {
-            cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+            // Landscape Start Connection
+            if (isWidgetPanelOpen && "left".equals(widgetPos)) {
+                cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.START, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.END);
+            } else if ("left".equals(dockPos)) {
+                cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.START, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.END);
+            } else {
+                cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.START, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.START);
+            }
+
+            // Landscape End Connection
+            if (isWidgetPanelOpen && "right".equals(widgetPos)) {
+                cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.START);
+            } else if ("right".equals(dockPos)) {
+                cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.START);
+            } else {
+                cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+            }
+
+            // Landscape Bottom Connection
+            if (isWidgetPanelOpen && "bottom".equals(widgetPos)) {
+                cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP);
+            } else if ("bottom".equals(dockPos)) {
+                cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
+            } else {
+                cs.connect(R.id.map_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+            }
         }
 
         cs.applyTo(rootLayout);
         
-        // Final Fix for Layers
-        if (mapContainer != null) mapContainer.setElevation(2f);
-        if (appDock != null) appDock.setElevation(10f);
-        if (widgetPanel != null) widgetPanel.setElevation(20f);
-        
-        // Fix for "Black Map" in Portrait: Ensure elevation doesn't hide it and it has space
-        if (isPortrait && mapContainer != null) {
-            mapContainer.setElevation(2f); // Lower than widgets but above background
-            if (widgetPanel != null) widgetPanel.setElevation(25f); // Ensure panel is on top if open
+        // Final Fix for Layers & Visibility
+        if (mapContainer != null) {
+            mapContainer.setElevation(1f); // Just above background
+            mapContainer.setVisibility(View.VISIBLE);
+        }
+        if (appDock != null) appDock.setElevation(15f);
+        if (widgetPanel != null) {
+            widgetPanel.setElevation(25f);
+            // If portrait, only show the widget panel if requested
+            if (isPortrait) {
+                // Ensure widget panel doesn't crush map
+                cs.constrainHeight(R.id.widget_panel, (int)(getResources().getDisplayMetrics().heightPixels * 0.40f));
+            }
         }
         
         // Handle Icons & UI Updates
