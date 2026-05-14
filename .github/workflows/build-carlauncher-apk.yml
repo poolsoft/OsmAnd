@@ -62,8 +62,8 @@ jobs:
     - name: Prepare Dynamic Version Info
       working-directory: ./android
       run: |
-        # OsmAnd ana surumunu build.gradle'dan oku
-        BASE_VERSION=$(grep "versionName" OsmAnd/build.gradle | head -n 1 | cut -d'"' -f2)
+        # OsmAnd ana surumunu build.gradle'dan akilli sekilde oku (sadece tırnak içindeki sayıları hedefle)
+        BASE_VERSION=$(grep -E 'versionName\s+"[0-9.]+"' OsmAnd/build.gradle | head -n 1 | sed -E 's/.*"([0-9.]+)".*/\1/')
         if [ -z "$BASE_VERSION" ]; then BASE_VERSION="5.4.0"; fi
         
         COMMIT_COUNT=$(git rev-list --count HEAD)
