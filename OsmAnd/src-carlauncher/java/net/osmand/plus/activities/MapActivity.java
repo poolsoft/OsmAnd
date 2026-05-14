@@ -724,7 +724,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         cs.clone(rootLayout);
 
         // --- PRE-RESET ---
-        int[] ids = {R.id.app_dock, R.id.widget_panel, R.id.map_container};
+        int[] ids = {R.id.app_dock, R.id.widget_panel, R.id.map_container, R.id.app_drawer_container};
         for (int id : ids) {
             cs.clear(id, androidx.constraintlayout.widget.ConstraintSet.TOP);
             cs.clear(id, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
@@ -832,21 +832,37 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
             }
         }
 
+        // --- APP DRAWER / MUSIC PLAYER REGION ---
+        cs.connect(R.id.app_drawer_container, androidx.constraintlayout.widget.ConstraintSet.TOP, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.TOP);
+        cs.connect(R.id.app_drawer_container, androidx.constraintlayout.widget.ConstraintSet.START, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.START);
+        cs.connect(R.id.app_drawer_container, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+        
+        if (isPortrait) {
+            if (isWidgetPanelOpen) {
+                cs.connect(R.id.app_drawer_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.widget_panel, androidx.constraintlayout.widget.ConstraintSet.TOP);
+            } else {
+                cs.connect(R.id.app_drawer_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, R.id.app_dock, androidx.constraintlayout.widget.ConstraintSet.TOP);
+            }
+        } else {
+            cs.connect(R.id.app_drawer_container, androidx.constraintlayout.widget.ConstraintSet.BOTTOM, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.BOTTOM);
+        }
+
         cs.applyTo(rootLayout);
         
         // Final Fix for Layers & Visibility
         if (mapContainer != null) {
-            mapContainer.setElevation(1f); // Just above background
+            mapContainer.setElevation(1f); 
             mapContainer.setVisibility(View.VISIBLE);
         }
         if (appDock != null) appDock.setElevation(15f);
         if (widgetPanel != null) {
             widgetPanel.setElevation(25f);
-            // If portrait, only show the widget panel if requested
             if (isPortrait) {
-                // Ensure widget panel doesn't crush map
                 cs.constrainHeight(R.id.widget_panel, (int)(getResources().getDisplayMetrics().heightPixels * 0.40f));
             }
+        }
+        if (appDrawerContainer != null) {
+            appDrawerContainer.setElevation(50f); 
         }
         
         // Handle Icons & UI Updates
