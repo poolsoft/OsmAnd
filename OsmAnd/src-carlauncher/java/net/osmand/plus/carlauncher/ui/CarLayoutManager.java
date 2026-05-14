@@ -179,7 +179,7 @@ public class CarLayoutManager {
         if (widgetHandle != null) {
             ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) widgetHandle.getLayoutParams();
             lp.verticalBias = settings.getWidgetHandleVerticalBias();
-            widgetHandle.setImageResource(isOpen ? R.drawable.ic_chevron_right : R.drawable.ic_chevron_left);
+            widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_right : net.osmand.plus.R.drawable.ic_chevron_left);
             widgetHandle.setLayoutParams(lp);
         }
     }
