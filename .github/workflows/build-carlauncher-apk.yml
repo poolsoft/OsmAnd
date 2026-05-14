@@ -62,15 +62,17 @@ jobs:
     - name: Prepare Dynamic Version Info
       working-directory: ./android
       run: |
-        # OsmAnd ana surumunu build.gradle'dan akilli sekilde oku (sadece tırnak içindeki sayıları hedefle)
+        # OsmAnd ana surumunu build.gradle'dan akilli sekilde oku
         BASE_VERSION=$(grep -E 'versionName\s+"[0-9.]+"' OsmAnd/build.gradle | head -n 1 | sed -E 's/.*"([0-9.]+)".*/\1/')
         if [ -z "$BASE_VERSION" ]; then BASE_VERSION="5.4.0"; fi
         
         COMMIT_COUNT=$(git rev-list --count HEAD)
         SHORT_SHA=$(git rev-parse --short HEAD)
         
-        VERSION_NAME="${BASE_VERSION}-rev${COMMIT_COUNT}-${SHORT_SHA}"
-        VERSION_CODE=$((COMMIT_COUNT + 5000))
+        # Versiyon isminde sadece nokta kullanalim, tire bazen bazi Android surumlerinde sorun cikariyor
+        VERSION_NAME="${BASE_VERSION}.${COMMIT_COUNT}"
+        # VersionCode degerini OsmAnd'in uzerine cikmak icin 20000+ yapalim
+        VERSION_CODE=$((COMMIT_COUNT + 20000))
         
         echo "VERSION_CODE=${VERSION_CODE}" >> $GITHUB_ENV
         echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_ENV
