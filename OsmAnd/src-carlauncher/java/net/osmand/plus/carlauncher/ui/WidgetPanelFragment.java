@@ -120,10 +120,13 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), menuBtn);
             
             // 1. Edit Widgets
-            popup.getMenu().add(0, 1, 0, "Widget Duzenle");
+            popup.getMenu().add(0, 1, 0, "Widget Düzenle");
             
-            // 2. Layout Mode Submenu
-            android.view.Menu layoutMenu = popup.getMenu().addSubMenu(0, 3, 1, "Görünüm");
+            // 2. Settings (NEW: Access settings when clock is hidden)
+            popup.getMenu().add(0, 4, 1, "Launcher Ayarları");
+            
+            // 3. Layout Mode Submenu
+            android.view.Menu layoutMenu = popup.getMenu().addSubMenu(0, 3, 2, "Görünüm");
             android.view.MenuItem itemClassic = layoutMenu.add(0, 31, 0, "Klasik (Liste)");
             android.view.MenuItem itemMetro = layoutMenu.add(0, 32, 1, "Metro (Izgara)");
             
@@ -135,8 +138,8 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             if (isMetro) itemMetro.setChecked(true);
             else itemClassic.setChecked(true);
             
-            // 3. Pin Toggle
-            android.view.MenuItem pinItem = popup.getMenu().add(0, 2, 2, "Sabitle (Pinned)");
+            // 4. Pin Toggle
+            android.view.MenuItem pinItem = popup.getMenu().add(0, 2, 3, "Sabitle (Pinned)");
             pinItem.setCheckable(true);
             
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
@@ -148,6 +151,11 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                 if (id == 1) { // Edit
                     showWidgetControlDialog();
                     return true;
+                } else if (id == 4) { // Settings
+                    if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                        ((net.osmand.plus.activities.MapActivity) getActivity()).openCarLauncherSettings();
+                    }
+                    return true;
                 } else if (id == 2) { // Pin
                     isPinned = !isPinned;
                     item.setChecked(isPinned);
@@ -155,7 +163,6 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                         .edit().putBoolean(PREF_IS_PINNED, isPinned).apply();
 
                     if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
-
                         ((net.osmand.plus.activities.MapActivity) getActivity()).updateWidgetPanelMode();
                     }
                     return true;
@@ -207,7 +214,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
              // CLASSIC Mode: Slots determines "Items Per Screen" for sizing, NOT columns.
              // Columns should always be 1 (List).
              if (isSystemPortrait) {
-                // Portrait mode: Show only 1 widget for maximum clarity
+                // Portrait mode: Always force 1 slot for maximum clarity
                 slots = 1; 
             } else {
                 slots = settings.getLandscapeSlotCount();
@@ -278,8 +285,12 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         if (isMetro) {
             slots = 4;
         } else {
-             if (isSystemPortrait) slots = settings.getPortraitSlotCount();
-             else slots = settings.getLandscapeSlotCount();
+             if (isSystemPortrait) {
+                 // CRITICAL FIX: Ensure slots=1 in portrait for Unit Math too!
+                 slots = 1; 
+             } else {
+                 slots = settings.getLandscapeSlotCount();
+             }
         }
         if (slots <= 0) slots = 1;
 

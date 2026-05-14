@@ -851,18 +851,22 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         
         // Final Fix for Layers & Visibility
         if (mapContainer != null) {
-            mapContainer.setElevation(1f); 
+            mapContainer.setElevation(0f); // Ground level
             mapContainer.setVisibility(View.VISIBLE);
         }
-        if (appDock != null) appDock.setElevation(15f);
+        if (appDock != null) appDock.setElevation(10f); // Dock slightly above
+        
         if (widgetPanel != null) {
-            widgetPanel.setElevation(25f);
+            // Lower elevation in portrait to avoid "floating" look
+            widgetPanel.setElevation(isPortrait ? 2f : 15f);
             if (isPortrait) {
-                cs.constrainHeight(R.id.widget_panel, (int)(getResources().getDisplayMetrics().heightPixels * 0.40f));
+                // Force a clear height in portrait to push map up
+                cs.constrainHeight(R.id.widget_panel, (int)(getResources().getDisplayMetrics().heightPixels * 0.42f));
             }
         }
+        
         if (appDrawerContainer != null) {
-            appDrawerContainer.setElevation(50f); 
+            appDrawerContainer.setElevation(50f); // Drawer is the only thing that should be "Overlay"
         }
         
         // Handle Icons & UI Updates
