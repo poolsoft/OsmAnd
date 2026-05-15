@@ -182,11 +182,12 @@ public class CarLayoutManager {
         if (widgetHandle != null) {
             String widgetPos = settings.getWidgetPanelPosition();
             
-            // Clear ALL horizontal constraints
-            cs.clear(R.id.widget_handle, ConstraintSet.START);
-            cs.clear(R.id.widget_handle, ConstraintSet.END);
-            cs.clear(R.id.widget_handle, ConstraintSet.LEFT);
-            cs.clear(R.id.widget_handle, ConstraintSet.RIGHT);
+            // AGGRESSIVE CLEAR: Remove all potential constraint anchors for handle
+            cs.clear(R.id.widget_handle);
+            
+            // Re-apply common constraints
+            cs.constrainWidth(R.id.widget_handle, (int)(48 * activity.getResources().getDisplayMetrics().density));
+            cs.constrainHeight(R.id.widget_handle, (int)(96 * activity.getResources().getDisplayMetrics().density));
             
             if ("left".equals(widgetPos)) {
                 // Panel solda, ok panelin SAĞ (END) sınırına ORTALANMALI
