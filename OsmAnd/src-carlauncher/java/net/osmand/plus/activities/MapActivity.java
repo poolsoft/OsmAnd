@@ -523,15 +523,18 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                                         v.setLayoutParams(params);
                                     }
                                 } else {
-                                    // HORIZONTAL RESIZE (Existing Logic)
-                                    float delta = startX - event.getRawX();
+                                    // HORIZONTAL RESIZE (Direction aware)
+                                    CarLauncherSettings settings = new CarLauncherSettings(MapActivity.this);
+                                    boolean isLeft = "left".equals(settings.getWidgetPanelPosition());
+                                    
+                                    float delta = isLeft ? (event.getRawX() - startX) : (startX - event.getRawX());
                                     int newWidth = (int) (startWidth + delta);
                                     int screenWidth = rootLayout.getWidth();
                                     
                                     if (screenWidth > 0) {
                                         float percent = (float) newWidth / screenWidth;
-                                        if (percent < 0.3f) percent = 0.3f;
-                                        if (percent > 0.6f) percent = 0.6f;
+                                        if (percent < 0.25f) percent = 0.25f; // Min width
+                                        if (percent > 0.65f) percent = 0.65f; // Max width
                                         
                                         int clampedWidth = (int) (screenWidth * percent);
                                         ViewGroup.LayoutParams params = widgetPanel.getLayoutParams();
