@@ -182,28 +182,32 @@ public class CarLayoutManager {
         if (widgetHandle != null) {
             String widgetPos = settings.getWidgetPanelPosition();
             
-            // Clear ALL horizontal constraints to start fresh
+            // Clear ALL horizontal constraints
             cs.clear(R.id.widget_handle, ConstraintSet.START);
             cs.clear(R.id.widget_handle, ConstraintSet.END);
             cs.clear(R.id.widget_handle, ConstraintSet.LEFT);
             cs.clear(R.id.widget_handle, ConstraintSet.RIGHT);
             
             if ("left".equals(widgetPos)) {
-                // Panel solda, ok panelin SAĞ sınırına bağlanmalı
+                // Panel solda, ok panelin SAĞ (END) sınırına ORTALANMALI
+                // Hem START hem END'i aynı yere bağlayarak tam çizginin üzerine oturtuyoruz (Overlay)
                 cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.END);
-                // Oku biraz haritanın üzerine bindirmek için negatif margin yerine 
-                // panelin içine girmemesini garanti ediyoruz.
+                cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.END);
                 widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_left : net.osmand.plus.R.drawable.ic_chevron_right);
             } else {
-                // Panel sağda, ok panelin SOL (START) sınırına bağlanmalı
+                // Panel sağda, ok panelin SOL (START) sınırına ORTALANMALI
+                cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.START);
                 cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.START);
                 widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_right : net.osmand.plus.R.drawable.ic_chevron_left);
             }
             
-            // Dikey konum ve Z-sıralaması
+            // Dikey konum ve Yüksek Z-Ekseni (Z-Order)
             cs.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
             cs.connect(R.id.widget_handle, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
             cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+            
+            // Görsel olarak önde durmasını garanti et (Elevation programatik olarak da set edilebilir)
+            widgetHandle.setElevation(100f); 
         }
     }
 
