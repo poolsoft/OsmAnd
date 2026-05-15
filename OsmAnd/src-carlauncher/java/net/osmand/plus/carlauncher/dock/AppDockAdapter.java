@@ -72,16 +72,18 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Genislik: ikon boyutu + yatay padding (dimens.xml'den okunur, qualifier sistemi calisir)
+        // Genislik: ikon boyutu + yatay padding
         int iconSize = (int) context.getResources().getDimension(net.osmand.plus.R.dimen.dock_icon_size);
-        int itemWidth = isVerticalMode ? ViewGroup.LayoutParams.MATCH_PARENT : iconSize + dpToPx(16);
-        int itemHeight = isVerticalMode ? iconSize + dpToPx(16) : ViewGroup.LayoutParams.MATCH_PARENT;
+        int itemWidth = isVerticalMode ? ViewGroup.LayoutParams.MATCH_PARENT : iconSize + dpToPx(12);
+        int itemHeight = isVerticalMode ? iconSize + dpToPx(8) : ViewGroup.LayoutParams.MATCH_PARENT;
 
         LinearLayout itemView = new LinearLayout(context);
         itemView.setOrientation(LinearLayout.VERTICAL);
         itemView.setLayoutParams(new RecyclerView.LayoutParams(itemWidth, itemHeight));
         itemView.setGravity(android.view.Gravity.CENTER);
-        itemView.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
+        // Reduced padding for tighter layout in sidebar
+        int padding = isVerticalMode ? dpToPx(2) : dpToPx(4);
+        itemView.setPadding(padding, padding, padding, padding);
 
         return new ViewHolder(itemView);
     }

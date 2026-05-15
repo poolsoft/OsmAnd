@@ -167,7 +167,8 @@ public class CarLayoutManager {
         updateWidgetHandle(carSettings, isWidgetPanelOpen);
         
         // 7. Refresh Dock orientation (CRITICAL: Always refresh on every layout apply to fix orientation issues)
-        refreshDockFragment(dockPos, isPortrait);
+        boolean isVertical = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
+        refreshDockFragment(isVertical);
     }
 
     private void updateElevations(boolean isPortrait) {
@@ -186,8 +187,7 @@ public class CarLayoutManager {
         }
     }
 
-    private void refreshDockFragment(String dockPos, boolean isPortrait) {
-        boolean isVertical = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
+    private void refreshDockFragment(boolean isVertical) {
         AppDockFragment dock = activity.getAppDockFragment();
         if (dock != null) {
             dock.setOrientation(isVertical);

@@ -297,12 +297,22 @@ public class AppDockFragment extends Fragment
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        
+        // Ensure orientation is correct based on global settings before creating adapter
+        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+        String dockPos = settings.getDockPosition();
+        boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        this.isVerticalMode = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
+        
         adapter = new AppDockAdapter(getContext(), this);
+        adapter.setVerticalMode(isVerticalMode); // Set it before attaching to recycler
         recyclerView.setAdapter(adapter);
+        
         if (dockManager != null) {
             adapter.setShortcuts(dockManager.getShortcuts());
         }
-        // Force apply current orientation state as soon as view is ready
+        
+        // Force apply UI constraints
         applyOrientationState(view, isVerticalMode);
     }
 
