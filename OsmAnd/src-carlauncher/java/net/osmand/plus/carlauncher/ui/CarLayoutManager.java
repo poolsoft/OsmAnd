@@ -180,34 +180,37 @@ public class CarLayoutManager {
 
     private void updateWidgetHandleConstraints(ConstraintSet cs, CarLauncherSettings settings, boolean isOpen) {
         if (widgetHandle != null) {
+            boolean isPortrait = activity.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+            
+            if (isPortrait) {
+                // Dikey modda ok butonu genellikle kafa karistirir, gizliyoruz.
+                widgetHandle.setVisibility(View.GONE);
+                return;
+            }
+            
+            widgetHandle.setVisibility(View.VISIBLE);
             String widgetPos = settings.getWidgetPanelPosition();
             
-            // AGGRESSIVE CLEAR: Remove all potential constraint anchors for handle
+            // AGGRESSIVE CLEAR
             cs.clear(R.id.widget_handle);
-            
-            // Re-apply common constraints
             cs.constrainWidth(R.id.widget_handle, (int)(48 * activity.getResources().getDisplayMetrics().density));
             cs.constrainHeight(R.id.widget_handle, (int)(96 * activity.getResources().getDisplayMetrics().density));
             
             if ("left".equals(widgetPos)) {
-                // Panel solda, ok panelin SAĞ (END) sınırına dayanmalı ve haritaya doğru taşmalı
                 cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.END);
-                cs.setMargin(R.id.widget_handle, ConstraintSet.START, (int)(-16 * activity.getResources().getDisplayMetrics().density)); // Overlap slightly
+                // Harita uzerine bindirme (Overlap)
+                cs.setMargin(R.id.widget_handle, ConstraintSet.START, (int)(-24 * activity.getResources().getDisplayMetrics().density)); 
                 widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_left : net.osmand.plus.R.drawable.ic_chevron_right);
             } else {
-                // Panel sağda, ok panelin SOL (START) sınırına dayanmalı ve haritaya doğru taşmalı
                 cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.START);
-                // Haritaya doğru 8dp taşması için margin veriyoruz
-                cs.setMargin(R.id.widget_handle, ConstraintSet.END, (int)(8 * activity.getResources().getDisplayMetrics().density));
+                // Harita uzerine bindirme
+                cs.setMargin(R.id.widget_handle, ConstraintSet.END, (int)(-24 * activity.getResources().getDisplayMetrics().density));
                 widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_right : net.osmand.plus.R.drawable.ic_chevron_left);
             }
             
-            // Dikey konum ve Yüksek Z-Ekseni (Z-Order)
             cs.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
             cs.connect(R.id.widget_handle, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
             cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
-            
-            // Görsel olarak önde durmasını garanti et (Elevation programatik olarak da set edilebilir)
             widgetHandle.setElevation(100f); 
         }
     }
