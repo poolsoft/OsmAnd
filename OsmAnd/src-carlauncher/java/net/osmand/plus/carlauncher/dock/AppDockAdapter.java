@@ -90,6 +90,18 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        // Force update LayoutParams based on current mode to prevent stale sizes from pool
+        int iconSize = (int) context.getResources().getDimension(net.osmand.plus.R.dimen.dock_icon_size);
+        int itemWidth = isVerticalMode ? ViewGroup.LayoutParams.MATCH_PARENT : iconSize + dpToPx(12);
+        int itemHeight = isVerticalMode ? iconSize + dpToPx(8) : ViewGroup.LayoutParams.MATCH_PARENT;
+        
+        ViewGroup.LayoutParams lp = holder.itemView.getLayoutParams();
+        if (lp != null) {
+            lp.width = itemWidth;
+            lp.height = itemHeight;
+            holder.itemView.setLayoutParams(lp);
+        }
+
         AppShortcut shortcut = shortcuts.get(position);
         holder.bind(shortcut);
         setAnimation(holder.itemView, position);

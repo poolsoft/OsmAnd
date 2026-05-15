@@ -620,6 +620,9 @@ public class AppDockFragment extends Fragment
     private void updateRecyclerViewOrientation(View root) {
         if (recyclerView == null) recyclerView = root.findViewById(net.osmand.plus.R.id.dock_recycler);
         if (recyclerView != null) {
+            // Force clear recycled view pool to ensure fresh ViewHolders with correct LayoutParams
+            recyclerView.setRecycledViewPool(new androidx.recyclerview.widget.RecyclerView.RecycledViewPool());
+            
             recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), 
                 isVerticalMode ? LinearLayoutManager.VERTICAL : LinearLayoutManager.HORIZONTAL, false));
             if (adapter != null) {
