@@ -190,15 +190,15 @@ public class CarLayoutManager {
             cs.constrainHeight(R.id.widget_handle, (int)(96 * activity.getResources().getDisplayMetrics().density));
             
             if ("left".equals(widgetPos)) {
-                // Panel solda, ok panelin SAĞ (END) sınırına ORTALANMALI
-                // Hem START hem END'i aynı yere bağlayarak tam çizginin üzerine oturtuyoruz (Overlay)
+                // Panel solda, ok panelin SAĞ (END) sınırına dayanmalı ve haritaya doğru taşmalı
                 cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.END);
-                cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.END);
+                cs.setMargin(R.id.widget_handle, ConstraintSet.START, (int)(-16 * activity.getResources().getDisplayMetrics().density)); // Overlap slightly
                 widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_left : net.osmand.plus.R.drawable.ic_chevron_right);
             } else {
-                // Panel sağda, ok panelin SOL (START) sınırına ORTALANMALI
-                cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.START);
+                // Panel sağda, ok panelin SOL (START) sınırına dayanmalı ve haritaya doğru taşmalı
                 cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.START);
+                // Haritaya doğru 8dp taşması için margin veriyoruz
+                cs.setMargin(R.id.widget_handle, ConstraintSet.END, (int)(8 * activity.getResources().getDisplayMetrics().density));
                 widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_right : net.osmand.plus.R.drawable.ic_chevron_left);
             }
             
