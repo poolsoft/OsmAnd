@@ -70,90 +70,130 @@ public class AlignmentView extends View {
 
         int cx = getWidth() / 2;
         int cy = getHeight() / 2;
-        int radius = Math.min(cx, cy) - 50;
+        int radius = Math.min(cx, cy) - 80;
 
-        // 1. Compass (Azimuth)
-        // Outer Circle
-        paintCircle.setColor(Color.DKGRAY);
+        // 1. Background Circles (Cyber Deck Look)
+        paintCircle.setColor(Color.parseColor("#22FFFFFF"));
+        paintCircle.setStrokeWidth(2f);
         canvas.drawCircle(cx, cy, radius, paintCircle);
+        canvas.drawCircle(cx, cy, radius * 0.7f, paintCircle);
+        canvas.drawCircle(cx, cy, radius * 0.4f, paintCircle);
 
-        // Compass Ticks (N, E, S, W)
-        // Adjust canvas rotation based on CURRENT Azimuth so "North" moves
-        // If currentAzimuth is 0 (North), North is up.
-        // If currentAzimuth is 90 (East), North is Left.
+        // Crosshairs
+        canvas.drawLine(cx - radius, cy, cx + radius, cy, paintCircle);
+        canvas.drawLine(cx, cy - radius, cx, cy + radius, paintCircle);
 
+        // 2. Compass Ring (Azimuth)
         canvas.save();
         canvas.rotate(-currentAzimuth, cx, cy);
 
-        // Draw North Tick
-        paintText.setColor(Color.RED);
-        canvas.drawText("N", cx, cy - radius + 60, paintText);
+        // Compass Ticks & Degrees
+        paintText.setTextSize(32f);
+        paintText.setFakeBoldText(true);
+        for (int i = 0; i < 360; i += 10) {
+            canvas.save();
+            canvas.rotate(i, cx, cy);
+            if (i % 90 == 0) {
+                paintCircle.setColor(i == 0 ? Color.parseColor("#FF9800") : Color.WHITE);
+                paintCircle.setStrokeWidth(6f);
+                canvas.drawLine(cx, cy - radius, cx, cy - radius + 30, paintCircle);
+                
+                String label = "";
+                if (i == 0) label = "N";
+                else if (i == 90) label = "E";
+                else if (i == 180) label = "S";
+                else if (i == 270) label = "W";
+                
+                paintText.setColor(i == 0 ? Color.parseColor("#FF9800") : Color.WHITE);
+                canvas.drawText(label, cx, cy - radius - 20, paintText);
+            } else if (i % 30 == 0) {
+                paintCircle.setColor(Color.parseColor("#88FFFFFF"));
+                paintCircle.setStrokeWidth(3f);
+                canvas.drawLine(cx, cy - radius, cx, cy - radius + 20, paintCircle);
+                // Draw numbers for 30, 60, etc.
+                paintText.setTextSize(24f);
+                paintText.setColor(Color.parseColor("#88FFFFFF"));
+                canvas.drawText(String.valueOf(i), cx, cy - radius - 20, paintText);
+            } else {
+                paintCircle.setColor(Color.parseColor("#44FFFFFF"));
+                paintCircle.setStrokeWidth(1f);
+                canvas.drawLine(cx, cy - radius, cx, cy - radius + 10, paintCircle);
+            }
+            canvas.restore();
+        }
 
-        // Target Azimuth Indicator (Green Line on the circle)
-        // Target is relative to North. Since we rotated North to match reality, we
-        // rotate Target relative to that.
-        // Actually simplest is: Draw everything relative to North, then rotate whole
-        // canvas by -currentAzimuth.
-
-        // Draw Target Line
+        // Target Azimuth Marker (Orange Triangle)
         canvas.save();
         canvas.rotate(targetAzimuth, cx, cy);
-        canvas.drawLine(cx, cy - radius + 20, cx, cy - radius - 20, paintTarget); // Little mark
-        canvas.drawCircle(cx, cy - radius, 10, paintTarget);
+        paintTarget.setColor(Color.parseColor("#FF9800"));
+        paintTarget.setStyle(Paint.Style.FILL);
+        android.graphics.Path path = new android.graphics.Path();
+        path.moveTo(cx, cy - radius + 40);
+        path.lineTo(cx - 15, cy - radius + 70);
+        path.lineTo(cx + 15, cy - radius + 70);
+        path.close();
+        canvas.drawPath(path, paintTarget);
         canvas.restore();
-
-        // Draw Fixed "Phone Forward" Indicator (Red Arrow pointing UP)
-        // But wait, we rotated the canvas by -currentAzimuth. So "Up" on screen is
-        // actually "Current Azimuth" in the world.
-        // So the "Phone Forward" is always "Up" on the screen.
-        // If we rotate the world, "Up" on screen is static.
 
         canvas.restore(); // Back to screen coordinates
 
-        // Phone Heading Indicator (Always Up)
-        paintCurrent.setColor(Color.YELLOW);
-        canvas.drawLine(cx, cy + 20, cx, cy - radius + 20, paintCurrent);
+        // 3. Current Heading Indicator (Fixed Upward Pointer)
+        paintCurrent.setColor(Color.WHITE);
+        paintCurrent.setStrokeWidth(6f);
+        canvas.drawLine(cx, cy - radius - 40, cx, cy - radius + 10, paintCurrent);
+        
+        // 4. Elevation Gauge (Right side vertical ruler)
+        int barX = getWidth() - 60;
+        int barHeight = radius * 2;
+        int barTop = cy - radius;
+        int barBottom = cy + radius;
 
-        // 2. Leveler (Pitch)
-        // Vertical bar on the right
-        int barX = getWidth() - 50;
-        int barHeight = getHeight() / 2;
-        int barTop = cy - barHeight / 2;
-        int barBottom = cy + barHeight / 2;
+        paintLeveler.setColor(Color.parseColor("#22FFFFFF"));
+        canvas.drawRect(barX - 20, barTop, barX + 20, barBottom, paintLeveler);
 
-        paintLeveler.setColor(Color.DKGRAY);
-        paintLeveler.setStrokeWidth(40f);
-        canvas.drawLine(barX, barTop, barX, barBottom, paintLeveler);
+        // Ruler Ticks
+        paintText.setTextSize(20f);
+        for (int p = -90; p <= 90; p += 10) {
+            float y = cy - (p * (barHeight / 180f));
+            if (y >= barTop && y <= barBottom) {
+                canvas.drawLine(barX - 15, y, barX, y, paintCircle);
+                if (p % 30 == 0) {
+                    canvas.drawText(p + "°", barX - 45, y + 8, paintText);
+                }
+            }
+        }
 
-        // Center (0 degrees horizon)
-        paintLeveler.setColor(Color.WHITE);
-        paintLeveler.setStrokeWidth(5f);
-        canvas.drawLine(barX - 20, cy, barX + 20, cy, paintLeveler);
+        // Target & Current Elevation Markers
+        float targetY = cy - (targetPitch * (barHeight / 180f));
+        float currentY = cy - (currentPitch * (barHeight / 180f));
 
-        // Target Pitch
-        float targetY = cy - (targetPitch * 5); // Scale: 1 degree = 5 pixels (approx)
-        paintTarget.setStyle(Paint.Style.FILL);
-        canvas.drawCircle(barX, targetY, 15, paintTarget);
+        paintTarget.setColor(Color.parseColor("#FF9800"));
+        canvas.drawCircle(barX, targetY, 12, paintTarget);
+        
+        paintCurrent.setColor(Color.WHITE);
+        paintCurrent.setStyle(Paint.Style.STROKE);
+        paintCurrent.setStrokeWidth(4f);
+        canvas.drawCircle(barX, currentY, 18, paintCurrent);
 
-        // Current Pitch
-        float currentY = cy - (currentPitch * 5);
-        paintCurrent.setStyle(Paint.Style.FILL);
-        paintCurrent.setColor(Color.RED);
-        canvas.drawCircle(barX, currentY, 15, paintCurrent);
-
-        // Alignment Feedback
-        // Check if aligned
+        // 5. Target Lock Feedback
         float azDiff = Math.abs(currentAzimuth - targetAzimuth);
-        if (azDiff > 180)
-            azDiff = 360 - azDiff;
-
+        if (azDiff > 180) azDiff = 360 - azDiff;
         float pitchDiff = Math.abs(currentPitch - targetPitch);
 
-        boolean aligned = azDiff < 5 && pitchDiff < 5;
-
-        if (aligned) {
-            paintText.setColor(Color.GREEN);
-            canvas.drawText("HİZALANDI", cx, cy, paintText);
+        if (azDiff < 3 && pitchDiff < 3) {
+            // LOCK ACHIEVED
+            paintCurrent.setColor(Color.parseColor("#4CAF50"));
+            paintCurrent.setStrokeWidth(10f);
+            canvas.drawCircle(cx, cy, radius * 0.15f, paintCurrent);
+            
+            paintText.setColor(Color.parseColor("#4CAF50"));
+            paintText.setTextSize(48f);
+            canvas.drawText("HEDEF KİLİTLENDİ", cx, cy + radius + 40, paintText);
+        } else if (azDiff < 15 && pitchDiff < 15) {
+            // NEAR TARGET
+            paintCurrent.setColor(Color.parseColor("#FFEB3B"));
+            paintCurrent.setStrokeWidth(4f);
+            canvas.drawCircle(cx, cy, radius * 0.15f, paintCurrent);
         }
     }
 }
