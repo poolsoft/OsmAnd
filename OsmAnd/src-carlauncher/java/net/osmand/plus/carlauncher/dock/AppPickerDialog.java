@@ -1,5 +1,7 @@
 package net.osmand.plus.carlauncher.dock;
 
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.view.Gravity;
 import android.view.View;
