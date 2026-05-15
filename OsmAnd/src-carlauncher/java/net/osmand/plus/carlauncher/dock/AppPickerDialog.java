@@ -1,31 +1,22 @@
 package net.osmand.plus.carlauncher.dock;
 
-import android.app.AlertDialog;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
-
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 
-/**
- * Uygulama secim dialogu.
- * Sistemdeki uygulamalari listeler ve secim yaptirir.
- */
 public class AppPickerDialog {
 
     public interface OnAppSelectedListener {
@@ -34,8 +25,8 @@ public class AppPickerDialog {
 
     private final Context context;
     private final OnAppSelectedListener listener;
-
     private final boolean onlyMusicApps;
+    private BottomSheetDialog dialog;
 
     public AppPickerDialog(@NonNull Context context, @NonNull OnAppSelectedListener listener) {
         this(context, false, listener);
@@ -47,185 +38,104 @@ public class AppPickerDialog {
         this.listener = listener;
     }
 
-    private AlertDialog dialog;
-
-    /**
-     * Dialogu goster.
-     */
     public void show() {
+        dialog = new BottomSheetDialog(context, net.osmand.plus.R.style.Theme_Design_BottomSheetDialog);
+        
+        LinearLayout root = new LinearLayout(context);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(android.graphics.Color.parseColor("#1C1C1E"));
+        root.setPadding(16, 24, 16, 16);
+        
+        View handle = new View(context);
+        LinearLayout.LayoutParams handleLp = new LinearLayout.LayoutParams(96, 12);
+        handleLp.gravity = Gravity.CENTER_HORIZONTAL;
+        handleLp.bottomMargin = 32;
+        handle.setBackgroundColor(android.graphics.Color.GRAY);
+        root.addView(handle, handleLp);
+
+        TextView titleView = new TextView(context);
+        titleView.setText(onlyMusicApps ? "MÜZİK UYGULAMASI SEÇ" : "UYGULAMA SEÇ");
+        titleView.setTextColor(android.graphics.Color.WHITE);
+        titleView.setTextSize(18);
+        titleView.setGravity(Gravity.CENTER);
+        titleView.setPadding(0, 0, 0, 32);
+        root.addView(titleView);
+
+        RecyclerView recyclerView = new RecyclerView(context);
+        recyclerView.setLayoutManager(new GridLayoutManager(context, 4));
+        AppInfoAdapter adapter = new AppInfoAdapter(app -> {
+            if (listener != null) listener.onAppSelected(app.packageName, app.name, app.icon);
+            dialog.dismiss();
+        });
+        recyclerView.setAdapter(adapter);
+        root.addView(recyclerView, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 
+                (int)(context.getResources().getDisplayMetrics().heightPixels * 0.6f)));
+
         List<AppInfo> apps = getInstalledApps();
+        adapter.setApps(apps);
 
-        if (apps.isEmpty()) {
-            new AlertDialog.Builder(context)
-                    .setTitle("Uygulama Bulunamadi")
-                    .setMessage(onlyMusicApps ? "Muzik uygulamasi bulunamadi." : "Uygulama bulunamadi.")
-                    .setPositiveButton("Tamam", null)
-                    .show();
-            return;
-        }
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(onlyMusicApps ? "Muzik Uygulamasi Sec" : "Uygulama Sec");
-
-        // Scroll view
-        ScrollView scrollView = new ScrollView(context);
-        scrollView.setFillViewport(true);
-        int topPadding = (int) (50 * context.getResources().getDisplayMetrics().density);
-        scrollView.setPadding(0, topPadding, 0, 0); // Status bar padding
-
-        LinearLayout listLayout = new LinearLayout(context);
-        listLayout.setOrientation(LinearLayout.VERTICAL);
-        listLayout.setPadding(16, 16, 16, 16);
-
-        // Ensure list takes full width
-        listLayout.setLayoutParams(new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        for (AppInfo app : apps) {
-            View itemView = createAppItem(app);
-            listLayout.addView(itemView);
-        }
-
-        scrollView.addView(listLayout);
-        builder.setView(scrollView);
-        builder.setNegativeButton("Iptal", null);
-
-        dialog = builder.create();
+        dialog.setContentView(root);
+        View parent = (View) root.getParent();
+        if (parent != null) parent.setBackgroundColor(android.graphics.Color.TRANSPARENT);
         dialog.show();
     }
 
-    /**
-     * Uygulama item view olustur.
-     */
-    private View createAppItem(AppInfo app) {
-        LinearLayout itemLayout = new LinearLayout(context);
-        itemLayout.setOrientation(LinearLayout.HORIZONTAL);
-        itemLayout.setGravity(Gravity.CENTER_VERTICAL);
-        itemLayout.setPadding(12, 16, 12, 16);
-        itemLayout.setClickable(true);
-        itemLayout.setFocusable(true);
-        itemLayout.setBackgroundResource(android.R.drawable.list_selector_background);
+    private static List<AppInfo> cachedAllApps = null;
+    private static List<AppInfo> cachedMusicApps = null;
 
-        // Icon
-        ImageView iconView = new ImageView(context);
-        iconView.setImageDrawable(app.icon);
-        iconView.setLayoutParams(new LinearLayout.LayoutParams(48, 48));
-        itemLayout.addView(iconView);
-
-        // Name
-        TextView nameView = new TextView(context);
-        nameView.setText(app.name);
-        nameView.setTextSize(16);
-        nameView.setPadding(16, 0, 0, 0);
-
-        LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
-        itemLayout.addView(nameView, nameParams);
-
-        // Click listener
-        itemLayout.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onAppSelected(app.packageName, app.name, app.icon);
-            }
-            if (dialog != null && dialog.isShowing()) {
-                dialog.dismiss();
-            }
-        });
-
-        return itemLayout;
-    }
-
-    private static List<AppInfo> cachedApps = null;
-
-    /**
-     * Yuklu uygulamalari al.
-     */
     private List<AppInfo> getInstalledApps() {
-        // Cache bypass if filter changed or simple cache invalidation needed?
-        // For simplicity, we won't use static cache if filtering differs or just ignore
-        // cache for now to be safe
-        // if (cachedApps != null ... ) return cachedApps;
+        if (onlyMusicApps && cachedMusicApps != null) return cachedMusicApps;
+        if (!onlyMusicApps && cachedAllApps != null) return cachedAllApps;
 
         List<AppInfo> apps = new ArrayList<>();
         PackageManager pm = context.getPackageManager();
-
         Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
         mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
 
         if (onlyMusicApps) {
-            // Add Internal Player Option
             AppInfo internalPlayer = new AppInfo();
-            internalPlayer.name = "Dahili Muzik Calar"; // "Internal Music Player"
-            internalPlayer.packageName = "usage.internal.player"; // Special ID
-            internalPlayer.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play); // Default icon
+            internalPlayer.name = "Dahili Muzik Calar";
+            internalPlayer.packageName = "usage.internal.player";
+            internalPlayer.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play);
             apps.add(internalPlayer);
         }
 
         List<ResolveInfo> resolveInfos = pm.queryIntentActivities(mainIntent, 0);
-
-        // Prepare music filter if needed
         List<String> musicPackages = new ArrayList<>();
         if (onlyMusicApps) {
             Intent musicIntent = new Intent("android.media.browse.MediaBrowserService");
             List<ResolveInfo> musicServices = pm.queryIntentServices(musicIntent, 0);
-            for (ResolveInfo info : musicServices) {
-                musicPackages.add(info.serviceInfo.packageName);
-            }
+            for (ResolveInfo info : musicServices) musicPackages.add(info.serviceInfo.packageName);
         }
 
         for (ResolveInfo info : resolveInfos) {
             try {
                 String packageName = info.activityInfo.packageName;
-
-                if (onlyMusicApps) {
-                    // Check if it has a MediaBrowserService or is a known music app
-                    if (!musicPackages.contains(packageName)) {
-                        continue;
-                    }
-                }
-
+                if (onlyMusicApps && !musicPackages.contains(packageName)) continue;
                 ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
-
-                // Sistem uygulamalarini filtrele (opsiyonel)
-                // if ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) continue;
-
                 AppInfo app = new AppInfo();
                 app.name = appInfo.loadLabel(pm).toString();
                 app.packageName = packageName;
                 app.icon = appInfo.loadIcon(pm);
-
                 apps.add(app);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            } catch (Exception e) { }
         }
 
-        // Alfabetik sirala
-        Collections.sort(apps, new Comparator<AppInfo>() {
-            @Override
-            public int compare(AppInfo a1, AppInfo a2) {
-                return a1.name.compareToIgnoreCase(a2.name);
-            }
-        });
-
-        cachedApps = apps;
+        Collections.sort(apps, (a1, a2) -> a1.name.compareToIgnoreCase(a2.name));
+        if (onlyMusicApps) cachedMusicApps = apps;
+        else cachedAllApps = apps;
         return apps;
     }
 
-    /**
-     * Cache'i temizle (Ornegin yeni uyulama yuklendiginde).
-     */
     public static void clearCache() {
-        cachedApps = null;
+        cachedAllApps = null;
+        cachedMusicApps = null;
     }
 
-    /**
-     * Uygulama bilgisi.
-     */
-    private static class AppInfo {
-        String name;
-        String packageName;
-        Drawable icon;
+    public static class AppInfo {
+        public String name;
+        public String packageName;
+        public Drawable icon;
     }
 }
