@@ -531,58 +531,70 @@ public class AppDockFragment extends Fragment
     }
 
     public void setOrientation(boolean isVertical) {
-        if (this.isVerticalMode == isVertical) return;
         this.isVerticalMode = isVertical;
         this.currentOrientation = isVertical ? ORIENTATION_VERTICAL : ORIENTATION_HORIZONTAL;
         
         if (getView() != null) {
             getView().post(() -> {
+                View root = getView();
                 // 1. Update Recycler Orientation
-                updateRecyclerViewOrientation(getView());
+                updateRecyclerViewOrientation(root);
                 
-                // 2. Hide/Show elements based on orientation
-                // Hide Music & Clock in Sidebar (Vertical) mode to save space
-                if (miniMusicContainer != null) {
-                    miniMusicContainer.setVisibility(isVertical ? View.GONE : View.VISIBLE);
-                }
-                
-                View clockContainer = getView().findViewById(net.osmand.plus.R.id.clock_settings_container);
-                if (clockContainer != null) {
-                    clockContainer.setVisibility(isVertical ? View.GONE : View.VISIBLE);
-                }
-                
-                // 3. Rearrange Main Container
-                View container = getView().findViewById(net.osmand.plus.R.id.dock_content_container);
-                if (container instanceof LinearLayout) {
-                    LinearLayout ll = (LinearLayout) container;
+                // 2. Main Container Setup
+                LinearLayout ll = root.findViewById(net.osmand.plus.R.id.dock_content_container);
+                if (ll != null) {
                     ll.setOrientation(isVertical ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
-                    ll.setGravity(isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL);
+                    ll.setGravity(isVertical ? android.view.Gravity.CENTER_HORIZONTAL | android.view.Gravity.TOP : android.view.Gravity.CENTER_VERTICAL);
+                    ll.setPadding(isVertical ? 0 : 16, isVertical ? 16 : 0, isVertical ? 0 : 16, isVertical ? 16 : 0);
                     
-                    // In vertical mode, take full height to spread icons
                     ViewGroup.LayoutParams lp = ll.getLayoutParams();
                     lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
                     lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
                     ll.setLayoutParams(lp);
                 }
                 
-                // 4. Center the App List & Layout Buttons
+                // 3. Conditional Visibility
+                if (miniMusicContainer != null) {
+                    miniMusicContainer.setVisibility(isVertical ? View.GONE : View.VISIBLE);
+                }
+                
+                View clockContainer = root.findViewById(net.osmand.plus.R.id.clock_settings_container);
+                if (clockContainer != null) {
+                    clockContainer.setVisibility(isVertical ? View.GONE : View.VISIBLE);
+                }
+                
+                // 4. Item Layout Params Adjustments
                 int gravity = isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL;
                 
                 if (appListButton != null) {
                     LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) appListButton.getLayoutParams();
                     lp.gravity = gravity;
+                    lp.setMargins(isVertical ? 0 : 8, isVertical ? 16 : 0, isVertical ? 0 : 8, isVertical ? 16 : 0);
                     appListButton.setLayoutParams(lp);
                 }
                 
                 if (layoutButton != null) {
-                    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) layoutButton.getLayoutParams();
-                    lp.gravity = gravity;
-                    // Push layout button to bottom in vertical mode
+                    // Layout button should be at the bottom in Sidebar, or at the end in Bottom Dock
                     if (isVertical) {
-                        lp.weight = 0;
-                        lp.topMargin = 16;
+                        // In Sidebar, it's often better to have Layout Toggle visible or part of a menu.
+                        // If shown, it should be at the very bottom.
+                        layoutButton.setVisibility(View.VISIBLE);
+                        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) layoutButton.getLayoutParams();
+                        lp.gravity = gravity;
+                        lp.topMargin = 24;
+                        layoutButton.setLayoutParams(lp);
+                    } else {
+                        layoutButton.setVisibility(View.VISIBLE);
                     }
-                    layoutButton.setLayoutParams(lp);
+                }
+                
+                // 5. RecyclerView Layout Adjustments
+                if (recyclerView != null) {
+                    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) recyclerView.getLayoutParams();
+                    lp.width = isVertical ? ViewGroup.LayoutParams.MATCH_PARENT : 0;
+                    lp.height = isVertical ? 0 : ViewGroup.LayoutParams.MATCH_PARENT;
+                    lp.weight = 1.0f;
+                    recyclerView.setLayoutParams(lp);
                 }
             });
         }

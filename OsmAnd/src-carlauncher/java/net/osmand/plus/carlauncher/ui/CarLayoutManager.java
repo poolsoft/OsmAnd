@@ -165,7 +165,7 @@ public class CarLayoutManager {
         updateElevations(isPortrait);
         updateWidgetHandle(carSettings, isWidgetPanelOpen);
         
-        // 7. Refresh Dock orientation
+        // 7. Refresh Dock orientation (CRITICAL: Always refresh on every layout apply to fix orientation issues)
         refreshDockFragment(dockPos, isPortrait);
     }
 
