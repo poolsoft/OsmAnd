@@ -302,6 +302,8 @@ public class AppDockFragment extends Fragment
         if (dockManager != null) {
             adapter.setShortcuts(dockManager.getShortcuts());
         }
+        // Force apply current orientation state as soon as view is ready
+        applyOrientationState(view, isVerticalMode);
     }
 
     @Override
@@ -530,12 +532,6 @@ public class AppDockFragment extends Fragment
         });
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        // Force apply current orientation state as soon as view is ready
-        applyOrientationState(view, isVerticalMode);
-    }
 
     public void setOrientation(boolean isVertical) {
         this.isVerticalMode = isVertical;
