@@ -558,11 +558,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                                 CarLauncherSettings settings = new CarLauncherSettings(MapActivity.this);
                                 settings.setWidgetHandleVerticalBias(params.verticalBias);
                                 
-                                // Reset Visuals
+                                // Reset Visuals & RE-APPLY Layout to snap to border
                                 widgetHandle.clearColorFilter();
-                                applyWidgetPanelState(); // Restore icon based on open/close state
+                                applyWidgetPanelState(); 
                             } else if (isDragging) {
-                                // Save Width (Existing Snap Logic)
+                                // Save Width & RE-APPLY Layout
                                 int screenWidth = rootLayout.getWidth();
                                 if (screenWidth > 0) {
                                      float currentPercent = (float) widgetPanel.getWidth() / screenWidth;

@@ -164,7 +164,7 @@ public class CarLayoutManager {
 
         // 6. Final UI Touch-ups (Elevation, etc)
         updateElevations(isPortrait);
-        updateWidgetHandle(carSettings, isWidgetPanelOpen);
+        updateWidgetHandleConstraints(cs, carSettings, isWidgetPanelOpen);
         
         // 7. Refresh Dock orientation (CRITICAL: Always refresh on every layout apply to fix orientation issues)
         boolean isVertical = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
@@ -178,12 +178,28 @@ public class CarLayoutManager {
         if (appDrawerContainer != null) appDrawerContainer.setElevation(50f);
     }
 
-    private void updateWidgetHandle(CarLauncherSettings settings, boolean isOpen) {
+    private void updateWidgetHandleConstraints(ConstraintSet cs, CarLauncherSettings settings, boolean isOpen) {
         if (widgetHandle != null) {
-            ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) widgetHandle.getLayoutParams();
-            lp.verticalBias = settings.getWidgetHandleVerticalBias();
-            widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_right : net.osmand.plus.R.drawable.ic_chevron_left);
-            widgetHandle.setLayoutParams(lp);
+            String widgetPos = settings.getWidgetPanelPosition();
+            
+            // Clear existing horizontal constraints for handle
+            cs.clear(R.id.widget_handle, ConstraintSet.START);
+            cs.clear(R.id.widget_handle, ConstraintSet.END);
+            
+            if ("left".equals(widgetPos)) {
+                // Panel is on left, handle should be at the RIGHT edge of the panel
+                cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.END);
+                // Adjust arrow icon based on state (Open = pointing left, Closed = pointing right)
+                widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_left : net.osmand.plus.R.drawable.ic_chevron_right);
+            } else {
+                // Panel is on right, handle should be at the LEFT edge of the panel
+                cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.START);
+                // Adjust arrow icon based on state (Open = pointing right, Closed = pointing left)
+                widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_right : net.osmand.plus.R.drawable.ic_chevron_left);
+            }
+            
+            // Ensure vertical bias is applied from settings
+            cs.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
         }
     }
 
