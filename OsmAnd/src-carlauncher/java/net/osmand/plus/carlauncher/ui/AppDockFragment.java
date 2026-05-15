@@ -530,74 +530,85 @@ public class AppDockFragment extends Fragment
         });
     }
 
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        // Force apply current orientation state as soon as view is ready
+        applyOrientationState(view, isVerticalMode);
+    }
+
     public void setOrientation(boolean isVertical) {
         this.isVerticalMode = isVertical;
         this.currentOrientation = isVertical ? ORIENTATION_VERTICAL : ORIENTATION_HORIZONTAL;
         
         if (getView() != null) {
-            getView().post(() -> {
-                View root = getView();
-                // 1. Update Recycler Orientation
-                updateRecyclerViewOrientation(root);
-                
-                // 2. Main Container Setup
-                LinearLayout ll = root.findViewById(net.osmand.plus.R.id.dock_content_container);
-                if (ll != null) {
-                    ll.setOrientation(isVertical ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
-                    ll.setGravity(isVertical ? android.view.Gravity.CENTER_HORIZONTAL | android.view.Gravity.TOP : android.view.Gravity.CENTER_VERTICAL);
-                    ll.setPadding(isVertical ? 0 : 16, isVertical ? 16 : 0, isVertical ? 0 : 16, isVertical ? 16 : 0);
-                    
-                    ViewGroup.LayoutParams lp = ll.getLayoutParams();
-                    lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
-                    lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
-                    ll.setLayoutParams(lp);
-                }
-                
-                // 3. Conditional Visibility
-                if (miniMusicContainer != null) {
-                    miniMusicContainer.setVisibility(isVertical ? View.GONE : View.VISIBLE);
-                }
-                
-                View clockContainer = root.findViewById(net.osmand.plus.R.id.clock_settings_container);
-                if (clockContainer != null) {
-                    clockContainer.setVisibility(isVertical ? View.GONE : View.VISIBLE);
-                }
-                
-                // 4. Item Layout Params Adjustments
-                int gravity = isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL;
-                
-                if (appListButton != null) {
-                    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) appListButton.getLayoutParams();
-                    lp.gravity = gravity;
-                    lp.setMargins(isVertical ? 0 : 8, isVertical ? 16 : 0, isVertical ? 0 : 8, isVertical ? 16 : 0);
-                    appListButton.setLayoutParams(lp);
-                }
-                
-                if (layoutButton != null) {
-                    // Layout button should be at the bottom in Sidebar, or at the end in Bottom Dock
-                    if (isVertical) {
-                        // In Sidebar, it's often better to have Layout Toggle visible or part of a menu.
-                        // If shown, it should be at the very bottom.
-                        layoutButton.setVisibility(View.VISIBLE);
-                        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) layoutButton.getLayoutParams();
-                        lp.gravity = gravity;
-                        lp.topMargin = 24;
-                        layoutButton.setLayoutParams(lp);
-                    } else {
-                        layoutButton.setVisibility(View.VISIBLE);
-                    }
-                }
-                
-                // 5. RecyclerView Layout Adjustments
-                if (recyclerView != null) {
-                    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) recyclerView.getLayoutParams();
-                    lp.width = isVertical ? ViewGroup.LayoutParams.MATCH_PARENT : 0;
-                    lp.height = isVertical ? 0 : ViewGroup.LayoutParams.MATCH_PARENT;
-                    lp.weight = 1.0f;
-                    recyclerView.setLayoutParams(lp);
-                }
-            });
+            applyOrientationState(getView(), isVertical);
         }
+    }
+
+    private void applyOrientationState(View root, boolean isVertical) {
+        root.post(() -> {
+            if (getContext() == null) return;
+            
+            // 1. Update Recycler Orientation
+            updateRecyclerViewOrientation(root);
+            
+            // 2. Main Container Setup
+            LinearLayout ll = root.findViewById(net.osmand.plus.R.id.dock_content_container);
+            if (ll != null) {
+                ll.setOrientation(isVertical ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+                // CRITICAL: Force TOP alignment in Sidebar mode
+                ll.setGravity(isVertical ? android.view.Gravity.CENTER_HORIZONTAL | android.view.Gravity.TOP : android.view.Gravity.CENTER_VERTICAL);
+                ll.setPadding(isVertical ? 0 : 16, isVertical ? 20 : 0, isVertical ? 0 : 16, isVertical ? 20 : 0);
+                
+                ViewGroup.LayoutParams lp = ll.getLayoutParams();
+                lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                ll.setLayoutParams(lp);
+            }
+            
+            // 3. Conditional Visibility
+            if (miniMusicContainer != null) {
+                miniMusicContainer.setVisibility(isVertical ? View.GONE : View.VISIBLE);
+            }
+            
+            View clockContainer = root.findViewById(net.osmand.plus.R.id.clock_settings_container);
+            if (clockContainer != null) {
+                clockContainer.setVisibility(isVertical ? View.GONE : View.VISIBLE);
+            }
+            
+            // 4. Item Layout Params Adjustments
+            int gravity = isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL;
+            
+            if (appListButton != null) {
+                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) appListButton.getLayoutParams();
+                lp.gravity = gravity;
+                // Add top margin in Sidebar to push it down slightly from status bar
+                lp.setMargins(isVertical ? 0 : 8, isVertical ? 24 : 0, isVertical ? 0 : 8, isVertical ? 24 : 0);
+                appListButton.setLayoutParams(lp);
+            }
+            
+            if (layoutButton != null) {
+                if (isVertical) {
+                    layoutButton.setVisibility(View.VISIBLE);
+                    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) layoutButton.getLayoutParams();
+                    lp.gravity = gravity;
+                    lp.topMargin = 32;
+                    layoutButton.setLayoutParams(lp);
+                } else {
+                    layoutButton.setVisibility(View.VISIBLE);
+                }
+            }
+            
+            // 5. RecyclerView Layout Adjustments
+            if (recyclerView != null) {
+                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) recyclerView.getLayoutParams();
+                lp.width = isVertical ? ViewGroup.LayoutParams.MATCH_PARENT : 0;
+                lp.height = isVertical ? 0 : ViewGroup.LayoutParams.MATCH_PARENT;
+                lp.weight = 1.0f;
+                recyclerView.setLayoutParams(lp);
+            }
+        });
     }
 
     private void updateRecyclerViewOrientation(View root) {

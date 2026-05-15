@@ -56,6 +56,7 @@ public class CarLayoutManager {
 
         // 2. Dock Region
         int dockSize = (int) activity.getResources().getDimension(R.dimen.dock_height);
+        int sidebarWidth = (int) (64 * activity.getResources().getDisplayMetrics().density); // Fixed safe width for sidebar
         if (isPortrait) dockPos = "bottom";
 
         switch (dockPos) {
@@ -63,14 +64,14 @@ public class CarLayoutManager {
                 cs.connect(R.id.app_dock, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
                 cs.connect(R.id.app_dock, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
                 cs.connect(R.id.app_dock, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
-                cs.constrainWidth(R.id.app_dock, dockSize);
+                cs.constrainWidth(R.id.app_dock, sidebarWidth);
                 cs.constrainHeight(R.id.app_dock, 0);
                 break;
             case "right":
                 cs.connect(R.id.app_dock, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
                 cs.connect(R.id.app_dock, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
                 cs.connect(R.id.app_dock, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
-                cs.constrainWidth(R.id.app_dock, dockSize);
+                cs.constrainWidth(R.id.app_dock, sidebarWidth);
                 cs.constrainHeight(R.id.app_dock, 0);
                 break;
             default: // bottom
