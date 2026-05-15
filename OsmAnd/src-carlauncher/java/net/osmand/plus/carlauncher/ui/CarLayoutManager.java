@@ -182,24 +182,28 @@ public class CarLayoutManager {
         if (widgetHandle != null) {
             String widgetPos = settings.getWidgetPanelPosition();
             
-            // Clear existing horizontal constraints for handle
+            // Clear ALL horizontal constraints to start fresh
             cs.clear(R.id.widget_handle, ConstraintSet.START);
             cs.clear(R.id.widget_handle, ConstraintSet.END);
+            cs.clear(R.id.widget_handle, ConstraintSet.LEFT);
+            cs.clear(R.id.widget_handle, ConstraintSet.RIGHT);
             
             if ("left".equals(widgetPos)) {
-                // Panel is on left, handle should be at the RIGHT edge of the panel
+                // Panel solda, ok panelin SAĞ sınırına bağlanmalı
                 cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.END);
-                // Adjust arrow icon based on state (Open = pointing left, Closed = pointing right)
+                // Oku biraz haritanın üzerine bindirmek için negatif margin yerine 
+                // panelin içine girmemesini garanti ediyoruz.
                 widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_left : net.osmand.plus.R.drawable.ic_chevron_right);
             } else {
-                // Panel is on right, handle should be at the LEFT edge of the panel
+                // Panel sağda, ok panelin SOL (START) sınırına bağlanmalı
                 cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.START);
-                // Adjust arrow icon based on state (Open = pointing right, Closed = pointing left)
                 widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_right : net.osmand.plus.R.drawable.ic_chevron_left);
             }
             
-            // Ensure vertical bias is applied from settings
+            // Dikey konum ve Z-sıralaması
             cs.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
+            cs.connect(R.id.widget_handle, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+            cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
         }
     }
 
