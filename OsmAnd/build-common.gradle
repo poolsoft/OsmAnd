@@ -334,7 +334,8 @@ tasks.register('buildOsmAndCore', Exec) {
 		if (flavour.length() > 0) {
 			environment "$flavour", "1"
 		}
-		commandLine "bash", file("./old-ndk-build.sh").getAbsolutePath()
+		// NDK build loglarini sessize al (>75000 satir warning)
+		commandLine "bash", "-c", file("./old-ndk-build.sh").getAbsolutePath() + " > /dev/null 2>&1"
 	} else {
 		commandLine "cmd", "/c", "echo", "Not supported"
 	}
