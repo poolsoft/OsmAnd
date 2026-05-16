@@ -3,13 +3,13 @@ apply plugin: 'com.android.application'
 apply from: 'build-common.gradle'
 apply from: rootProject.file("versions.gradle")
 
-// Özel uyari bastirma ayarlarini yukle
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-parcelize'
+
+// Özel uyari bastirma ayarlarini yukle (Pluginlerden SONRA yuklenmeli)
 if (file("silence-warnings.gradle").exists()) {
     apply from: 'silence-warnings.gradle'
 }
-
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-parcelize'
 
 // Global Parameters accepted
 // TARGET_APP_NAME    - app name
