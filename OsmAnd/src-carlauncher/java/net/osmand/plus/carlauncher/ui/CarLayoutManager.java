@@ -198,29 +198,27 @@ public class CarLayoutManager {
             cs.constrainWidth(R.id.widget_handle, (int)(48 * density));
             cs.constrainHeight(R.id.widget_handle, (int)(96 * density));
             
-            // 3. DIKEY HIZALAMA (BIAS ILE)
+            // 3. DIKEY HIZALAMA
             cs.connect(R.id.widget_handle, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
             cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
             cs.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
 
-            // 4. YATAY HIZALAMA (PANEL SINIRINA CIFT TARAFLI BAGLANTI)
+            // 4. YATAY HIZALAMA (TEK TARAFLI VE SAGLAM)
             if ("left".equals(widgetPos)) {
-                // Panel soldaysa, okun merkezini panelin bitişine (END) bağla
+                // Panel soldaysa: Okun solunu (START) panelin sagina (END) yasla
                 cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.END);
-                cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.END);
-                // Haritaya doğru (sağa) taşması için küçük bir kaydırma
-                widgetHandle.setTranslationX(4 * density); 
+                // Harita uzerine hafif bindi (Saga dogru)
+                widgetHandle.setTranslationX(-8 * density); 
                 widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_left : net.osmand.plus.R.drawable.ic_chevron_right);
             } else {
-                // Panel sağdaysa, okun merkezini panelin başlangıcına (START) bağla
-                cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.START);
+                // Panel sagdaysa: Okun sagini (END) panelin soluna (START) yasla
                 cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.START);
-                // Haritaya doğru (sola) taşması için sola kaydır
-                widgetHandle.setTranslationX(-20 * density); 
+                // Harita uzerine hafif bindi (Sola dogru)
+                widgetHandle.setTranslationX(8 * density); 
                 widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_right : net.osmand.plus.R.drawable.ic_chevron_left);
             }
             
-            // 5. GÖRÜNÜRLÜK GARANTISI
+            // 5. EN UST KATMAN GARANTISI
             widgetHandle.setElevation(100f); 
             widgetHandle.setZ(100f);
         }
