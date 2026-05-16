@@ -1,8 +1,6 @@
 // Bu dosya terminaldeki gereksiz uyari loglarini temizlemek icin olusturuldu.
-// Ana build.gradle icinden "apply from: 'silence-warnings.gradle'" ile cagrilir.
 
 android {
-    // Lint uyarilari
     lintOptions {
         quiet true
         abortOnError false
@@ -10,14 +8,15 @@ android {
     }
 }
 
-// Kotlin uyarilari (Harici dosyalarda bu yapi daha saglamdir)
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-    kotlinOptions {
-        freeCompilerArgs += ["-nowarn", "-Xexpect-actual-classes"]
-    }
-}
-
+// Java derleyicisi uyarilarini sustur
 tasks.withType(JavaCompile) {
     options.compilerArgs << "-Xlint:none"
     options.compilerArgs << "-nowarn"
+}
+
+// Kotlin derleyicisi uyarilarini sustur (ClassName yerine Task isminden yakalıyoruz)
+tasks.matching { it.name.contains("KotlinCompile") }.configureEach {
+    kotlinOptions {
+        freeCompilerArgs += ["-nowarn", "-Xexpect-actual-classes"]
+    }
 }
