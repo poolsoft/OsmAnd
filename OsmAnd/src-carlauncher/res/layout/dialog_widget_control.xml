@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="#121212">
+    android:background="@color/cl_background_deep">
 
     <!-- Header -->
     <!-- Header -->
@@ -22,7 +22,7 @@
             android:text="Widget Yönetimi"
             android:textSize="20sp"
             android:textStyle="bold"
-            android:textColor="#FFFFFF" />
+            android:textColor="@color/cl_text_primary" />
 
         <ImageButton
             android:id="@+id/btn_close_dialog"
@@ -30,7 +30,7 @@
             android:layout_height="40dp"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
             android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:tint="#FFFFFF"
+            android:tint="@color/cl_text_primary"
             android:scaleType="centerInside" />
     </LinearLayout>
 
@@ -40,7 +40,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="#1E1E1E"
+        android:background="@color/cl_surface"
         android:padding="4dp"
         android:scrollbars="vertical" />
 
@@ -59,8 +59,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="+ Yeni Ekle"
-            android:backgroundTint="#2196F3"
-            android:textColor="#FFFFFF" />
+            android:backgroundTint="@color/cl_primary"
+            android:textColor="@color/cl_text_primary" />
 
         <Space
             android:layout_width="0dp"
@@ -72,8 +72,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Kaydet &amp; Kapat"
-            android:backgroundTint="#4CAF50"
-            android:textColor="#FFFFFF" />
+            android:backgroundTint="@color/cl_success"
+            android:textColor="@color/cl_text_primary" />
 
     </LinearLayout>
 

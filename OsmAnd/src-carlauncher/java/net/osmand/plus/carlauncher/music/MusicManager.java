@@ -711,6 +711,16 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     }
     
     /**
+     * NotificationListener tarafından çağrılır - session listesi güncellenir.
+     * MediaNotificationListener.onNotificationPosted/Removed -> bu metodu tetikler.
+     */
+    public void onSessionsRefreshed(java.util.List<android.media.session.MediaController> controllers) {
+        if (controllers != null) {
+            updateActiveController(controllers);
+        }
+    }
+
+    /**
      * Helper: Get app name from package
      */
     private String getAppName(String packageName) {
