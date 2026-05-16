@@ -52,6 +52,7 @@ public class AntennaAlignmentActivity extends AppCompatActivity implements Senso
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(net.osmand.plus.R.style.Theme_HUD);
         super.onCreate(savedInstanceState);
 
         // Keep screen on
