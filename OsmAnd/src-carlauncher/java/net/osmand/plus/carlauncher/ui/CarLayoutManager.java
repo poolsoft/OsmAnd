@@ -169,8 +169,16 @@ public class CarLayoutManager {
         // 6. Final UI Touch-ups (Elevation, etc)
         updateElevations(isPortrait);
         updateWidgetHandleConstraints(cs, carSettings, isWidgetPanelOpen);
+
+        // 7. APPLY ALL CONSTRAINTS AT ONCE
+        cs.applyTo(rootLayout);
+
+        // 8. BRING TO FRONT (Z-INDEX)
+        if (widgetHandle != null) {
+            widgetHandle.bringToFront();
+        }
         
-        // 7. Refresh Dock orientation (CRITICAL: Always refresh on every layout apply to fix orientation issues)
+        // 9. Refresh Dock orientation
         boolean isVertical = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
         refreshDockFragment(isVertical);
     }
@@ -207,18 +215,20 @@ public class CarLayoutManager {
             cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
             cs.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
 
-            // 4. YATAY HIZALAMA (TEK TARAFLI VE SAGLAM)
+            // 4. YATAY HIZALAMA (PANEL SINIRINA MERKEZLE)
             if ("left".equals(widgetPos)) {
-                // Panel soldaysa: Okun solunu (START) panelin sagina (END) yasla
+                // Panel soldaysa: Okun merkezini panelin bitisine (END) yasla
                 cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.END);
+                cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.END);
                 // Harita uzerine hafif bindi (Saga dogru)
-                widgetHandle.setTranslationX(-8 * density); 
+                widgetHandle.setTranslationX(4 * density); 
                 widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_left : net.osmand.plus.R.drawable.ic_chevron_right);
             } else {
-                // Panel sagdaysa: Okun sagini (END) panelin soluna (START) yasla
+                // Panel sagdaysa: Okun merkezini panelin baslangicina (START) yasla
+                cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.START);
                 cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.START);
                 // Harita uzerine hafif bindi (Sola dogru)
-                widgetHandle.setTranslationX(8 * density); 
+                widgetHandle.setTranslationX(-4 * density); 
                 widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_right : net.osmand.plus.R.drawable.ic_chevron_left);
             }
             
