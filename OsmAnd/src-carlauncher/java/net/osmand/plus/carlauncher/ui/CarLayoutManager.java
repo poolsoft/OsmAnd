@@ -164,19 +164,25 @@ public class CarLayoutManager {
             cs.connect(R.id.app_drawer_container, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
         }
 
-        // 6. Final UI Touch-ups (Elevation, etc)
-        updateElevations(isPortrait);
+        // 6. Handle constraint'lerini ayarla (translationX henuz yok)
         updateWidgetHandleConstraints(cs, carSettings, isWidgetPanelOpen);
 
-        // 7. APPLY ALL CONSTRAINTS AT ONCE
+        // 7. Final UI Touch-ups (Elevation, etc)
+        updateElevations(isPortrait);
+
+        // 8. APPLY ALL CONSTRAINTS AT ONCE
         cs.applyTo(rootLayout);
 
-        // 8. BRING TO FRONT (Z-INDEX)
+        // 9. BRING TO FRONT (Z-INDEX)
         if (widgetHandle != null) {
             widgetHandle.bringToFront();
         }
+
+        // 10. TRANSLATIONX - constraint uygulandiktan SONRA
+        //     (cs.applyTo() translationX'i sifirlayabilir)
+        applyWidgetHandleTranslation(carSettings, isWidgetPanelOpen);
         
-        // 9. Refresh Dock orientation
+        // 11. Refresh Dock orientation
         boolean isVertical = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
         refreshDockFragment(isVertical);
     }
@@ -190,7 +196,8 @@ public class CarLayoutManager {
 
     private void updateWidgetHandleConstraints(ConstraintSet cs, CarLauncherSettings settings, boolean isOpen) {
         if (widgetHandle != null) {
-            boolean isPortrait = activity.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+            boolean isPortrait = activity.getResources().getConfiguration().orientation 
+                    == android.content.res.Configuration.ORIENTATION_PORTRAIT;
             
             if (isPortrait) {
                 widgetHandle.setVisibility(View.GONE);
@@ -215,58 +222,69 @@ public class CarLayoutManager {
             cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
             cs.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
 
-            // 4. YATAY POZISYON - PARENT_ID'ye gore, translationX ile panel kenarina otur
-            // Panel acikken: handle panelin kenarinda durur
-            // Panel kapaliyken: handle ekranin en sag/sol kenarinda durur (translate sifir)
-            float panelTranslateX = 0;
-            if (isOpen) {
-                // Panel acik - panel genisligini hesapla
-                int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
-                float panelPercent = settings.getWidgetPanelWidthPercent();
-                int panelWidth = (int)(screenWidth * panelPercent);
-                
-                if ("left".equals(widgetPos)) {
-                    // Panel solda -> handle panelin END'inde, hafif haritaya binmis
-                    cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
-                    cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.START);
-                    // translationX = panelWidth (handle baslangici panel bittigi yerde)
-                    panelTranslateX = panelWidth - handleWidth / 2f;
-                } else {
-                    // Panel sagda -> handle panelin START'inda, hafif haritaya binmis
-                    cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.END);
-                    cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
-                    // translationX = -panelWidth (handle bitisi panel basladigi yerde)
-                    panelTranslateX = -(panelWidth - handleWidth / 2f);
-                }
-            } else {
-                // Panel kapali - handle ekranin en kenarinda
-                if ("left".equals(widgetPos)) {
-                    cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
-                    cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.START);
-                    // Sol kenara yapismis, hafif gorunur
-                    panelTranslateX = -handleWidth / 3f;
-                } else {
-                    cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.END);
-                    cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
-                    // Sag kenara yapismis, hafif gorunur
-                    panelTranslateX = handleWidth / 3f;
-                }
-            }
-            
-            widgetHandle.setTranslationX(panelTranslateX);
-            
-            // Ikon yonu
+            // 4. YATAY POZISYON - PARENT_ID'ye gore
+            // translationX ayri bir metodda cs.applyTo() sonrasi uygulanir
             if ("left".equals(widgetPos)) {
-                // Panel soldaysa: acikken <- (iceri ok), kapaliyken -> (disari ok)
-                widgetHandle.setImageResource(isOpen ? R.drawable.ic_chevron_left : R.drawable.ic_chevron_right);
+                cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
+                cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.START);
             } else {
-                // Panel sagdaysa: acikken -> (iceri ok), kapaliyken <- (disari ok)
-                widgetHandle.setImageResource(isOpen ? R.drawable.ic_chevron_right : R.drawable.ic_chevron_left);
+                cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.END);
+                cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
             }
             
             // 5. EN UST KATMAN GARANTISI
             widgetHandle.setElevation(100f); 
             widgetHandle.setZ(100f);
+        }
+    }
+
+    /**
+     * Constraint uygulandiktan SONRA translationX ayarlanir.
+     * cs.applyTo() tum view pozisyonlarini sifirlar, bu nedenle
+     * translationX ANCAK ondan sonra gecerli olur.
+     */
+    private void applyWidgetHandleTranslation(CarLauncherSettings settings, boolean isOpen) {
+        if (widgetHandle == null) return;
+        
+        boolean isPortrait = activity.getResources().getConfiguration().orientation 
+                == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        if (isPortrait) return;
+        
+        String widgetPos = settings.getWidgetPanelPosition();
+        float density = activity.getResources().getDisplayMetrics().density;
+        int handleWidth = (int)(48 * density);
+        float panelTranslateX = 0;
+        
+        if (isOpen) {
+            int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
+            float panelPercent = settings.getWidgetPanelWidthPercent();
+            int panelWidth = (int)(screenWidth * panelPercent);
+            
+            if ("left".equals(widgetPos)) {
+                // Panel solda -> handle widget'in SAĞ kenarinda, harita uzerinde
+                // Ekranin solundan panelWidth kadar uzakta, handle'in yarisi haritaya binsin
+                panelTranslateX = panelWidth - handleWidth / 3f;
+            } else {
+                // Panel sagda -> handle widget'in SOL kenarinda, harita uzerinde
+                // Ekranin sagindan panelWidth kadar uzakta
+                panelTranslateX = -(panelWidth - handleWidth / 3f);
+            }
+        } else {
+            // Panel kapali -> handle ekranin en kenarinda hafif gorunur
+            if ("left".equals(widgetPos)) {
+                panelTranslateX = -handleWidth / 3f;
+            } else {
+                panelTranslateX = handleWidth / 3f;
+            }
+        }
+        
+        widgetHandle.setTranslationX(panelTranslateX);
+        
+        // Ikon yonu - ayrik olarak burada da ayarla (guvenlik)
+        if ("left".equals(widgetPos)) {
+            widgetHandle.setImageResource(isOpen ? R.drawable.ic_chevron_left : R.drawable.ic_chevron_right);
+        } else {
+            widgetHandle.setImageResource(isOpen ? R.drawable.ic_chevron_right : R.drawable.ic_chevron_left);
         }
     }
 
