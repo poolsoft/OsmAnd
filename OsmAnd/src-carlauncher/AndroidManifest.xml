@@ -21,7 +21,7 @@
         </service>
         <activity android:name="net.osmand.plus.carlauncher.antenna.AntennaAlignmentActivity"
                   android:label="Antenna Alignment"
-                  android:theme="@style/Theme.AppCompat.NoActionBar.FullScreen"
+                  android:theme="@style/Theme.HUD"
                   android:screenOrientation="sensorLandscape" />
     </application>
 

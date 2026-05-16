@@ -38,4 +38,11 @@
         <item name="android:padding">12dp</item>
         <item name="android:scaleType">fitCenter</item>
     </style>
+    <!-- Antenna Alignment HUD Theme -->
+    <style name="Theme.HUD" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
 </resources>
