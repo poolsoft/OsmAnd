@@ -1,0 +1,19 @@
+// Bu dosya terminaldeki gereksiz uyari loglarini temizlemek icin olusturuldu.
+// Ana build.gradle icinden "apply from: 'silence-warnings.gradle'" ile cagrilir.
+
+android {
+    lintOptions {
+        quiet true
+        abortOnError false
+        warningsAsErrors false
+    }
+
+    kotlinOptions {
+        freeCompilerArgs += ["-nowarn"]
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:none"
+    options.compilerArgs << "-nowarn"
+}

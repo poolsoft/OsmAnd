@@ -3,6 +3,11 @@ apply plugin: 'com.android.application'
 apply from: 'build-common.gradle'
 apply from: rootProject.file("versions.gradle")
 
+// Özel uyari bastirma ayarlarini yukle
+if (file("silence-warnings.gradle").exists()) {
+    apply from: 'silence-warnings.gradle'
+}
+
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-parcelize'
 
@@ -47,7 +52,6 @@ android {
 
 	kotlinOptions {
 		jvmTarget = "17"
-        freeCompilerArgs += ["-nowarn"]
 	}
 
 	defaultConfig {
@@ -62,8 +66,6 @@ android {
 	lintOptions {
 		lintConfig file("lint.xml")
 		warningsAsErrors false
-        quiet true // Sadece hataları göster
-        abortOnError false
 	}
 
 	bundle {
@@ -228,21 +230,6 @@ android {
 			osmandTask.dependsOn(collectExternalResources)
 		}
 	}
-
-    // --- Uyari Loglarini Bastir (Terminal Temizligi) ---
-    tasks.withType(JavaCompile) {
-        options.compilerArgs << "-Xlint:none"
-        options.compilerArgs << "-nowarn" // Ekstra guvenlik
-    }
-
-    // NDK build uyarilarini bastir
-    /* 
-    externalNativeBuild {
-        cmake {
-            cppFlags "-Wno-psabi", "-Wno-unused-parameter", "-Wno-unused-variable"
-        }
-    }
-    */
 }
 
 afterEvaluate {
