@@ -175,11 +175,23 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         // Programmatic constraints removed to avoid portrait/landscape conflicts.
 
         if (newSize == WidgetSize.LARGE) {
-            if (title != null) title.setTextSize(18);
-            if (artist != null) artist.setTextSize(15);
+            if (title != null) title.setTextSize(20);
+            if (artist != null) artist.setTextSize(16);
+            if (albumArtView != null) {
+                ViewGroup.LayoutParams lp = albumArtView.getLayoutParams();
+                lp.width = dpToPx(80);
+                lp.height = dpToPx(80);
+                albumArtView.setLayoutParams(lp);
+            }
         } else {
             if (title != null) title.setTextSize(16);
             if (artist != null) artist.setTextSize(13);
+            if (albumArtView != null) {
+                ViewGroup.LayoutParams lp = albumArtView.getLayoutParams();
+                lp.width = dpToPx(60);
+                lp.height = dpToPx(60);
+                albumArtView.setLayoutParams(lp);
+            }
         }
     }
 

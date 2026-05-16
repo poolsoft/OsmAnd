@@ -138,8 +138,16 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
                     params.width = unitSize - marginTotal; 
                     params.height = ViewGroup.LayoutParams.MATCH_PARENT;
                 } else {
-                     int multiplier = (widgets.get(position).getSize() == net.osmand.plus.carlauncher.widgets.BaseWidget.WidgetSize.SMALL) ? 1 : 2;
-                     params.height = (unitSize * multiplier) - marginTotal;
+                    int multiplier;
+                    BaseWidget.WidgetSize size = widgets.get(position).getSize();
+                    if (size == BaseWidget.WidgetSize.SMALL) {
+                        multiplier = 1;
+                    } else if (size == BaseWidget.WidgetSize.MEDIUM) {
+                        multiplier = 2;
+                    } else { // LARGE
+                        multiplier = 3;
+                    }
+                    params.height = (unitSize * multiplier) - marginTotal;
                      // Ensure minimum usable height in portrait
                      if (params.height < dpToPx(holder.itemView.getContext(), 100)) {
                          params.height = dpToPx(holder.itemView.getContext(), 100);

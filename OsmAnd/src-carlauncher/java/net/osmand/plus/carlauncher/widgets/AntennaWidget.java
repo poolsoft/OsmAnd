@@ -202,4 +202,27 @@ public class AntennaWidget extends BaseWidget implements AntennaManager.AntennaL
             statsContainer.setVisibility(View.GONE);
         }
     }
+
+    @Override
+    protected void onSizeChanged(WidgetSize newSize) {
+        if (rootView == null) return;
+        
+        float titleSize = (newSize == WidgetSize.LARGE) ? 18 : 16;
+        float valueSize = (newSize == WidgetSize.LARGE) ? 22 : 18;
+        float labelSize = (newSize == WidgetSize.LARGE) ? 14 : 12;
+
+        if (textSource != null) textSource.setTextSize(titleSize);
+        if (textTarget != null) textTarget.setTextSize(titleSize);
+        if (valDistance != null) valDistance.setTextSize(valueSize);
+        if (valAzimuth != null) valAzimuth.setTextSize(valueSize);
+        if (valElevation != null) valElevation.setTextSize(valueSize);
+        
+        // Etiketleri de buyut (LBL_*)
+        TextView lblDist = rootView.findViewById(net.osmand.plus.R.id.lbl_distance);
+        TextView lblAz = rootView.findViewById(net.osmand.plus.R.id.lbl_azimuth);
+        TextView lblEl = rootView.findViewById(net.osmand.plus.R.id.lbl_elevation);
+        if (lblDist != null) lblDist.setTextSize(labelSize);
+        if (lblAz != null) lblAz.setTextSize(labelSize);
+        if (lblEl != null) lblEl.setTextSize(labelSize);
+    }
 }
