@@ -45,7 +45,7 @@ public class CarLayoutManager {
         ConstraintSet cs = new ConstraintSet();
         cs.clone(rootLayout);
 
-        // 1. Reset all regions
+        // 1. Reset all regions (widget_handle'i resetleme - elle yonetilir)
         int[] ids = {R.id.app_dock, R.id.widget_panel, R.id.map_container, R.id.app_drawer_container};
         for (int id : ids) {
             cs.clear(id, ConstraintSet.TOP);
@@ -56,7 +56,7 @@ public class CarLayoutManager {
 
         // 2. Dock Region
         int dockSize = (int) activity.getResources().getDimension(R.dimen.dock_height);
-        int sidebarWidth = (int) (64 * activity.getResources().getDisplayMetrics().density); // Fixed safe width for sidebar
+        int sidebarWidth = (int) (64 * activity.getResources().getDisplayMetrics().density);
         if (isPortrait) dockPos = "bottom";
 
         switch (dockPos) {
@@ -83,23 +83,23 @@ public class CarLayoutManager {
                 break;
         }
 
-        // 3. Widget Region
+        // 3. Widget Region - Handle her zaman gorunur, panel acik/kapali durumdan bagimsiz
+        float panelPercent = carSettings.getWidgetPanelWidthPercent();
+        int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
+        int screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
+
         if (!isWidgetPanelOpen) {
             cs.setVisibility(R.id.widget_panel, View.GONE);
+            // Panel kapaliyken handle'i parent'in sag/sol kenarina yasla
+            // (translationX ile panel acikkenki pozisyonuna kayacak)
         } else {
             cs.setVisibility(R.id.widget_panel, View.VISIBLE);
-            float panelPercent = carSettings.getWidgetPanelWidthPercent();
-            int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
-            int screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
-
             if (isPortrait || "bottom".equals(widgetPos)) {
                 cs.connect(R.id.widget_panel, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
                 cs.connect(R.id.widget_panel, ConstraintSet.START, "left".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "left".equals(dockPos) ? ConstraintSet.END : ConstraintSet.START);
                 cs.connect(R.id.widget_panel, ConstraintSet.END, "right".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "right".equals(dockPos) ? ConstraintSet.START : ConstraintSet.END);
-                cs.constrainHeight(R.id.widget_panel, (int)(screenHeight * 0.30f)); // Dikey modda panel %30, harita %70
+                cs.constrainHeight(R.id.widget_panel, (int)(screenHeight * 0.30f));
                 cs.constrainWidth(R.id.widget_panel, 0);
-                
-                // Dikey modda yarim gorunen saati ve ayar butonunu gizle
                 View clockContainer = activity.findViewById(R.id.clock_settings_container);
                 if (clockContainer != null) clockContainer.setVisibility(isPortrait ? View.GONE : View.VISIBLE);
             } else if ("left".equals(widgetPos)) {
@@ -200,34 +200,68 @@ public class CarLayoutManager {
             widgetHandle.setVisibility(View.VISIBLE);
             String widgetPos = settings.getWidgetPanelPosition();
             float density = activity.getResources().getDisplayMetrics().density;
+            int handleWidth = (int)(48 * density);
+            int handleHeight = (int)(96 * density);
             
             // 1. TAM TEMIZLIK
             cs.clear(R.id.widget_handle);
             
             // 2. BOYUTLANDIRMA
-            cs.constrainWidth(R.id.widget_handle, (int)(48 * density));
-            cs.constrainHeight(R.id.widget_handle, (int)(96 * density));
+            cs.constrainWidth(R.id.widget_handle, handleWidth);
+            cs.constrainHeight(R.id.widget_handle, handleHeight);
             
-            // 3. DIKEY HIZALAMA
+            // 3. DIKEY HIZALAMA - parent'a gore, panel'den bagimsiz
             cs.connect(R.id.widget_handle, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
             cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
             cs.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
 
-            // 4. YATAY HIZALAMA (PANEL SINIRINA MERKEZLE)
-            if ("left".equals(widgetPos)) {
-                // Panel soldaysa: Okun merkezini panelin bitisine (END) yasla
-                cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.END);
-                cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.END);
-                // Harita uzerine hafif bindi (Saga dogru)
-                widgetHandle.setTranslationX(4 * density); 
-                widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_left : net.osmand.plus.R.drawable.ic_chevron_right);
+            // 4. YATAY POZISYON - PARENT_ID'ye gore, translationX ile panel kenarina otur
+            // Panel acikken: handle panelin kenarinda durur
+            // Panel kapaliyken: handle ekranin en sag/sol kenarinda durur (translate sifir)
+            float panelTranslateX = 0;
+            if (isOpen) {
+                // Panel acik - panel genisligini hesapla
+                int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
+                float panelPercent = settings.getWidgetPanelWidthPercent();
+                int panelWidth = (int)(screenWidth * panelPercent);
+                
+                if ("left".equals(widgetPos)) {
+                    // Panel solda -> handle panelin END'inde, hafif haritaya binmis
+                    cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
+                    cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.START);
+                    // translationX = panelWidth (handle baslangici panel bittigi yerde)
+                    panelTranslateX = panelWidth - handleWidth / 2f;
+                } else {
+                    // Panel sagda -> handle panelin START'inda, hafif haritaya binmis
+                    cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.END);
+                    cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+                    // translationX = -panelWidth (handle bitisi panel basladigi yerde)
+                    panelTranslateX = -(panelWidth - handleWidth / 2f);
+                }
             } else {
-                // Panel sagdaysa: Okun merkezini panelin baslangicina (START) yasla
-                cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.START);
-                cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.START);
-                // Harita uzerine hafif bindi (Sola dogru)
-                widgetHandle.setTranslationX(-4 * density); 
-                widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_right : net.osmand.plus.R.drawable.ic_chevron_left);
+                // Panel kapali - handle ekranin en kenarinda
+                if ("left".equals(widgetPos)) {
+                    cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
+                    cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.START);
+                    // Sol kenara yapismis, hafif gorunur
+                    panelTranslateX = -handleWidth / 3f;
+                } else {
+                    cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.END);
+                    cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+                    // Sag kenara yapismis, hafif gorunur
+                    panelTranslateX = handleWidth / 3f;
+                }
+            }
+            
+            widgetHandle.setTranslationX(panelTranslateX);
+            
+            // Ikon yonu
+            if ("left".equals(widgetPos)) {
+                // Panel soldaysa: acikken <- (iceri ok), kapaliyken -> (disari ok)
+                widgetHandle.setImageResource(isOpen ? R.drawable.ic_chevron_left : R.drawable.ic_chevron_right);
+            } else {
+                // Panel sagdaysa: acikken -> (iceri ok), kapaliyken <- (disari ok)
+                widgetHandle.setImageResource(isOpen ? R.drawable.ic_chevron_right : R.drawable.ic_chevron_left);
             }
             
             // 5. EN UST KATMAN GARANTISI
