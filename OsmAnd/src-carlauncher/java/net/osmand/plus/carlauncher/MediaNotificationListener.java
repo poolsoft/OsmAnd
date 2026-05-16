@@ -66,7 +66,6 @@ public class MediaNotificationListener extends NotificationListenerService {
         if (sbn == null || sbn.getNotification() == null) return false;
         String category = sbn.getNotification().category;
         return android.app.Notification.CATEGORY_TRANSPORT.equals(category)
-                || android.app.Notification.CATEGORY_MEDIA.equals(category)
                 || android.app.Notification.CATEGORY_SERVICE.equals(category);
     }
 
