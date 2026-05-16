@@ -9,7 +9,7 @@ android {
     }
 
     kotlinOptions {
-        freeCompilerArgs += ["-nowarn"]
+        freeCompilerArgs += ["-nowarn", "-Xexpect-actual-classes"]
     }
 }
 
