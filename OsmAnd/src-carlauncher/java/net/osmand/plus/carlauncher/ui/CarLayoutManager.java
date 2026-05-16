@@ -96,8 +96,12 @@ public class CarLayoutManager {
                 cs.connect(R.id.widget_panel, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
                 cs.connect(R.id.widget_panel, ConstraintSet.START, "left".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "left".equals(dockPos) ? ConstraintSet.END : ConstraintSet.START);
                 cs.connect(R.id.widget_panel, ConstraintSet.END, "right".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "right".equals(dockPos) ? ConstraintSet.START : ConstraintSet.END);
-                cs.constrainHeight(R.id.widget_panel, (int)(screenHeight * 0.42f)); // Optimized portrait height
+                cs.constrainHeight(R.id.widget_panel, (int)(screenHeight * 0.30f)); // Dikey modda panel %30, harita %70
                 cs.constrainWidth(R.id.widget_panel, 0);
+                
+                // Dikey modda yarim gorunen saati gizle
+                View clock = activity.findViewById(R.id.text_clock);
+                if (clock != null) clock.setVisibility(isPortrait ? View.GONE : View.VISIBLE);
             } else if ("left".equals(widgetPos)) {
                 cs.connect(R.id.widget_panel, ConstraintSet.START, "left".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "left".equals(dockPos) ? ConstraintSet.END : ConstraintSet.START);
                 cs.connect(R.id.widget_panel, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
