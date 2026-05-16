@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -519,9 +520,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         if (navNavigation != null) {
             navNavigation.setOnClickListener(v -> {
                 setActiveNav(navNavigation);
-                if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
-                    ((net.osmand.plus.activities.MapActivity) getActivity()).openNavigationPanel();
-                }
+                // Navigation panel - su an icin sadece widget'lara geri don
             });
         }
         if (navApps != null) {
