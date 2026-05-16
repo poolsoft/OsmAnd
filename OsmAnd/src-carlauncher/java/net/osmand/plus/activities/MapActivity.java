@@ -691,14 +691,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 	
 	public void toggleLayoutMode() {
-	    // Cycle: 0 (Normal) -> 2 (Full Screen) -> 0
-	    if (layoutMode == 0) {
-	        layoutMode = 2;
-	    } else {
-	        layoutMode = 0;
-	    }
+	    // Cycle: 0 (Normal) -> 1 (No Widgets) -> 2 (Full Screen) -> 0
+	    layoutMode = (layoutMode + 1) % 3;
 	    
-	    isWidgetPanelOpen = !isWidgetPanelOpen;
+	    // Map layoutMode to isWidgetPanelOpen
+	    // Mode 0 = panel açık, Mode 1/2 = panel kapalı
+	    isWidgetPanelOpen = (layoutMode == 0);
 	    applyWidgetPanelState();
 	}
 	
@@ -730,14 +728,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	@Override
 	public void onLayoutModeToggle() {
-		// Toggle Logic: Normal (0) <-> Full Screen (2)
-		if (layoutMode == 0) {
-			layoutMode = 2;
-			isWidgetPanelOpen = false;
-		} else {
-			layoutMode = 0;
-			isWidgetPanelOpen = true;
-		}
+		// Toggle Logic: Normal (0) -> Full Screen (2) (for API compatibility)
+		layoutMode = (layoutMode == 0) ? 2 : 0;
+		isWidgetPanelOpen = (layoutMode == 0);
 		
 		updateLayoutMode();
 	}

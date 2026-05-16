@@ -164,8 +164,6 @@ public class CarLayoutManager {
             cs.connect(R.id.app_drawer_container, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
         }
 
-        cs.applyTo(rootLayout);
-
         // 6. Final UI Touch-ups (Elevation, etc)
         updateElevations(isPortrait);
         updateWidgetHandleConstraints(cs, carSettings, isWidgetPanelOpen);
