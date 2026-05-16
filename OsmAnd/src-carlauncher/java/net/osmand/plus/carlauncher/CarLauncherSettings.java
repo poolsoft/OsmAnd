@@ -23,8 +23,9 @@ public class CarLauncherSettings {
     public static final String KEY_WIDGET_SLOTS_PORTRAIT = "widget_slot_count_portrait_v2";
     public static final String KEY_WIDGET_SLOTS_LANDSCAPE = "widget_slot_count_landscape_v2";
     
-    // Panel Resize Key
+    // Panel Resize Keys
     public static final String KEY_WIDGET_PANEL_WIDTH_PERCENT = "widget_panel_width_percent";
+    public static final String KEY_WIDGET_PANEL_HEIGHT_PORTRAIT = "widget_panel_height_portrait";
     
     // Layout Mode (Classic/Metro)
     public static final String KEY_WIDGET_LAYOUT_MODE = "widget_layout_mode_v2";
@@ -110,6 +111,15 @@ public class CarLauncherSettings {
     
     public void setWidgetPanelWidthPercent(float percent) {
         prefs.edit().putFloat(KEY_WIDGET_PANEL_WIDTH_PERCENT, percent).apply();
+    }
+
+    // --- Portrait Panel Height (0.1 - 0.7) ---
+    public float getWidgetPanelHeightPortrait() {
+        return prefs.getFloat(KEY_WIDGET_PANEL_HEIGHT_PORTRAIT, 0.30f);
+    }
+
+    public void setWidgetPanelHeightPortrait(float percent) {
+        prefs.edit().putFloat(KEY_WIDGET_PANEL_HEIGHT_PORTRAIT, Math.max(0.1f, Math.min(0.7f, percent))).apply();
     }
 
     public static final String KEY_WIDGET_HANDLE_VERTICAL_BIAS = "widget_handle_vertical_bias";
