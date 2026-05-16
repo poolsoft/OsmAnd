@@ -207,15 +207,14 @@ public class CarLayoutManager {
             widgetHandle.setVisibility(View.VISIBLE);
             String widgetPos = settings.getWidgetPanelPosition();
             float density = activity.getResources().getDisplayMetrics().density;
-            int handleWidth = (int)(48 * density);
-            int handleHeight = (int)(96 * density);
+            int handleSize = (int)(48 * density);
             
             // 1. TAM TEMIZLIK
             cs.clear(R.id.widget_handle);
             
-            // 2. BOYUTLANDIRMA
-            cs.constrainWidth(R.id.widget_handle, handleWidth);
-            cs.constrainHeight(R.id.widget_handle, handleHeight);
+            // 2. BOYUTLANDIRMA - kare (48x48) daire olacak
+            cs.constrainWidth(R.id.widget_handle, handleSize);
+            cs.constrainHeight(R.id.widget_handle, handleSize);
             
             // 3. DIKEY HIZALAMA - parent'a gore, panel'den bagimsiz
             cs.connect(R.id.widget_handle, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
@@ -223,17 +222,15 @@ public class CarLayoutManager {
             cs.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
 
             // 4. YATAY POZISYON - START constraint + translationX ile
-            // START ve END ayni yone baglanirsa ConstraintLayout cozulemez,
-            // bu nedenle SADECE START baglanir, genislik constrainWidth ile verilir
             if ("left".equals(widgetPos)) {
                 cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
             } else {
                 cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
             }
             
-            // 5. EN UST KATMAN GARANTISI
-            widgetHandle.setElevation(100f); 
-            widgetHandle.setZ(100f);
+            // 5. Z-INDEX: harita(4dp) uzerinde, panel(15f) altinda
+            widgetHandle.setElevation(8f); 
+            widgetHandle.setZ(8f);
         }
     }
 
