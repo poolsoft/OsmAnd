@@ -1,6 +1,6 @@
 package net.osmand.plus.carlauncher.antenna;
 
-import android.app.Activity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -16,7 +16,7 @@ import android.widget.TextView;
 
 import java.util.Locale;
 
-public class AntennaAlignmentActivity extends Activity implements SensorEventListener {
+public class AntennaAlignmentActivity extends AppCompatActivity implements SensorEventListener {
 
     private SensorManager sensorManager;
     private Sensor rotationVectorSensor;
