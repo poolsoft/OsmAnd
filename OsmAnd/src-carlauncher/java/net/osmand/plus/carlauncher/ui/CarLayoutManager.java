@@ -183,35 +183,46 @@ public class CarLayoutManager {
             boolean isPortrait = activity.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
             
             if (isPortrait) {
-                // Dikey modda ok butonu genellikle kafa karistirir, gizliyoruz.
                 widgetHandle.setVisibility(View.GONE);
                 return;
             }
             
             widgetHandle.setVisibility(View.VISIBLE);
             String widgetPos = settings.getWidgetPanelPosition();
+            float density = activity.getResources().getDisplayMetrics().density;
             
-            // AGGRESSIVE CLEAR
+            // 1. TAM TEMIZLIK
             cs.clear(R.id.widget_handle);
-            cs.constrainWidth(R.id.widget_handle, (int)(48 * activity.getResources().getDisplayMetrics().density));
-            cs.constrainHeight(R.id.widget_handle, (int)(96 * activity.getResources().getDisplayMetrics().density));
             
+            // 2. BOYUTLANDIRMA
+            cs.constrainWidth(R.id.widget_handle, (int)(48 * density));
+            cs.constrainHeight(R.id.widget_handle, (int)(96 * density));
+            
+            // 3. DIKEY HIZALAMA (BIAS ILE)
+            cs.connect(R.id.widget_handle, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+            cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+            cs.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
+
+            // 4. YATAY HIZALAMA (PANEL SINIRINA CIFT TARAFLI BAGLANTI)
             if ("left".equals(widgetPos)) {
+                // Panel soldaysa, okun merkezini panelin bitişine (END) bağla
                 cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.END);
-                // Harita uzerine bindirme (Overlap)
-                cs.setMargin(R.id.widget_handle, ConstraintSet.START, (int)(-24 * activity.getResources().getDisplayMetrics().density)); 
+                cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.END);
+                // Haritaya doğru (sağa) taşması için küçük bir kaydırma
+                widgetHandle.setTranslationX(4 * density); 
                 widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_left : net.osmand.plus.R.drawable.ic_chevron_right);
             } else {
+                // Panel sağdaysa, okun merkezini panelin başlangıcına (START) bağla
+                cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.START);
                 cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.START);
-                // Harita uzerine bindirme
-                cs.setMargin(R.id.widget_handle, ConstraintSet.END, (int)(-24 * activity.getResources().getDisplayMetrics().density));
+                // Haritaya doğru (sola) taşması için sola kaydır
+                widgetHandle.setTranslationX(-20 * density); 
                 widgetHandle.setImageResource(isOpen ? net.osmand.plus.R.drawable.ic_chevron_right : net.osmand.plus.R.drawable.ic_chevron_left);
             }
             
-            cs.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
-            cs.connect(R.id.widget_handle, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
-            cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+            // 5. GÖRÜNÜRLÜK GARANTISI
             widgetHandle.setElevation(100f); 
+            widgetHandle.setZ(100f);
         }
     }
 
