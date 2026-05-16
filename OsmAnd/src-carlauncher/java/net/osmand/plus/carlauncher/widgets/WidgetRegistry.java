@@ -13,6 +13,7 @@ import java.util.List;
 public class WidgetRegistry {
 
     // Sabit Widget Tipleri
+    public static final String TYPE_COMBINED = "combined";
     public static final String TYPE_SPEED = "speed";
     public static final String TYPE_MUSIC = "music";
     public static final String TYPE_NAVIGATION = "navigation";
@@ -45,6 +46,7 @@ public class WidgetRegistry {
 
     // Statik blok ile temel widget'lari kaydediyoruz.
     static {
+        register(TYPE_COMBINED, "Dashboard (Saat+Hız)", CombinedWidget::new);
         register(TYPE_SPEED, "Hız Göstergesi", SpeedWidget::new);
         register(TYPE_MUSIC, "Müzik Çalar", MusicWidget::new);
         register(TYPE_NAVIGATION, "Navigasyon", NavigationWidget::new);
