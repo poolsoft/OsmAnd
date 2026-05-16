@@ -80,6 +80,14 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         listRecyclerView = root.findViewById(net.osmand.plus.R.id.widget_recycler_view);
         View menuBtn = root.findViewById(net.osmand.plus.R.id.btn_widget_menu);
         
+        // Bottom Navigation
+        View navWidgets = root.findViewById(net.osmand.plus.R.id.nav_widgets);
+        View navNavigation = root.findViewById(net.osmand.plus.R.id.nav_navigation);
+        View navApps = root.findViewById(net.osmand.plus.R.id.nav_apps);
+        View navSettings = root.findViewById(net.osmand.plus.R.id.nav_settings);
+        
+        setupBottomNav(navWidgets, navNavigation, navApps, navSettings);
+        
         widgetContentFrame = root;
         rootContent = (ViewGroup) root;
 
@@ -493,6 +501,62 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         VehicleMetricsPlugin obdPlugin = PluginsHelper.getPlugin(VehicleMetricsPlugin.class);
         if (obdPlugin != null && obdPlugin.isActive()) {
             widgetManager.addWidget(new OBDWidget(getContext(), app));
+        }
+    }
+
+    /**
+     * Bottom navigation bar click handler.
+     */
+    private void setupBottomNav(View navWidgets, View navNavigation, View navApps, View navSettings) {
+        // Varsayilan: Widgets secili
+        setActiveNav(navWidgets);
+
+        if (navWidgets != null) {
+            navWidgets.setOnClickListener(v -> {
+                setActiveNav(navWidgets);
+            });
+        }
+        if (navNavigation != null) {
+            navNavigation.setOnClickListener(v -> {
+                setActiveNav(navNavigation);
+                if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                    ((net.osmand.plus.activities.MapActivity) getActivity()).openNavigationPanel();
+                }
+            });
+        }
+        if (navApps != null) {
+            navApps.setOnClickListener(v -> {
+                setActiveNav(navApps);
+                if (getActivity() instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
+                    ((net.osmand.plus.carlauncher.CarLauncherInterface) getActivity()).openAppDrawer();
+                }
+            });
+        }
+        if (navSettings != null) {
+            navSettings.setOnClickListener(v -> {
+                setActiveNav(navSettings);
+                if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                    ((net.osmand.plus.activities.MapActivity) getActivity()).openCarLauncherSettings();
+                }
+            });
+        }
+    }
+
+    private void setActiveNav(View active) {
+        // Tum nav item'larini pasif yap
+        View root = getView();
+        if (root == null) return;
+        int[] navIds = {net.osmand.plus.R.id.nav_widgets, net.osmand.plus.R.id.nav_navigation, 
+                        net.osmand.plus.R.id.nav_apps, net.osmand.plus.R.id.nav_settings};
+        for (int id : navIds) {
+            View v = root.findViewById(id);
+            if (v instanceof TextView) {
+                ((TextView) v).setTextColor(0xFF888888);
+            }
+        }
+        // Secili olani aktif yap
+        if (active instanceof TextView) {
+            ((TextView) active).setTextColor(0xFFFFFFFF);
         }
     }
 
