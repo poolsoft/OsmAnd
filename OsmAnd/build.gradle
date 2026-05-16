@@ -130,6 +130,7 @@ android {
 
 	buildFeatures {
 		aidl true
+        buildConfig true
 	}
 
 	flavorDimensions "version", "coreversion", "abi"
