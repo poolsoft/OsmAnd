@@ -76,9 +76,9 @@ jobs:
         echo "APK_VERSION_SUFFIX=.${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
         echo "{\"versionCode\": ${VERSION_CODE}, \"versionName\": \"${VERSION_NAME}\", \"apkUrl\": \"https://github.com/${{ github.repository }}/releases/latest/download/CarLauncher.apk\"}" > version.json
 
-    - name: Build with Gradle
+    - name: Build with Gradle (Quiet mode)
       working-directory: ./android
-      run: ./gradlew assemblecarlauncherLegacyFatDebug -x test --no-daemon
+      run: ./gradlew assemblecarlauncherLegacyFatDebug -x test --no-daemon -q
 
     - name: Rename APK
       working-directory: ./android
