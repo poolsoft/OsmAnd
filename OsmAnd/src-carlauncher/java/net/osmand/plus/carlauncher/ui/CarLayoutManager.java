@@ -222,13 +222,12 @@ public class CarLayoutManager {
             cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
             cs.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
 
-            // 4. YATAY POZISYON - PARENT_ID'ye gore
-            // translationX ayri bir metodda cs.applyTo() sonrasi uygulanir
+            // 4. YATAY POZISYON - START constraint + translationX ile
+            // START ve END ayni yone baglanirsa ConstraintLayout cozulemez,
+            // bu nedenle SADECE START baglanir, genislik constrainWidth ile verilir
             if ("left".equals(widgetPos)) {
                 cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
-                cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.START);
             } else {
-                cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.END);
                 cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
             }
             
