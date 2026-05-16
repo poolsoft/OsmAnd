@@ -9,6 +9,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import net.osmand.plus.carlauncher.CarLauncherSettings;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -69,11 +71,22 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
         notifyItemMoved(fromPosition, toPosition);
     }
 
+    /**
+     * DockSize ayarina gore olceklendirilmis ikon boyutunu dondurur.
+     * CarLauncherSettings.getDockSize() %30-100 arasi deger dondurur,
+     * base icon size ile carpariz.
+     */
+    private int getScaledIconSize() {
+        int baseSize = (int) context.getResources().getDimension(net.osmand.plus.R.dimen.dock_icon_size);
+        CarLauncherSettings settings = new CarLauncherSettings(context);
+        int dockSizePercent = settings.getDockSize();
+        return (int) (baseSize * (dockSizePercent / 100.0f));
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Genislik: ikon boyutu + yatay padding
-        int iconSize = (int) context.getResources().getDimension(net.osmand.plus.R.dimen.dock_icon_size);
+        int iconSize = getScaledIconSize();
         int itemWidth = isVerticalMode ? ViewGroup.LayoutParams.MATCH_PARENT : iconSize + dpToPx(12);
         int itemHeight = isVerticalMode ? iconSize + dpToPx(8) : ViewGroup.LayoutParams.MATCH_PARENT;
 
@@ -81,7 +94,6 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
         itemView.setOrientation(LinearLayout.VERTICAL);
         itemView.setLayoutParams(new RecyclerView.LayoutParams(itemWidth, itemHeight));
         itemView.setGravity(android.view.Gravity.CENTER);
-        // Reduced padding for tighter layout in sidebar
         int padding = isVerticalMode ? dpToPx(2) : dpToPx(4);
         itemView.setPadding(padding, padding, padding, padding);
 
@@ -90,8 +102,7 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        // Force update LayoutParams based on current mode to prevent stale sizes from pool
-        int iconSize = (int) context.getResources().getDimension(net.osmand.plus.R.dimen.dock_icon_size);
+        int iconSize = getScaledIconSize();
         int itemWidth = isVerticalMode ? ViewGroup.LayoutParams.MATCH_PARENT : iconSize + dpToPx(12);
         int itemHeight = isVerticalMode ? iconSize + dpToPx(8) : ViewGroup.LayoutParams.MATCH_PARENT;
         
@@ -151,8 +162,8 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
             removeButton.setVisibility(View.GONE);
             container.addView(removeButton);
 
-            // Icon — boyut dimens.xml'den gelir (qualifier sistemi: telefon vs araba teybi)
-            int iconSize = (int) context.getResources().getDimension(net.osmand.plus.R.dimen.dock_icon_size);
+            // Icon — boyut dockSize ayarina gore olceklendirilir
+            int iconSize = AppDockAdapter.this.getScaledIconSize();
             iconView = new ImageView(context);
             iconView.setLayoutParams(new LinearLayout.LayoutParams(iconSize, iconSize));
             iconView.setScaleType(ImageView.ScaleType.FIT_CENTER);

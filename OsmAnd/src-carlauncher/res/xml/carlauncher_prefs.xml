@@ -211,6 +211,16 @@
             android:iconSpaceReserved="false" />
 
         <androidx.preference.SeekBarPreference
+            android:key="car_launcher_dock_size"
+            android:title="Dock Boyutu (%)"
+            android:summary="Dock ikonlarının ve alanının boyutunu ayarlar"
+            android:defaultValue="70"
+            android:max="100"
+            app:min="30"
+            app:showSeekBarValue="true"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.SeekBarPreference
             android:key="car_launcher_max_shortcuts"
             android:title="Maksimum Kısayol Sayısı"
             android:defaultValue="6"

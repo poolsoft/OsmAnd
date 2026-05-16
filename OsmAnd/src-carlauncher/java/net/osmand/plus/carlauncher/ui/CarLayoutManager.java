@@ -54,9 +54,11 @@ public class CarLayoutManager {
             cs.clear(id, ConstraintSet.END);
         }
 
-        // 2. Dock Region
-        int dockSize = (int) activity.getResources().getDimension(R.dimen.dock_height);
-        int sidebarWidth = (int) (64 * activity.getResources().getDisplayMetrics().density);
+        // 2. Dock Region - dockSize ayarina gore olceklendir
+        int dockSizePercent = carSettings.getDockSize();
+        float dockScale = dockSizePercent / 100.0f;
+        int dockSize = (int) (activity.getResources().getDimension(R.dimen.dock_height) * dockScale);
+        int sidebarWidth = (int) (64 * activity.getResources().getDisplayMetrics().density * dockScale);
         if (isPortrait) dockPos = "bottom";
 
         switch (dockPos) {

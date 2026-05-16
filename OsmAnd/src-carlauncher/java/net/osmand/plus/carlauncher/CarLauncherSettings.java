@@ -40,6 +40,7 @@ public class CarLauncherSettings {
     public static final String KEY_MAX_SHORTCUTS = "car_launcher_max_shortcuts";
     public static final String KEY_DOCK_POSITION = "car_launcher_dock_position"; // "bottom", "left", "right"
     public static final String KEY_DOCK_STYLE = "car_launcher_dock_style"; // "glass", "solid", "transparent"
+    public static final String KEY_DOCK_SIZE = "car_launcher_dock_size"; // 0-100 arasi boyut yuzdesi
 
     // Widget Panel Keys
     public static final String KEY_WIDGET_PANEL_POSITION = "widget_panel_position"; // "right", "bottom", "left"
@@ -250,6 +251,15 @@ public class CarLauncherSettings {
 
     public void setWidgetCardStyle(String style) {
         prefs.edit().putString(KEY_WIDGET_CARD_STYLE, style).apply();
+    }
+
+    // --- Dock Size (percentage 30-100) ---
+    public int getDockSize() {
+        return prefs.getInt(KEY_DOCK_SIZE, 70); // %70 varsayilan
+    }
+
+    public void setDockSize(int sizePercent) {
+        prefs.edit().putInt(KEY_DOCK_SIZE, Math.max(30, Math.min(100, sizePercent))).apply();
     }
 
     // --- General ---
