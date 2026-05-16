@@ -225,6 +225,21 @@ android {
 			osmandTask.dependsOn(collectExternalResources)
 		}
 	}
+
+    // --- Uyari Loglarini Bastir (Terminal Temizligi) ---
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:none"
+        options.compilerArgs << "-nowarn" // Ekstra guvenlik
+    }
+
+    // NDK build uyarilarini bastir
+    /* 
+    externalNativeBuild {
+        cmake {
+            cppFlags "-Wno-psabi", "-Wno-unused-parameter", "-Wno-unused-variable"
+        }
+    }
+    */
 }
 
 afterEvaluate {
