@@ -27,6 +27,7 @@ import net.osmand.plus.carlauncher.CarLauncherSettings;
 import net.osmand.plus.plugins.odb.VehicleMetricsPlugin;
 import net.osmand.plus.plugins.PluginsHelper;
 import net.osmand.plus.carlauncher.AutoLaunchManager;
+import net.osmand.plus.carlauncher.CarLauncherInterface;
 import net.osmand.plus.OsmandApplication;
 
 /**

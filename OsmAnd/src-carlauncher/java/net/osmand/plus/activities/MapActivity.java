@@ -888,6 +888,13 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 	}
 
+	@Override
+	public void setPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent content) {
+		if (panelContentManager != null) {
+			panelContentManager.setContent(content);
+		}
+	}
+
 	public void openMusicPlayer() {
 		if (appDrawerContainer != null) {
 			android.util.Log.d("MapActivity", "Opening Music Drawer");
