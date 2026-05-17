@@ -218,6 +218,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	private View appDrawerContainer;
 	private View btnFullscreenExit;
 	private net.osmand.plus.carlauncher.ui.CarLayoutManager carLayoutManager;
+	private net.osmand.plus.carlauncher.ui.PanelContentManager panelContentManager;
 	private View mainLayoutRoot; // main.xml root reference
 
     private boolean isWidgetPanelOpen = true;
@@ -445,8 +446,14 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		appDrawerContainer = findViewById(R.id.app_drawer_container);
 		btnFullscreenExit = findViewById(R.id.btn_fullscreen_exit);
 		
-		// Initialize Layout Manager
+		// Initialize Layout Manager & Panel Content Manager
 		carLayoutManager = new net.osmand.plus.carlauncher.ui.CarLayoutManager(this);
+		panelContentManager = new net.osmand.plus.carlauncher.ui.PanelContentManager(
+				getSupportFragmentManager(), R.id.widget_panel);
+		panelContentManager.setOnFullScreenToggle(() -> {
+			carLayoutManager.toggleContentFullScreen();
+			applyWidgetPanelState();
+		});
 		
 		if (widgetHandle != null) {
 		    boolean isPortrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
