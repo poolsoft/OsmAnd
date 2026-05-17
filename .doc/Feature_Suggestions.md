@@ -1,105 +1,81 @@
-# Car Launcher Geliştirme Planı (Android Auto UI Tabanlı)
+# Car Launcher Geliştirme Planı (Android Auto UI)
 
 > **Branch:** android-auto-ui
-> **Son Commit:** 8e69bbfcca
+> **Son Commit:** 8002e4634e
 > **Referans Resimler:** .doc/0001.webp, 002.webp, 003.webp, 005.webp, 006.webp
+
+---
+
+## ✅ Mevcut ve Korunacak Özellikler
+
+| Özellik | Durum |
+|---------|-------|
+| Dock pozisyonu (alt/sol/sağ) | **Dinamik, değişmeyecek** |
+| Dock boyutu | **Ayarlanabilir, değişmeyecek** |
+| Dock kısayolları (AppDockFragment) | **Çalışıyor, değişmeyecek** |
+| Widget sistemi (WidgetManager) | **Kalacak, içerik panelinde kullanılacak** |
+| Layout mod butonu (AppDockFragment) | **Zaten var, kalacak** |
+| CarLauncherSettings | **Tüm ayarlar kalacak** |
 
 ---
 
 ## 🎯 Hedef: Android Auto UI
 
-### Layout Yapısı (Resimlerden Analiz)
+### Layout Değişikliği
 
 ```
-┌──────────┬───────────────────────────┬──────────────┐
-│          │                           │              │
-│   DOCK   │       HARİTA              │  SAĞ PANEL   │
-│  (sol)   │                           │  (müzik/     │
-│  dikey   │   • Full screen alan      │   bildirim/  │
-│  yuvarlak│   • Yuvarlatılmış köşeler │   drawer)    │
-│  köşeler │   • Siyah arkaplan        │              │
-│          │                           │  • Yuvarlak  │
-│ 🌐 🏠 📋 │                           │  • Cam efekti│
-│          │                           │              │
-└──────────┴───────────────────────────┴──────────────┘
+┌──────────┬───────────────────────┬──────────────┐
+│          │                       │              │
+│   DOCK   │      HARİTA           │  İÇERİK      │
+│  (sol)   │  (yuvarlak köşe)     │  PANELİ      │
+│  dikey   │                       │  (yuvarlak)  │
+│  aynı    │ • Her zaman görünür  │              │
+│          │ • Yuvarlatılmış       │ • Müzik      │
+│ 🌐 🏠 📋 │ • cam kart efekt     │ • Bildirim   │
+│          │                       │ • Drawer     │
+└──────────┴───────────────────────┴──────────────┘
 ```
 
-### Görsel Detaylar (Referans Resimlerden)
+### Değişecek Ana Şeyler
 
-| Özellik | Detay |
-|---------|-------|
-| **Arkaplan** | Siyah (#000000) |
-| **Köşe yarıçapı** | ~20dp (harita ve panel) |
-| **Dock** | Sol dikey, ~56dp genişlik, koyu cam efekti |
-| **Dock ikonları** | Beyaz ikonlar, 4 adet (Maps, Home, Apps, Layout) |
-| **Harita** | Büyük, ortalanmış, yuvarlatılmış cam kart |
-| **Sağ Panel** | ~280dp genişlik, yuvarlatılmış, içerik paneli |
-| **Müzik player** | Sağ panelde, üst kısımda |
-| **Bildirim** | Müzik üstünde, küçük banner |
-| **App drawer** | Sağ panelde liste görünümü |
-
-### Davranış Kuralları (Resimlerden)
-
-| Kural | Açıklama |
-|-------|----------|
-| **1. Harita her zaman ekranda** | Full ekran, hiç kaybolmaz |
-| **2. Sağ panel içerik paneli** | Widget listesi DEĞİL - müzik/bildirim/drawer gösterir |
-| **3. Müzik + Bildirim üst üste** | Müzik player her zaman, çağrı gelince üstünde bildirim |
-| **4. App Drawer** | Tıklanınca harita daralır, sağ panel app listesi |
-| **5. Müziğe tıkla** | Müzik player harita alanında büyük açılır |
-| **6. Dock** | Sol dikey, yuvarlak köşe, layout mod butonu |
-| **7. Modern cam efekti** | Yarı saydam cam görünümü (glassmorphism) |
+| Eski | Yeni |
+|------|------|
+| `widget_panel` widget listesi gösterir | **İçerik paneli** (müzik/bildirim/drawer) |
+| `map_container` bazen kaybolur | Harita **her zaman** görünür |
+| Düz kare köşeler | **Yuvarlatılmış köşeler** (tüm kartlar) |
+| Widget listesi dikey kayar | İçerik paneli **dinamik** (müzik↔drawer) |
 
 ---
 
-## 📋 Faz 1: Layout + Drawable
+## 📋 Faz 1: Layout + Görünüm
 
-- [X] `android-auto-ui` branch'i oluşturuldu
+- [X] android-auto-ui branch'i oluşturuldu
 - [X] Referans resimler eklendi
-- [ ] `activity_car_launcher.xml` - Yeni layout (ConstraintLayout)
-- [ ] `bg_card_rounded_dark.xml` - Harita/sağ panel için yuvarlak köşe drawable
-- [ ] `bg_dock_rounded.xml` - Dock için yuvarlak köşe drawable
-- [ ] `CarLayoutManager.java` - Güncelleme (dock artık sabit sol)
-- [ ] MapActivity.java'da dock pozisyon ayarı güncelle
+- [ ] **`bg_card_rounded_dark.xml`** (YENİ) - Yuvarlak köşe drawable (20dp radius, koyu cam)
+- [ ] **`bg_panel_rounded.xml`** (YENİ) - Panel için yuvarlak köşe drawable
+- [ ] **`activity_car_launcher.xml`** - ConstraintLayout güncellemesi (yuvarlak köşe referansları)
+- [ ] **`CarLayoutManager.java`** - map_container her zaman görünür, widget_panel içerik paneli
+- [ ] **MapActivity.java** - Yuvarlak köşe background ataması
 
 ## 📋 Faz 2: İçerik Paneli Sistemi
 
-- [ ] `RightPanelFragment.java` - YENİ - Sağ içerik paneli
-- [ ] `PanelContentManager.java` - YENİ - Panel içerik yöneticisi
-- [ ] Müzik player panel içeriği
-- [ ] Bildirim panel içeriği
-- [ ] Harita yeniden boyutlandırma
+- [ ] **`RightPanelFragment.java`** (YENİ) - Sağ içerik paneli fragment
+- [ ] **`PanelContentManager.java`** (YENİ) - Panel içeriğini yönetir
+- [ ] Müzik player → panelde göster (varsa)
+- [ ] Bildirim → müzik üstünde banner (gelirse)
+- [ ] App Drawer → panelde app listesi
 
 ## 📋 Faz 3: App Drawer + Geçişler
 
-- [ ] App drawer -> harita daralır, sağ panel drawer
-- [ ] Müzik -> harita alanında player açılır
+- [ ] App Drawer tıklandı → harita küçülür, panel drawer listesi
+- [ ] Müziğe tıklandı → harita alanında player açılır
 - [ ] Geçiş animasyonları
-- [ ] Layout mod butonu dock'a entegre
 
 ## 📋 Faz 4: İyileştirmeler
 
-- [ ] Glassmorphism efekti (cam görünümü)
-- [ ] Dock item görselleri
-- [ ] Touch feedback iyileştirmeleri
+- [ ] Glassmorphism efekti
 - [ ] Adaptive layout (portrait/landscape)
-
----
-
-## 📁 Değişecek/Yeni Dosyalar
-
-| Dosya | Durum |
-|-------|-------|
-| `res/layout/activity_car_launcher.xml` | Değişecek |
-| `res/drawable/bg_card_rounded_dark.xml` | **YENİ** |
-| `res/drawable/bg_dock_rounded.xml` | **YENİ** |
-| `res/values/colors.xml` | Güncellenecek |
-| `ui/CarLayoutManager.java` | Değişecek |
-| `ui/RightPanelFragment.java` | **YENİ** |
-| `ui/PanelContentManager.java` | **YENİ** |
-| `ui/AppDockFragment.java` | Dock yuvarlak köşe |
-| `activities/MapActivity.java` | Dock pozisyonu güncelle |
-| `.doc/Feature_Suggestions.md` | Plan dokümanı |
+- [ ] Widget'lar panel içeriğine entegre
 
 ---
 
@@ -107,7 +83,7 @@
 
 - [X] Branch oluşturuldu
 - [X] Referans resimler eklendi
-- [ ] **1. Faz başlatıldı**
+- [ ] **1. Faz başlatılacak**
 - [ ] 2. Faz
 - [ ] 3. Faz
 - [ ] 4. Faz
