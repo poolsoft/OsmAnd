@@ -25,19 +25,32 @@ public class PanelContentManager {
     private PanelContent currentContent = PanelContent.WIDGETS;
     private final FragmentManager fragmentManager;
     private final int containerId;
+    private Runnable onFullScreenToggle;
 
     public PanelContentManager(FragmentManager fragmentManager, int containerId) {
         this.fragmentManager = fragmentManager;
         this.containerId = containerId;
     }
 
+    public void setOnFullScreenToggle(Runnable r) {
+        this.onFullScreenToggle = r;
+    }
+
     /**
      * Panel içeriğini değiştirir.
      * Her değişimde eski fragment remove edilir, yenisi eklenir.
+     * APP_DRAWER/MUSIC icin fullscreen toggle otomatik.
      */
     public void setContent(PanelContent content) {
         if (currentContent == content) return;
         currentContent = content;
+        
+        // Fullscreen toggle
+        boolean needsFullScreen = (content == PanelContent.APP_DRAWER || content == PanelContent.MUSIC);
+        boolean wasFullScreen = (content == PanelContent.WIDGETS);
+        if (onFullScreenToggle != null && (needsFullScreen || wasFullScreen)) {
+            onFullScreenToggle.run();
+        }
 
         Fragment fragment = null;
         String tag = content.name();
