@@ -96,91 +96,136 @@ public class CarLayoutManager {
                 break;
         }
 
-        // 3. Widget Region - Handle her zaman gorunur, panel acik/kapali durumdan bagimsiz
+        // 3. Widget ve Harita Alanlari - Harita herzaman ekranda kalacak sekilde swap mantigi
         float panelPercent = carSettings.getWidgetPanelWidthPercent();
         int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
         int screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
 
         if (!isWidgetPanelOpen) {
             cs.setVisibility(R.id.widget_panel, View.GONE);
-            // Panel kapaliyken handle'i parent'in sag/sol kenarina yasla
-            // (translationX ile panel acikkenki pozisyonuna kayacak)
+            // Harita tum ekrani kaplar (dock haric)
+            cs.connect(R.id.map_container, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+            if (isPortrait) {
+                cs.connect(R.id.map_container, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
+                cs.connect(R.id.map_container, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
+                cs.connect(R.id.map_container, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+            } else {
+                cs.connect(R.id.map_container, ConstraintSet.START, "left".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "left".equals(dockPos) ? ConstraintSet.END : ConstraintSet.START);
+                cs.connect(R.id.map_container, ConstraintSet.END, "right".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "right".equals(dockPos) ? ConstraintSet.START : ConstraintSet.END);
+                cs.connect(R.id.map_container, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
+            }
+            cs.constrainWidth(R.id.map_container, 0);
+            cs.constrainHeight(R.id.map_container, 0);
         } else {
             cs.setVisibility(R.id.widget_panel, View.VISIBLE);
+            boolean isSwapped = isContentFullScreen;
+
             if (isPortrait || "bottom".equals(widgetPos)) {
-                cs.connect(R.id.widget_panel, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
-                cs.connect(R.id.widget_panel, ConstraintSet.START, "left".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "left".equals(dockPos) ? ConstraintSet.END : ConstraintSet.START);
-                cs.connect(R.id.widget_panel, ConstraintSet.END, "right".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "right".equals(dockPos) ? ConstraintSet.START : ConstraintSet.END);
-                // Portrait: kaydedilen height kullan, landscape bottom: sabit 30%
+                // Dikey yerlesim: Ust Panel ve Alt Panel
+                int topViewId;
+                int bottomViewId;
+                if (isSwapped) {
+                    topViewId = R.id.widget_panel;   // LARGE
+                    bottomViewId = R.id.map_container; // SMALL
+                } else {
+                    topViewId = R.id.map_container;  // LARGE
+                    bottomViewId = R.id.widget_panel;  // SMALL
+                }
+
                 float portraitPanelHeight = isPortrait ? carSettings.getWidgetPanelHeightPortrait() : 0.30f;
-                cs.constrainHeight(R.id.widget_panel, (int)(screenHeight * portraitPanelHeight));
-                cs.constrainWidth(R.id.widget_panel, 0);
+                int smallHeight = (int) (screenHeight * portraitPanelHeight);
+
+                // Her iki gorunum de yatayda yayilir
+                int leftBorder = "left".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID;
+                int rightBorder = "right".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID;
+                int leftSide = "left".equals(dockPos) ? ConstraintSet.END : ConstraintSet.START;
+                int rightSide = "right".equals(dockPos) ? ConstraintSet.START : ConstraintSet.END;
+
+                cs.connect(topViewId, ConstraintSet.START, leftBorder, leftSide);
+                cs.connect(topViewId, ConstraintSet.END, rightBorder, rightSide);
+                cs.constrainWidth(topViewId, 0);
+
+                cs.connect(bottomViewId, ConstraintSet.START, leftBorder, leftSide);
+                cs.connect(bottomViewId, ConstraintSet.END, rightBorder, rightSide);
+                cs.constrainWidth(bottomViewId, 0);
+
+                // Dikey zincirleme (Vertical chains)
+                cs.connect(topViewId, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+                cs.connect(topViewId, ConstraintSet.BOTTOM, bottomViewId, ConstraintSet.TOP);
+
+                cs.connect(bottomViewId, ConstraintSet.TOP, topViewId, ConstraintSet.BOTTOM);
+                cs.connect(bottomViewId, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
+
+                // Yukseklikleri sinirla
+                cs.constrainHeight(topViewId, 0); // LARGE gorunum kalan alanı doldurur
+                cs.constrainHeight(bottomViewId, smallHeight); // SMALL gorunum sabit/hesapli yukseklik alir
+
                 View clockContainer = activity.findViewById(R.id.clock_settings_container);
                 if (clockContainer != null) clockContainer.setVisibility(isPortrait ? View.GONE : View.VISIBLE);
-            } else if ("left".equals(widgetPos)) {
-                cs.connect(R.id.widget_panel, ConstraintSet.START, "left".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "left".equals(dockPos) ? ConstraintSet.END : ConstraintSet.START);
-                cs.connect(R.id.widget_panel, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
-                cs.connect(R.id.widget_panel, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
-                cs.constrainWidth(R.id.widget_panel, (int)(screenWidth * panelPercent));
-                cs.constrainHeight(R.id.widget_panel, 0);
-            } else { // right
-                // FULLSCREEN MODE: panel buyur sola gecer, harita kuculur saga kayar
-                if (isContentFullScreen && !isPortrait) {
-                    // Panel BUYUK (sol tarafa)
-                    cs.connect(R.id.widget_panel, ConstraintSet.START, "left".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "left".equals(dockPos) ? ConstraintSet.END : ConstraintSet.START);
-                    cs.connect(R.id.widget_panel, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
-                    cs.connect(R.id.widget_panel, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
-                    cs.connect(R.id.widget_panel, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
-                    cs.constrainWidth(R.id.widget_panel, (int)(screenWidth * panelPercent));
-                    cs.constrainHeight(R.id.widget_panel, 0);
-                } else {
-                    cs.connect(R.id.widget_panel, ConstraintSet.END, "right".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "right".equals(dockPos) ? ConstraintSet.START : ConstraintSet.END);
-                    cs.connect(R.id.widget_panel, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
-                    cs.connect(R.id.widget_panel, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
-                    cs.constrainWidth(R.id.widget_panel, (int)(screenWidth * panelPercent));
-                    cs.constrainHeight(R.id.widget_panel, 0);
-                }
-            }
-        }
 
-        // 4. Map Region
-        cs.connect(R.id.map_container, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
-        if (isPortrait) {
-            if (isWidgetPanelOpen) {
-                cs.connect(R.id.map_container, ConstraintSet.BOTTOM, R.id.widget_panel, ConstraintSet.TOP);
             } else {
-                cs.connect(R.id.map_container, ConstraintSet.BOTTOM, R.id.app_dock, ConstraintSet.TOP);
-            }
-            cs.connect(R.id.map_container, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
-            cs.connect(R.id.map_container, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
-        } else {
-            // Landscape Start
-            if (isWidgetPanelOpen && "left".equals(widgetPos)) {
-                cs.connect(R.id.map_container, ConstraintSet.START, R.id.widget_panel, ConstraintSet.END);
-            } else if ("left".equals(dockPos)) {
-                cs.connect(R.id.map_container, ConstraintSet.START, R.id.app_dock, ConstraintSet.END);
-            } else {
-                cs.connect(R.id.map_container, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
-            }
-            // Landscape End - FullScreen mode: harita saga kuculur
-            if (isContentFullScreen && !isPortrait) {
-                // FullScreen: harita kucuk panel (sagda)
-                cs.connect(R.id.map_container, ConstraintSet.END, R.id.widget_panel, ConstraintSet.START);
-                cs.constrainWidth(R.id.map_container, 0);
-            } else if (isWidgetPanelOpen && "right".equals(widgetPos)) {
-                cs.connect(R.id.map_container, ConstraintSet.END, R.id.widget_panel, ConstraintSet.START);
-            } else if ("right".equals(dockPos)) {
-                cs.connect(R.id.map_container, ConstraintSet.END, R.id.app_dock, ConstraintSet.START);
-            } else {
-                cs.connect(R.id.map_container, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
-            }
-            // Landscape Bottom
-            if (isWidgetPanelOpen && "bottom".equals(widgetPos)) {
-                cs.connect(R.id.map_container, ConstraintSet.BOTTOM, R.id.widget_panel, ConstraintSet.TOP);
-            } else if ("bottom".equals(dockPos)) {
-                cs.connect(R.id.map_container, ConstraintSet.BOTTOM, R.id.app_dock, ConstraintSet.TOP);
-            } else {
-                cs.connect(R.id.map_container, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+                // Yatay yerlesim: Sol Panel ve Sag Panel
+                int leftBorder = "left".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID;
+                int rightBorder = "right".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID;
+                int leftSide = "left".equals(dockPos) ? ConstraintSet.END : ConstraintSet.START;
+                int rightSide = "right".equals(dockPos) ? ConstraintSet.START : ConstraintSet.END;
+
+                int leftViewId;
+                int rightViewId;
+                boolean leftViewIsSmall = "left".equals(widgetPos);
+
+                if (leftViewIsSmall) {
+                    if (isSwapped) {
+                        // SMALL solda (harita), LARGE sagda (widget)
+                        leftViewId = R.id.map_container;
+                        rightViewId = R.id.widget_panel;
+                    } else {
+                        // SMALL solda (widget), LARGE sagda (harita)
+                        leftViewId = R.id.widget_panel;
+                        rightViewId = R.id.map_container;
+                    }
+                } else {
+                    // Sagdaki panel SMALL
+                    if (isSwapped) {
+                        // LARGE solda (widget), SMALL sagda (harita)
+                        leftViewId = R.id.widget_panel;
+                        rightViewId = R.id.map_container;
+                    } else {
+                        // LARGE solda (harita), SMALL sagda (widget)
+                        leftViewId = R.id.map_container;
+                        rightViewId = R.id.widget_panel;
+                    }
+                }
+
+                int smallWidth = (int) (screenWidth * panelPercent);
+
+                // Her iki gorunum de dikeyde yayilir
+                int bottomBorder = "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID;
+                int bottomSide = "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM;
+
+                cs.connect(leftViewId, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+                cs.connect(leftViewId, ConstraintSet.BOTTOM, bottomBorder, bottomSide);
+                cs.constrainHeight(leftViewId, 0);
+
+                cs.connect(rightViewId, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+                cs.connect(rightViewId, ConstraintSet.BOTTOM, bottomBorder, bottomSide);
+                cs.constrainHeight(rightViewId, 0);
+
+                // Yatay zincirleme (Horizontal chains)
+                cs.connect(leftViewId, ConstraintSet.START, leftBorder, leftSide);
+                cs.connect(leftViewId, ConstraintSet.END, rightViewId, ConstraintSet.START);
+
+                cs.connect(rightViewId, ConstraintSet.START, leftViewId, ConstraintSet.END);
+                cs.connect(rightViewId, ConstraintSet.END, rightBorder, rightSide);
+
+                // Genislikleri yerlesime gore ayarla
+                if (leftViewIsSmall) {
+                    cs.constrainWidth(leftViewId, smallWidth);
+                    cs.constrainWidth(rightViewId, 0);
+                } else {
+                    cs.constrainWidth(leftViewId, 0);
+                    cs.constrainWidth(rightViewId, smallWidth);
+                }
             }
         }
 

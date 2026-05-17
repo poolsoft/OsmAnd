@@ -671,6 +671,22 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		// 4. main.xml'i map_container'a ekle
 		mapContainer.addView(mainLayoutRoot);
 
+		// Harita kucuk paneldeyken tiklanirsa buyuk ekrana geri don
+		if (mapContainer != null) {
+			mapContainer.setOnTouchListener(new View.OnTouchListener() {
+				@Override
+				public boolean onTouch(View v, MotionEvent event) {
+					if (carLayoutManager != null && carLayoutManager.isContentFullScreen()) {
+						if (event.getAction() == MotionEvent.ACTION_UP) {
+							closeAppDrawer();
+						}
+						return true; // Dokunmayi haritaya gecirme
+					}
+					return false;
+				}
+			});
+		}
+
 		// 5. CarLauncher bileşenlerini başlat
 		embedWidgetPanel();
 		embedAppDock();
@@ -680,11 +696,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 
 	private void embedWidgetPanel() {
-		if (widgetPanel != null) {
-			net.osmand.plus.carlauncher.ui.WidgetPanelFragment widgetPanelFragment = new net.osmand.plus.carlauncher.ui.WidgetPanelFragment();
-			getSupportFragmentManager().beginTransaction()
-					.replace(widgetPanel.getId(), widgetPanelFragment, "widget_panel")
-					.commitAllowingStateLoss();
+		if (widgetPanel != null && panelContentManager != null) {
+			panelContentManager.setContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS);
 		}
 	}
 
@@ -779,59 +792,18 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 
 	public void openAppDrawer() {
-		if (appDrawerContainer != null) {
-			appDrawerContainer.setVisibility(View.VISIBLE);
-			if (getSupportFragmentManager().findFragmentByTag("AppDrawerFragment") == null) {
-				getSupportFragmentManager().beginTransaction()
-						.replace(R.id.app_drawer_container, new net.osmand.plus.carlauncher.ui.AppDrawerFragment(),
-								"AppDrawerFragment")
-						.commitAllowingStateLoss();
-			}
-		}
+		// Uygulama cekmecesini sag panel swap kullanarak buyuk ekranda ac
+		setPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.APP_DRAWER);
 	}
 
 	public void openWeatherDashboard() {
-		if (appDrawerContainer != null) {
-			appDrawerContainer.setVisibility(View.VISIBLE);
-			if (getSupportFragmentManager().findFragmentByTag("WeatherDashboardFragment") == null) {
-				getSupportFragmentManager().beginTransaction()
-						.replace(R.id.app_drawer_container, new net.osmand.plus.carlauncher.ui.WeatherDashboardFragment(),
-								"WeatherDashboardFragment")
-						.commitAllowingStateLoss();
-			}
-		}
+		// Hava durumu panelini sag panel swap kullanarak buyuk ekranda ac
+		setPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WEATHER);
 	}
 
 	public void closeAppDrawer() {
-		if (appDrawerContainer != null) {
-			appDrawerContainer.setVisibility(View.GONE);
-
-			// Clean up fragments to ensure fresh state on next open
-			try {
-				FragmentManager fm = getSupportFragmentManager();
-				// Remove MusicPlayerFragment if exists
-				Fragment musicFragment = fm.findFragmentByTag("MusicPlayerFragment");
-				if (musicFragment != null) {
-					fm.beginTransaction().remove(musicFragment).commitAllowingStateLoss();
-				}
-				// Remove AppDrawerFragment if exists
-				Fragment drawerFragment = fm.findFragmentByTag("AppDrawerFragment");
-				if (drawerFragment != null) {
-					fm.beginTransaction().remove(drawerFragment).commitAllowingStateLoss();
-				}
-                // Remove WeatherDashboardFragment if exists
-                Fragment weatherFragment = fm.findFragmentByTag("WeatherDashboardFragment");
-                if (weatherFragment != null) {
-                    fm.beginTransaction().remove(weatherFragment).commitAllowingStateLoss();
-                }
-				// Clear back stack
-				if (fm.getBackStackEntryCount() > 0) {
-					fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-				}
-			} catch (Exception e) {
-				LOG.error("Error closing app drawer", e);
-			}
-		}
+		// Tum buyuk panelleri kapatip varsayilan premium birlesik panele geri don
+		setPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS);
 	}
 
 	// Permission Check for Overlay (Widget updates in background etc)
@@ -896,18 +868,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 
 	public void openMusicPlayer() {
-		if (appDrawerContainer != null) {
-			android.util.Log.d("MapActivity", "Opening Music Drawer");
-			appDrawerContainer.setVisibility(View.VISIBLE);
-			// Müzik player için özel bir container veya layout kullanılabilir
-			if (getSupportFragmentManager().findFragmentByTag("MusicPlayerFragment") == null) {
-				net.osmand.plus.carlauncher.ui.MusicPlayerFragment fragment = new net.osmand.plus.carlauncher.ui.MusicPlayerFragment();
-				getSupportFragmentManager().beginTransaction()
-						.replace(R.id.app_drawer_container, fragment, "MusicPlayerFragment")
-						.addToBackStack(null)
-						.commitAllowingStateLoss();
-			}
-		}
+		// Muzik oynaticiyi sag panel swap kullanarak buyuk ekranda ac
+		setPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.MUSIC);
 	}
 
 	public void openCarLauncherSettings() {

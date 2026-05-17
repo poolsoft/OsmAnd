@@ -63,7 +63,8 @@ public class PanelContentManager {
 
         switch (content) {
             case WIDGETS:
-                fragment = new WidgetPanelFragment();
+                // Varsayilan: widget listesi yerine premium birlesik panel
+                fragment = new UnifiedPanelFragment();
                 break;
             case MUSIC:
                 fragment = new MusicPlayerFragment();
@@ -76,7 +77,7 @@ public class PanelContentManager {
                     Class<?> weatherClass = Class.forName("net.osmand.plus.carlauncher.ui.WeatherConfigDialog");
                     fragment = (Fragment) weatherClass.newInstance();
                 } catch (Exception e) {
-                    fragment = new WidgetPanelFragment(); // fallback
+                    fragment = new UnifiedPanelFragment(); // fallback
                 }
                 break;
         }
