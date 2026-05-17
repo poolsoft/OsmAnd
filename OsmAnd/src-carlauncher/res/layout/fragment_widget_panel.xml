@@ -40,7 +40,8 @@
         android:orientation="horizontal"
         android:gravity="center"
         android:background="#CC1A1A1A"
-        android:elevation="10dp">
+        android:elevation="10dp"
+        android:visibility="gone">
 
         <TextView
             android:id="@+id/nav_widgets"
