@@ -1,28 +1,93 @@
-# Car Launcher Geliştirme Önerileri
+# Car Launcher Geliştirme Planı (Android Auto UI Tabanlı)
 
-Mevcut projeye "Premium" hissiyatı katacak ve kullanıcı deneyimini zenginleştirecek özellik önerileri:
+> **Son Güncelleme:** 17 May 2026
+> **Branch:** right-panel-plugin
+> **Son Commit:** 8225707dfc
 
-### 1. 🎵 Gelişmiş Medya Widget'ı (Spotify/Youtube Music Entegrasyonu)
-*   **Açıklama:** Sadece dahili oynatıcıyı değil, Spotify, Youtube Music gibi harici uygulamaları da kontrol edebilen bir widget.
-*   **Özellikler:** Albüm kapağı (Album Art) çekme, Şarkı/Sanatçı bilgisi, Play/Pause/Next/Prev kontrolleri.
-*   **Yöntem:** Android `MediaSessionManager` veya `NotificationListenerService` kullanılarak diğer uygulamaların medya oturumlarına erişim sağlanır.
+---
 
-### 2. 🏎️ Grafiksel OBD Dashboard (Kadran/İbre Görünümü)
-*   **Açıklama:** OBD verilerini (Hız, Devir, Hararet vb.) sadece metin olarak değil, görsel grafiklerle sunma.
-*   **Özellikler:** Analog ibreler (Gauge), dairesel barlar, dinamik renk değişimi (Örn: Devir yükselince kırmızılaşan ibre).
-*   **Yöntem:** Custom View çizimi veya grafik kütüphaneleri (MPAndroidChart vb.) kullanılarak `OBDWidget` görselleştirilir.
+## 🎯 Yeni Tasarım: Android Auto UI
 
-### 3. ⛽ Akıllı Yakıt ve Maliyet Asistanı
-*   **Açıklama:** Teknik tüketim verisini (L/100km) finansal veriye çeviren asistan.
-*   **Özellikler:** "Yolculuk Maliyeti: XX TL", "Km Başına: Y Kuruş". Kullanıcı benzin litre fiyatını ayarlardan girer.
-*   **Yöntem:** `OBDDataComputer`'dan gelen tüketim verisi x Birim Fiyat.
+### Layout Yapısı
 
-### 4. 🛞 Lastik Basınç (TPMS) Görselleştirmesi
-*   **Açıklama:** Lastik basınçlarını görsel araç şeması üzerinde gösterme.
-*   **Özellikler:** 4 tekerlek üzerinde ayrı ayrı basınç (PSI/Bar) ve sıcaklık değerleri. Düşük basınçta uyarı (Kırmızı yanıp sönme).
-*   **Yöntem:** Harici BLE TPMS sensörleri ile entegrasyon veya araçtan veri çekebiliyorsak bunu görselleştirme.
+```
+┌──────────────────────┬─────────────────────┐
+│                      │  🎵 Müzik /         │
+│                      │  📞 Bildirim        │
+│      HARİTA          │  (İçerik Paneli)    │
+│      (Büyük Alan)    │                     │
+│                      │  - Müzik player     │
+│                      │  - Gelen çağrı      │
+│                      │  - App drawer list  │
+├──────────────────────┴─────────────────────┤
+│  Dock (Sol, yuvarlatılmış köşeler)         │
+│  🌐 Maps  🏠 Home  📋 Apps  🔄 Layout    │
+└────────────────────────────────────────────┘
+```
 
-### 5. 🌦️ Dinamik Hava Durumu Asistanı (Rota Bazlı)
-*   **Açıklama:** Sadece anlık konum değil, gidilecek rota üzerindeki hava durumunu proaktif söyleme.
-*   **Özellikler:** "Varış noktasında yağmur bekleniyor", "Rotanın 50. kilometresinde sis var".
-*   **Yöntem:** Mevcut hava durumu API'sini rota noktaları (waypoints) için sorgulama.
+### Temel Davranış Kuralları (Android Auto Mantığı)
+
+| Kural | Açıklama |
+|-------|----------|
+| **1. Harita her zaman ekranda** | Hiçbir modda kaybolmaz, sadece boyutu değişir |
+| **2. Sağ panel içerik panelidir** | Widget listesi değil, aktif içerik gösterir (müzik/bildirim/drawer) |
+| **3. Müzik + Bildirim üst üste** | Müzik player'ı gösterilir, çağrı gelirse müziğin üstünde bildirim |
+| **4. App Drawer** | Tıklanınca harita küçülür, sağ panel app drawer listesi olur |
+| **5. Müziğe tıkla** | Müzik player harita alanında büyük açılır, sağ panel tekrar harita |
+| **6. Dock** | Sol tarafta dikey, yuvarlatılmış köşeler. Layout mod butonu dock'da |
+| **7. Yuvarlak köşeler** | Harita ve sağ panel kartları yuvarlatılmış |
+
+---
+
+## 📋 Yapılacaklar Listesi
+
+### 1. Faz: Temel Layout Değişikliği
+- [ ] **activity_car_launcher.xml** - Harita + Sağ Panel + Dock yapısı (ConstraintLayout)
+- [ ] **bg_card_rounded_black.xml** - Yuvarlatılmış köşe drawable'ı (harita için)
+- [ ] **bg_panel_rounded.xml** - Sağ panel için yuvarlatılmış arkaplan
+- [ ] **CarLayoutManager.java** - Yeni layout sistemine göre yeniden yazılacak
+- [ ] **Dock drawable** - Yuvarlatılmış dock arkaplanı
+- [ ] **Layout mod butonu** - Dock'a eklenecek
+
+### 2. Faz: İçerik Paneli Sistemi
+- [ ] **RightPanelFragment.java** - Sağ panel fragment (müzik/bildirim/drawer gösterir)
+- [ ] **PanelContentManager.java** - Panel içeriğini yöneten sınıf
+- [ ] **Müzik + Bildirim üst üste** gösterim mantığı
+- [ ] **Harita yeniden boyutlandırma** - Panel içeriğine göre harita boyutu
+
+### 3. Faz: App Drawer ve Geçişler
+- [ ] **App Drawer** - Harita küçülür, sağ panel drawer listesi
+- [ ] **Müzik player** - Harita alanında açılır, panel tekrar harita
+- [ ] **Geçiş animasyonları** - Kaydırmalı/fade geçişler
+
+### 4. Faz: Dock İyileştirmeleri
+- [ ] **Dock yuvarlatılmış köşeler**
+- [ ] **Layout mod butonu** (Normal/No Widgets/Full Screen) dock'a eklenecek
+- [ ] **Dock item boyutlandırma** - Dock size ayarına göre
+
+---
+
+## 📁 Değişecek Dosyalar
+
+| Dosya | Değişiklik |
+|-------|-----------|
+| `res/layout/activity_car_launcher.xml` | Yeni Android Auto layout yapısı |
+| `res/drawable/bg_card_rounded_black.xml` | Harita yuvarlak köşe |
+| `res/drawable/bg_panel_rounded.xml` | Sağ panel yuvarlak köşe |
+| `res/drawable/bg_dock_modern.xml` | Dock yuvarlak köşe |
+| `ui/CarLauncherInterface.java` | openAppDrawer(), openMusicPlayer() metotları |
+| `ui/CarLayoutManager.java` | Yeni layout sistemi |
+| `ui/RightPanelFragment.java` | **YENİ** - Sağ içerik paneli |
+| `ui/PanelContentManager.java` | **YENİ** - Panel içerik yöneticisi |
+| `ui/AppDockFragment.java` | Layout mod butonu eklenecek |
+| `widgets/WidgetManager.java` | Widget listesi panel içeriğine dönüşecek |
+
+---
+
+## 🚀 İlerleme
+
+- [x] Mevcut kod yedeği alındı (push: 8225707d)
+- [ ] 1. Faz başlatılacak
+- [ ] 2. Faz
+- [ ] 3. Faz
+- [ ] 4. Faz
