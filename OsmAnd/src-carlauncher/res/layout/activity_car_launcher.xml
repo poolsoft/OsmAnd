@@ -16,19 +16,19 @@
         android:layout_height="0dp"
         android:layout_margin="@dimen/map_margin_side"
         android:layout_marginTop="@dimen/map_margin_top"
-        android:background="@drawable/bg_card_rounded_black" 
+        android:background="@drawable/bg_card_rounded_dark" 
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/app_dock"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/widget_panel"
         android:elevation="4dp"/>
 
-    <!-- WIDGET PANEL CONTAINER (Drawer) -->
+    <!-- WIDGET PANEL CONTAINER (Icerik Paneli) -->
     <FrameLayout
         android:id="@+id/widget_panel"
         android:layout_width="@dimen/widget_panel_width"
         android:layout_height="0dp"
-        android:background="@drawable/bg_gradient_overlay"
+        android:background="@drawable/bg_panel_rounded"
         android:layout_marginTop="0dp"
         android:elevation="20dp"
         android:visibility="gone"
