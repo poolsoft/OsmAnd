@@ -31,7 +31,7 @@ import net.osmand.plus.OsmandApplication;
 
 /**
  * Widget paneli fragment.
- * GRID LAYOUT IMPLEMENTATION WITH SEPARATE PORTRAIT/LANDSCAPE SETTINGS.
+ * Android Auto UI: bottom nav ile icerik paneli yonetimi.
  */
 public class WidgetPanelFragment extends Fragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -527,7 +527,9 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             navApps.setOnClickListener(v -> {
                 setActiveNav(navApps);
                 if (getActivity() instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
-                    ((net.osmand.plus.carlauncher.CarLauncherInterface) getActivity()).openAppDrawer();
+                    CarLauncherInterface ci = (CarLauncherInterface) getActivity();
+                    ci.setPanelContent(PanelContentManager.PanelContent.APP_DRAWER);
+                    ci.openAppDrawer();
                 }
             });
         }
