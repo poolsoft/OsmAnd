@@ -34,6 +34,16 @@ public class CarLayoutManager {
         this.widgetHandle = activity.findViewById(R.id.widget_handle);
     }
 
+    private boolean isContentFullScreen = false;
+
+    public void toggleContentFullScreen() {
+        isContentFullScreen = !isContentFullScreen;
+    }
+
+    public boolean isContentFullScreen() {
+        return isContentFullScreen;
+    }
+
     public void applyLayout(boolean isWidgetPanelOpen, int layoutMode) {
         if (rootLayout == null || widgetPanel == null || appDock == null) return;
 
@@ -114,11 +124,22 @@ public class CarLayoutManager {
                 cs.constrainWidth(R.id.widget_panel, (int)(screenWidth * panelPercent));
                 cs.constrainHeight(R.id.widget_panel, 0);
             } else { // right
-                cs.connect(R.id.widget_panel, ConstraintSet.END, "right".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "right".equals(dockPos) ? ConstraintSet.START : ConstraintSet.END);
-                cs.connect(R.id.widget_panel, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
-                cs.connect(R.id.widget_panel, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
-                cs.constrainWidth(R.id.widget_panel, (int)(screenWidth * panelPercent));
-                cs.constrainHeight(R.id.widget_panel, 0);
+                // FULLSCREEN MODE: panel buyur sola gecer, harita kuculur saga kayar
+                if (isContentFullScreen && !isPortrait) {
+                    // Panel BUYUK (sol tarafa)
+                    cs.connect(R.id.widget_panel, ConstraintSet.START, "left".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "left".equals(dockPos) ? ConstraintSet.END : ConstraintSet.START);
+                    cs.connect(R.id.widget_panel, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+                    cs.connect(R.id.widget_panel, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+                    cs.connect(R.id.widget_panel, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
+                    cs.constrainWidth(R.id.widget_panel, (int)(screenWidth * panelPercent));
+                    cs.constrainHeight(R.id.widget_panel, 0);
+                } else {
+                    cs.connect(R.id.widget_panel, ConstraintSet.END, "right".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "right".equals(dockPos) ? ConstraintSet.START : ConstraintSet.END);
+                    cs.connect(R.id.widget_panel, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+                    cs.connect(R.id.widget_panel, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
+                    cs.constrainWidth(R.id.widget_panel, (int)(screenWidth * panelPercent));
+                    cs.constrainHeight(R.id.widget_panel, 0);
+                }
             }
         }
 
@@ -141,8 +162,12 @@ public class CarLayoutManager {
             } else {
                 cs.connect(R.id.map_container, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
             }
-            // Landscape End
-            if (isWidgetPanelOpen && "right".equals(widgetPos)) {
+            // Landscape End - FullScreen mode: harita saga kuculur
+            if (isContentFullScreen && !isPortrait) {
+                // FullScreen: harita kucuk panel (sagda)
+                cs.connect(R.id.map_container, ConstraintSet.END, R.id.widget_panel, ConstraintSet.START);
+                cs.constrainWidth(R.id.map_container, 0);
+            } else if (isWidgetPanelOpen && "right".equals(widgetPos)) {
                 cs.connect(R.id.map_container, ConstraintSet.END, R.id.widget_panel, ConstraintSet.START);
             } else if ("right".equals(dockPos)) {
                 cs.connect(R.id.map_container, ConstraintSet.END, R.id.app_dock, ConstraintSet.START);
