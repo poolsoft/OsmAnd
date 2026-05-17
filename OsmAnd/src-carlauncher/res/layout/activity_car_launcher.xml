@@ -54,8 +54,10 @@
         android:id="@+id/app_dock"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@drawable/bg_gradient_overlay"
+        android:background="@drawable/bg_dock_rounded"
         android:elevation="8dp"
+        android:clipToPadding="false"
+        android:padding="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
