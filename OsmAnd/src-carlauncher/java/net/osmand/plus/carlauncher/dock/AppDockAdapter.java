@@ -72,15 +72,15 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
     }
 
     /**
-     * DockSize ayarina gore olceklendirilmis ikon boyutunu dondurur.
-     * CarLauncherSettings.getDockSize() %30-100 arasi deger dondurur,
-     * base icon size ile carpariz.
+     * DockSize (0-100) ayarina gore olceklendirilmis ikon boyutu.
+     * 0=min(0.3x), 50=normal(1.0x), 100=max(1.7x)
      */
     private int getScaledIconSize() {
         int baseSize = (int) context.getResources().getDimension(net.osmand.plus.R.dimen.dock_icon_size);
         CarLauncherSettings settings = new CarLauncherSettings(context);
         int dockSizePercent = settings.getDockSize();
-        return (int) (baseSize * (dockSizePercent / 100.0f));
+        float scale = 0.3f + (dockSizePercent / 100.0f) * 1.4f;
+        return (int) (baseSize * scale);
     }
 
     @NonNull

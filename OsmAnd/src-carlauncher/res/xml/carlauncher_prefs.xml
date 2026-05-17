@@ -212,11 +212,11 @@
 
         <androidx.preference.SeekBarPreference
             android:key="car_launcher_dock_size"
-            android:title="Dock Boyutu (%)"
-            android:summary="Dock ikonlarının ve alanının boyutunu ayarlar"
-            android:defaultValue="70"
+            android:title="Dock Boyutu"
+            android:summary="0: Küçük, 50: Normal, 100: Büyük"
+            android:defaultValue="50"
             android:max="100"
-            app:min="30"
+            app:min="0"
             app:showSeekBarValue="true"
             android:iconSpaceReserved="false" />
 

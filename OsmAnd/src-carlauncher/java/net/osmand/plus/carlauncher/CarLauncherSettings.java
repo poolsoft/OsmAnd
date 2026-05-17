@@ -263,13 +263,13 @@ public class CarLauncherSettings {
         prefs.edit().putString(KEY_WIDGET_CARD_STYLE, style).apply();
     }
 
-    // --- Dock Size (percentage 30-100) ---
+    // --- Dock Size (intensity 0-100, 50=varsayilan) ---
     public int getDockSize() {
-        return prefs.getInt(KEY_DOCK_SIZE, 70); // %70 varsayilan
+        return prefs.getInt(KEY_DOCK_SIZE, 50); // %50 varsayilan (normal)
     }
 
     public void setDockSize(int sizePercent) {
-        prefs.edit().putInt(KEY_DOCK_SIZE, Math.max(30, Math.min(100, sizePercent))).apply();
+        prefs.edit().putInt(KEY_DOCK_SIZE, Math.max(0, Math.min(100, sizePercent))).apply();
     }
 
     // --- General ---
