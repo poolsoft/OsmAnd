@@ -9,13 +9,14 @@
     android:fitsSystemWindows="true">
 
     <!-- MAP CONTAINER (Weight 3 - %75 height) -->
-    <FrameLayout
+    <net.osmand.plus.carlauncher.ui.ExactFrameLayout
         android:id="@+id/map_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="8dp"
         android:layout_marginTop="32dp"
         android:background="@drawable/bg_card_rounded_black" 
+        android:clipToOutline="true"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/widget_panel"
         app:layout_constraintStart_toStartOf="parent"
