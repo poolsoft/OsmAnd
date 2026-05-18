@@ -601,6 +601,13 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                 TransitionManager.beginDelayedTransition(rootLayout);
             }
             carLayoutManager.applyLayout(isWidgetPanelOpen, layoutMode);
+
+            // Harita kucuk ekrana gectiginde butonlari otomatik gizle
+            View mapHudContainer = findViewById(R.id.map_hud_container);
+            if (mapHudContainer != null) {
+                boolean isMapMinimized = isWidgetPanelOpen && carLayoutManager.isContentFullScreen();
+                mapHudContainer.setVisibility(isMapMinimized ? View.GONE : View.VISIBLE);
+            }
         }
     }
 
