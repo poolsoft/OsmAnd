@@ -280,7 +280,7 @@ public class CarLayoutManager {
             if (isPortrait) {
                 // PORTRAIT: handle yatay cubuk, panelin ust kenarinda, panel genisliginde
                 int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
-                widgetHandle.setVisibility(View.VISIBLE);
+                widgetHandle.setVisibility(View.GONE);
                 cs.constrainWidth(R.id.widget_handle, screenWidth);
                 cs.constrainHeight(R.id.widget_handle, (int)(12 * density));
                 cs.connect(R.id.widget_handle, ConstraintSet.TOP, R.id.widget_panel, ConstraintSet.TOP);
@@ -289,7 +289,7 @@ public class CarLayoutManager {
                 widgetHandle.setImageResource(R.drawable.ic_action_view);
             } else {
                 // LANDSCAPE: daire handle, ekranin kenarinda
-                widgetHandle.setVisibility(View.VISIBLE);
+                widgetHandle.setVisibility(View.GONE);
                 int handleSize = (int)(48 * density);
                 String widgetPos = settings.getWidgetPanelPosition();
                 

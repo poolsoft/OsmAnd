@@ -4,7 +4,7 @@
     android:id="@+id/dock_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_app_dock"
+    android:background="@android:color/transparent"
     android:padding="4dp">
 
     <!-- App List Button (Top) - Uses dashboard_grid (Apps) -->
