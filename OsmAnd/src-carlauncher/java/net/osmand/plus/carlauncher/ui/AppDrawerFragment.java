@@ -106,7 +106,7 @@ public class AppDrawerFragment extends Fragment {
         // Logic
         closeBtn.setOnClickListener(v -> closeDrawer());
 
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 5));
+        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 4));
 
         // Search Filter
         searchInput.addTextChangedListener(new android.text.TextWatcher() {

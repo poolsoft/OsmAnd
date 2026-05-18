@@ -10,10 +10,10 @@
     android:focusable="true">
 
     <androidx.cardview.widget.CardView
-        android:layout_width="72dp"
-        android:layout_height="72dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:foregroundGravity="center"
-        app:cardCornerRadius="16dp"
+        app:cardCornerRadius="32dp"
         app:cardElevation="0dp"
         app:cardBackgroundColor="@android:color/transparent"
         xmlns:app="http://schemas.android.com/apk/res-auto">
@@ -23,7 +23,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            android:padding="8dp"/>
+            android:padding="0dp"/>
             
     </androidx.cardview.widget.CardView>
 

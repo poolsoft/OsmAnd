@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#E6000000"
+    android:background="@android:color/transparent"
     android:clickable="true"
     android:focusable="true">
 
@@ -10,6 +10,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
+        android:background="@drawable/bg_drawer_rounded"
+        android:layout_margin="8dp"
+        android:clipToOutline="true"
         android:padding="16dp">
 
         <!-- Search Header -->
