@@ -9,8 +9,8 @@
     android:fitsSystemWindows="true"
     android:clipChildren="false">
 
-    <!-- MAP CONTAINER (Dynamic Constraints) -->
-    <FrameLayout
+    <!-- MAP CONTAINER (Exact FrameLayout to prevent DrawerLayout measure crash) -->
+    <net.osmand.plus.carlauncher.ui.ExactFrameLayout
         android:id="@+id/map_container"
         android:layout_width="0dp"
         android:layout_height="0dp"

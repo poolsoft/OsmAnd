@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -171,12 +172,16 @@ public class UnifiedPanelFragment extends Fragment implements MusicManager.Music
             musicManager.addVisualizerListener(this);
         }
 
-        // BroadcastReceiver kaydi
+        // BroadcastReceiver kaydi (Android 14+ icin RECEIVER_EXPORTED zorunlu)
         if (getContext() != null) {
             IntentFilter filter = new IntentFilter();
             filter.addAction("net.osmand.carlauncher.SHOW_NOTIFICATION");
             filter.addAction("net.osmand.carlauncher.HIDE_NOTIFICATION");
-            getContext().registerReceiver(notificationReceiver, filter);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                getContext().registerReceiver(notificationReceiver, filter, Context.RECEIVER_EXPORTED);
+            } else {
+                getContext().registerReceiver(notificationReceiver, filter);
+            }
         }
     }
 
