@@ -109,6 +109,14 @@ public class AppPickerDialog {
             Intent musicIntent = new Intent("android.media.browse.MediaBrowserService");
             List<ResolveInfo> musicServices = pm.queryIntentServices(musicIntent, 0);
             for (ResolveInfo info : musicServices) musicPackages.add(info.serviceInfo.packageName);
+            
+            // Teyplerdeki standarda uymayan dahili yerel muzik calarlari listeye ekliyoruz
+            musicPackages.add("com.acloud.stub.localmusic");
+            musicPackages.add("com.xyauto.music");
+            musicPackages.add("com.android.music");
+            musicPackages.add("com.txznet.music");
+            musicPackages.add("com.syd.music");
+            musicPackages.add("com.mediatek.music");
         }
 
         for (ResolveInfo info : resolveInfos) {
