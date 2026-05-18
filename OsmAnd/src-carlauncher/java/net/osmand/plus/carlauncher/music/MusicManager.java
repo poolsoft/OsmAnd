@@ -373,21 +373,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         }
     }
 
-    public void skipToNext() {
-        if (useExternal()) {
-            activeExternalController.getTransportControls().skipToNext();
-        } else {
-            internalPlayer.playNext();
-        }
-    }
 
-    public void skipToPrevious() {
-        if (useExternal()) {
-            activeExternalController.getTransportControls().skipToPrevious();
-        } else {
-            internalPlayer.playPrevious();
-        }
-    }
 
     // --- Logic ---
 
