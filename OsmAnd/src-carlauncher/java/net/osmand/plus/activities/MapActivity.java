@@ -149,6 +149,7 @@ import net.osmand.plus.views.mapwidgets.WidgetsVisibilityHelper;
 import net.osmand.shared.gpx.GpxFile;
 import net.osmand.util.Algorithms;
 import net.osmand.plus.carlauncher.ui.AppDockFragment;
+import android.transition.TransitionManager;
 
 import org.apache.commons.logging.Log;
 
@@ -211,7 +212,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	// CarLauncher Fields
 	private androidx.constraintlayout.widget.ConstraintLayout rootLayout;
-	private android.widget.FrameLayout mapContainer;
+	private net.osmand.plus.carlauncher.ui.ExactFrameLayout mapContainer;
 	private android.widget.FrameLayout widgetPanel;
 	private android.widget.ImageButton widgetHandle; 
 	private View appDock;
@@ -453,6 +454,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		panelContentManager.setOnFullScreenStateChangeListener(isFullScreen -> {
 			carLayoutManager.setContentFullScreen(isFullScreen);
 			applyWidgetPanelState();
+			if (mapContainer != null) {
+				mapContainer.setInterceptTouch(isFullScreen, () -> closeAppDrawer());
+			}
 		});
 		
 		if (widgetHandle != null) {
@@ -671,20 +675,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		// 4. main.xml'i map_container'a ekle
 		mapContainer.addView(mainLayoutRoot);
 
-		// Harita kucuk paneldeyken tiklanirsa buyuk ekrana geri don
-		if (mapContainer != null) {
-			mapContainer.setOnTouchListener(new View.OnTouchListener() {
-				@Override
-				public boolean onTouch(View v, MotionEvent event) {
-					if (carLayoutManager != null && carLayoutManager.isContentFullScreen()) {
-						if (event.getAction() == MotionEvent.ACTION_UP) {
-							closeAppDrawer();
-						}
-						return true; // Dokunmayi haritaya gecirme
-					}
-					return false;
-				}
-			});
+		// Harita kucuk paneldeyken dokunmalari engellemek ve tiklayinca buyutmek icin
+		if (mapContainer != null && carLayoutManager != null) {
+			mapContainer.setInterceptTouch(carLayoutManager.isContentFullScreen(), () -> closeAppDrawer());
 		}
 
 		// 5. CarLauncher bileşenlerini başlat
@@ -734,6 +727,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
     private void applyWidgetPanelState() {
         if (carLayoutManager != null) {
+            if (rootLayout != null) {
+                TransitionManager.beginDelayedTransition(rootLayout);
+            }
             carLayoutManager.applyLayout(isWidgetPanelOpen, layoutMode);
         }
     }
@@ -792,8 +788,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 
 	public void openAppDrawer() {
-		// Uygulama cekmecesini sag panel swap kullanarak buyuk ekranda ac
-		setPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.APP_DRAWER);
+		// Uygulama cekmecesini sag panel swap kullanarak buyuk ekranda ac/kapat (toggle)
+		if (panelContentManager != null && panelContentManager.getCurrentContent() == net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.APP_DRAWER) {
+			closeAppDrawer();
+		} else {
+			setPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.APP_DRAWER);
+		}
 	}
 
 	public void openWeatherDashboard() {

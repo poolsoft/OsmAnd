@@ -3,13 +3,17 @@ package net.osmand.plus.carlauncher.ui;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
+import android.view.MotionEvent;
 
 /**
  * DrawerLayout'un ConstraintLayout icinde AT_MOST/UNSPECIFIED ile olculup 
  * java.lang.IllegalArgumentException: DrawerLayout must be measured with MeasureSpec.EXACTLY
- * hatasi vermesini onleyen ozel FrameLayout sinifi.
+ * hatasi vermesini onleyen ve harita kucuk paneldeyken dokunmalari havada yakalayan ozel FrameLayout sinifi.
  */
 public class ExactFrameLayout extends FrameLayout {
+
+    private boolean interceptTouch = false;
+    private Runnable onInterceptClickRunnable;
 
     public ExactFrameLayout(Context context) {
         super(context);
@@ -21,6 +25,32 @@ public class ExactFrameLayout extends FrameLayout {
 
     public ExactFrameLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+    }
+
+    public void setInterceptTouch(boolean intercept, Runnable clickRunnable) {
+        this.interceptTouch = intercept;
+        this.onInterceptClickRunnable = clickRunnable;
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        if (interceptTouch) {
+            return true; // Alt harita gorunumlerinin dokunmayi tuketmesini onlemek icin havada yakala
+        }
+        return super.onInterceptTouchEvent(ev);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (interceptTouch) {
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                if (onInterceptClickRunnable != null) {
+                    onInterceptClickRunnable.run();
+                }
+            }
+            return true;
+        }
+        return super.onTouchEvent(event);
     }
 
     @Override

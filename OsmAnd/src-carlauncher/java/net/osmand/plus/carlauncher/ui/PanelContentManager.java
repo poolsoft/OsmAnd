@@ -22,7 +22,7 @@ public class PanelContentManager {
         WEATHER       // Hava durumu
     }
 
-    private PanelContent currentContent = PanelContent.WIDGETS;
+    private PanelContent currentContent = null;
     private final FragmentManager fragmentManager;
     private final int containerId;
 
@@ -88,6 +88,7 @@ public class PanelContentManager {
 
         if (fragment != null) {
             fragmentManager.beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
                     .replace(containerId, fragment, tag)
                     .commitAllowingStateLoss();
         }
