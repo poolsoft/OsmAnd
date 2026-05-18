@@ -135,7 +135,7 @@ public class CarLayoutManager {
                 float portraitPanelHeight = isPortrait ? carSettings.getWidgetPanelHeightPortrait() : 0.30f;
                 int smallHeight = (int) (screenHeight * portraitPanelHeight);
                 float density = activity.getResources().getDisplayMetrics().density;
-                int gapSize = (int) (16 * density); // Premium 16dp bosluk
+                int gapSize = (int) (8 * density); // Premium 8dp bosluk
 
                 // Her iki gorunum de yatayda yayilir
                 int leftBorder = "left".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID;
@@ -211,7 +211,7 @@ public class CarLayoutManager {
 
                 float density = activity.getResources().getDisplayMetrics().density;
                 int smallWidth = (int) (screenWidth * panelPercent);
-                int gapSize = (int) (16 * density); // Premium 16dp bosluk
+                int gapSize = (int) (8 * density); // Premium 8dp bosluk
 
                 // Her iki gorunum de dikeyde yayilir
                 int bottomBorder = "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID;
@@ -312,11 +312,24 @@ public class CarLayoutManager {
     private void applyWidgetHandleTranslation(CarLauncherSettings settings, boolean isOpen) {
         if (widgetHandle == null) return;
         
-        // Premium grab indicator olarak ikon ve renk set edilir
+        // Sifirlamalar ve transparan arka plan
         widgetHandle.setTranslationX(0);
         widgetHandle.setTranslationY(0);
+        widgetHandle.setBackground(null);
+        widgetHandle.setPadding(0, 0, 0, 0);
+        
+        // Premium grab indicator olarak ikon ve renk set edilir
         widgetHandle.setImageResource(R.drawable.ic_more_vert);
         widgetHandle.setColorFilter(0xCCFFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
+        
+        // Yonelime gore 3-noktayi donduruyoruz (Dikey modda yatay dots, yatay modda dikey dots)
+        boolean isPortrait = activity.getResources().getConfiguration().orientation 
+                == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        if (isPortrait) {
+            widgetHandle.setRotation(90f);
+        } else {
+            widgetHandle.setRotation(0f);
+        }
     }
 
     private void refreshDockFragment(boolean isVertical) {
