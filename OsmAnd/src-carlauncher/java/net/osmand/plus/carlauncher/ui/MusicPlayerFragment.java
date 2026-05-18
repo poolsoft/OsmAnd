@@ -65,6 +65,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private View appSelectorArrow;
     private ImageButton btnPlaylist, btnClose, btnEqualizer;
     private ImageView nowPlayingArt;
+    private ImageView nowPlayingArtBlur;
     private TextView nowPlayingTitle, nowPlayingArtist;
     private SeekBar seekbar;
     private TextView timeCurrent, timeTotal;
@@ -114,6 +115,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         // btnEqualizer = root.findViewById(net.osmand.plus.R.id.btn_equalizer);
         btnClose = root.findViewById(net.osmand.plus.R.id.btn_close);
         nowPlayingArt = root.findViewById(net.osmand.plus.R.id.now_playing_art);
+        nowPlayingArtBlur = root.findViewById(net.osmand.plus.R.id.now_playing_art_blur);
         nowPlayingTitle = root.findViewById(net.osmand.plus.R.id.now_playing_title);
         nowPlayingArtist = root.findViewById(net.osmand.plus.R.id.now_playing_artist);
         seekbar = root.findViewById(net.osmand.plus.R.id.seekbar);
@@ -367,12 +369,20 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         int selectedColor = 0xFFFFFFFF;
         int unselectedColor = 0xFF888888;
 
-        if (tabAllTracks != null)
+        if (tabAllTracks != null) {
             tabAllTracks.setTextColor(index == 0 ? selectedColor : unselectedColor);
-        if (tabRecent != null)
+            tabAllTracks.setBackgroundResource(index == 0 ? net.osmand.plus.R.drawable.bg_tab_active : 0);
+        }
+        if (tabRecent != null) {
             tabRecent.setTextColor(index == 1 ? selectedColor : unselectedColor);
-        if (tabPlaylistLabel != null)
+            tabRecent.setBackgroundResource(index == 1 ? net.osmand.plus.R.drawable.bg_tab_active : 0);
+        }
+        if (tabPlaylistsContainer != null) {
+            tabPlaylistsContainer.setBackgroundResource(index == 2 ? net.osmand.plus.R.drawable.bg_tab_active : 0);
+        }
+        if (tabPlaylistLabel != null) {
             tabPlaylistLabel.setTextColor(index == 2 ? selectedColor : unselectedColor);
+        }
 
         // Ensure Spinner is visible/hidden if needed, but it is inside Tab 3 container
         // so it's always there.
@@ -962,10 +972,22 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 nowPlayingArtist.setText(artist != null ? artist : "");
 
             if (nowPlayingArt != null) {
-                if (albumArt != null)
+                if (albumArt != null) {
+                    nowPlayingArt.setPadding(0, 0, 0, 0);
                     nowPlayingArt.setImageBitmap(albumArt);
-                else
-                    nowPlayingArt.setImageResource(net.osmand.plus.R.drawable.ic_music_play);
+                    nowPlayingArt.setColorFilter(null);
+                    if (nowPlayingArtBlur != null) {
+                        nowPlayingArtBlur.setImageBitmap(albumArt);
+                    }
+                } else {
+                    int p = (int) (32 * getResources().getDisplayMetrics().density);
+                    nowPlayingArt.setPadding(p, p, p, p);
+                    nowPlayingArt.setImageResource(net.osmand.plus.R.drawable.ic_default_album_art);
+                    nowPlayingArt.setColorFilter(0x88FFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
+                    if (nowPlayingArtBlur != null) {
+                        nowPlayingArtBlur.setImageResource(net.osmand.plus.R.drawable.bg_default_music_art);
+                    }
+                }
             }
 
             // Update Adapter Highlight

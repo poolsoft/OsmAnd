@@ -11,10 +11,12 @@
         android:id="@+id/music_icon"
         android:layout_width="56dp"
         android:layout_height="56dp"
-        android:src="@android:drawable/ic_media_play"
+        android:src="@drawable/ic_default_album_art"
         android:scaleType="centerInside"
-        android:background="#33FFFFFF"
-        android:padding="8dp"/>
+        android:background="@drawable/bg_track_art_placeholder"
+        android:clipToOutline="true"
+        android:tint="#88FFFFFF"
+        android:padding="12dp"/>
 
     <LinearLayout
         android:layout_width="0dp"
