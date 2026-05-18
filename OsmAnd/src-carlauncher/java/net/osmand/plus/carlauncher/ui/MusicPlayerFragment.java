@@ -398,8 +398,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         }
 
         ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getContext(),
-                android.R.layout.simple_spinner_item, options);
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                net.osmand.plus.R.layout.item_spinner, options);
+        spinnerAdapter.setDropDownViewResource(net.osmand.plus.R.layout.item_spinner_dropdown);
         playlistSpinner.setAdapter(spinnerAdapter);
 
         playlistSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
