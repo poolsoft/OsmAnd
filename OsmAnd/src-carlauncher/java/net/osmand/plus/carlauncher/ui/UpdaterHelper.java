@@ -82,26 +82,42 @@ public class UpdaterHelper {
     }
 
     private static void downloadAndInstallApk(Context context, String url) {
-        Toast.makeText(context, "İndirme başlatıldı...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, "Indirme baslatildi...", Toast.LENGTH_SHORT).show();
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-        request.setTitle("Car Launcher Güncelleme");
-        request.setDescription("Yeni sürüm indiriliyor...");
+        request.setTitle("Car Launcher Guncelleme");
+        request.setDescription("Yeni surum indiriliyor...");
         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
         request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "CarLauncher_Update.apk");
+        
+        // Mobil veri ve dolasimda indirmeye acikca izin vererek takilmalari onluyoruz
+        request.setAllowedOverMetered(true);
+        request.setAllowedOverRoaming(true);
 
         DownloadManager manager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
         if (manager != null) {
             long downloadId = manager.enqueue(request);
             
             // Indirme bittiginde yakalamak icin bir receiver kaydediyoruz
-            context.getApplicationContext().registerReceiver(new BroadcastReceiver() {
+            BroadcastReceiver receiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context c, Intent intent) {
                     installApk(c, manager, downloadId);
-                    context.getApplicationContext().unregisterReceiver(this);
+                    try {
+                        context.getApplicationContext().unregisterReceiver(this);
+                    } catch (Exception e) {
+                        // ignore
+                    }
                 }
-            }, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+            };
+
+            IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+            // Android 14+ Guvenlik kuralina gore RECEIVER_EXPORTED bayragi ekliyoruz
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.getApplicationContext().registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+            } else {
+                context.getApplicationContext().registerReceiver(receiver, filter);
+            }
         }
     }
 
@@ -132,6 +148,9 @@ public class UpdaterHelper {
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(intent);
                 }
+            } else if (status == DownloadManager.STATUS_FAILED) {
+                int reason = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_REASON));
+                Toast.makeText(context, "Indirme basarisiz oldu (Hata kodu: " + reason + ")", Toast.LENGTH_LONG).show();
             }
         }
         cursor.close();

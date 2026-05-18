@@ -595,15 +595,15 @@ public class AppDockFragment extends Fragment
             }
             
             if (layoutButton != null) {
+                layoutButton.setVisibility(View.VISIBLE);
+                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) layoutButton.getLayoutParams();
+                lp.gravity = gravity;
                 if (isVertical) {
-                    layoutButton.setVisibility(View.VISIBLE);
-                    LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) layoutButton.getLayoutParams();
-                    lp.gravity = gravity;
-                    lp.topMargin = 32;
-                    layoutButton.setLayoutParams(lp);
+                    lp.setMargins(0, 0, 0, 24);
                 } else {
-                    layoutButton.setVisibility(View.VISIBLE);
+                    lp.setMargins(4, 0, 4, 0);
                 }
+                layoutButton.setLayoutParams(lp);
             }
             
             // 5. RecyclerView Layout Adjustments

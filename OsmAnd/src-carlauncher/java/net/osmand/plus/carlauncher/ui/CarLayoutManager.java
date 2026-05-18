@@ -134,6 +134,8 @@ public class CarLayoutManager {
 
                 float portraitPanelHeight = isPortrait ? carSettings.getWidgetPanelHeightPortrait() : 0.30f;
                 int smallHeight = (int) (screenHeight * portraitPanelHeight);
+                float density = activity.getResources().getDisplayMetrics().density;
+                int gapSize = (int) (16 * density); // Premium 16dp bosluk
 
                 // Her iki gorunum de yatayda yayilir
                 int leftBorder = "left".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID;
@@ -149,15 +151,25 @@ public class CarLayoutManager {
                 cs.connect(bottomViewId, ConstraintSet.END, rightBorder, rightSide);
                 cs.constrainWidth(bottomViewId, 0);
 
-                // Dikey zincirleme (Vertical chains)
+                // Dikey zincirleme (Vertical chains) - Araya 16dp bosluk eklenir
                 cs.connect(topViewId, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
-                cs.connect(topViewId, ConstraintSet.BOTTOM, bottomViewId, ConstraintSet.TOP);
+                cs.connect(topViewId, ConstraintSet.BOTTOM, bottomViewId, ConstraintSet.TOP, gapSize);
 
-                cs.connect(bottomViewId, ConstraintSet.TOP, topViewId, ConstraintSet.BOTTOM);
+                cs.connect(bottomViewId, ConstraintSet.TOP, topViewId, ConstraintSet.BOTTOM, gapSize);
                 cs.connect(bottomViewId, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
 
+                // Tutamac (widget_handle) dikey boslugun tam ortasina dairesel olarak hizalanir
+                cs.connect(R.id.widget_handle, ConstraintSet.TOP, topViewId, ConstraintSet.BOTTOM);
+                cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, bottomViewId, ConstraintSet.TOP);
+                cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
+                cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+                
+                int handleSize = (int) (40 * density);
+                cs.constrainWidth(R.id.widget_handle, handleSize);
+                cs.constrainHeight(R.id.widget_handle, handleSize);
+
                 // Yukseklikleri sinirla
-                cs.constrainHeight(topViewId, 0); // LARGE gorunum kalan alanı doldurur
+                cs.constrainHeight(topViewId, 0); // LARGE gorunum kalan alani doldurur
                 cs.constrainHeight(bottomViewId, smallHeight); // SMALL gorunum sabit/hesapli yukseklik alir
 
                 View clockContainer = activity.findViewById(R.id.clock_settings_container);
@@ -197,7 +209,9 @@ public class CarLayoutManager {
                     }
                 }
 
+                float density = activity.getResources().getDisplayMetrics().density;
                 int smallWidth = (int) (screenWidth * panelPercent);
+                int gapSize = (int) (16 * density); // Premium 16dp bosluk
 
                 // Her iki gorunum de dikeyde yayilir
                 int bottomBorder = "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID;
@@ -211,12 +225,22 @@ public class CarLayoutManager {
                 cs.connect(rightViewId, ConstraintSet.BOTTOM, bottomBorder, bottomSide);
                 cs.constrainHeight(rightViewId, 0);
 
-                // Yatay zincirleme (Horizontal chains)
+                // Yatay zincirleme (Horizontal chains) - Araya 16dp bosluk eklenir
                 cs.connect(leftViewId, ConstraintSet.START, leftBorder, leftSide);
-                cs.connect(leftViewId, ConstraintSet.END, rightViewId, ConstraintSet.START);
+                cs.connect(leftViewId, ConstraintSet.END, rightViewId, ConstraintSet.START, gapSize);
 
-                cs.connect(rightViewId, ConstraintSet.START, leftViewId, ConstraintSet.END);
+                cs.connect(rightViewId, ConstraintSet.START, leftViewId, ConstraintSet.END, gapSize);
                 cs.connect(rightViewId, ConstraintSet.END, rightBorder, rightSide);
+
+                // Tutamac (widget_handle) yatay boslugun tam ortasina dairesel olarak hizalanir
+                cs.connect(R.id.widget_handle, ConstraintSet.START, leftViewId, ConstraintSet.END);
+                cs.connect(R.id.widget_handle, ConstraintSet.END, rightViewId, ConstraintSet.START);
+                cs.connect(R.id.widget_handle, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+                cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, bottomBorder, bottomSide);
+                
+                int handleSize = (int) (40 * density);
+                cs.constrainWidth(R.id.widget_handle, handleSize);
+                cs.constrainHeight(R.id.widget_handle, handleSize);
 
                 // Genislikleri yerlesime gore ayarla
                 if (leftViewIsSmall) {
@@ -239,7 +263,7 @@ public class CarLayoutManager {
             cs.connect(R.id.app_drawer_container, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
         }
 
-        // 6. Handle constraint'lerini ayarla (translationX henuz yok)
+        // 6. Handle constraint'lerini ayarla (visibility durumunu ConstraintSet uzerinden guvenle yonetiriz)
         updateWidgetHandleConstraints(cs, carSettings, isWidgetPanelOpen);
 
         // 7. Final UI Touch-ups (Elevation, etc)
@@ -253,8 +277,7 @@ public class CarLayoutManager {
             widgetHandle.bringToFront();
         }
 
-        // 10. TRANSLATIONX - constraint uygulandiktan SONRA
-        //     (cs.applyTo() translationX'i sifirlayabilir)
+        // 10. TRANSLATIONX - constraint uygulandiktan SONRA (Sifirlayip ikonu 3-nokta yapar)
         applyWidgetHandleTranslation(carSettings, isWidgetPanelOpen);
         
         // 11. Refresh Dock orientation
@@ -271,43 +294,12 @@ public class CarLayoutManager {
 
     private void updateWidgetHandleConstraints(ConstraintSet cs, CarLauncherSettings settings, boolean isOpen) {
         if (widgetHandle != null) {
-            boolean isPortrait = activity.getResources().getConfiguration().orientation 
-                    == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-            float density = activity.getResources().getDisplayMetrics().density;
-            
-            cs.clear(R.id.widget_handle);
-            
-            if (isPortrait) {
-                // PORTRAIT: handle yatay cubuk, panelin ust kenarinda, panel genisliginde
-                int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
-                widgetHandle.setVisibility(View.GONE);
-                cs.constrainWidth(R.id.widget_handle, screenWidth);
-                cs.constrainHeight(R.id.widget_handle, (int)(12 * density));
-                cs.connect(R.id.widget_handle, ConstraintSet.TOP, R.id.widget_panel, ConstraintSet.TOP);
-                cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.START);
-                cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.END);
-                widgetHandle.setImageResource(R.drawable.ic_action_view);
+            if (!isOpen) {
+                cs.setVisibility(R.id.widget_handle, View.GONE);
             } else {
-                // LANDSCAPE: daire handle, ekranin kenarinda
-                widgetHandle.setVisibility(View.GONE);
-                int handleSize = (int)(48 * density);
-                String widgetPos = settings.getWidgetPanelPosition();
-                
-                cs.constrainWidth(R.id.widget_handle, handleSize);
-                cs.constrainHeight(R.id.widget_handle, handleSize);
-                cs.connect(R.id.widget_handle, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
-                cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
-                cs.setVerticalBias(R.id.widget_handle, settings.getWidgetHandleVerticalBias());
-                
-                if ("left".equals(widgetPos)) {
-                    cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
-                } else {
-                    cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
-                }
+                cs.setVisibility(R.id.widget_handle, View.VISIBLE);
+                cs.constrainElevation(R.id.widget_handle, 25f);
             }
-            
-            widgetHandle.setElevation(8f); 
-            widgetHandle.setZ(8f);
         }
     }
 
@@ -317,93 +309,11 @@ public class CarLayoutManager {
     private void applyWidgetHandleTranslation(CarLauncherSettings settings, boolean isOpen) {
         if (widgetHandle == null) return;
         
-        boolean isPortrait = activity.getResources().getConfiguration().orientation 
-                == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-        float density = activity.getResources().getDisplayMetrics().density;
-        
-        if (isPortrait) {
-            // Portrait: yatay cubuk panelin ustunde, surukleme ile height degisir
-            // Handle panelin ust kenarina yapismis, zaten constraint ile orada
-            // Drag handler ayri bir metodda setup edilir (ilk cagrida bir kere)
-            if (widgetHandle.getTag() == null) {
-                setupPortraitHandleDrag(settings);
-                widgetHandle.setTag("draggable");
-            }
-            widgetHandle.setTranslationX(0);
-            widgetHandle.setTranslationY(0);
-            widgetHandle.setImageResource(R.drawable.ic_action_view);
-            return;
-        }
-        
-        // LANDSCAPE: daire handle
-        String widgetPos = settings.getWidgetPanelPosition();
-        int handleWidth = (int)(48 * density);
-        float panelTranslateX = 0;
-        
-        if (isOpen) {
-            int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
-            float panelPercent = settings.getWidgetPanelWidthPercent();
-            int panelWidth = (int)(screenWidth * panelPercent);
-            
-            if ("left".equals(widgetPos)) {
-                panelTranslateX = panelWidth - handleWidth / 3f;
-            } else {
-                panelTranslateX = -(panelWidth - handleWidth / 3f);
-            }
-        } else {
-            if ("left".equals(widgetPos)) {
-                panelTranslateX = -handleWidth / 3f;
-            } else {
-                panelTranslateX = handleWidth / 3f;
-            }
-        }
-        
-        widgetHandle.setTranslationX(panelTranslateX);
-        
-        if ("left".equals(widgetPos)) {
-            widgetHandle.setImageResource(isOpen ? R.drawable.ic_chevron_left : R.drawable.ic_chevron_right);
-        } else {
-            widgetHandle.setImageResource(isOpen ? R.drawable.ic_chevron_right : R.drawable.ic_chevron_left);
-        }
-    }
-
-    /**
-     * Portrait modda widget_panel height'ini degistirmek icin
-     * handle'a surukleme (drag) ozelligi ekler.
-     */
-    private void setupPortraitHandleDrag(CarLauncherSettings settings) {
-        widgetHandle.setOnTouchListener((v, event) -> {
-            switch (event.getAction()) {
-                case android.view.MotionEvent.ACTION_DOWN:
-                    v.setScaleY(1.5f); // gorsel feedback
-                    return true;
-                case android.view.MotionEvent.ACTION_MOVE:
-                    int screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
-                    float touchY = event.getRawY();
-                    // Panel height = ekranin en altindan touch noktasina kadar
-                    int maxHeight = (int)(screenHeight * 0.7f);
-                    int minHeight = (int)(screenHeight * 0.1f);
-                    int newHeight = Math.max(minHeight, Math.min(maxHeight, screenHeight - (int)touchY));
-                    float heightPercent = (float)newHeight / screenHeight;
-                    
-                    // Panel height'ini dogrudan degistir
-                    ViewGroup.LayoutParams lp = widgetPanel.getLayoutParams();
-                    if (lp != null) {
-                        lp.height = newHeight;
-                        widgetPanel.setLayoutParams(lp);
-                    }
-                    
-                    // Kaydet (canli)
-                    settings.setWidgetPanelHeightPortrait(heightPercent);
-                    return true;
-                case android.view.MotionEvent.ACTION_UP:
-                case android.view.MotionEvent.ACTION_CANCEL:
-                    v.setScaleY(1.0f);
-                    v.performClick();
-                    return true;
-            }
-            return false;
-        });
+        // Premium grab indicator olarak ikon ve renk set edilir
+        widgetHandle.setTranslationX(0);
+        widgetHandle.setTranslationY(0);
+        widgetHandle.setImageResource(R.drawable.ic_more_vert);
+        widgetHandle.setColorFilter(0xCCFFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
     }
 
     private void refreshDockFragment(boolean isVertical) {

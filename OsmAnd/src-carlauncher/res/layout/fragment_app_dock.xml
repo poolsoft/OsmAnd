@@ -86,7 +86,7 @@
 
     </LinearLayout>
 
-    <!-- 5. Clock + Layout Toggle -->
+    <!-- 5. Clock -->
     <LinearLayout
         android:id="@+id/clock_settings_container"
         android:layout_width="wrap_content"
@@ -107,16 +107,17 @@
             android:textStyle="bold"
             android:fontFamily="sans-serif-medium"/>
 
-        <ImageButton
-            android:id="@+id/btn_layout_toggle"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginStart="4dp"
-            android:src="@drawable/ic_action_view_as_list"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="12dp"
-            app:tint="@color/cl_text_hint"/>
-
     </LinearLayout>
+
+    <!-- 6. Layout Toggle -->
+    <ImageButton
+        android:id="@+id/btn_layout_toggle"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="4dp"
+        android:src="@drawable/ic_action_view_as_list"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="12dp"
+        app:tint="@color/cl_text_hint"/>
 
 </LinearLayout>

@@ -462,148 +462,19 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		if (widgetHandle != null) {
 		    widgetHandle.setVisibility(View.GONE);
 		    widgetHandle.bringToFront(); // Force Top Z-Order
+		    widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_more_vert);
+		    widgetHandle.setColorFilter(0xCCFFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
 		    
-		    // Resize & Toggle Logic
-            widgetHandle.setOnTouchListener(new View.OnTouchListener() {
-                private float startX, startY;
-                private int startWidth;
-                private boolean isDragging = false;
-                private boolean isMoveMode = false;
-                private static final int DRAG_THRESHOLD = 20;
-                
-                // Long Press Logic
-                private final android.os.Handler handler = new android.os.Handler();
-                private final Runnable longPressRunnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        isMoveMode = true;
-                        isDragging = true; // Treating move as drag
-                        // Visual Feedback: Move Mode (Red/Accent)
-                        widgetHandle.setColorFilter(0xFFFF4081, android.graphics.PorterDuff.Mode.SRC_IN); 
-                        widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_action_move); // Fixed Icon
-                        
-                        // Haptic Feedback
-                        widgetHandle.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
-                    }
-                };
-
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    float rawY = event.getRawY();
-                    int screenHeight = rootLayout.getHeight();
-                    
-                    switch (event.getAction()) {
-                        case MotionEvent.ACTION_DOWN:
-                            startX = event.getRawX();
-                            startY = rawY;
-                            startWidth = widgetPanel.getWidth();
-                            isDragging = false;
-                            isMoveMode = false;
-                            
-                            // Start Long Press Timer
-                            handler.postDelayed(longPressRunnable, 500);
-                            return true;
-
-                        case MotionEvent.ACTION_MOVE:
-                             float diffX = Math.abs(event.getRawX() - startX);
-                             float diffY = Math.abs(rawY - startY);
-                             
-                             if (!isDragging) {
-                                 if (diffX > DRAG_THRESHOLD && !isMoveMode) {
-                                     // Horizontal Start -> Resize Mode
-                                     isDragging = true;
-                                     handler.removeCallbacks(longPressRunnable); // Cancel Move Mode
-                                 } else if (isMoveMode) {
-                                     isDragging = true;
-                                 }
-                             }
-                            
-                            if (isDragging) {
-                                if (isMoveMode) {
-                                    // VERTICAL MOVE (Bias Update)
-                                    if (screenHeight > 0) {
-                                        float newBias = rawY / (float) screenHeight;
-                                        if (newBias < 0.1f) newBias = 0.1f;
-                                        if (newBias > 0.9f) newBias = 0.9f;
-                                        
-                                        // Update Constraint Bias directly
-                                        androidx.constraintlayout.widget.ConstraintLayout.LayoutParams params = 
-                                            (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) v.getLayoutParams();
-                                        params.verticalBias = newBias;
-                                        v.setLayoutParams(params);
-                                    }
-                                } else {
-                                    // HORIZONTAL RESIZE (Direction aware)
-                                    CarLauncherSettings settings = new CarLauncherSettings(MapActivity.this);
-                                    boolean isLeft = "left".equals(settings.getWidgetPanelPosition());
-                                    
-                                    float delta = isLeft ? (event.getRawX() - startX) : (startX - event.getRawX());
-                                    int newWidth = (int) (startWidth + delta);
-                                    int screenWidth = rootLayout.getWidth();
-                                    
-                                    if (screenWidth > 0) {
-                                        float percent = (float) newWidth / screenWidth;
-                                        if (percent < 0.25f) percent = 0.25f; // Min width
-                                        if (percent > 0.65f) percent = 0.65f; // Max width
-                                        
-                                        int clampedWidth = (int) (screenWidth * percent);
-                                        ViewGroup.LayoutParams params = widgetPanel.getLayoutParams();
-                                        params.width = clampedWidth;
-                                        widgetPanel.setLayoutParams(params);
-                                    }
-                                }
-                            } else {
-                                // Still waiting for threshold or Long Press
-                                if (diffX > DRAG_THRESHOLD || diffY > DRAG_THRESHOLD) {
-                                     handler.removeCallbacks(longPressRunnable); // Moved too much before long press
-                                }
-                            }
-                            return true;
-
-                        case MotionEvent.ACTION_UP:
-                        case MotionEvent.ACTION_CANCEL:
-                            handler.removeCallbacks(longPressRunnable);
-                            
-                            if (isMoveMode) {
-                                // Save Vertical Bias
-                                androidx.constraintlayout.widget.ConstraintLayout.LayoutParams params = 
-                                    (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) v.getLayoutParams();
-                                CarLauncherSettings settings = new CarLauncherSettings(MapActivity.this);
-                                settings.setWidgetHandleVerticalBias(params.verticalBias);
-                                
-                                // Reset Visuals & RE-APPLY Layout to snap to border
-                                widgetHandle.clearColorFilter();
-                                applyWidgetPanelState(); 
-                            } else if (isDragging) {
-                                // Save Width & RE-APPLY Layout
-                                int screenWidth = rootLayout.getWidth();
-                                if (screenWidth > 0) {
-                                     float currentPercent = (float) widgetPanel.getWidth() / screenWidth;
-                                     float snapPercent = 0.4f;
-                                     float[] snaps = {0.3f, 0.4f, 0.5f, 0.6f};
-                                     float minDiff = Float.MAX_VALUE;
-                                     for (float s : snaps) {
-                                         float diff = Math.abs(currentPercent - s);
-                                         if (diff < minDiff) { minDiff = diff; snapPercent = s; }
-                                     }
-                                     CarLauncherSettings settings = new CarLauncherSettings(MapActivity.this);
-                                     settings.setWidgetPanelWidthPercent(snapPercent);
-                                     applyWidgetPanelState();
-                                 }
-                            } else {
-                                // Tap -> Toggle
-                                v.performClick();
-                                toggleLayoutMode();
-                            }
-                            
-                            isDragging = false;
-                            isMoveMode = false;
-                            widgetHandle.clearColorFilter(); // Ensure reset
-                            return true;
-                    }
-                    return false;
-                }
-            });
+		    widgetHandle.setOnClickListener(new View.OnClickListener() {
+		        @Override
+		        public void onClick(View v) {
+		            if (carLayoutManager != null) {
+		                // Panellerin yerini swap (toggle) yapar
+		                carLayoutManager.setContentFullScreen(!carLayoutManager.isContentFullScreen());
+		                applyWidgetPanelState();
+		            }
+		        }
+		    });
 		}
 		
 		applyWidgetPanelState();
@@ -872,14 +743,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 
 	public void openCarLauncherSettings() {
-		if (appDrawerContainer != null) {
-			appDrawerContainer.setVisibility(View.VISIBLE);
-			if (getSupportFragmentManager().findFragmentByTag("CarLauncherSettingsFragment") == null) {
-				net.osmand.plus.carlauncher.ui.CarLauncherSettingsFragment fragment = new net.osmand.plus.carlauncher.ui.CarLauncherSettingsFragment();
-				getSupportFragmentManager().beginTransaction()
-						.replace(R.id.app_drawer_container, fragment, "CarLauncherSettingsFragment")
-						.addToBackStack(null)
-						.commitAllowingStateLoss();
+		if (panelContentManager != null) {
+			if (panelContentManager.getCurrentContent() == net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.SETTINGS) {
+				setPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS);
+			} else {
+				setPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.SETTINGS);
 			}
 		}
 	}
@@ -1134,6 +1002,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				return;
 			}
 		}
+		if (panelContentManager != null && panelContentManager.getCurrentContent() != net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS) {
+			closeAppDrawer();
+			return;
+		}
+
         if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
             getSupportFragmentManager().popBackStack();
             return;

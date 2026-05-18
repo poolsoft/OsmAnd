@@ -19,7 +19,8 @@ public class PanelContentManager {
         MUSIC,        // Müzik player
         NOTIFICATION, // Bildirim + müzik (üst üste)
         APP_DRAWER,   // App drawer listesi
-        WEATHER       // Hava durumu
+        WEATHER,      // Hava durumu
+        SETTINGS      // Ayarlar fragmenti
     }
 
     private PanelContent currentContent = null;
@@ -48,7 +49,7 @@ public class PanelContentManager {
      */
     public void setContent(PanelContent content) {
         // Her zaman en guncel fullscreen durumunu set et
-        boolean needsFullScreen = (content == PanelContent.APP_DRAWER || content == PanelContent.MUSIC);
+        boolean needsFullScreen = (content == PanelContent.APP_DRAWER || content == PanelContent.MUSIC || content == PanelContent.SETTINGS);
         if (fullScreenListener != null) {
             fullScreenListener.onFullScreenStateChanged(needsFullScreen);
         }
@@ -75,6 +76,9 @@ public class PanelContentManager {
                 break;
             case APP_DRAWER:
                 fragment = new AppDrawerFragment();
+                break;
+            case SETTINGS:
+                fragment = new CarLauncherSettingsFragment();
                 break;
             case WEATHER:
                 try {
