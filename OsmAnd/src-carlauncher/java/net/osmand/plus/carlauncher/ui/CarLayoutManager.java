@@ -36,8 +36,8 @@ public class CarLayoutManager {
 
     private boolean isContentFullScreen = false;
 
-    public void toggleContentFullScreen() {
-        isContentFullScreen = !isContentFullScreen;
+    public void setContentFullScreen(boolean fullScreen) {
+        this.isContentFullScreen = fullScreen;
     }
 
     public boolean isContentFullScreen() {

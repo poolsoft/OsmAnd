@@ -450,8 +450,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		carLayoutManager = new net.osmand.plus.carlauncher.ui.CarLayoutManager(this);
 		panelContentManager = new net.osmand.plus.carlauncher.ui.PanelContentManager(
 				getSupportFragmentManager(), R.id.widget_panel);
-		panelContentManager.setOnFullScreenToggle(() -> {
-			carLayoutManager.toggleContentFullScreen();
+		panelContentManager.setOnFullScreenStateChangeListener(isFullScreen -> {
+			carLayoutManager.setContentFullScreen(isFullScreen);
 			applyWidgetPanelState();
 		});
 		
