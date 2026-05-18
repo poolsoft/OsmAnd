@@ -65,7 +65,7 @@ public class UnifiedPanelFragment extends Fragment
                 SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                 panelClock.setText(sdf.format(new Date()));
             }
-            clockHandler.postDelayed(this, 15000);
+            clockHandler.postDelayed(this, 1000);
         }
     };
 
