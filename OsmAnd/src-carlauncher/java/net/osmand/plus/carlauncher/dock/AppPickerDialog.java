@@ -117,6 +117,17 @@ public class AppPickerDialog {
             musicPackages.add("com.txznet.music");
             musicPackages.add("com.syd.music");
             musicPackages.add("com.mediatek.music");
+
+            // Populer muzik ve video uygulamalarini da listeye ekliyoruz (Spotify, YouTube vb.)
+            musicPackages.add("com.spotify.music");
+            musicPackages.add("com.google.android.apps.youtube.music");
+            musicPackages.add("com.google.android.youtube");
+            musicPackages.add("com.apple.android.music");
+            musicPackages.add("deezer.android.app");
+            musicPackages.add("com.aspiro.tidal");
+            musicPackages.add("com.soundcloud.android");
+            musicPackages.add("tunein.player");
+            musicPackages.add("org.videolan.vlc");
         }
 
         for (ResolveInfo info : resolveInfos) {

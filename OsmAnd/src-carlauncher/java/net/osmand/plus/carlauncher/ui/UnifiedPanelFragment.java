@@ -22,13 +22,28 @@ import net.osmand.plus.carlauncher.CarLauncherInterface;
 import net.osmand.plus.carlauncher.music.MusicManager;
 import net.osmand.plus.carlauncher.widgets.MusicVisualizerView;
 
+// Konum, Hiz ve Saat icin eklenen importlar
+import net.osmand.Location;
+import net.osmand.plus.OsmAndLocationProvider;
+import net.osmand.plus.OsmandApplication;
+import net.osmand.plus.utils.FormattedValue;
+import net.osmand.plus.utils.OsmAndFormatter;
+import android.os.Handler;
+import android.os.Looper;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+import java.util.Date;
+
 /**
  * Birlesik Müzik ve Arama/Bildirim Paneli.
  * Normal modda sag taraftaki panelde gosterilir.
  */
-public class UnifiedPanelFragment extends Fragment implements MusicManager.MusicUIListener, MusicManager.MusicVisualizerListener {
+public class UnifiedPanelFragment extends Fragment 
+        implements MusicManager.MusicUIListener, MusicManager.MusicVisualizerListener,
+                   OsmAndLocationProvider.OsmAndLocationListener {
 
     private MusicManager musicManager;
+    private OsmandApplication app;
 
     // Arayuz Elemanlari
     private ImageView albumArtBg;
@@ -37,6 +52,22 @@ public class UnifiedPanelFragment extends Fragment implements MusicManager.Music
     private TextView notifTitle;
     private TextView notifMessage;
     private ImageButton btnNotifClose;
+
+    // Ust Panel Saat ve Hiz Gostergeleri
+    private TextView panelClock;
+    private TextView panelSpeed;
+
+    private final Handler clockHandler = new Handler(Looper.getMainLooper());
+    private final Runnable clockRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (panelClock != null) {
+                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                panelClock.setText(sdf.format(new Date()));
+            }
+            clockHandler.postDelayed(this, 15000);
+        }
+    };
 
     private View musicArea;
     private ImageView musicMiniArt;
@@ -70,6 +101,7 @@ public class UnifiedPanelFragment extends Fragment implements MusicManager.Music
         super.onCreate(savedInstanceState);
         if (getContext() != null) {
             musicManager = MusicManager.getInstance(getContext());
+            app = (OsmandApplication) getContext().getApplicationContext();
         }
     }
 
@@ -85,6 +117,10 @@ public class UnifiedPanelFragment extends Fragment implements MusicManager.Music
         notifTitle = root.findViewById(R.id.notif_title);
         notifMessage = root.findViewById(R.id.notif_message);
         btnNotifClose = root.findViewById(R.id.btn_notif_close);
+
+        // Ust panel saat ve hiz gostergeleri
+        panelClock = root.findViewById(R.id.panel_clock);
+        panelSpeed = root.findViewById(R.id.panel_speed);
 
         // Muzik alani yapilari
         musicArea = root.findViewById(R.id.music_area);
@@ -172,6 +208,15 @@ public class UnifiedPanelFragment extends Fragment implements MusicManager.Music
             musicManager.addVisualizerListener(this);
         }
 
+        // Saat guncellemesini baslat
+        clockHandler.post(clockRunnable);
+
+        // Konum dinleyicisini kaydet
+        if (app != null && app.getLocationProvider() != null) {
+            app.getLocationProvider().addLocationListener(this);
+            updateLocation(app.getLocationProvider().getLastKnownLocation());
+        }
+
         // BroadcastReceiver kaydi (Android 14+ icin RECEIVER_EXPORTED zorunlu)
         if (getContext() != null) {
             IntentFilter filter = new IntentFilter();
@@ -191,6 +236,14 @@ public class UnifiedPanelFragment extends Fragment implements MusicManager.Music
         if (musicManager != null) {
             musicManager.removeListener(this);
             musicManager.removeVisualizerListener(this);
+        }
+
+        // Saat guncellemesini durdur
+        clockHandler.removeCallbacks(clockRunnable);
+
+        // Konum dinleyicisini kaldir
+        if (app != null && app.getLocationProvider() != null) {
+            app.getLocationProvider().removeLocationListener(this);
         }
 
         // BroadcastReceiver kaydini kaldir
@@ -241,5 +294,28 @@ public class UnifiedPanelFragment extends Fragment implements MusicManager.Music
         if (musicVisualizer != null) {
             musicVisualizer.updateVisualizer(fft);
         }
+    }
+
+    // --- OsmAndLocationListener Geri Bildirimleri ---
+
+    @Override
+    public void updateLocation(Location location) {
+        if (location == null || panelSpeed == null || app == null) return;
+
+        float speed = 0;
+        if (location.hasSpeed()) {
+            speed = location.getSpeed();
+        }
+
+        final float finalSpeed = speed;
+        panelSpeed.post(() -> {
+            if (finalSpeed > 0.5f) { // speed > ~1.8 km/h ise goster
+                FormattedValue formatted = OsmAndFormatter.getFormattedSpeedValue(finalSpeed, app);
+                panelSpeed.setText(formatted.value);
+                panelSpeed.setVisibility(View.VISIBLE);
+            } else {
+                panelSpeed.setVisibility(View.GONE);
+            }
+        });
     }
 }

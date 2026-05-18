@@ -243,36 +243,67 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     
     private MusicSource lastActiveSource = MusicSource.INTERNAL; // Default
 
-    // --- Controls (Widget ile uyumlu isimler) ---
+    private void sendMediaKey(int keycode) {
+        try {
+            android.media.AudioManager am = (android.media.AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+            if (am != null) {
+                long eventtime = android.os.SystemClock.uptimeMillis();
+                android.view.KeyEvent downEvent = new android.view.KeyEvent(eventtime, eventtime, android.view.KeyEvent.ACTION_DOWN, keycode, 0);
+                android.view.KeyEvent upEvent = new android.view.KeyEvent(eventtime, eventtime, android.view.KeyEvent.ACTION_UP, keycode, 0);
+                am.dispatchMediaKeyEvent(downEvent);
+                am.dispatchMediaKeyEvent(upEvent);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to send media key: " + keycode, e);
+        }
+    }
 
     public void togglePlayPause() {
         // 1. Permission Check
         if (!checkNotificationAccess()) {
-            android.widget.Toast.makeText(context, "Harici kontrol için 'Bildirim Erişimi' izni gerekli!", android.widget.Toast.LENGTH_LONG).show();
-            // Optional: Intent logic is in Widget, not here usually, but we could broadcast.
-            // Assuming UI handles the intent based on a specific state or toast is enough.
+            android.widget.Toast.makeText(context, "Harici kontrol icin 'Bildirim Erisimi' izni gerekli!", android.widget.Toast.LENGTH_LONG).show();
         }
 
-        // 2. Refresh External Sessions (Always try to find fresh info)
+        // 2. Refresh External Sessions
         MediaSessionManager manager = (MediaSessionManager) context.getSystemService(Context.MEDIA_SESSION_SERVICE);
         if (manager != null) {
             try {
-                // Requires Permission!
                 ComponentName listenerComp = new ComponentName(context, "net.osmand.plus.carlauncher.MediaNotificationListener");
                 List<MediaController> controllers = manager.getActiveSessions(listenerComp);
                 updateActiveController(controllers);
             } catch (Exception e) {
-                 // Log.w(TAG, "Session refresh failed (Normal if no permission)");
+                 // Session refresh failed (Normal if no permission)
             }
         }
 
-        // 3. Aggressive Logic: Preferred Package Priority
-        // If user explicitly selected an external app (e.g. Spotify) as preferred,
-        // and Internal is NOT playing, try to force that external app.
-        if (preferredPackage != null && !preferredPackage.equals("usage.internal.player") && !internalPlayer.isPlaying()) {
-            
-            // A. If we have a controller for it, use it!
+        // 3. If Internal player has track and is active, toggle it
+        if (internalPlayer.isPlaying() || (preferredPackage != null && preferredPackage.equals("usage.internal.player"))) {
+            internalPlayer.playPause();
+            lastActiveSource = MusicSource.INTERNAL;
+            return;
+        }
+
+        // 4. Preferred Package Priority with active controller
+        if (preferredPackage != null && !preferredPackage.equals("usage.internal.player")) {
             if (activeExternalController != null && activeExternalController.getPackageName().equals(preferredPackage)) {
+                try {
+                    PlaybackState state = activeExternalController.getPlaybackState();
+                    if (state != null && state.getState() == PlaybackState.STATE_PLAYING) {
+                        activeExternalController.getTransportControls().pause();
+                    } else {
+                        activeExternalController.getTransportControls().play();
+                    }
+                    lastActiveSource = MusicSource.EXTERNAL;
+                    return;
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to toggle via preferred controller, falling back", e);
+                }
+            }
+        }
+
+        // 5. Default Active controller fallback
+        if (activeExternalController != null) {
+            try {
                 PlaybackState state = activeExternalController.getPlaybackState();
                 if (state != null && state.getState() == PlaybackState.STATE_PLAYING) {
                     activeExternalController.getTransportControls().pause();
@@ -281,43 +312,53 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 }
                 lastActiveSource = MusicSource.EXTERNAL;
                 return;
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to toggle via active controller, falling back", e);
             }
-            
-            // B. If no active controller for preferred, but we have it saved: LAUNCH IT.
-            // Often launching the app resumes music or makes the session active.
-            startPreferredApplication(preferredPackage);
-            lastActiveSource = MusicSource.EXTERNAL;
-            return;
         }
 
-        // 4. Default "Last Active" Fallback
-        
-        // If External is Active (Controller exists), use it
-        if (activeExternalController != null) {
-             PlaybackState state = activeExternalController.getPlaybackState();
-             if (state != null && state.getState() == PlaybackState.STATE_PLAYING) {
-                 activeExternalController.getTransportControls().pause();
-             } else {
-                 activeExternalController.getTransportControls().play();
-             }
-             lastActiveSource = MusicSource.EXTERNAL;
-             return;
-        }
+        // 6. Universal Fallback: Send media key event to active focus owner
+        sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
+        lastActiveSource = MusicSource.EXTERNAL;
 
-        // If Internal has track, toggle it
-        if (internalPlayer.getCurrentTrack() != null) {
-            internalPlayer.playPause();
-            lastActiveSource = MusicSource.INTERNAL;
-            return;
-        }
-        
-        // If nothing at all... Launch preferred if exists, else Toast
+        // 7. Wake up preferred application if not running
         if (preferredPackage != null && !preferredPackage.equals("usage.internal.player")) {
-             startPreferredApplication(preferredPackage);
-        } else {
-             // Try to play internal empty?
-             internalPlayer.playPause(); 
+            if (activeExternalController == null || !activeExternalController.getPackageName().equals(preferredPackage)) {
+                startPreferredApplication(preferredPackage);
+            }
         }
+    }
+
+    public void skipToNext() {
+        if (internalPlayer.isPlaying() || (preferredPackage != null && preferredPackage.equals("usage.internal.player"))) {
+            internalPlayer.playNext();
+            return;
+        }
+        if (activeExternalController != null) {
+            try {
+                activeExternalController.getTransportControls().skipToNext();
+                return;
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to skipToNext via controller, falling back", e);
+            }
+        }
+        sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_NEXT);
+    }
+
+    public void skipToPrevious() {
+        if (internalPlayer.isPlaying() || (preferredPackage != null && preferredPackage.equals("usage.internal.player"))) {
+            internalPlayer.playPrevious();
+            return;
+        }
+        if (activeExternalController != null) {
+            try {
+                activeExternalController.getTransportControls().skipToPrevious();
+                return;
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to skipToPrevious via controller, falling back", e);
+            }
+        }
+        sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS);
     }
 
     private void startPreferredApplication(String pkg) {
