@@ -290,6 +290,10 @@ public class CarLayoutManager {
         if (appDock != null) appDock.setElevation(10f);
         if (widgetPanel != null) widgetPanel.setElevation(isPortrait ? 2f : 15f);
         if (appDrawerContainer != null) appDrawerContainer.setElevation(50f);
+        if (widgetHandle != null) {
+            widgetHandle.setElevation(25f);
+            widgetHandle.setZ(25f);
+        }
     }
 
     private void updateWidgetHandleConstraints(ConstraintSet cs, CarLauncherSettings settings, boolean isOpen) {
@@ -298,7 +302,6 @@ public class CarLayoutManager {
                 cs.setVisibility(R.id.widget_handle, View.GONE);
             } else {
                 cs.setVisibility(R.id.widget_handle, View.VISIBLE);
-                cs.constrainElevation(R.id.widget_handle, 25f);
             }
         }
     }
