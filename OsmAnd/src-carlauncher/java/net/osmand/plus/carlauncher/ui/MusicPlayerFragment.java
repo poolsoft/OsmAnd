@@ -1140,17 +1140,15 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         static class Holder extends RecyclerView.ViewHolder {
             TextView title, artist;
-            ImageButton btnAdd;
+            ImageButton btnAdd = null;
             ImageButton btnFavorite;
-            ImageView icon;
+            ImageView icon = null;
 
             public Holder(@NonNull View itemView) {
                 super(itemView);
                 title = itemView.findViewById(net.osmand.plus.R.id.music_title);
                 artist = itemView.findViewById(net.osmand.plus.R.id.music_artist);
-                btnAdd = itemView.findViewById(net.osmand.plus.R.id.btn_add_to_playlist);
                 btnFavorite = itemView.findViewById(net.osmand.plus.R.id.btn_favorite);
-                icon = itemView.findViewById(net.osmand.plus.R.id.music_icon);
             }
         }
     }
