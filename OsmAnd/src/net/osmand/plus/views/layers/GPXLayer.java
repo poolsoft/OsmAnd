@@ -639,6 +639,7 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 			QListFloat startFinishHeights = new QListFloat();
 			for (SelectedGpxFile selectedGpxFile : selectedGPXFiles) {
 				QListPointI startFinishPoints = new QListPointI();
+				QListInt startFinishExtraIds = new QListInt();
 				SplitLabelList splitLabels = new SplitLabelList();
 
 				GpxFile gpxFile = selectedGpxFile.getGpxFile();
@@ -663,7 +664,9 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 								startFinishHeights.add((float) Gpx3DVisualizationType.getPointElevation(finish, track3DStyle, heightmapsActive));
 							}
 							startFinishPoints.add(new PointI(Utilities.get31TileNumberX(start.getLon()), Utilities.get31TileNumberY(start.getLat())));
+							startFinishExtraIds.add(0);
 							startFinishPoints.add(new PointI(Utilities.get31TileNumberX(finish.getLon()), Utilities.get31TileNumberY(finish.getLat())));
+							startFinishExtraIds.add(0);
 						}
 					}
 				}
@@ -680,10 +683,10 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 							SplitLabel splitLabel;
 							PointI point31 = new PointI(Utilities.get31TileNumberX(point.getLon()), Utilities.get31TileNumberY(point.getLat()));
 							if (visualizationType == Gpx3DVisualizationType.NONE || trackLinePosition != Gpx3DLinePositionType.TOP) {
-								splitLabel = new SplitLabel(point31, name, NativeUtilities.createColorARGB(color, 179));
+								splitLabel = new SplitLabel(point31, name, NativeUtilities.createColorARGB(color, 179), 0);
 							} else {
 								float labelHeight = (float) Gpx3DVisualizationType.getPointElevation(point, track3DStyle, heightmapsActive);
-								splitLabel = new SplitLabel(point31, name, NativeUtilities.createColorARGB(color, 179), labelHeight);
+								splitLabel = new SplitLabel(point31, name, NativeUtilities.createColorARGB(color, 179), 0, labelHeight);
 							}
 							splitLabels.add(splitLabel);
 						}
@@ -691,7 +694,7 @@ public class GPXLayer extends OsmandMapLayer implements IContextMenuProvider, IM
 				}
 				if (!startFinishPoints.isEmpty() || !splitLabels.isEmpty()) {
 					GpxAdditionalIconsProvider additionalIconsProvider = new GpxAdditionalIconsProvider(getPointsOrder() - selectedGPXFiles.size() - 800, tileBox.getDensity(),
-							startFinishPoints, splitLabels,
+							startFinishPoints, startFinishExtraIds, splitLabels,
 							NativeUtilities.createSkImageFromBitmap(startPointImage),
 							NativeUtilities.createSkImageFromBitmap(finishPointImage),
 							NativeUtilities.createSkImageFromBitmap(startAndFinishImage),
