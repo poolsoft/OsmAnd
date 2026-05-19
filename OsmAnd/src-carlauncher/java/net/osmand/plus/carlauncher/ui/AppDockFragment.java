@@ -567,7 +567,8 @@ public class AppDockFragment extends Fragment
             @Override
             public void run() {
                 if (clockView != null) {
-                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm",
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
+                            isVerticalMode ? "HH\nmm" : "HH:mm",
                             java.util.Locale.getDefault());
                     clockView.setText(sdf.format(new java.util.Date()));
                 }
@@ -600,13 +601,13 @@ public class AppDockFragment extends Fragment
         layoutButton.post(() -> {
             switch (mode) {
                 case 0: // Normal (Widgets Visible)
-                    layoutButton.setImageResource(android.R.drawable.ic_menu_mapmode);
+                    layoutButton.setImageResource(net.osmand.plus.R.drawable.ic_layout_full);
                     break;
                 case 2: // Full Screen (Map Only)
-                    layoutButton.setImageResource(net.osmand.plus.R.drawable.ic_action_view_as_list);
+                    layoutButton.setImageResource(net.osmand.plus.R.drawable.ic_layout_split);
                     break;
                 default: 
-                    layoutButton.setImageResource(android.R.drawable.ic_menu_mapmode);
+                    layoutButton.setImageResource(net.osmand.plus.R.drawable.ic_layout_split);
                     break;
             }
         });
@@ -635,7 +636,7 @@ public class AppDockFragment extends Fragment
                 ll.setOrientation(isVertical ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
                 // CRITICAL: Force TOP alignment in Sidebar mode
                 ll.setGravity(isVertical ? android.view.Gravity.CENTER_HORIZONTAL | android.view.Gravity.TOP : android.view.Gravity.CENTER_VERTICAL);
-                ll.setPadding(isVertical ? 0 : 16, isVertical ? 8 : 0, isVertical ? 0 : 16, isVertical ? 8 : 0);
+                ll.setPadding(isVertical ? 0 : dpToPx(16), isVertical ? dpToPx(2) : 0, isVertical ? 0 : dpToPx(16), isVertical ? dpToPx(2) : 0);
                 
                 ViewGroup.LayoutParams lp = ll.getLayoutParams();
                 lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
@@ -653,7 +654,23 @@ public class AppDockFragment extends Fragment
             
             View clockContainer = root.findViewById(net.osmand.plus.R.id.clock_settings_container);
             if (clockContainer != null) {
-                clockContainer.setVisibility(isVertical ? View.GONE : View.VISIBLE);
+                // Keep visible in vertical mode!
+                clockContainer.setVisibility(View.VISIBLE);
+                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) clockContainer.getLayoutParams();
+                lp.gravity = isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL;
+                lp.width = isVertical ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT;
+                lp.height = isVertical ? ViewGroup.LayoutParams.WRAP_CONTENT : dpToPx(44);
+                lp.setMargins(0, 0, 0, 0);
+                clockContainer.setPadding(isVertical ? 0 : dpToPx(12), isVertical ? dpToPx(2) : 0, isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(2) : 0);
+                clockContainer.setLayoutParams(lp);
+            }
+            
+            if (clockView != null) {
+                clockView.setGravity(isVertical ? android.view.Gravity.CENTER : android.view.Gravity.CENTER_VERTICAL);
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
+                        isVertical ? "HH\nmm" : "HH:mm",
+                        java.util.Locale.getDefault());
+                clockView.setText(sdf.format(new java.util.Date()));
             }
             
             // 4. Item Layout Params Adjustments
@@ -662,8 +679,8 @@ public class AppDockFragment extends Fragment
             if (appListButton != null) {
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) appListButton.getLayoutParams();
                 lp.gravity = gravity;
-                // Reduced top margin in vertical to keep it closer and match horizontal margins
-                lp.setMargins(isVertical ? 0 : 8, isVertical ? 10 : 0, isVertical ? 0 : 8, isVertical ? 10 : 0);
+                // Extremely reduced top margin in vertical to keep it closer and match horizontal margins
+                lp.setMargins(isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(2) : 0, isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(2) : 0);
                 appListButton.setLayoutParams(lp);
             }
             
@@ -672,9 +689,9 @@ public class AppDockFragment extends Fragment
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) layoutButton.getLayoutParams();
                 lp.gravity = gravity;
                 if (isVertical) {
-                    lp.setMargins(0, 0, 0, 10); // Reduced bottom margin
+                    lp.setMargins(0, 0, 0, dpToPx(2)); // Extremely reduced bottom margin
                 } else {
-                    lp.setMargins(4, 0, 4, 0);
+                    lp.setMargins(dpToPx(4), 0, dpToPx(4), 0);
                 }
                 layoutButton.setLayoutParams(lp);
             }
@@ -685,6 +702,7 @@ public class AppDockFragment extends Fragment
                 lp.width = isVertical ? ViewGroup.LayoutParams.MATCH_PARENT : 0;
                 lp.height = isVertical ? 0 : ViewGroup.LayoutParams.MATCH_PARENT;
                 lp.weight = 1.0f;
+                lp.setMargins(isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(4) : 0, isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(4) : 0);
                 recyclerView.setLayoutParams(lp);
             }
         });
@@ -712,7 +730,12 @@ public class AppDockFragment extends Fragment
             miniMusicContainer.setVisibility(View.VISIBLE);
             miniMusicContainer.setBackground(null);
             miniMusicContainer.setPadding(0, 0, 0, 0);
-            miniMusicContainer.setMinimumWidth(0);
+            
+            android.view.ViewGroup.LayoutParams containerLp = miniMusicContainer.getLayoutParams();
+            if (containerLp != null) {
+                containerLp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                miniMusicContainer.setLayoutParams(containerLp);
+            }
             
             if (miniMusicIcon != null) miniMusicIcon.setVisibility(View.GONE);
             if (miniMusicTitle != null) miniMusicTitle.setVisibility(View.GONE);
@@ -743,26 +766,42 @@ public class AppDockFragment extends Fragment
         } else {
             // Restore default landscape styles if needed (in case of dynamic layout configuration updates)
             miniMusicContainer.setBackgroundResource(net.osmand.plus.R.drawable.bg_drawer_rounded);
-            miniMusicContainer.setPadding(dpToPx(12), 0, dpToPx(12), 0);
-            miniMusicContainer.setMinimumWidth(dpToPx(160));
+            miniMusicContainer.setPadding(dpToPx(8), 0, dpToPx(8), 0);
             
-            if (miniMusicIcon != null) miniMusicIcon.setVisibility(View.VISIBLE);
-            if (miniMusicTitle != null) miniMusicTitle.setVisibility(View.VISIBLE);
+            android.view.ViewGroup.LayoutParams containerLp = miniMusicContainer.getLayoutParams();
+            if (containerLp != null) {
+                containerLp.width = dpToPx(160); // Fixed 160dp width in landscape horizontal dock
+                miniMusicContainer.setLayoutParams(containerLp);
+            }
+            
+            if (miniMusicIcon != null) {
+                miniMusicIcon.setVisibility(View.VISIBLE);
+                android.view.ViewGroup.LayoutParams lp = miniMusicIcon.getLayoutParams();
+                lp.width = dpToPx(24);
+                lp.height = dpToPx(24);
+                miniMusicIcon.setLayoutParams(lp);
+            }
+            
+            if (miniMusicTitle != null) {
+                miniMusicTitle.setVisibility(View.VISIBLE);
+                android.widget.LinearLayout.LayoutParams lp = (android.widget.LinearLayout.LayoutParams) miniMusicTitle.getLayoutParams();
+                lp.width = 0;
+                lp.weight = 1.0f;
+                lp.leftMargin = dpToPx(4);
+                lp.rightMargin = dpToPx(4);
+                miniMusicTitle.setLayoutParams(lp);
+            }
             
             if (miniBtnPlay != null) {
-                miniBtnPlay.setBackgroundResource(0);
-                miniBtnPlay.setBackgroundResource(android.R.drawable.screen_background_light_transparent); // selectableItemBackgroundBorderless fallback
-                miniBtnPlay.setBackground(getResources().getDrawable(android.R.drawable.screen_background_light_transparent, null)); // generic background
-                // We can set it to selectableItemBackground
                 android.util.TypedValue outValue = new android.util.TypedValue();
                 getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true);
                 miniBtnPlay.setBackgroundResource(outValue.resourceId);
                 
                 android.view.ViewGroup.LayoutParams lp = miniBtnPlay.getLayoutParams();
-                lp.width = dpToPx(32);
-                lp.height = dpToPx(32);
+                lp.width = dpToPx(28);
+                lp.height = dpToPx(28);
                 miniBtnPlay.setLayoutParams(lp);
-                miniBtnPlay.setPadding(dpToPx(6), dpToPx(6), dpToPx(6), dpToPx(6));
+                miniBtnPlay.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
             }
             
             if (miniBtnNext != null) {
@@ -771,11 +810,11 @@ public class AppDockFragment extends Fragment
                 miniBtnNext.setBackgroundResource(outValue.resourceId);
                 
                 android.widget.LinearLayout.LayoutParams lp = (android.widget.LinearLayout.LayoutParams) miniBtnNext.getLayoutParams();
-                lp.width = dpToPx(32);
-                lp.height = dpToPx(32);
+                lp.width = dpToPx(28);
+                lp.height = dpToPx(28);
                 lp.leftMargin = 0;
                 miniBtnNext.setLayoutParams(lp);
-                miniBtnNext.setPadding(dpToPx(6), dpToPx(6), dpToPx(6), dpToPx(6));
+                miniBtnNext.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
             }
         }
     }
