@@ -14,7 +14,7 @@
         android:layout_height="0dp"
         android:scaleType="centerCrop"
         android:alpha="0.4"
-        android:src="@android:drawable/ic_menu_gallery"
+        android:src="@drawable/bg_default_music_art"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -47,13 +47,14 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <TextView
-            android:id="@+id/panel_clock"
+            android:id="@+id/panel_speed"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/cl_primary"
             android:textSize="15sp"
             android:fontFamily="sans-serif-medium"
-            android:text="12:00"
+            android:text="85 km/h"
+            android:visibility="gone"
             android:shadowColor="#80000000"
             android:shadowDx="1"
             android:shadowDy="1"
@@ -65,14 +66,13 @@
             android:layout_weight="1"/>
 
         <TextView
-            android:id="@+id/panel_speed"
+            android:id="@+id/panel_clock"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/cl_primary"
+            android:textColor="#FFFFFF"
             android:textSize="15sp"
             android:fontFamily="sans-serif-medium"
-            android:text="85 km/h"
-            android:visibility="gone"
+            android:text="12:00"
             android:shadowColor="#80000000"
             android:shadowDx="1"
             android:shadowDy="1"
@@ -160,8 +160,11 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:layout_marginTop="16dp"
-            android:scaleType="centerCrop"
-            android:src="@android:drawable/ic_menu_gallery"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_default_album_art"
+            android:tint="#88FFFFFF"
+            android:background="@drawable/bg_track_art_placeholder"
+            android:padding="12dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>

@@ -1079,31 +1079,38 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             holder.title.setText(track.getTitle());
             holder.artist.setText(track.getArtist());
 
-            // Icon Logic
+            // Calan sarkinin arka planini vurgula
             boolean isCurrent = track.getPath().equals(currentTrackPath);
+            if (holder.icon != null) {
+                if (isCurrent) {
+                    holder.icon.setVisibility(View.VISIBLE);
+                    holder.icon.setImageResource(
+                            isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play);
+                } else {
+                    holder.icon.setVisibility(View.INVISIBLE);
+                    holder.icon.setImageResource(0);
+                }
+            }
+
             if (isCurrent) {
-                holder.icon.setVisibility(View.VISIBLE);
-                holder.icon.setImageResource(
-                        isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play);
                 holder.itemView.setBackgroundColor(0x3300FFFF); // Highlight
             } else {
-                holder.icon.setVisibility(View.INVISIBLE);
-                holder.icon.setImageResource(0);
                 holder.itemView.setBackgroundResource(android.R.drawable.list_selector_background);
             }
 
-            // Favorites Logic
+            // Favori ve Oynatma Listesi Mantigi
             if (holder.btnFavorite != null && playlistManager != null) {
                 boolean isFav = playlistManager.isFavorite(track.getPath());
                 holder.btnFavorite.setImageResource(isFav ? android.R.drawable.star_on : android.R.drawable.star_off);
 
-                // Tint: Gold if Fav, Gray/White if not
+                // Tint: Favori ise Altin, degilse Gri
                 if (isFav) {
                     holder.btnFavorite.setColorFilter(0xFFFFD700); // Gold
                 } else {
                     holder.btnFavorite.setColorFilter(0xFF888888); // Gray
                 }
 
+                // Yildiza kisa basildiginda favori durumunu degistir
                 holder.btnFavorite.setOnClickListener(v -> {
                     if (isFav) {
                         playlistManager.removeFromFavorites(track.getPath());
@@ -1111,6 +1118,12 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                         playlistManager.addToFavorites(track.getPath());
                     }
                     notifyItemChanged(position);
+                });
+
+                // Yildiza uzun basildiginda calma listesi ekleme dialogunu ac
+                holder.btnFavorite.setOnLongClickListener(v -> {
+                    listener.onAddClick(track);
+                    return true;
                 });
             }
 

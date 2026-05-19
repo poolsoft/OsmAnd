@@ -266,12 +266,24 @@ public class UnifiedPanelFragment extends Fragment
         if (albumArt != null) {
             if (albumArtBg != null) albumArtBg.setImageBitmap(albumArt);
             if (musicMiniArt != null) {
+                musicMiniArt.setBackground(null);
+                musicMiniArt.setPadding(0, 0, 0, 0);
+                musicMiniArt.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 musicMiniArt.setImageBitmap(albumArt);
                 musicMiniArt.setVisibility(View.VISIBLE);
             }
         } else {
-            if (albumArtBg != null) albumArtBg.setImageResource(android.R.drawable.ic_menu_gallery);
-            if (musicMiniArt != null) musicMiniArt.setVisibility(View.GONE);
+            if (albumArtBg != null) albumArtBg.setImageResource(R.drawable.bg_default_music_art);
+            if (musicMiniArt != null) {
+                musicMiniArt.setBackgroundResource(R.drawable.bg_track_art_placeholder);
+                if (getContext() != null) {
+                    int padding = (int) (12 * getContext().getResources().getDisplayMetrics().density);
+                    musicMiniArt.setPadding(padding, padding, padding, padding);
+                }
+                musicMiniArt.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                musicMiniArt.setImageResource(R.drawable.ic_default_album_art);
+                musicMiniArt.setVisibility(View.VISIBLE);
+            }
         }
     }
 
