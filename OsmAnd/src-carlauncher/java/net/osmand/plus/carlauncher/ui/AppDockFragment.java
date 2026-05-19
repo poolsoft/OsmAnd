@@ -239,6 +239,21 @@ public class AppDockFragment extends Fragment
         // Setup RecyclerView
         updateRecyclerViewOrientation(root);
 
+        // Responsive visibility listener based on available dock width
+        View dockContainer = root.findViewById(net.osmand.plus.R.id.dock_content_container);
+        if (dockContainer != null) {
+            dockContainer.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+                @Override
+                public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                           int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                    int width = right - left;
+                    if (width > 0) {
+                        adjustVisibilityByAvailableWidth(width);
+                    }
+                }
+            });
+        }
+
         // Long Press on Root & Recycler to add apps
         View.OnLongClickListener longClickListener = v -> {
             showAppPickerDialog();
@@ -562,7 +577,7 @@ public class AppDockFragment extends Fragment
                 ll.setOrientation(isVertical ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
                 // CRITICAL: Force TOP alignment in Sidebar mode
                 ll.setGravity(isVertical ? android.view.Gravity.CENTER_HORIZONTAL | android.view.Gravity.TOP : android.view.Gravity.CENTER_VERTICAL);
-                ll.setPadding(isVertical ? 0 : 16, isVertical ? 20 : 0, isVertical ? 0 : 16, isVertical ? 20 : 0);
+                ll.setPadding(isVertical ? 0 : 16, isVertical ? 8 : 0, isVertical ? 0 : 16, isVertical ? 8 : 0);
                 
                 ViewGroup.LayoutParams lp = ll.getLayoutParams();
                 lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
@@ -589,8 +604,8 @@ public class AppDockFragment extends Fragment
             if (appListButton != null) {
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) appListButton.getLayoutParams();
                 lp.gravity = gravity;
-                // Add top margin in Sidebar to push it down slightly from status bar
-                lp.setMargins(isVertical ? 0 : 8, isVertical ? 24 : 0, isVertical ? 0 : 8, isVertical ? 24 : 0);
+                // Reduced top margin in vertical to keep it closer and match horizontal margins
+                lp.setMargins(isVertical ? 0 : 8, isVertical ? 10 : 0, isVertical ? 0 : 8, isVertical ? 10 : 0);
                 appListButton.setLayoutParams(lp);
             }
             
@@ -599,7 +614,7 @@ public class AppDockFragment extends Fragment
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) layoutButton.getLayoutParams();
                 lp.gravity = gravity;
                 if (isVertical) {
-                    lp.setMargins(0, 0, 0, 24);
+                    lp.setMargins(0, 0, 0, 10); // Reduced bottom margin
                 } else {
                     lp.setMargins(4, 0, 4, 0);
                 }
@@ -647,6 +662,7 @@ public class AppDockFragment extends Fragment
             if (miniBtnPlay != null) {
                 miniBtnPlay.setBackgroundResource(net.osmand.plus.R.drawable.bg_mini_play_circle);
                 miniBtnPlay.setColorFilter(0xFFFFFFFF);
+                miniBtnPlay.setElevation(dpToPx(2)); // Play sits on top of Next
                 android.view.ViewGroup.LayoutParams lp = miniBtnPlay.getLayoutParams();
                 lp.width = dpToPx(36);
                 lp.height = dpToPx(36);
@@ -657,12 +673,14 @@ public class AppDockFragment extends Fragment
             if (miniBtnNext != null) {
                 miniBtnNext.setBackgroundResource(net.osmand.plus.R.drawable.bg_mini_next_half_pill);
                 miniBtnNext.setColorFilter(0xFFFFFFFF);
+                miniBtnNext.setElevation(dpToPx(1)); // Next sits under Play
                 android.widget.LinearLayout.LayoutParams lp = (android.widget.LinearLayout.LayoutParams) miniBtnNext.getLayoutParams();
-                lp.width = dpToPx(36);
-                lp.height = dpToPx(36);
-                lp.leftMargin = dpToPx(-1); // Merge borders smoothly
+                lp.width = dpToPx(54); // Longer width to slide out
+                lp.height = dpToPx(36); // Same height as play circle
+                lp.leftMargin = dpToPx(-18); // Overlaps right half of play circle
                 miniBtnNext.setLayoutParams(lp);
-                miniBtnNext.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
+                // Pushes Next icon to the visible right part to center it beautifully
+                miniBtnNext.setPadding(dpToPx(22), dpToPx(8), dpToPx(8), dpToPx(8));
             }
         } else {
             // Restore default landscape styles if needed (in case of dynamic layout configuration updates)
@@ -707,5 +725,60 @@ public class AppDockFragment extends Fragment
     private int dpToPx(int dp) {
         if (getContext() == null) return dp;
         return (int) (dp * getContext().getResources().getDisplayMetrics().density);
+    }
+
+    private void adjustVisibilityByAvailableWidth(int totalWidthPx) {
+        if (getContext() == null) return;
+        
+        // Sadece SCREEN dikey (portrait) konumdayken bu dinamik visibility kurallarini uygula!
+        boolean isScreenPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        if (!isScreenPortrait) {
+            // Yatay modda veya dikey dock durumlarinda standart gorunurlugu koru
+            if (clockView != null && clockView.getParent() != null) {
+                ((View) clockView.getParent()).setVisibility(View.VISIBLE);
+            }
+            if (recyclerView != null) {
+                recyclerView.setVisibility(View.VISIBLE);
+            }
+            return;
+        }
+        
+        // Genisligi DP degerine donustur
+        float density = getResources().getDisplayMetrics().density;
+        int totalWidthDp = Math.round(totalWidthPx / density);
+        
+        View clockContainer = clockView != null ? (View) clockView.getParent() : null;
+        
+        // Oncelikli gizleme mantigi (Priority Rules):
+        // 1. Esik 1 (Her sey sigar): Genislik >= 440dp -> Saat, Player ve Recycler acik
+        if (totalWidthDp >= 440) {
+            if (clockContainer != null) clockContainer.setVisibility(View.VISIBLE);
+            if (miniMusicContainer != null) {
+                miniMusicContainer.setVisibility(View.VISIBLE);
+                adjustMiniPlayerLayout();
+            }
+            if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
+        }
+        // 2. Esik 2 (Ilk olarak SAAT gizlenir): 360dp <= Genislik < 440dp
+        else if (totalWidthDp >= 360) {
+            if (clockContainer != null) clockContainer.setVisibility(View.GONE);
+            if (miniMusicContainer != null) {
+                miniMusicContainer.setVisibility(View.VISIBLE);
+                adjustMiniPlayerLayout();
+            }
+            if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
+        }
+        // 3. Esik 3 (Ikinci olarak MINI PLAYER gizlenir): 280dp <= Genislik < 360dp
+        else if (totalWidthDp >= 280) {
+            if (clockContainer != null) clockContainer.setVisibility(View.GONE);
+            if (miniMusicContainer != null) miniMusicContainer.setVisibility(View.GONE);
+            if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
+        }
+        // 4. Esik 4 (Ucuncu olarak RECYCLER kisayollar gizlenir): Genislik < 280dp
+        else {
+            if (clockContainer != null) clockContainer.setVisibility(View.GONE);
+            if (miniMusicContainer != null) miniMusicContainer.setVisibility(View.GONE);
+            if (recyclerView != null) recyclerView.setVisibility(View.GONE);
+        }
     }
 }
