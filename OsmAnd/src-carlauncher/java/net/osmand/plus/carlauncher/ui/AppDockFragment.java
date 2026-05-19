@@ -182,11 +182,8 @@ public class AppDockFragment extends Fragment
             clockView.setTypeface(digitalFont);
         }
 
-        // Hide Mini Player in Portrait Mode
-        if (getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT) {
-            if (miniMusicContainer != null)
-                miniMusicContainer.setVisibility(View.GONE);
-        }
+        // Dikey ve yatay ekran durumlarina gore mini player tasarimini ozellestir
+        adjustMiniPlayerLayout();
 
         if (miniBtnPlay != null) {
             miniBtnPlay.setOnClickListener(v -> musicManager.togglePlayPause());
@@ -576,6 +573,9 @@ public class AppDockFragment extends Fragment
             // 3. Conditional Visibility
             if (miniMusicContainer != null) {
                 miniMusicContainer.setVisibility(isVertical ? View.GONE : View.VISIBLE);
+                if (!isVertical) {
+                    adjustMiniPlayerLayout();
+                }
             }
             
             View clockContainer = root.findViewById(net.osmand.plus.R.id.clock_settings_container);
@@ -629,5 +629,83 @@ public class AppDockFragment extends Fragment
                 adapter.setVerticalMode(isVerticalMode);
             }
         }
+    }
+
+    private void adjustMiniPlayerLayout() {
+        if (getContext() == null || miniMusicContainer == null) return;
+        
+        boolean isScreenPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        if (isScreenPortrait) {
+            miniMusicContainer.setVisibility(View.VISIBLE);
+            miniMusicContainer.setBackground(null);
+            miniMusicContainer.setPadding(0, 0, 0, 0);
+            miniMusicContainer.setMinimumWidth(0);
+            
+            if (miniMusicIcon != null) miniMusicIcon.setVisibility(View.GONE);
+            if (miniMusicTitle != null) miniMusicTitle.setVisibility(View.GONE);
+            
+            if (miniBtnPlay != null) {
+                miniBtnPlay.setBackgroundResource(net.osmand.plus.R.drawable.bg_mini_play_circle);
+                miniBtnPlay.setColorFilter(0xFFFFFFFF);
+                android.view.ViewGroup.LayoutParams lp = miniBtnPlay.getLayoutParams();
+                lp.width = dpToPx(36);
+                lp.height = dpToPx(36);
+                miniBtnPlay.setLayoutParams(lp);
+                miniBtnPlay.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
+            }
+            
+            if (miniBtnNext != null) {
+                miniBtnNext.setBackgroundResource(net.osmand.plus.R.drawable.bg_mini_next_half_pill);
+                miniBtnNext.setColorFilter(0xFFFFFFFF);
+                android.widget.LinearLayout.LayoutParams lp = (android.widget.LinearLayout.LayoutParams) miniBtnNext.getLayoutParams();
+                lp.width = dpToPx(36);
+                lp.height = dpToPx(36);
+                lp.leftMargin = dpToPx(-1); // Merge borders smoothly
+                miniBtnNext.setLayoutParams(lp);
+                miniBtnNext.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
+            }
+        } else {
+            // Restore default landscape styles if needed (in case of dynamic layout configuration updates)
+            miniMusicContainer.setBackgroundResource(net.osmand.plus.R.drawable.bg_drawer_rounded);
+            miniMusicContainer.setPadding(dpToPx(12), 0, dpToPx(12), 0);
+            miniMusicContainer.setMinimumWidth(dpToPx(160));
+            
+            if (miniMusicIcon != null) miniMusicIcon.setVisibility(View.VISIBLE);
+            if (miniMusicTitle != null) miniMusicTitle.setVisibility(View.VISIBLE);
+            
+            if (miniBtnPlay != null) {
+                miniBtnPlay.setBackgroundResource(0);
+                miniBtnPlay.setBackgroundResource(android.R.drawable.screen_background_light_transparent); // selectableItemBackgroundBorderless fallback
+                miniBtnPlay.setBackground(getResources().getDrawable(android.R.drawable.screen_background_light_transparent, null)); // generic background
+                // We can set it to selectableItemBackground
+                android.util.TypedValue outValue = new android.util.TypedValue();
+                getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true);
+                miniBtnPlay.setBackgroundResource(outValue.resourceId);
+                
+                android.view.ViewGroup.LayoutParams lp = miniBtnPlay.getLayoutParams();
+                lp.width = dpToPx(32);
+                lp.height = dpToPx(32);
+                miniBtnPlay.setLayoutParams(lp);
+                miniBtnPlay.setPadding(dpToPx(6), dpToPx(6), dpToPx(6), dpToPx(6));
+            }
+            
+            if (miniBtnNext != null) {
+                android.util.TypedValue outValue = new android.util.TypedValue();
+                getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true);
+                miniBtnNext.setBackgroundResource(outValue.resourceId);
+                
+                android.widget.LinearLayout.LayoutParams lp = (android.widget.LinearLayout.LayoutParams) miniBtnNext.getLayoutParams();
+                lp.width = dpToPx(32);
+                lp.height = dpToPx(32);
+                lp.leftMargin = 0;
+                miniBtnNext.setLayoutParams(lp);
+                miniBtnNext.setPadding(dpToPx(6), dpToPx(6), dpToPx(6), dpToPx(6));
+            }
+        }
+    }
+
+    private int dpToPx(int dp) {
+        if (getContext() == null) return dp;
+        return (int) (dp * getContext().getResources().getDisplayMetrics().density);
     }
 }
