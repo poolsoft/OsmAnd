@@ -287,7 +287,8 @@ public class CarLayoutManager {
 
     private void updateElevations(boolean isPortrait) {
         if (mapContainer != null) mapContainer.setElevation(0f);
-        if (appDock != null) appDock.setElevation(10f);
+        // Yatay modda muzik panelinin (15f) ustunde kalmasi ve dokunma onceligi icin elevation yukseltildi
+        if (appDock != null) appDock.setElevation(isPortrait ? 10f : 20f);
         if (widgetPanel != null) widgetPanel.setElevation(isPortrait ? 2f : 15f);
         if (appDrawerContainer != null) appDrawerContainer.setElevation(50f);
         if (widgetHandle != null) {

@@ -53,6 +53,10 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
         notifyDataSetChanged();
     }
 
+    public boolean isEditMode() {
+        return isEditMode;
+    }
+
     public void setVerticalMode(boolean verticalMode) {
         this.isVerticalMode = verticalMode;
         notifyDataSetChanged();

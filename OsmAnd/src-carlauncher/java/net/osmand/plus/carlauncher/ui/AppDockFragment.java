@@ -215,13 +215,12 @@ public class AppDockFragment extends Fragment
                 listener.onAppDrawerOpen();
         });
 
-        // Right Button: Layout Toggle
+        // Sag Buton: 3-nokta Menu (Tiklandiginda acilir menu gosterir)
         if (layoutButton != null) {
             layoutButton.setOnClickListener(v -> {
-                if (listener != null)
-                    listener.onLayoutModeToggle();
+                showDockPopupMenu(v);
             });
-            // Long press opens settings as backup
+            // Uzun basildiginda da dogrudan ayarlari acar
             layoutButton.setOnLongClickListener(v -> {
                 openSettings();
                 return true;
@@ -462,7 +461,66 @@ public class AppDockFragment extends Fragment
 
     @Override
     public void onShortcutLongClick(AppShortcut shortcut) {
-        onRemoveClick(shortcut);
+        if (getContext() == null || dockManager == null) return;
+        
+        String[] options = {
+            "Uygulamayi Ac (Tam Ekran)",
+            "Uygulamayi Yan Yana Ac (Bolunmus Ekran / Coolwalk)",
+            "Varsayilan Acilis Modu: Tam Ekran Yap",
+            "Varsayilan Acilis Modu: Yan Yana (Bolunmus) Yap",
+            "Kisayolu Kaldir"
+        };
+        
+        new AlertDialog.Builder(getContext())
+                .setTitle(shortcut.getAppName() + " Secenekleri")
+                .setItems(options, (dialog, which) -> {
+                    switch (which) {
+                        case 0: // Tam Ekran Baslat
+                            launchAppWithMode(shortcut, LaunchMode.FULL_SCREEN);
+                            break;
+                        case 1: // Yan Yana / Split-Screen Baslat
+                            launchAppWithMode(shortcut, LaunchMode.SPLIT_SCREEN);
+                            break;
+                        case 2: // Varsayilan modu Tam Ekran yap
+                            shortcut.setLaunchMode(LaunchMode.FULL_SCREEN);
+                            dockManager.saveShortcuts();
+                            if (adapter != null) {
+                                adapter.setShortcuts(dockManager.getShortcuts());
+                            }
+                            break;
+                        case 3: // Varsayilan modu Split-Screen yap
+                            shortcut.setLaunchMode(LaunchMode.SPLIT_SCREEN);
+                            dockManager.saveShortcuts();
+                            if (adapter != null) {
+                                adapter.setShortcuts(dockManager.getShortcuts());
+                            }
+                            break;
+                        case 4: // Kaldir
+                            onRemoveClick(shortcut);
+                            break;
+                    }
+                })
+                .setNegativeButton("Iptal", null)
+                .show();
+    }
+
+    private void launchAppWithMode(AppShortcut shortcut, LaunchMode mode) {
+        try {
+            Intent intent = getContext().getPackageManager()
+                    .getLaunchIntentForPackage(shortcut.getPackageName());
+            if (intent != null) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                if (mode == LaunchMode.SPLIT_SCREEN) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                        intent.addFlags(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+                    }
+                }
+                getContext().startActivity(intent);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void onRemoveClick(AppShortcut shortcut) {
@@ -727,6 +785,43 @@ public class AppDockFragment extends Fragment
         return (int) (dp * getContext().getResources().getDisplayMetrics().density);
     }
 
+    private void showDockPopupMenu(View anchor) {
+        if (getContext() == null) return;
+        
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), anchor);
+        
+        // Turkce karakter kullanmadan menuyu dinamik olarak dolduruyoruz
+        popup.getMenu().add(0, 1, 0, "Gorunumu Degistir (Buyuk/Kucuk Panel)");
+        
+        if (adapter != null) {
+            popup.getMenu().add(0, 2, 1, adapter.isEditMode() ? "Duzenleme Modunu Kapat" : "Kisayollari Duzenle");
+        }
+        
+        popup.getMenu().add(0, 3, 2, "Ayarlar");
+        
+        popup.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case 1:
+                    if (listener != null) {
+                        listener.onLayoutModeToggle();
+                    }
+                    return true;
+                case 2:
+                    if (adapter != null) {
+                        adapter.setEditMode(!adapter.isEditMode());
+                    }
+                    return true;
+                case 3:
+                    openSettings();
+                    return true;
+                default:
+                    return false;
+            }
+        });
+        
+        popup.show();
+    }
+
     private void adjustVisibilityByAvailableWidth(int totalWidthPx) {
         if (getContext() == null) return;
         
@@ -750,8 +845,8 @@ public class AppDockFragment extends Fragment
         View clockContainer = clockView != null ? (View) clockView.getParent() : null;
         
         // Oncelikli gizleme mantigi (Priority Rules):
-        // 1. Esik 1 (Her sey sigar): Genislik >= 440dp -> Saat, Player ve Recycler acik
-        if (totalWidthDp >= 440) {
+        // 1. Esik 1: Genislik >= 480dp -> Saat, Player ve Recycler acik
+        if (totalWidthDp >= 480) {
             if (clockContainer != null) clockContainer.setVisibility(View.VISIBLE);
             if (miniMusicContainer != null) {
                 miniMusicContainer.setVisibility(View.VISIBLE);
@@ -759,8 +854,8 @@ public class AppDockFragment extends Fragment
             }
             if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
         }
-        // 2. Esik 2 (Ilk olarak SAAT gizlenir): 360dp <= Genislik < 440dp
-        else if (totalWidthDp >= 360) {
+        // 2. Esik 2: 420dp <= Genislik < 480dp -> Saat gizlenir, Player ve Recycler acik
+        else if (totalWidthDp >= 420) {
             if (clockContainer != null) clockContainer.setVisibility(View.GONE);
             if (miniMusicContainer != null) {
                 miniMusicContainer.setVisibility(View.VISIBLE);
@@ -768,13 +863,13 @@ public class AppDockFragment extends Fragment
             }
             if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
         }
-        // 3. Esik 3 (Ikinci olarak MINI PLAYER gizlenir): 280dp <= Genislik < 360dp
+        // 3. Esik 3: 280dp <= Genislik < 420dp -> Saat VE Player gizlenir, Kisayol Recycler'ina tam alan kalir! (Dikey portrait telefon ve teyplerde simgelerin sigmasini saglar)
         else if (totalWidthDp >= 280) {
             if (clockContainer != null) clockContainer.setVisibility(View.GONE);
             if (miniMusicContainer != null) miniMusicContainer.setVisibility(View.GONE);
             if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
         }
-        // 4. Esik 4 (Ucuncu olarak RECYCLER kisayollar gizlenir): Genislik < 280dp
+        // 4. Esik 4: Genislik < 280dp -> Kisayollar da gizlenir
         else {
             if (clockContainer != null) clockContainer.setVisibility(View.GONE);
             if (miniMusicContainer != null) miniMusicContainer.setVisibility(View.GONE);

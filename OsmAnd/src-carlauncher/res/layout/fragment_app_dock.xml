@@ -90,7 +90,8 @@
     <LinearLayout
         android:id="@+id/clock_settings_container"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
+        android:layout_height="44dp"
+        android:layout_gravity="center_vertical"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="?attr/selectableItemBackground"
@@ -109,13 +110,14 @@
 
     </LinearLayout>
 
-    <!-- 6. Layout Toggle -->
+    <!-- 6. Layout Toggle (3-dot Menu) -->
     <ImageButton
         android:id="@+id/btn_layout_toggle"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_gravity="center_vertical"
         android:layout_marginStart="4dp"
-        android:src="@drawable/ic_action_view_as_list"
+        android:src="@drawable/ic_overflow_menu_white"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:padding="8dp"
         app:tint="@color/cl_text_hint"/>
