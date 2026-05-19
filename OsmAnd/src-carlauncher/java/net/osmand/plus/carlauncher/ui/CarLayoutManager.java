@@ -124,6 +124,7 @@ public class CarLayoutManager {
             cs.constrainWidth(R.id.widget_panel, 0);
             cs.constrainHeight(R.id.widget_panel, 0);
         } else if (!isWidgetPanelOpen) {
+            cs.setVisibility(R.id.map_container, View.VISIBLE);
             cs.setVisibility(R.id.widget_panel, View.GONE);
             // Harita tum ekrani kaplar (dock haric)
             cs.connect(R.id.map_container, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
@@ -139,6 +140,7 @@ public class CarLayoutManager {
             cs.constrainWidth(R.id.map_container, 0);
             cs.constrainHeight(R.id.map_container, 0);
         } else {
+            cs.setVisibility(R.id.map_container, View.VISIBLE);
             cs.setVisibility(R.id.widget_panel, View.VISIBLE);
             boolean isSwapped = isContentFullScreen;
 
