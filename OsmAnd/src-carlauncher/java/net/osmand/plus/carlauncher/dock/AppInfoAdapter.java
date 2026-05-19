@@ -34,21 +34,24 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.ViewHold
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Simple vertical item but can be grid
+        float density = parent.getContext().getResources().getDisplayMetrics().density;
+        int iconSize = (int) (60 * density);
+        int paddingVertical = (int) (16 * density);
+
         LinearLayout itemView = new LinearLayout(parent.getContext());
         itemView.setOrientation(LinearLayout.VERTICAL);
         itemView.setGravity(android.view.Gravity.CENTER);
         itemView.setLayoutParams(new RecyclerView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 
                 ViewGroup.LayoutParams.WRAP_CONTENT));
-        itemView.setPadding(0, 24, 0, 24);
+        itemView.setPadding(0, paddingVertical, 0, paddingVertical);
         itemView.setClickable(true);
         itemView.setFocusable(true);
         itemView.setBackgroundResource(android.R.drawable.list_selector_background);
 
         ImageView iconView = new ImageView(parent.getContext());
         iconView.setId(View.generateViewId());
-        iconView.setLayoutParams(new LinearLayout.LayoutParams(96, 96));
+        iconView.setLayoutParams(new LinearLayout.LayoutParams(iconSize, iconSize));
         itemView.addView(iconView);
 
         TextView nameView = new TextView(parent.getContext());
@@ -61,7 +64,7 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.ViewHold
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 
                 ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = 8;
+        lp.topMargin = (int) (8 * density);
         itemView.addView(nameView, lp);
 
         return new ViewHolder(itemView, iconView, nameView);

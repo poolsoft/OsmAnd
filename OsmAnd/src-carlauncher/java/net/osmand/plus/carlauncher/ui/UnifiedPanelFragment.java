@@ -56,6 +56,7 @@ public class UnifiedPanelFragment extends Fragment
     // Ust Panel Saat ve Hiz Gostergeleri
     private TextView panelClock;
     private TextView panelSpeed;
+    private ImageButton panelMenuBtn;
 
     private final Handler clockHandler = new Handler(Looper.getMainLooper());
     private final Runnable clockRunnable = new Runnable() {
@@ -121,6 +122,7 @@ public class UnifiedPanelFragment extends Fragment
         // Ust panel saat ve hiz gostergeleri
         panelClock = root.findViewById(R.id.panel_clock);
         panelSpeed = root.findViewById(R.id.panel_speed);
+        panelMenuBtn = root.findViewById(R.id.panel_menu_btn);
 
         // Muzik alani yapilari
         musicArea = root.findViewById(R.id.music_area);
@@ -145,6 +147,15 @@ public class UnifiedPanelFragment extends Fragment
                     CarLauncherInterface ci = (CarLauncherInterface) getActivity();
                     ci.setPanelContent(PanelContentManager.PanelContent.MUSIC);
                     ci.openMusicPlayer();
+                }
+            });
+        }
+
+        // Ayarlari acan 3 nokta butonu
+        if (panelMenuBtn != null) {
+            panelMenuBtn.setOnClickListener(v -> {
+                if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                    ((net.osmand.plus.activities.MapActivity) getActivity()).openCarLauncherSettings();
                 }
             });
         }
