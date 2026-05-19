@@ -705,10 +705,15 @@ public class AppDockFragment extends Fragment
                 lp.setMargins(0, 0, 0, 0);
                 clockContainer.setPadding(isVertical ? 0 : dpToPx(12), isVertical ? dpToPx(2) : 0, isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(2) : 0);
                 clockContainer.setLayoutParams(lp);
+                
+                if (clockContainer instanceof LinearLayout) {
+                    ((LinearLayout) clockContainer).setGravity(isVertical ? android.view.Gravity.CENTER : android.view.Gravity.CENTER_VERTICAL);
+                }
             }
             
             if (clockView != null) {
                 clockView.setGravity(isVertical ? android.view.Gravity.CENTER : android.view.Gravity.CENTER_VERTICAL);
+                clockView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, isVertical ? 26f : 22f);
                 java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
                         isVertical ? "HH\nmm" : "HH:mm",
                         java.util.Locale.getDefault());
