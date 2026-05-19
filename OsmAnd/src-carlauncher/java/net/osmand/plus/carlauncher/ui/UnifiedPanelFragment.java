@@ -124,6 +124,14 @@ public class UnifiedPanelFragment extends Fragment
         panelSpeed = root.findViewById(R.id.panel_speed);
         panelMenuBtn = root.findViewById(R.id.panel_menu_btn);
 
+        // Ust panel baslik bari tiklama yutucu
+        View panelHeader = root.findViewById(R.id.panel_header);
+        if (panelHeader != null) {
+            panelHeader.setOnClickListener(v -> {
+                // Tiklamayi yut (Consume click to block propagation)
+            });
+        }
+
         // Muzik alani yapilari
         musicArea = root.findViewById(R.id.music_area);
         musicMiniArt = root.findViewById(R.id.music_mini_art);

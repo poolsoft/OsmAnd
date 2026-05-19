@@ -20,7 +20,8 @@ public class PanelContentManager {
         NOTIFICATION, // Bildirim + müzik (üst üste)
         APP_DRAWER,   // App drawer listesi
         WEATHER,      // Hava durumu
-        SETTINGS      // Ayarlar fragmenti
+        SETTINGS,     // Ayarlar fragmenti
+        DESKTOP       // Masaustu Modu (WidgetPanelFragment)
     }
 
     private PanelContent currentContent = null;
@@ -49,7 +50,7 @@ public class PanelContentManager {
      */
     public void setContent(PanelContent content) {
         // Her zaman en guncel fullscreen durumunu set et
-        boolean needsFullScreen = (content == PanelContent.APP_DRAWER || content == PanelContent.MUSIC || content == PanelContent.SETTINGS);
+        boolean needsFullScreen = (content == PanelContent.APP_DRAWER || content == PanelContent.MUSIC || content == PanelContent.SETTINGS || content == PanelContent.DESKTOP);
         if (fullScreenListener != null) {
             fullScreenListener.onFullScreenStateChanged(needsFullScreen);
         }
@@ -79,6 +80,9 @@ public class PanelContentManager {
                 break;
             case SETTINGS:
                 fragment = new CarLauncherSettingsFragment();
+                break;
+            case DESKTOP:
+                fragment = new WidgetPanelFragment();
                 break;
             case WEATHER:
                 try {

@@ -223,6 +223,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	private View mainLayoutRoot; // main.xml root reference
 
     private boolean isWidgetPanelOpen = true;
+    private boolean isDesktopMode = false;
     private static final String PREF_IS_PINNED = "widget_panel_pinned";
 
 	// Layout Mode: 0 = Normal, 1 = No Widgets, 2 = Full Screen
@@ -659,6 +660,41 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         }
 	}
 
+	public boolean isDesktopMode() {
+		return isDesktopMode;
+	}
+
+	@Override
+	public void onDesktopModeToggle() {
+		setDesktopMode(!isDesktopMode);
+	}
+
+	public void setDesktopMode(boolean active) {
+		if (this.isDesktopMode == active) return;
+		this.isDesktopMode = active;
+
+		if (active) {
+			// Masaustu modunu acarken WidgetPanelFragment (DESKTOP) icerigini yukle
+			if (panelContentManager != null) {
+				panelContentManager.setContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.DESKTOP);
+			}
+		} else {
+			// Pasif yaparken varsayilan premium birlesik paneli (WIDGETS) geri yukle
+			if (panelContentManager != null) {
+				panelContentManager.setContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS);
+			}
+		}
+
+		// Yerlesimi guncelle (haritayi gizle, widget panelini tam ekran yap)
+		applyWidgetPanelState();
+
+		// App Dock uzerindeki buton aktif/pasif durumunu guncelle
+		net.osmand.plus.carlauncher.ui.AppDockFragment dock = getAppDockFragment();
+		if (dock != null) {
+			dock.updateDesktopModeState(active);
+		}
+	}
+
 	@Override
 	public void onAppDrawerOpen() {
 		openAppDrawer();
@@ -740,6 +776,15 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	public void setPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent content) {
 		if (panelContentManager != null) {
+			// Eger DESKTOP disinda bir sey aciliyorsa Masaustu modundan cik
+			if (content != net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.DESKTOP && isDesktopMode) {
+				isDesktopMode = false;
+				applyWidgetPanelState();
+				net.osmand.plus.carlauncher.ui.AppDockFragment dock = getAppDockFragment();
+				if (dock != null) {
+					dock.updateDesktopModeState(false);
+				}
+			}
 			panelContentManager.setContent(content);
 		}
 	}

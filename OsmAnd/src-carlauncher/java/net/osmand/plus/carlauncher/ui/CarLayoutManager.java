@@ -101,7 +101,29 @@ public class CarLayoutManager {
         int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
         int screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
 
-        if (!isWidgetPanelOpen) {
+        if (activity.isDesktopMode()) {
+            cs.setVisibility(R.id.map_container, View.GONE);
+            cs.setVisibility(R.id.widget_handle, View.GONE);
+            cs.setVisibility(R.id.widget_panel, View.VISIBLE);
+
+            cs.connect(R.id.widget_panel, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+            
+            if (isPortrait || "bottom".equals(dockPos)) {
+                cs.connect(R.id.widget_panel, ConstraintSet.BOTTOM, R.id.app_dock, ConstraintSet.TOP);
+                cs.connect(R.id.widget_panel, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
+                cs.connect(R.id.widget_panel, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+            } else if ("left".equals(dockPos)) {
+                cs.connect(R.id.widget_panel, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+                cs.connect(R.id.widget_panel, ConstraintSet.START, R.id.app_dock, ConstraintSet.END);
+                cs.connect(R.id.widget_panel, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+            } else { // right
+                cs.connect(R.id.widget_panel, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+                cs.connect(R.id.widget_panel, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
+                cs.connect(R.id.widget_panel, ConstraintSet.END, R.id.app_dock, ConstraintSet.START);
+            }
+            cs.constrainWidth(R.id.widget_panel, 0);
+            cs.constrainHeight(R.id.widget_panel, 0);
+        } else if (!isWidgetPanelOpen) {
             cs.setVisibility(R.id.widget_panel, View.GONE);
             // Harita tum ekrani kaplar (dock haric)
             cs.connect(R.id.map_container, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
@@ -299,7 +321,7 @@ public class CarLayoutManager {
 
     private void updateWidgetHandleConstraints(ConstraintSet cs, CarLauncherSettings settings, boolean isOpen) {
         if (widgetHandle != null) {
-            if (!isOpen) {
+            if (!isOpen || activity.isDesktopMode()) {
                 cs.setVisibility(R.id.widget_handle, View.GONE);
             } else {
                 cs.setVisibility(R.id.widget_handle, View.VISIBLE);

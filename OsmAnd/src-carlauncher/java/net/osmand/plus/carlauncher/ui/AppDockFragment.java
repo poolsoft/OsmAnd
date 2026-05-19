@@ -68,6 +68,7 @@ public class AppDockFragment extends Fragment
     private ImageButton menuButton;
     private ImageButton layoutButton;
     private ImageButton appListButton;
+    private ImageButton btnDesktopMode;
 
     // New Views
     private TextView clockView;
@@ -86,6 +87,7 @@ public class AppDockFragment extends Fragment
     public interface OnAppDockListener {
         void onLayoutModeToggle();
         void onAppDrawerOpen();
+        void onDesktopModeToggle();
     }
 
     @Override
@@ -210,6 +212,15 @@ public class AppDockFragment extends Fragment
 
         // Setup Buttons
         // Listeners
+        btnDesktopMode = root.findViewById(net.osmand.plus.R.id.btn_desktop_mode);
+        if (btnDesktopMode != null) {
+            btnDesktopMode.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onDesktopModeToggle();
+                }
+            });
+        }
+
         appListButton.setOnClickListener(v -> {
             if (listener != null)
                 listener.onAppDrawerOpen();
@@ -325,6 +336,11 @@ public class AppDockFragment extends Fragment
         
         // Force apply UI constraints
         applyOrientationState(view, isVerticalMode);
+        
+        // Sync Desktop Mode color filter on launch
+        if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+            updateDesktopModeState(((net.osmand.plus.activities.MapActivity) getActivity()).isDesktopMode());
+        }
     }
 
     @Override
@@ -613,6 +629,32 @@ public class AppDockFragment extends Fragment
         });
     }
 
+    public void updateDesktopModeState(boolean active) {
+        if (btnDesktopMode == null) return;
+        
+        btnDesktopMode.post(() -> {
+            if (active) {
+                // Aktifken premium primary brand rengiyle vurgula
+                if (getContext() != null) {
+                    btnDesktopMode.setColorFilter(androidx.core.content.ContextCompat.getColor(getContext(), net.osmand.plus.R.color.cl_primary));
+                } else {
+                    btnDesktopMode.setColorFilter(0xFF0084FF); // Fallback premium blue
+                }
+            } else {
+                // Pasifken beyaz / yari transparan hint rengi
+                if (isVerticalMode) {
+                    btnDesktopMode.setColorFilter(0x88FFFFFF); // Dikey mod pasif rengi
+                } else {
+                    if (getContext() != null) {
+                        btnDesktopMode.setColorFilter(androidx.core.content.ContextCompat.getColor(getContext(), net.osmand.plus.R.color.cl_text_hint));
+                    } else {
+                        btnDesktopMode.setColorFilter(0xFF888888);
+                    }
+                }
+            }
+        });
+    }
+
 
     public void setOrientation(boolean isVertical) {
         this.isVerticalMode = isVertical;
@@ -684,6 +726,18 @@ public class AppDockFragment extends Fragment
                 appListButton.setLayoutParams(lp);
             }
             
+            if (btnDesktopMode != null) {
+                btnDesktopMode.setVisibility(View.VISIBLE);
+                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) btnDesktopMode.getLayoutParams();
+                lp.gravity = gravity;
+                if (isVertical) {
+                    lp.setMargins(0, 0, 0, dpToPx(2)); // Extremely reduced bottom margin
+                } else {
+                    lp.setMargins(dpToPx(4), 0, dpToPx(4), 0);
+                }
+                btnDesktopMode.setLayoutParams(lp);
+            }
+
             if (layoutButton != null) {
                 layoutButton.setVisibility(View.VISIBLE);
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) layoutButton.getLayoutParams();
