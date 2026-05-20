@@ -647,8 +647,16 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         }
     }
 
+	private long lastLayoutToggleTime = 0;
+
 	@Override
 	public void onLayoutModeToggle() {
+		long currentTime = System.currentTimeMillis();
+		if (currentTime - lastLayoutToggleTime < 500) {
+			// Cok hizli ard arda tiklamalar engellendi (Turkce karakter yok)
+			return;
+		}
+		lastLayoutToggleTime = currentTime;
 		// Toggle Logic: Normal (0) -> Full Screen (2) (for API compatibility)
 		layoutMode = (layoutMode == 0) ? 2 : 0;
 		isWidgetPanelOpen = (layoutMode == 0);
@@ -695,8 +703,16 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		return isDesktopMode;
 	}
 
+	private long lastDesktopToggleTime = 0;
+
 	@Override
 	public void onDesktopModeToggle() {
+		long currentTime = System.currentTimeMillis();
+		if (currentTime - lastDesktopToggleTime < 500) {
+			// Cok hizli ard arda tiklamalar engellendi (Turkce karakter yok)
+			return;
+		}
+		lastDesktopToggleTime = currentTime;
 		setDesktopMode(!isDesktopMode);
 	}
 
