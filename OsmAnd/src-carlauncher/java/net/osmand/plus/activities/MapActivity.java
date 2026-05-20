@@ -413,7 +413,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		floatFilter.addAction("net.osmand.carlauncher.ACTION_LAYOUT_TOGGLE");
 		floatFilter.addAction("net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE");
 		floatFilter.addAction("net.osmand.carlauncher.ACTION_OPEN_SETTINGS");
-		registerReceiver(carFloatingButtonReceiver, floatFilter);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+			registerReceiver(carFloatingButtonReceiver, floatFilter, Context.RECEIVER_NOT_EXPORTED);
+		} else {
+			registerReceiver(carFloatingButtonReceiver, floatFilter);
+		}
 
 		app.getAidlApi().onCreateMapActivity(this);
 
