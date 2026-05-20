@@ -40,6 +40,20 @@
             android:defaultValue="classic"
             android:iconSpaceReserved="false" />
 
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="car_launcher_portrait_map_only"
+            android:title="Dikey Ekranda Sadece Harita Goster"
+            android:summary="Dikey modda widget paneli ve rihtimi gizler"
+            android:defaultValue="false"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="car_launcher_floating_button"
+            android:title="Yuzen Yardimci Buton (Floating Button)"
+            android:summary="Ekranda tasinabilir sistem menu butonu gosterir"
+            android:defaultValue="false"
+            android:iconSpaceReserved="false" />
+
     </androidx.preference.PreferenceCategory>
 
     <androidx.preference.PreferenceCategory

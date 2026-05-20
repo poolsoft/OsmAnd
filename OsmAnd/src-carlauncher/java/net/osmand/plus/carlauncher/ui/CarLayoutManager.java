@@ -64,6 +64,25 @@ public class CarLayoutManager {
             cs.clear(id, ConstraintSet.END);
         }
 
+        if (isPortrait && carSettings.isPortraitMapOnly()) {
+            cs.setVisibility(R.id.app_dock, View.GONE);
+            cs.setVisibility(R.id.widget_panel, View.GONE);
+            cs.setVisibility(R.id.widget_handle, View.GONE);
+            cs.setVisibility(R.id.map_container, View.VISIBLE);
+
+            cs.connect(R.id.map_container, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+            cs.connect(R.id.map_container, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+            cs.connect(R.id.map_container, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
+            cs.connect(R.id.map_container, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+            cs.constrainWidth(R.id.map_container, 0);
+            cs.constrainHeight(R.id.map_container, 0);
+
+            cs.applyTo(rootLayout);
+            return;
+        }
+
+        cs.setVisibility(R.id.app_dock, View.VISIBLE);
+
         // 2. Dock Region - dockSize (0-100) ayarina gore olceklendir
         // 0=min(0.3x), 50=normal(1.0x), 100=max(1.7x)
         int dockSizePercent = carSettings.getDockSize();

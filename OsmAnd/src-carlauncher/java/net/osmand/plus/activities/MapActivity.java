@@ -183,6 +183,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	private static Intent prevActivityIntent = null;
 
 	private BroadcastReceiver screenOffReceiver;
+	private BroadcastReceiver carFloatingButtonReceiver;
 	private WidgetsVisibilityHelper mapWidgetsVisibilityHelper;
 	private ExtendedMapActivity extendedMapActivity;
 
@@ -394,6 +395,25 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
 		screenOffReceiver = new ScreenOffReceiver();
 		registerReceiver(screenOffReceiver, filter);
+
+		carFloatingButtonReceiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				String action = intent.getAction();
+				if ("net.osmand.carlauncher.ACTION_LAYOUT_TOGGLE".equals(action)) {
+					onLayoutModeToggle();
+				} else if ("net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE".equals(action)) {
+					onDesktopModeToggle();
+				} else if ("net.osmand.carlauncher.ACTION_OPEN_SETTINGS".equals(action)) {
+					openCarLauncherSettings();
+				}
+			}
+		};
+		IntentFilter floatFilter = new IntentFilter();
+		floatFilter.addAction("net.osmand.carlauncher.ACTION_LAYOUT_TOGGLE");
+		floatFilter.addAction("net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE");
+		floatFilter.addAction("net.osmand.carlauncher.ACTION_OPEN_SETTINGS");
+		registerReceiver(carFloatingButtonReceiver, floatFilter);
 
 		app.getAidlApi().onCreateMapActivity(this);
 
@@ -1099,6 +1119,18 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	protected void onResume() {
 		super.onResume();
 		hideSystemUI();
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			CarLauncherSettings carSettings = new CarLauncherSettings(this);
+			if (carSettings.isFloatingButtonEnabled() && !android.provider.Settings.canDrawOverlays(this)) {
+				Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+						Uri.parse("package:" + getPackageName()));
+				startActivity(intent);
+				android.widget.Toast.makeText(this, "Yuzen buton icin diger uygulamalarin uzerinde gorunme izni vermelisiniz.", android.widget.Toast.LENGTH_LONG).show();
+			}
+		}
+		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).setAppInForeground(true);
+		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).updateButtonState();
 		MapActivity mapViewMapActivity = getMapView().getMapActivity();
 		if (activityRestartNeeded || !getMapLayers().hasMapActivity()
 				|| (mapViewMapActivity != null && mapViewMapActivity != this)) {
@@ -1543,6 +1575,10 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		mapRouteInfoMenu.setMapActivity(null);
 		trackDetailsMenu.setMapActivity(null);
 		unregisterReceiver(screenOffReceiver);
+		if (carFloatingButtonReceiver != null) {
+			unregisterReceiver(carFloatingButtonReceiver);
+		}
+		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).hideButton();
 		app.getAidlApi().onDestroyMapActivity(this);
 		app.getImportHelper().resetUIActivity(this);
 		PluginsHelper.onMapActivityDestroy(this);
@@ -1599,6 +1635,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	protected void onPause() {
 		super.onPause();
+		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).setAppInForeground(false);
 		settings.LAST_MAP_ACTIVITY_PAUSED_TIME.set(System.currentTimeMillis());
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInMultiWindowMode()) {
 			pendingPause = true;

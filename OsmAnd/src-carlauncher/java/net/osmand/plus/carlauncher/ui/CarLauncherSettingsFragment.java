@@ -83,8 +83,18 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         }
     }
 
+    private int dpToPx(int dp) {
+        if (getContext() == null) return dp;
+        return (int) (dp * getContext().getResources().getDisplayMetrics().density);
+    }
+
     private View createSingleLayout(View prefsView) {
-        prefsView.setBackgroundColor(0xFF111111);
+        prefsView.setBackgroundColor(0xFF0B0B0E);
+        if (prefsView instanceof androidx.recyclerview.widget.RecyclerView) {
+            androidx.recyclerview.widget.RecyclerView rv = (androidx.recyclerview.widget.RecyclerView) prefsView;
+            rv.setPadding(dpToPx(16), dpToPx(16), dpToPx(16), dpToPx(16));
+            rv.setClipToPadding(false);
+        }
         android.widget.FrameLayout wrapper = new android.widget.FrameLayout(getContext());
         wrapper.setLayoutParams(new android.view.ViewGroup.LayoutParams(
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT,
@@ -105,17 +115,17 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         splitContainer.setLayoutParams(new android.view.ViewGroup.LayoutParams(
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT));
-        splitContainer.setBackgroundColor(0xFF111111);
+        splitContainer.setBackgroundColor(0xFF0B0B0E);
 
         // --- Left Pane: Headers ---
         android.widget.ScrollView leftScroll = new android.widget.ScrollView(getContext());
         leftScroll.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
                 0, android.view.ViewGroup.LayoutParams.MATCH_PARENT, 0.3f));
-        leftScroll.setBackgroundColor(0xFF1A1A1A); // Slightly lighter
+        leftScroll.setBackgroundColor(0xFF14141C); // Sleek Space Grey
         
         categoriesList = new android.widget.LinearLayout(getContext());
         categoriesList.setOrientation(android.widget.LinearLayout.VERTICAL);
-        categoriesList.setPadding(0, 24, 0, 24);
+        categoriesList.setPadding(0, dpToPx(24), 0, dpToPx(24));
         leftScroll.addView(categoriesList);
         
         splitContainer.addView(leftScroll);
@@ -123,19 +133,26 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         // --- Divider ---
         View divider = new View(getContext());
         divider.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
-                2, android.view.ViewGroup.LayoutParams.MATCH_PARENT));
-        divider.setBackgroundColor(0xFF333333);
+                dpToPx(1), android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+        divider.setBackgroundColor(0xFF222232);
         splitContainer.addView(divider);
 
         // --- Right Pane: Content ---
         android.widget.FrameLayout rightPane = new android.widget.FrameLayout(getContext());
         rightPane.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
                 0, android.view.ViewGroup.LayoutParams.MATCH_PARENT, 0.7f));
+        rightPane.setBackgroundColor(0xFF0B0B0E);
         
         // Add the Prefs RecyclerView here
-        // Note: prefsView is the RecyclerView returned by super
         if (prefsView.getParent() != null) {
             ((ViewGroup)prefsView.getParent()).removeView(prefsView);
+        }
+        
+        if (prefsView instanceof androidx.recyclerview.widget.RecyclerView) {
+            androidx.recyclerview.widget.RecyclerView rv = (androidx.recyclerview.widget.RecyclerView) prefsView;
+            rv.setPadding(dpToPx(24), dpToPx(24), dpToPx(24), dpToPx(24));
+            rv.setClipToPadding(false);
+            rv.setBackgroundColor(0xFF0B0B0E);
         }
         rightPane.addView(prefsView);
         
@@ -143,9 +160,6 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         
         addCloseButton(rightPane); // Close button on right pane top corner
 
-        // Init Categories from XML logic
-        // We need to wait for preferences to be bound? They are bound in onCreatePreferences.
-        // So we can access them now.
         setupCategoriesList();
 
         return splitContainer;
@@ -159,13 +173,13 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
             closeBtn.setBackgroundResource(outValue.resourceId);
             closeBtn.setColorFilter(0xFFFFFFFF);
-            closeBtn.setPadding(32, 32, 32, 32);
+            closeBtn.setPadding(dpToPx(16), dpToPx(16), dpToPx(16), dpToPx(16));
             closeBtn.setOnClickListener(v -> closeSettings());
 
             android.widget.FrameLayout.LayoutParams btnParams = new android.widget.FrameLayout.LayoutParams(
-                    120, 120); 
+                    dpToPx(48), dpToPx(48)); 
             btnParams.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
-            btnParams.setMargins(24, 24, 24, 24);
+            btnParams.setMargins(dpToPx(24), dpToPx(24), dpToPx(24), dpToPx(24));
 
             container.addView(closeBtn, btnParams);
         }
@@ -203,15 +217,16 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     private void addCategoryToMenu(androidx.preference.PreferenceCategory cat) {
         android.widget.TextView item = new android.widget.TextView(getContext());
         item.setText(cat.getTitle());
-        item.setTextColor(0xFFBBBBBB);
-        item.setTextSize(16);
-        item.setPadding(32, 24, 32, 24);
+        item.setTextColor(0xFF8E8E93);
+        item.setTextSize(15);
+        item.setPadding(dpToPx(20), dpToPx(16), dpToPx(20), dpToPx(16));
         item.setTag(cat);
+        item.setGravity(android.view.Gravity.CENTER_VERTICAL);
         
-        android.util.TypedValue outValue = new android.util.TypedValue();
-        if (getContext() != null)
-            getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
-        item.setBackgroundResource(outValue.resourceId);
+        android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(dpToPx(16), dpToPx(6), dpToPx(16), dpToPx(6));
+        item.setLayoutParams(lp);
 
         item.setOnClickListener(v -> selectCategory(cat));
         categoriesList.addView(item);
@@ -223,19 +238,28 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             cat.setVisible(cat == target);
         }
         
-        // Update Menu UI (Highlight)
+        // Update Menu UI (Highlight with HSL blue gradient/borders)
         for (int i = 0; i < categoriesList.getChildCount(); i++) {
             View child = categoriesList.getChildAt(i);
             if (child instanceof android.widget.TextView) {
                 android.widget.TextView tv = (android.widget.TextView) child;
                 if (tv.getTag() == target) {
-                    tv.setTextColor(0xFFFFFFFF);
-                    tv.setTypeface(null, android.graphics.Typeface.BOLD);
-                    tv.setBackgroundColor(0xFF2A2A2A); // Active bg
+                    tv.setTextColor(0xFF3D63FF);
+                    tv.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
+                    
+                    android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+                    gd.setCornerRadius(dpToPx(12));
+                    gd.setColor(0x1E3D63FF); // 12% opacity bright blue
+                    gd.setStroke(dpToPx(1), 0xFF3D63FF); // Solid premium blue border
+                    tv.setBackground(gd);
                 } else {
-                    tv.setTextColor(0xFFBBBBBB);
-                    tv.setTypeface(null, android.graphics.Typeface.NORMAL);
-                    tv.setBackgroundColor(0x00000000);
+                    tv.setTextColor(0xFF8E8E93);
+                    tv.setTypeface(android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL));
+                    
+                    android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+                    gd.setCornerRadius(dpToPx(12));
+                    gd.setColor(0x00000000);
+                    tv.setBackground(gd);
                 }
             }
         }
@@ -310,6 +334,37 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             widgetPref.setOnPreferenceClickListener(preference -> {
                 if (getContext() != null) {
                     Toast.makeText(getContext(), "Widget ayarlari ust panelde duzenlenir", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            });
+        }
+
+        // Dikey modda sadece harita
+        SwitchPreferenceCompat portraitMapOnlyPref = findPreference(CarLauncherSettings.KEY_PORTRAIT_MAP_ONLY);
+        if (portraitMapOnlyPref != null) {
+            portraitMapOnlyPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                boolean val = (Boolean) newValue;
+                if (settings != null) {
+                    settings.setPortraitMapOnly(val);
+                }
+                if (getActivity() != null) {
+                    Intent intent = new Intent("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
+                    getActivity().sendBroadcast(intent);
+                }
+                return true;
+            });
+        }
+
+        // Yuzen yardimci buton
+        SwitchPreferenceCompat floatingButtonPref = findPreference(CarLauncherSettings.KEY_FLOATING_BUTTON);
+        if (floatingButtonPref != null) {
+            floatingButtonPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                boolean val = (Boolean) newValue;
+                if (settings != null) {
+                    settings.setFloatingButtonEnabled(val);
+                }
+                if (getContext() != null) {
+                    CarFloatingButtonManager.getInstance(getContext()).updateButtonState();
                 }
                 return true;
             });

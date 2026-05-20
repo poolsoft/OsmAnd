@@ -161,11 +161,7 @@ public class UnifiedPanelFragment extends Fragment
 
         // Ayarlari acan 3 nokta butonu
         if (panelMenuBtn != null) {
-            panelMenuBtn.setOnClickListener(v -> {
-                if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
-                    ((net.osmand.plus.activities.MapActivity) getActivity()).openCarLauncherSettings();
-                }
-            });
+            panelMenuBtn.setOnClickListener(v -> showPanelPopupMenu(v));
         }
 
         // Medya oynatma tuslari
@@ -189,6 +185,36 @@ public class UnifiedPanelFragment extends Fragment
         if (btnNotifClose != null) {
             btnNotifClose.setOnClickListener(v -> hideNotificationCard());
         }
+    }
+
+    private void showPanelPopupMenu(View anchor) {
+        if (getContext() == null || getActivity() == null) return;
+        
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), anchor);
+        
+        popup.getMenu().add(0, 1, 0, "Gorunumu Degistir (Buyuk/Kucuk Panel)");
+        popup.getMenu().add(0, 2, 1, "Masaustu Modu (Desktop)");
+        popup.getMenu().add(0, 3, 2, "Ayarlar");
+        
+        popup.setOnMenuItemClickListener(item -> {
+            if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                net.osmand.plus.activities.MapActivity activity = (net.osmand.plus.activities.MapActivity) getActivity();
+                switch (item.getItemId()) {
+                    case 1:
+                        activity.onLayoutModeToggle();
+                        return true;
+                    case 2:
+                        activity.onDesktopModeToggle();
+                        return true;
+                    case 3:
+                        activity.openCarLauncherSettings();
+                        return true;
+                }
+            }
+            return false;
+        });
+        
+        popup.show();
     }
 
     private void showNotificationCard(String title, String message, String type) {

@@ -33,6 +33,8 @@ public class CarLauncherSettings {
     // Appearance Keys
     public static final String KEY_STATUS_BAR = "car_launcher_status_bar";
     public static final String KEY_DARK_THEME = "car_launcher_dark_theme";
+    public static final String KEY_PORTRAIT_MAP_ONLY = "car_launcher_portrait_map_only";
+    public static final String KEY_FLOATING_BUTTON = "car_launcher_floating_button";
 
     // Music Keys
     public static final String KEY_MUSIC_APP = "car_launcher_music_app";
@@ -156,6 +158,22 @@ public class CarLauncherSettings {
 
     public void setDarkTheme(boolean dark) {
         prefs.edit().putBoolean(KEY_DARK_THEME, dark).apply();
+    }
+
+    public boolean isPortraitMapOnly() {
+        return prefs.getBoolean(KEY_PORTRAIT_MAP_ONLY, false);
+    }
+
+    public void setPortraitMapOnly(boolean only) {
+        prefs.edit().putBoolean(KEY_PORTRAIT_MAP_ONLY, only).apply();
+    }
+
+    public boolean isFloatingButtonEnabled() {
+        return prefs.getBoolean(KEY_FLOATING_BUTTON, false);
+    }
+
+    public void setFloatingButtonEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_FLOATING_BUTTON, enabled).apply();
     }
 
     // --- Music Settings ---
