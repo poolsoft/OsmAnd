@@ -746,7 +746,8 @@ public class AppDockFragment extends Fragment
             }
 
             if (layoutButton != null) {
-                layoutButton.setVisibility(View.VISIBLE);
+                //layoutButton.setVisibility(View.VISIBLE);
+                layoutButton.setVisibility(View.GONE);
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) layoutButton.getLayoutParams();
                 lp.gravity = gravity;
                 if (isVertical) {
