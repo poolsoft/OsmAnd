@@ -634,6 +634,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
                 mapHudContainer.setVisibility(isMapMinimized ? View.GONE : View.VISIBLE);
             }
         }
+        // Yüzen buton yöneticisine tam ekran harita modunu bildir (Türkçe karakter yok)
+        boolean isFull = (layoutMode == 2);
+        net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).setFullScreenMap(isFull);
     }
 
     private void refreshDockFragment(String dockPos, boolean isPortrait) {
@@ -654,6 +657,10 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 
 	private void updateLayoutMode() {
+		// Yüzen buton yöneticisine tam ekran harita modunu bildir (Türkçe karakter yok)
+		boolean isFull = (layoutMode == 2);
+		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).setFullScreenMap(isFull);
+
 		// Delegate Widget Panel Visibility & Constraints to helper
 		applyWidgetPanelState();
 		

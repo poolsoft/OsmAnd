@@ -214,10 +214,33 @@ public class AppDockFragment extends Fragment
         // Listeners
         btnDesktopMode = root.findViewById(net.osmand.plus.R.id.btn_desktop_mode);
         if (btnDesktopMode != null) {
+            // Yuze buton ile ayni simgeyi ve renk filtresini ata (Turkce karakter yok)
+            btnDesktopMode.setImageResource(net.osmand.plus.R.drawable.dashboard_grid);
+            btnDesktopMode.setColorFilter(0xFFFFFFFF);
+            
+            // Premium yuvarlak mavi kenarlikli arka plan
+            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+            bg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            bg.setColor(0xDD181824); // Yari transparan premium lacivert
+            bg.setStroke(dpToPx(2), 0xFF3D63FF); // 2dp modern mavi kenarlik
+            btnDesktopMode.setBackground(bg);
+            
+            // Tiklama: Desktop Mode Toggle
             btnDesktopMode.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onDesktopModeToggle();
                 }
+            });
+            
+            // Uzun basma: Yüzen buton asistan menüsünü tetikle
+            btnDesktopMode.setOnLongClickListener(v -> {
+                android.content.Intent intent = new android.content.Intent("net.osmand.carlauncher.ACTION_SHOW_ASSISTANT_MENU");
+                intent.setPackage(getContext().getPackageName());
+                getContext().sendBroadcast(intent);
+                
+                androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(getContext())
+                        .sendBroadcast(new android.content.Intent("net.osmand.carlauncher.ACTION_SHOW_ASSISTANT_MENU"));
+                return true;
             });
         }
 

@@ -51,9 +51,43 @@ public class CarFloatingButtonManager {
     private FrameLayout menuOverlayView;
     private WindowManager.LayoutParams menuParams;
 
+    private boolean isFullScreenMap = false;
+
+    private final android.content.BroadcastReceiver assistantReceiver = new android.content.BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if ("net.osmand.carlauncher.ACTION_SHOW_ASSISTANT_MENU".equals(action)) {
+                showOverlayMenuFromDock();
+            } else if ("net.osmand.carlauncher.ACTION_LAYOUT_TOGGLE".equals(action)) {
+                // Layout degistiginde buton gosterim durumunu guncelle (Turkce karakter yok)
+                gestureHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateButtonState();
+                    }
+                }, 150);
+            }
+        }
+    };
+
     private CarFloatingButtonManager(Context context) {
         this.context = context.getApplicationContext();
         this.windowManager = (WindowManager) this.context.getSystemService(Context.WINDOW_SERVICE);
+
+        // Alıcı kaydı (Türkçe karakter yok)
+        android.content.IntentFilter filter = new android.content.IntentFilter();
+        filter.addAction("net.osmand.carlauncher.ACTION_SHOW_ASSISTANT_MENU");
+        filter.addAction("net.osmand.carlauncher.ACTION_LAYOUT_TOGGLE");
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            this.context.registerReceiver(assistantReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            this.context.registerReceiver(assistantReceiver, filter);
+        }
+
+        androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this.context)
+                .registerReceiver(assistantReceiver, filter);
     }
 
     public static synchronized CarFloatingButtonManager getInstance(Context context) {
@@ -67,12 +101,23 @@ public class CarFloatingButtonManager {
         this.isAppInForeground = foreground;
     }
 
+    public void setFullScreenMap(boolean fullScreen) {
+        this.isFullScreenMap = fullScreen;
+        updateButtonState();
+    }
+
     public void updateButtonState() {
         CarLauncherSettings settings = new CarLauncherSettings(context);
         boolean enabled = settings.isFloatingButtonEnabled();
 
         if (enabled) {
-            showButton();
+            // Akıllı Görünürlük Kontrolü ( Landscape + Foreground + Split panelde GIZLE )
+            boolean isLandscape = context.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+            if (isAppInForeground && isLandscape && !isFullScreenMap) {
+                hideButton();
+            } else {
+                showButton();
+            }
         } else {
             hideButton();
         }
@@ -309,6 +354,78 @@ public class CarFloatingButtonManager {
             menuParams.x = params.x + dpToPx(60);
         }
         menuParams.y = params.y;
+
+        // Disari dokunuldugunda kapanmasi icin touch listener
+        menuOverlayView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
+                    hideCustomOverlayMenu();
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        try {
+            windowManager.addView(menuOverlayView, menuParams);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void showOverlayMenuFromDock() {
+        if (menuOverlayView != null) {
+            hideCustomOverlayMenu();
+            return;
+        }
+
+        // Custom FrameLayout menu karti
+        menuOverlayView = new FrameLayout(context);
+        
+        // Premium koyu tema: #111115 arka plan, #3D63FF neon mavi cerceve
+        GradientDrawable bg = new GradientDrawable();
+        bg.setShape(GradientDrawable.RECTANGLE);
+        bg.setColor(0xF4111115); // Koyu premium renk
+        bg.setStroke(dpToPx(1), 0xFF3D63FF); // Modern mavi kenarlik
+        bg.setCornerRadius(dpToPx(12));
+        menuOverlayView.setBackground(bg);
+        
+        int padding = dpToPx(8);
+        menuOverlayView.setPadding(padding, padding, padding, padding);
+
+        android.widget.LinearLayout content = new android.widget.LinearLayout(context);
+        content.setOrientation(android.widget.LinearLayout.VERTICAL);
+        FrameLayout.LayoutParams contentLp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        menuOverlayView.addView(content, contentLp);
+
+        // Menü elemanları (Türkçe karakter yok!)
+        addMenuItem(content, "Gorunumu Degistir", "net.osmand.carlauncher.ACTION_LAYOUT_TOGGLE");
+        addMenuItem(content, "Masaustu Modu (Desktop)", "net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE");
+        addMenuItem(content, "Car Launcher Ayarlari", "net.osmand.carlauncher.ACTION_OPEN_SETTINGS");
+
+        int layoutType;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            layoutType = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            layoutType = WindowManager.LayoutParams.TYPE_PHONE;
+        }
+
+        menuParams = new WindowManager.LayoutParams(
+                dpToPx(240),
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                layoutType,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                PixelFormat.TRANSLUCENT
+        );
+        
+        // Dock sag altta oldugu icin menuyu de sag altta konumlandiriyoruz
+        menuParams.gravity = Gravity.BOTTOM | Gravity.END;
+        menuParams.x = dpToPx(20);
+        menuParams.y = dpToPx(70);
 
         // Disari dokunuldugunda kapanmasi icin touch listener
         menuOverlayView.setOnTouchListener(new View.OnTouchListener() {
