@@ -89,6 +89,16 @@ public class CarLayoutManager {
         float dockScale = 0.3f + (dockSizePercent / 100.0f) * 1.4f;
         int dockSize = (int) (activity.getResources().getDimension(R.dimen.dock_height) * dockScale);
         int sidebarWidth = (int) (64 * activity.getResources().getDisplayMetrics().density * dockScale);
+        
+        // Asgari boyut sinirlamasi (Clipped buton ve widgetlari engellemek icin minimum 50dp)
+        int minAllowedSize = (int) (50 * activity.getResources().getDisplayMetrics().density);
+        if (dockSize < minAllowedSize) {
+            dockSize = minAllowedSize;
+        }
+        if (sidebarWidth < minAllowedSize) {
+            sidebarWidth = minAllowedSize;
+        }
+        
         if (isPortrait) dockPos = "bottom";
 
         switch (dockPos) {

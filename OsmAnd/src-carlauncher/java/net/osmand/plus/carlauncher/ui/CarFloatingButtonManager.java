@@ -42,6 +42,15 @@ public class CarFloatingButtonManager {
     private boolean isDragging = false;
     private long touchStartTime;
 
+    // Jest ve Uzun Basim Durumlari (Türkçe karakter yok)
+    private final android.os.Handler gestureHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private Runnable longClickRunnable;
+    private boolean isLongClickTriggered = false;
+
+    // Custom Menu Overlay
+    private FrameLayout menuOverlayView;
+    private WindowManager.LayoutParams menuParams;
+
     private CarFloatingButtonManager(Context context) {
         this.context = context.getApplicationContext();
         this.windowManager = (WindowManager) this.context.getSystemService(Context.WINDOW_SERVICE);
@@ -116,6 +125,19 @@ public class CarFloatingButtonManager {
                             initialTouchY = event.getRawY();
                             touchStartTime = System.currentTimeMillis();
                             isDragging = false;
+                            isLongClickTriggered = false;
+
+                            // 500ms basili tutuldugunda uzun basim tetiklenir (parmak kaldirmayi beklemez)
+                            longClickRunnable = new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (!isDragging) {
+                                        isLongClickTriggered = true;
+                                        onButtonLongClicked();
+                                    }
+                                }
+                            };
+                            gestureHandler.postDelayed(longClickRunnable, 500);
                             return true;
 
                         case MotionEvent.ACTION_MOVE:
@@ -123,6 +145,7 @@ public class CarFloatingButtonManager {
                             float deltaY = event.getRawY() - initialTouchY;
                             if (Math.abs(deltaX) > 15 || Math.abs(deltaY) > 15) {
                                 isDragging = true;
+                                gestureHandler.removeCallbacks(longClickRunnable);
                             }
                             params.x = (int) (initialX + deltaX);
                             params.y = (int) (initialY + deltaY);
@@ -137,8 +160,11 @@ public class CarFloatingButtonManager {
                             return true;
 
                         case MotionEvent.ACTION_UP:
-                            if (!isDragging || (System.currentTimeMillis() - touchStartTime) < 200) {
-                                onButtonClicked();
+                            gestureHandler.removeCallbacks(longClickRunnable);
+                            if (!isDragging) {
+                                if (!isLongClickTriggered) {
+                                    onButtonClicked();
+                                }
                             }
                             return true;
                     }
@@ -154,6 +180,7 @@ public class CarFloatingButtonManager {
     }
 
     public void hideButton() {
+        hideCustomOverlayMenu();
         if (!isAdded || floatingView == null) return;
         try {
             windowManager.removeView(floatingView);
@@ -194,47 +221,176 @@ public class CarFloatingButtonManager {
 
     private void onButtonClicked() {
         if (!isAppInForeground) {
-            // Arka plandaysa: Uygulamayi en on plana getir
-            Intent intent = new Intent(context, net.osmand.plus.activities.MapActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            context.startActivity(intent);
+            bringAppToForeground();
         } else {
-            // On plandaysa: PopupMenu ac
+            // On planda tek tiklandiginda: Desktop modu toggle yapar (Kisa Basim)
+            Intent intent = new Intent("net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE");
+            intent.setPackage(context.getPackageName());
+            context.sendBroadcast(intent);
+            
+            androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(context)
+                    .sendBroadcast(new Intent("net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE"));
+        }
+    }
+
+    private void onButtonLongClicked() {
+        if (!isAppInForeground) {
+            bringAppToForeground();
+        } else {
+            // On planda uzun basildiginda: Custom popup menu ac
             showOverlayMenu();
         }
+    }
+
+    private void bringAppToForeground() {
+        Intent intent = new Intent(context, net.osmand.plus.activities.MapActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        context.startActivity(intent);
     }
 
     private void showOverlayMenu() {
         if (floatingView == null) return;
         
-        // PopupMenu AppCompat temali bir baglam gerektirir
-        Context themeContext = new android.view.ContextThemeWrapper(context, android.R.style.Theme_DeviceDefault_InputMethod);
-        PopupMenu popup = new PopupMenu(themeContext, floatingView);
-        
-        popup.getMenu().add(0, 1, 0, "Gorunumu Degistir (Buyuk/Kucuk Panel)");
-        popup.getMenu().add(0, 2, 1, "Masaustu Modu (Desktop)");
-        popup.getMenu().add(0, 3, 2, "Ayarlar");
+        if (menuOverlayView != null) {
+            hideCustomOverlayMenu();
+            return;
+        }
 
-        popup.setOnMenuItemClickListener(item -> {
-            Intent intent = new Intent();
-            switch (item.getItemId()) {
-                case 1:
-                    intent.setAction("net.osmand.carlauncher.ACTION_LAYOUT_TOGGLE");
-                    context.sendBroadcast(intent);
+        // Custom FrameLayout menu karti
+        menuOverlayView = new FrameLayout(context);
+        
+        // Premium koyu tema: #111115 arka plan, #3D63FF neon mavi cerceve
+        GradientDrawable bg = new GradientDrawable();
+        bg.setShape(GradientDrawable.RECTANGLE);
+        bg.setColor(0xF4111115); // Koyu premium renk
+        bg.setStroke(dpToPx(1), 0xFF3D63FF); // Modern mavi kenarlik
+        bg.setCornerRadius(dpToPx(12));
+        menuOverlayView.setBackground(bg);
+        
+        int padding = dpToPx(8);
+        menuOverlayView.setPadding(padding, padding, padding, padding);
+
+        android.widget.LinearLayout content = new android.widget.LinearLayout(context);
+        content.setOrientation(android.widget.LinearLayout.VERTICAL);
+        FrameLayout.LayoutParams contentLp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        menuOverlayView.addView(content, contentLp);
+
+        // Menü elemanları (Türkçe karakter yok!)
+        addMenuItem(content, "Gorunumu Degistir", "net.osmand.carlauncher.ACTION_LAYOUT_TOGGLE");
+        addMenuItem(content, "Masaustu Modu (Desktop)", "net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE");
+        addMenuItem(content, "Car Launcher Ayarlari", "net.osmand.carlauncher.ACTION_OPEN_SETTINGS");
+
+        int layoutType;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            layoutType = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            layoutType = WindowManager.LayoutParams.TYPE_PHONE;
+        }
+
+        menuParams = new WindowManager.LayoutParams(
+                dpToPx(240),
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                layoutType,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                PixelFormat.TRANSLUCENT
+        );
+        menuParams.gravity = Gravity.TOP | Gravity.START;
+
+        // Butonun yaninda konumlandir
+        int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
+        if (params.x > screenWidth / 2) {
+            // Buton sagda ise: menuyu sola ac
+            menuParams.x = params.x - dpToPx(250);
+        } else {
+            // Buton solda ise: menuyu saga ac
+            menuParams.x = params.x + dpToPx(60);
+        }
+        menuParams.y = params.y;
+
+        // Disari dokunuldugunda kapanmasi icin touch listener
+        menuOverlayView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_OUTSIDE) {
+                    hideCustomOverlayMenu();
                     return true;
-                case 2:
-                    intent.setAction("net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE");
-                    context.sendBroadcast(intent);
-                    return true;
-                case 3:
-                    intent.setAction("net.osmand.carlauncher.ACTION_OPEN_SETTINGS");
-                    context.sendBroadcast(intent);
-                    return true;
+                }
+                return false;
             }
-            return false;
         });
 
-        popup.show();
+        try {
+            windowManager.addView(menuOverlayView, menuParams);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void addMenuItem(android.widget.LinearLayout container, String title, final String action) {
+        final android.widget.TextView tv = new android.widget.TextView(context);
+        tv.setText(title);
+        tv.setTextColor(0xFFFFFFFF);
+        tv.setTextSize(14);
+        tv.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        tv.setPadding(dpToPx(16), dpToPx(12), dpToPx(16), dpToPx(12));
+        
+        final GradientDrawable itemBg = new GradientDrawable();
+        itemBg.setShape(GradientDrawable.RECTANGLE);
+        itemBg.setCornerRadius(dpToPx(8));
+        itemBg.setColor(0x00000000);
+        tv.setBackground(itemBg);
+
+        tv.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        itemBg.setColor(0x223D63FF); // Parmak basildiginda mavi hover rengi
+                        tv.setBackground(itemBg);
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        itemBg.setColor(0x00000000);
+                        tv.setBackground(itemBg);
+                        
+                        // Broadcast yayini gonder
+                        Intent intent = new Intent(action);
+                        intent.setPackage(context.getPackageName());
+                        context.sendBroadcast(intent);
+                        
+                        androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(context)
+                                .sendBroadcast(new Intent(action));
+
+                        hideCustomOverlayMenu();
+                        break;
+                    case MotionEvent.ACTION_CANCEL:
+                        itemBg.setColor(0x00000000);
+                        tv.setBackground(itemBg);
+                        break;
+                }
+                return true;
+            }
+        });
+
+        android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        lp.setMargins(0, dpToPx(2), 0, dpToPx(2));
+        container.addView(tv, lp);
+    }
+
+    private void hideCustomOverlayMenu() {
+        if (menuOverlayView != null) {
+            try {
+                windowManager.removeView(menuOverlayView);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            menuOverlayView = null;
+        }
     }
 
     private int dpToPx(int dp) {

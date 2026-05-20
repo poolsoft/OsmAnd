@@ -7,7 +7,7 @@
     android:background="@android:color/transparent"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingStart="8dp"
+    android:paddingStart="0dp"
     android:paddingEnd="8dp">
 
     <!-- 1. App Drawer Button -->
@@ -20,7 +20,8 @@
         android:padding="8dp"
         android:scaleType="fitCenter"
         android:src="@drawable/dashboard_grid"
-        app:tint="@color/cl_primary" />
+        app:tint="@color/cl_primary"
+        android:visibility="visible" />
 
     <!-- 3. Shortcuts RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
@@ -36,7 +37,7 @@
     <LinearLayout
         android:id="@+id/mini_music_container"
         android:layout_width="160dp"
-        android:layout_height="44dp"
+        android:layout_height="38dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="@drawable/bg_drawer_rounded" 
@@ -91,7 +92,7 @@
     <LinearLayout
         android:id="@+id/clock_settings_container"
         android:layout_width="wrap_content"
-        android:layout_height="44dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:orientation="horizontal"
         android:gravity="center_vertical"
@@ -133,6 +134,7 @@
         android:src="@drawable/ic_layout_split"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:padding="8dp"
-        app:tint="@color/cl_text_hint"/>
+        app:tint="@color/cl_text_hint"
+        android:visibility="gone" />
 
 </LinearLayout>

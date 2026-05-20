@@ -221,10 +221,12 @@ public class AppDockFragment extends Fragment
             });
         }
 
-        appListButton.setOnClickListener(v -> {
-            if (listener != null)
-                listener.onAppDrawerOpen();
-        });
+        if (appListButton != null) {
+            appListButton.setOnClickListener(v -> {
+                if (listener != null)
+                    listener.onAppDrawerOpen();
+            });
+        }
 
         // Sag Buton: 3-nokta Menu (Tiklandiginda acilir menu gosterir)
         if (layoutButton != null) {
