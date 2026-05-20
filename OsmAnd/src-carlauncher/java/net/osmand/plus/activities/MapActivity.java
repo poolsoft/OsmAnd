@@ -150,6 +150,8 @@ import net.osmand.shared.gpx.GpxFile;
 import net.osmand.util.Algorithms;
 import net.osmand.plus.carlauncher.ui.AppDockFragment;
 import android.transition.TransitionManager;
+import android.transition.AutoTransition;
+import android.transition.Transition;
 
 import org.apache.commons.logging.Log;
 
@@ -225,6 +227,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
     private boolean isWidgetPanelOpen = true;
     private boolean isDesktopMode = false;
+    private boolean isTransitioning = false;
     private static final String PREF_IS_PINNED = "widget_panel_pinned";
 
 	// Layout Mode: 0 = Normal, 1 = No Widgets, 2 = Full Screen
@@ -623,7 +626,29 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
     private void applyWidgetPanelState() {
         if (carLayoutManager != null) {
             if (rootLayout != null) {
-                TransitionManager.beginDelayedTransition(rootLayout);
+                isTransitioning = true;
+                AutoTransition transition = new AutoTransition();
+                transition.addListener(new Transition.TransitionListener() {
+                    @Override
+                    public void onTransitionStart(Transition transition) {}
+
+                    @Override
+                    public void onTransitionEnd(Transition transition) {
+                        isTransitioning = false;
+                    }
+
+                    @Override
+                    public void onTransitionCancel(Transition transition) {
+                        isTransitioning = false;
+                    }
+
+                    @Override
+                    public void onTransitionPause(Transition transition) {}
+
+                    @Override
+                    public void onTransitionResume(Transition transition) {}
+                });
+                TransitionManager.beginDelayedTransition(rootLayout, transition);
             }
             carLayoutManager.applyLayout(isWidgetPanelOpen, layoutMode);
 
@@ -647,16 +672,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         }
     }
 
-	private long lastLayoutToggleTime = 0;
-
 	@Override
 	public void onLayoutModeToggle() {
-		long currentTime = System.currentTimeMillis();
-		if (currentTime - lastLayoutToggleTime < 500) {
-			// Cok hizli ard arda tiklamalar engellendi (Turkce karakter yok)
+		if (isTransitioning) {
+			// Animasyon devam ederken yeni tiklamalari engelle (Turkce karakter yok)
 			return;
 		}
-		lastLayoutToggleTime = currentTime;
 		// Toggle Logic: Normal (0) -> Full Screen (2) (for API compatibility)
 		layoutMode = (layoutMode == 0) ? 2 : 0;
 		isWidgetPanelOpen = (layoutMode == 0);
@@ -703,16 +724,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		return isDesktopMode;
 	}
 
-	private long lastDesktopToggleTime = 0;
-
 	@Override
 	public void onDesktopModeToggle() {
-		long currentTime = System.currentTimeMillis();
-		if (currentTime - lastDesktopToggleTime < 500) {
-			// Cok hizli ard arda tiklamalar engellendi (Turkce karakter yok)
+		if (isTransitioning) {
+			// Animasyon devam ederken yeni tiklamalari engelle (Turkce karakter yok)
 			return;
 		}
-		lastDesktopToggleTime = currentTime;
 		setDesktopMode(!isDesktopMode);
 	}
 
