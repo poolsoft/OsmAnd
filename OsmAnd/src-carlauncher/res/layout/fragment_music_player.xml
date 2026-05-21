@@ -54,24 +54,49 @@
                 android:layout_height="match_parent"
                 android:orientation="horizontal">
 
-                <!-- SOL DIKEY DOCK: HIZLI ERISIM PANELI (Side dock iceri tasindi) -->
+                <!-- SOL DIKEY DOCK: HIZLI ERISIM PANELI -->
                 <LinearLayout
                     android:id="@+id/music_side_dock"
                     android:layout_width="60dp"
                     android:layout_height="match_parent"
                     android:orientation="vertical"
-                    android:background="@android:color/transparent"
+                    android:background="#20000000"
                     android:gravity="center_horizontal"
-                    android:paddingVertical="20dp"
-                    android:elevation="0dp">
+                    android:paddingTop="16dp"
+                    android:paddingBottom="16dp"
+                    android:elevation="2dp">
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp"
-                        android:layout_weight="1" />
+                    <!-- Kapat Butonu (Sol Ust Kose) -->
+                    <ImageButton
+                        android:id="@+id/btn_close"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:src="@android:drawable/ic_menu_close_clear_cancel"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:tint="#FFFFFF"
+                        android:contentDescription="Kapat"
+                        android:padding="10dp"
+                        android:layout_marginBottom="16dp"/>
 
-                    <!-- Playlist Panelini Acip Kapatan Buton -->
-                    <!-- Belirgin ripple efekti eklendi ve dikeyde ortalandi -->
+                    <!-- Uygulama Secici (Aktif uygulama simgesi, tiklayınca picker acılacak) -->
+                    <FrameLayout
+                        android:id="@+id/app_selector_launch"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@drawable/bg_circle_translucent_white"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:layout_marginBottom="16dp">
+                        
+                        <ImageView
+                            android:id="@+id/app_icon"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_gravity="center"
+                            android:src="@android:drawable/ic_media_play"/>
+                    </FrameLayout>
+
+                    <!-- Playlist Butonu -->
                     <ImageButton
                         android:id="@+id/btn_dock_playlist"
                         android:layout_width="44dp"
@@ -83,6 +108,7 @@
                         android:scaleType="centerInside"
                         android:padding="10dp" />
 
+                    <!-- Alttaki Bosluk -->
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
@@ -96,84 +122,6 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1">
 
-                    <!-- App Selector / Header -->
-                    <LinearLayout
-                        android:id="@+id/player_header"
-                        android:layout_width="0dp"
-                        android:layout_height="48dp"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:paddingHorizontal="16dp"
-                        android:background="#40000000"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent">
-
-                        <ImageButton
-                            android:id="@+id/btn_close"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:src="@android:drawable/ic_menu_close_clear_cancel"
-                            android:background="?android:attr/selectableItemBackgroundBorderless"
-                            android:tint="#FFFFFF"
-                            android:contentDescription="Kapat"
-                            android:layout_marginEnd="12dp" />
-
-                        <!-- Selector Area -->
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <!-- 1. Launch App Area (Icon + Name) -->
-                            <LinearLayout
-                                android:id="@+id/app_selector_launch"
-                                android:layout_width="0dp"
-                                android:layout_height="match_parent"
-                                android:layout_weight="1"
-                                android:gravity="center_vertical"
-                                android:background="?android:attr/selectableItemBackground"
-                                android:paddingHorizontal="8dp"
-                                android:clickable="true"
-                                android:focusable="true">
-
-                                <ImageView
-                                    android:id="@+id/app_icon"
-                                    android:layout_width="32dp"
-                                    android:layout_height="32dp"
-                                    android:src="@android:drawable/ic_media_play"/>
-
-                                <TextView
-                                     android:id="@+id/app_name"
-                                     android:layout_width="wrap_content"
-                                     android:layout_height="wrap_content"
-                                     android:text="Muzik Kaynagi"
-                                     android:textColor="#FFFFFF"
-                                     android:textSize="16sp"
-                                     android:textStyle="bold"
-                                     android:shadowColor="#000000"
-                                     android:shadowDx="1"
-                                     android:shadowDy="1"
-                                     android:shadowRadius="2"
-                                     android:layout_marginStart="12dp"/>
-                            </LinearLayout>
-
-                            <!-- 2. Picker Arrow -->
-                            <ImageView
-                                 android:id="@+id/app_selector_arrow"
-                                 android:layout_width="48dp"
-                                 android:layout_height="match_parent"
-                                 android:src="@android:drawable/arrow_down_float"
-                                 android:tint="#FFFFFF"
-                                 android:scaleType="centerInside"
-                                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                                 android:clickable="true"
-                                 android:focusable="true"/>
-                        </LinearLayout>
-                    </LinearLayout>
-
                     <!-- Floating Cover Art Card Container -->
                     <androidx.cardview.widget.CardView
                         android:id="@+id/card_album_art"
@@ -183,7 +131,7 @@
                         app:cardElevation="8dp"
                         app:cardBackgroundColor="#1AFFFFFF"
                         android:foreground="?android:attr/selectableItemBackground"
-                        app:layout_constraintTop_toBottomOf="@id/player_header"
+                        app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintBottom_toTopOf="@id/player_info_container"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"

@@ -45,6 +45,7 @@ public class AppDrawerFragment extends Fragment {
     private AppDrawerAdapter adapter;
     private View loadingView;
     private static List<AppItem> cachedApps; // Static Cache to prevent reloading
+    private BroadcastReceiver packageReceiver; // Paket degisikliklerini izlemek icin alici (Turkce karakter yok)
     
     // Asynchronous LruCache for holding app icons (Turkce karakter yok)
     private static android.util.LruCache<String, Drawable> iconCache;
@@ -133,11 +134,37 @@ public class AppDrawerFragment extends Fragment {
         if (iconCache == null) {
             iconCache = new android.util.LruCache<>(150); // Max 150 icons
         }
+
+        // Paket degisikliklerini dinlemek icin alici (Turkce karakter yok)
+        packageReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                clearCache();
+                if (isAdded() && !isDetached()) {
+                    loadApps();
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_PACKAGE_ADDED);
+        filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        filter.addAction(Intent.ACTION_PACKAGE_CHANGED);
+        filter.addDataScheme("package");
+        if (getContext() != null) {
+            getContext().registerReceiver(packageReceiver, filter);
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if (packageReceiver != null && getContext() != null) {
+            try {
+                getContext().unregisterReceiver(packageReceiver);
+            } catch (Exception e) {
+                // ignore
+            }
+        }
     }
 
     @Nullable

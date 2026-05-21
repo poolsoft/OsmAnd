@@ -681,6 +681,15 @@ public class AppDockFragment extends Fragment
     }
 
 
+    private int getScaledIconSize() {
+        if (getContext() == null) return dpToPx(48);
+        int baseSize = (int) getContext().getResources().getDimension(net.osmand.plus.R.dimen.dock_icon_size);
+        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+        int dockSizePercent = settings.getDockSize();
+        float scale = 0.3f + (dockSizePercent / 100.0f) * 1.4f;
+        return (int) (baseSize * scale);
+    }
+
     public void setOrientation(boolean isVertical) {
         this.isVerticalMode = isVertical;
         this.currentOrientation = isVertical ? ORIENTATION_VERTICAL : ORIENTATION_HORIZONTAL;
@@ -726,7 +735,7 @@ public class AppDockFragment extends Fragment
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) clockContainer.getLayoutParams();
                 lp.gravity = isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL;
                 lp.width = isVertical ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT;
-                lp.height = isVertical ? ViewGroup.LayoutParams.WRAP_CONTENT : dpToPx(44);
+                lp.height = isVertical ? ViewGroup.LayoutParams.WRAP_CONTENT : ViewGroup.LayoutParams.MATCH_PARENT;
                 lp.setMargins(0, 0, 0, 0);
                 clockContainer.setPadding(isVertical ? 0 : dpToPx(12), isVertical ? dpToPx(2) : 0, isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(2) : 0);
                 clockContainer.setLayoutParams(lp);
@@ -745,36 +754,42 @@ public class AppDockFragment extends Fragment
                 clockView.setText(sdf.format(new java.util.Date()));
             }
             
-            // 4. Item Layout Params Adjustments
+            // 4. Item Layout Params Adjustments & Dynamic Scaling
             int gravity = isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL;
+            int iconSize = getScaledIconSize();
             
             if (appListButton != null) {
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) appListButton.getLayoutParams();
                 lp.gravity = gravity;
-                // Extremely reduced top margin in vertical to keep it closer and match horizontal margins
+                lp.width = iconSize;
+                lp.height = iconSize;
+                // Marginler dikey ve yatay modlar icin dinamik optimize edildi
                 lp.setMargins(isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(2) : 0, isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(2) : 0);
                 appListButton.setLayoutParams(lp);
+                appListButton.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
             }
             
             if (btnDesktopMode != null) {
                 btnDesktopMode.setVisibility(View.VISIBLE);
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) btnDesktopMode.getLayoutParams();
                 lp.gravity = gravity;
+                lp.width = iconSize;
+                lp.height = iconSize;
                 if (isVertical) {
-                    lp.setMargins(0, 0, 0, dpToPx(2)); // Extremely reduced bottom margin
+                    lp.setMargins(0, 0, 0, dpToPx(2));
                 } else {
                     lp.setMargins(dpToPx(4), 0, dpToPx(4), 0);
                 }
                 btnDesktopMode.setLayoutParams(lp);
+                btnDesktopMode.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
             }
 
             if (layoutButton != null) {
-                //layoutButton.setVisibility(View.VISIBLE);
                 layoutButton.setVisibility(View.GONE);
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) layoutButton.getLayoutParams();
                 lp.gravity = gravity;
                 if (isVertical) {
-                    lp.setMargins(0, 0, 0, dpToPx(2)); // Extremely reduced bottom margin
+                    lp.setMargins(0, 0, 0, dpToPx(2));
                 } else {
                     lp.setMargins(dpToPx(4), 0, dpToPx(4), 0);
                 }
@@ -853,17 +868,27 @@ public class AppDockFragment extends Fragment
             miniMusicContainer.setBackgroundResource(net.osmand.plus.R.drawable.bg_drawer_rounded);
             miniMusicContainer.setPadding(dpToPx(8), 0, dpToPx(8), 0);
             
+            float scale = 1.0f;
+            int iconSize = dpToPx(48);
+            if (getContext() != null) {
+                net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+                int dockSizePercent = settings.getDockSize();
+                scale = 0.3f + (dockSizePercent / 100.0f) * 1.4f;
+                iconSize = getScaledIconSize();
+            }
+            
             android.view.ViewGroup.LayoutParams containerLp = miniMusicContainer.getLayoutParams();
             if (containerLp != null) {
-                containerLp.width = dpToPx(160); // Fixed 160dp width in landscape horizontal dock
+                containerLp.width = (int) (dpToPx(160) * (0.6f + scale * 0.4f));
+                containerLp.height = iconSize + dpToPx(8);
                 miniMusicContainer.setLayoutParams(containerLp);
             }
             
             if (miniMusicIcon != null) {
                 miniMusicIcon.setVisibility(View.VISIBLE);
                 android.view.ViewGroup.LayoutParams lp = miniMusicIcon.getLayoutParams();
-                lp.width = dpToPx(24);
-                lp.height = dpToPx(24);
+                lp.width = (int) (iconSize * 0.5f);
+                lp.height = (int) (iconSize * 0.5f);
                 miniMusicIcon.setLayoutParams(lp);
             }
             
@@ -875,6 +900,7 @@ public class AppDockFragment extends Fragment
                 lp.leftMargin = dpToPx(4);
                 lp.rightMargin = dpToPx(4);
                 miniMusicTitle.setLayoutParams(lp);
+                miniMusicTitle.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 11f + (scale * 3f));
             }
             
             if (miniBtnPlay != null) {
@@ -883,8 +909,8 @@ public class AppDockFragment extends Fragment
                 miniBtnPlay.setBackgroundResource(outValue.resourceId);
                 
                 android.view.ViewGroup.LayoutParams lp = miniBtnPlay.getLayoutParams();
-                lp.width = dpToPx(28);
-                lp.height = dpToPx(28);
+                lp.width = (int) (iconSize * 0.6f);
+                lp.height = (int) (iconSize * 0.6f);
                 miniBtnPlay.setLayoutParams(lp);
                 miniBtnPlay.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
             }
@@ -895,8 +921,8 @@ public class AppDockFragment extends Fragment
                 miniBtnNext.setBackgroundResource(outValue.resourceId);
                 
                 android.widget.LinearLayout.LayoutParams lp = (android.widget.LinearLayout.LayoutParams) miniBtnNext.getLayoutParams();
-                lp.width = dpToPx(28);
-                lp.height = dpToPx(28);
+                lp.width = (int) (iconSize * 0.6f);
+                lp.height = (int) (iconSize * 0.6f);
                 lp.leftMargin = 0;
                 miniBtnNext.setLayoutParams(lp);
                 miniBtnNext.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));

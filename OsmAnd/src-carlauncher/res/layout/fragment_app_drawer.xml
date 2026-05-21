@@ -25,12 +25,21 @@
             android:padding="8dp"
             android:layout_marginBottom="16dp">
 
+            <ImageButton
+                android:id="@+id/btn_close_drawer"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:tint="#FFFFFF"
+                android:contentDescription="Kapat"
+                android:layout_marginEnd="8dp"/>
+
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@android:drawable/ic_menu_search"
-                android:tint="#888888"
-                android:layout_marginStart="8dp"/>
+                android:tint="#888888"/>
 
             <EditText
                 android:id="@+id/search_input"
@@ -44,15 +53,6 @@
                 android:paddingHorizontal="12dp"
                 android:singleLine="true"
                 android:imeOptions="actionDone"/>
-
-            <ImageButton
-                android:id="@+id/btn_close_drawer"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@android:drawable/ic_menu_close_clear_cancel"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:tint="#FFFFFF"
-                android:contentDescription="Kapat"/>
         </LinearLayout>
 
         <!-- Apps Grid -->

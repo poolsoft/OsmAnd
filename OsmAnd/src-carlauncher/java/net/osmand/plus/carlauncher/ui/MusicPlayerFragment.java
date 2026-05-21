@@ -232,6 +232,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     trackListPanel.setVisibility(trackListPanel.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
                 }
                 updateDockButtonsUI();
+                updateShuffleAndRepeatVisibility();
             });
         }
 
@@ -271,28 +272,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 updateRepeatUI();
             });
 
-        // App Selector Launch (Icon + Name)
+        // App Selector Launch (Icon + Name) - Tiklayinca picker acilacak (Turkce karakter yok)
         if (appSelectorLaunch != null) {
-            appSelectorLaunch.setOnClickListener(v -> {
-                if (isExternalMode) {
-                    // Launch External App
-                    String pkg = musicManager.getPreferredPackage();
-                    if (pkg != null && !pkg.isEmpty()) {
-                         try {
-                            Intent launchIntent = getContext().getPackageManager().getLaunchIntentForPackage(pkg);
-                            if (launchIntent != null) {
-                                // Launch in Overlay/Split based on logic, or just standard launch
-                                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                startActivity(launchIntent);
-                            }
-                        } catch (Exception e) {
-                            android.widget.Toast.makeText(getContext(), "Uygulama açılamadı", android.widget.Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                } else {
-                    android.widget.Toast.makeText(getContext(), "Dahili Oynatıcı", android.widget.Toast.LENGTH_SHORT).show();
-                }
-            });
+            appSelectorLaunch.setOnClickListener(v -> showAppPicker());
         }
 
         // App Selector Picker (Arrow)
@@ -505,6 +487,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         // Dock butonlarini guncelle
         updateDockButtonsUI();
+
+        // Shuffle ve repeat butonlarinin gorunurlugunu calma listesine gore guncelle (Turkce karakter yok)
+        updateShuffleAndRepeatVisibility();
     }
 
     private void updateDockButtonsUI() {
@@ -938,6 +923,15 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 btnRepeat.setImageResource(net.osmand.plus.R.drawable.ic_music_repeat);
                 break; // Repeat All
         }
+    }
+
+    // Calma listesi acikken shuffle ve repeat butonlarini gizle, kapaliyken goster (Turkce karakter yok)
+    private void updateShuffleAndRepeatVisibility() {
+        if (btnShuffle == null || btnRepeat == null) return;
+        boolean isListVisible = trackListPanel != null && trackListPanel.getVisibility() == View.VISIBLE;
+        int visibility = isListVisible ? View.GONE : View.VISIBLE;
+        btnShuffle.setVisibility(visibility);
+        btnRepeat.setVisibility(visibility);
     }
 
     private void closeFragment() {
