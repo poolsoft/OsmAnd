@@ -229,6 +229,13 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
     private boolean isDesktopMode = false;
     private boolean isTransitioning = false;
     private static final String PREF_IS_PINNED = "widget_panel_pinned";
+    
+    // Global package receiver for App Drawer cache dynamic sync (Turkce karakter yok)
+    private BroadcastReceiver globalPackageReceiver;
+
+    public boolean isWidgetPanelOpen() {
+        return isWidgetPanelOpen;
+    }
 
 	// Layout Mode: 0 = Normal, 1 = No Widgets, 2 = Full Screen
 	private int layoutMode = 0;
@@ -312,6 +319,21 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			registerReceiver(musicDrawerReceiver,
 					new android.content.IntentFilter("net.osmand.carlauncher.OPEN_MUSIC_DRAWER"));
 		}
+
+		// Register globalPackageReceiver for App Drawer cache dynamic sync (Turkce karakter yok)
+		globalPackageReceiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				net.osmand.plus.carlauncher.ui.AppDrawerFragment.clearCache();
+			}
+		};
+		IntentFilter packageFilter = new IntentFilter();
+		packageFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
+		packageFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+		packageFilter.addAction(Intent.ACTION_PACKAGE_CHANGED);
+		packageFilter.addAction(Intent.ACTION_PACKAGE_REPLACED);
+		packageFilter.addDataScheme("package");
+		registerReceiver(globalPackageReceiver, packageFilter);
 
 		// CarLauncher: Direkt activity_car_launcher layout'unu set et
 		// setupCarLauncherUI(); // Removed duplicate call (Already called in onCreate)
@@ -675,6 +697,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         // Yüzen buton yöneticisine tam ekran harita modunu bildir (Türkçe karakter yok)
         boolean isFull = (layoutMode == 2);
         net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).setFullScreenMap(isFull);
+
+        // WidgetPanelFragment'a gorunurluk durumunu bildir (Turkce karakter yok)
+        Fragment panelFragment = getSupportFragmentManager().findFragmentByTag(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.DESKTOP.name());
+        if (panelFragment instanceof net.osmand.plus.carlauncher.ui.WidgetPanelFragment) {
+            ((net.osmand.plus.carlauncher.ui.WidgetPanelFragment) panelFragment).onPanelVisibilityChanged(isWidgetPanelOpen);
+        }
     }
 
     private void refreshDockFragment(String dockPos, boolean isPortrait) {
@@ -1637,6 +1665,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		unregisterReceiver(screenOffReceiver);
 		if (carFloatingButtonReceiver != null) {
 			unregisterReceiver(carFloatingButtonReceiver);
+		}
+		if (globalPackageReceiver != null) {
+			unregisterReceiver(globalPackageReceiver);
 		}
 		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).hideButton();
 		app.getAidlApi().onDestroyMapActivity(this);

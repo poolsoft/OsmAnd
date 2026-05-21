@@ -500,7 +500,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         // Kaynak durumuna gore panellerin gorunurlugunu dinamik yonet
         if (isExternalMode) {
-            if (trackListPanel != null) {
+            // Harici modda playlist varsayilan olarak kapali kalir, 
+            // ama kullanici playlist butonuna basarak acmissa zorla kapatma!
+            if (trackListPanel != null && trackListPanel.getVisibility() != View.VISIBLE) {
                 trackListPanel.setVisibility(View.GONE);
             }
             if (playerPanel != null) {
@@ -524,16 +526,22 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         if (btnDockPlayer == null || btnDockPlaylist == null) return;
 
         if (isExternalMode) {
-            // Harici modda sadece player gosterilir, playlist butonu devre disi
+            // Harici modda player butonu pasif (harici oynatici ekrani acik kalir)
             btnDockPlayer.setColorFilter(0xFF00FFFF); // Cyan
             btnDockPlayer.setBackgroundResource(net.osmand.plus.R.drawable.bg_circle_translucent_white);
             btnDockPlayer.setAlpha(0.5f);
             btnDockPlayer.setEnabled(false);
 
-            btnDockPlaylist.setColorFilter(0xFF888888); // Pasif gri
-            btnDockPlaylist.setBackgroundResource(0);
-            btnDockPlaylist.setAlpha(0.3f);
-            btnDockPlaylist.setEnabled(false);
+            // Playlist butonu ise AKTIF kalir! Boylece basinca playlist acilabilir
+            btnDockPlaylist.setEnabled(true);
+            btnDockPlaylist.setAlpha(1.0f);
+            if (trackListPanel != null && trackListPanel.getVisibility() == View.VISIBLE) {
+                btnDockPlaylist.setColorFilter(0xFF00FFFF); // Cyan
+                btnDockPlaylist.setBackgroundResource(net.osmand.plus.R.drawable.bg_circle_translucent_white);
+            } else {
+                btnDockPlaylist.setColorFilter(0xFFFFFFFF); // Beyaz
+                btnDockPlaylist.setBackgroundResource(0);
+            }
         } else {
             // Dahili modda butonlar aktif
             btnDockPlayer.setEnabled(true);

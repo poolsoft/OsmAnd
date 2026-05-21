@@ -45,44 +45,99 @@ public class AppDrawerFragment extends Fragment {
     private AppDrawerAdapter adapter;
     private View loadingView;
     private static List<AppItem> cachedApps; // Static Cache to prevent reloading
-    private PackageReceiver packageReceiver;
+    
+    // Asynchronous LruCache for holding app icons (Turkce karakter yok)
+    private static android.util.LruCache<String, Drawable> iconCache;
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        // Register BroadcastReceiver
-        packageReceiver = new PackageReceiver();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_PACKAGE_ADDED);
-        filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
-        filter.addAction(Intent.ACTION_PACKAGE_CHANGED);
-        filter.addAction(Intent.ACTION_PACKAGE_REPLACED);
-        filter.addDataScheme("package");
-
-        if (getContext() != null) {
-            getContext().registerReceiver(packageReceiver, filter);
+    public static void clearCache() {
+        cachedApps = null;
+        if (iconCache != null) {
+            iconCache.evictAll();
         }
     }
-    
-    // ... (rest of onCreate/onDestroy) ...
-
-    // (Skip to AppItem definition)
-
-    // ...
 
     private static class AppItem { // Static class
         String label;
         String packageName;
-        Drawable icon;
+    }
+
+    // Kolay ve guvenli sekilde uygulama ikonunu yukleme yardimcisi (Turkce karakter yok)
+    private static Drawable getAppIcon(Context context, String packageName) {
+        if (context == null || packageName == null) {
+            return null;
+        }
+        if (packageName.equals("internal://settings")) {
+            try {
+                return context.getResources().getDrawable(android.R.drawable.ic_menu_preferences);
+            } catch (Exception e) {
+                // fallback
+            }
+        } else if (packageName.equals("internal://music")) {
+            try {
+                return context.getResources().getDrawable(android.R.drawable.ic_media_play);
+            } catch (Exception e) {
+                // fallback
+            }
+        } else {
+            try {
+                return context.getPackageManager().getApplicationIcon(packageName);
+            } catch (Exception e) {
+                // fallback
+            }
+        }
+        // Varsayilan sistem ikonunu don (Turkce karakter yok)
+        try {
+            return context.getPackageManager().getDefaultActivityIcon();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // Arka planda ikon yukleyen asenkron gorev sinifi (Turkce karakter yok)
+    private static class LoadIconTask extends AsyncTask<Void, Void, Drawable> {
+        private final java.lang.ref.WeakReference<ImageView> imageViewReference;
+        private final Context context;
+        private final String packageName;
+
+        LoadIconTask(ImageView imageView, Context context, String packageName) {
+            this.imageViewReference = new java.lang.ref.WeakReference<>(imageView);
+            this.context = context.getApplicationContext();
+            this.packageName = packageName;
+        }
+
+        @Override
+        protected Drawable doInBackground(Void... voids) {
+            return getAppIcon(context, packageName);
+        }
+
+        @Override
+        protected void onPostExecute(Drawable drawable) {
+            if (drawable != null && iconCache != null) {
+                iconCache.put(packageName, drawable);
+            }
+            ImageView imageView = imageViewReference.get();
+            if (imageView != null) {
+                String tag = (String) imageView.getTag();
+                if (tag != null && tag.equals(packageName)) {
+                    imageView.setImageDrawable(drawable);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        
+        // Initialize Icon Cache if not exists (Turkce karakter yok)
+        if (iconCache == null) {
+            iconCache = new android.util.LruCache<>(150); // Max 150 icons
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (getContext() != null && packageReceiver != null) {
-            getContext().unregisterReceiver(packageReceiver);
-        }
     }
 
     @Nullable
@@ -156,15 +211,6 @@ public class AppDrawerFragment extends Fragment {
     }
 
     // Broadcast Receiver for App Updates
-    private class PackageReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            // Clear cache and reload
-            cachedApps = null;
-            loadApps();
-        }
-    }
-
     private class LoadAppsTask extends AsyncTask<Void, Void, List<AppItem>> {
         private final Context context;
 
@@ -188,7 +234,6 @@ public class AppDrawerFragment extends Fragment {
                 AppItem item = new AppItem();
                 item.label = info.loadLabel(pm).toString();
                 item.packageName = info.activityInfo.packageName;
-                item.icon = info.loadIcon(pm);
                 apps.add(item);
             }
 
@@ -208,14 +253,12 @@ public class AppDrawerFragment extends Fragment {
             AppItem settings = new AppItem();
             settings.label = "⚙️ Car Launcher Ayarlar";
             settings.packageName = "internal://settings";
-            settings.icon = context.getResources().getDrawable(android.R.drawable.ic_menu_preferences, null);
             internal.add(settings);
 
             // Music Player
             AppItem music = new AppItem();
             music.label = "🎵 Muzik Calici";
             music.packageName = "internal://music";
-            music.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
             internal.add(music);
 
             return internal;
@@ -273,7 +316,20 @@ public class AppDrawerFragment extends Fragment {
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             AppItem item = displayedApps.get(position);
             holder.textView.setText(item.label);
-            holder.iconView.setImageDrawable(item.icon);
+            
+            // Geri donusum sirasinda yanlis ikon gosterilmesini engelle (Turkce karakter yok)
+            holder.iconView.setTag(item.packageName);
+
+            Drawable cachedIcon = iconCache != null ? iconCache.get(item.packageName) : null;
+            if (cachedIcon != null) {
+                holder.iconView.setImageDrawable(cachedIcon);
+            } else {
+                // Varsayilan bos/placeholder ikon set et (Turkce karakter yok)
+                holder.iconView.setImageDrawable(null);
+                if (holder.iconView.getContext() != null) {
+                    new LoadIconTask(holder.iconView, holder.iconView.getContext(), item.packageName).execute();
+                }
+            }
 
             holder.itemView.setOnClickListener(v -> {
                 launchApp(item.packageName);
@@ -342,7 +398,11 @@ public class AppDrawerFragment extends Fragment {
         }
 
         int order = dockManager.getShortcuts().size();
-        AppShortcut shortcut = new AppShortcut(item.packageName, item.label, item.icon, order, mode);
+        Drawable icon = iconCache != null ? iconCache.get(item.packageName) : null;
+        if (icon == null && getContext() != null) {
+            icon = getAppIcon(getContext(), item.packageName);
+        }
+        AppShortcut shortcut = new AppShortcut(item.packageName, item.label, icon, order, mode);
 
         if (dockManager.addShortcut(shortcut)) {
             Toast.makeText(getContext(), item.label + " dock'a eklendi.", Toast.LENGTH_SHORT).show();

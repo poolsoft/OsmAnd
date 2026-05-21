@@ -482,7 +482,15 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             }
         }
         if (widgetManager != null) {
-            widgetManager.startAllWidgets();
+            boolean isPanelOpen = true;
+            if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                isPanelOpen = ((net.osmand.plus.activities.MapActivity) getActivity()).isWidgetPanelOpen();
+            }
+            
+            if (isPanelOpen) {
+                widgetManager.startAllWidgets();
+            }
+            
             // Adapter mevcutsa yeniden olusturma — sadece listeyi guncelle (RAM tasarrufu)
             if (listRecyclerView != null && listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
                 ((WidgetListAdapter) listRecyclerView.getAdapter())
@@ -494,6 +502,19 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         }
     }
 
+    public void onPanelVisibilityChanged(boolean visible) {
+        if (widgetManager != null) {
+            if (visible) {
+                widgetManager.startAllWidgets();
+                if (listRecyclerView != null && listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
+                    ((WidgetListAdapter) listRecyclerView.getAdapter())
+                            .refresh(widgetManager.getVisibleWidgets());
+                }
+            } else {
+                widgetManager.stopAllWidgets();
+            }
+        }
+    }
 
     @Override
     public void onPause() {
