@@ -64,7 +64,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private ImageButton btnDockPlaylist;
     private ImageView appIcon;
     private View appSelectorLaunch;
-    private View appSelectorArrow;
     private ImageButton btnPlaylist, btnClose, btnEqualizer;
     private ImageView nowPlayingArt;
     private ImageView nowPlayingArtBlur;
@@ -114,7 +113,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         btnDockPlaylist = root.findViewById(net.osmand.plus.R.id.btn_dock_playlist);
         appIcon = root.findViewById(net.osmand.plus.R.id.app_icon);
         appSelectorLaunch = root.findViewById(net.osmand.plus.R.id.app_selector_launch);
-        appSelectorArrow = root.findViewById(net.osmand.plus.R.id.app_selector_arrow);
         // btnPlaylist = root.findViewById(net.osmand.plus.R.id.btn_playlist);
         // btnEqualizer = root.findViewById(net.osmand.plus.R.id.btn_equalizer);
         btnClose = root.findViewById(net.osmand.plus.R.id.btn_close);
@@ -277,10 +275,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             appSelectorLaunch.setOnClickListener(v -> showAppPicker());
         }
 
-        // App Selector Picker (Arrow)
-        if (appSelectorArrow != null) {
-            appSelectorArrow.setOnClickListener(v -> showAppPicker());
-        }
+
 
         // Playlist Toggle (Switch Modes)
         if (btnPlaylist != null)
