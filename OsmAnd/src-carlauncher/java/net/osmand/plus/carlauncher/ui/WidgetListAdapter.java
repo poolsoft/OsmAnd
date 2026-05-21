@@ -106,7 +106,7 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
 
     @Override
     public void onBindViewHolder(@NonNull WidgetViewHolder holder, int position) {
-        int margin = dpToPx(holder.itemView.getContext(), 4);
+        int margin = dpToPx(holder.itemView.getContext(), 6);
         int marginTotal = margin * 2;
         
         // --- 1. Sizing Calculation ---
@@ -138,22 +138,34 @@ public class WidgetListAdapter extends RecyclerView.Adapter<WidgetListAdapter.Wi
                     params.width = unitSize - marginTotal; 
                     params.height = ViewGroup.LayoutParams.MATCH_PARENT;
                 } else {
-                    int multiplier;
+                    // Classic Vertical: iOS stili sabit premium yukseklik standartlari (Turkce karakter yok)
+                    int heightDp;
                     BaseWidget.WidgetSize size = widgets.get(position).getSize();
                     if (size == BaseWidget.WidgetSize.SMALL) {
-                        multiplier = 1;
+                        heightDp = 110; 
                     } else if (size == BaseWidget.WidgetSize.MEDIUM) {
-                        multiplier = 2;
+                        heightDp = 160;
                     } else { // LARGE
-                        multiplier = 3;
+                        heightDp = 220;
                     }
-                    params.height = (unitSize * multiplier) - marginTotal;
-                     // Ensure minimum usable height in portrait
-                     if (params.height < dpToPx(holder.itemView.getContext(), 100)) {
-                         params.height = dpToPx(holder.itemView.getContext(), 100);
-                     }
-                     params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                    params.height = dpToPx(holder.itemView.getContext(), heightDp);
+                    params.width = ViewGroup.LayoutParams.MATCH_PARENT;
                 }
+            }
+        } else {
+            // unitSize henuz olculmediyse bile dikey modda sabit yukseklikleri uygula (Turkce karakter yok)
+            if (!isMetroMode && !isHorizontalScroll) {
+                int heightDp;
+                BaseWidget.WidgetSize size = widgets.get(position).getSize();
+                if (size == BaseWidget.WidgetSize.SMALL) {
+                    heightDp = 110; 
+                } else if (size == BaseWidget.WidgetSize.MEDIUM) {
+                    heightDp = 160;
+                } else { // LARGE
+                    heightDp = 220;
+                }
+                params.height = dpToPx(holder.itemView.getContext(), heightDp);
+                params.width = ViewGroup.LayoutParams.MATCH_PARENT;
             }
         }
         holder.itemView.setLayoutParams(params);

@@ -626,29 +626,42 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
     private void applyWidgetPanelState() {
         if (carLayoutManager != null) {
             if (rootLayout != null) {
-                isTransitioning = true;
-                AutoTransition transition = new AutoTransition();
-                transition.addListener(new Transition.TransitionListener() {
-                    @Override
-                    public void onTransitionStart(Transition transition) {}
+                if (rootLayout.isAttachedToWindow()) {
+                    isTransitioning = true;
+                    
+                    // Guvenlik onlemi: Gecis animasyonu tamamlanmazsa kilidi 500ms sonra otomatik ac (Turkce karakter yok)
+                    rootLayout.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            isTransitioning = false;
+                        }
+                    }, 500);
 
-                    @Override
-                    public void onTransitionEnd(Transition transition) {
-                        isTransitioning = false;
-                    }
+                    AutoTransition transition = new AutoTransition();
+                    transition.addListener(new Transition.TransitionListener() {
+                        @Override
+                        public void onTransitionStart(Transition transition) {}
 
-                    @Override
-                    public void onTransitionCancel(Transition transition) {
-                        isTransitioning = false;
-                    }
+                        @Override
+                        public void onTransitionEnd(Transition transition) {
+                            isTransitioning = false;
+                        }
 
-                    @Override
-                    public void onTransitionPause(Transition transition) {}
+                        @Override
+                        public void onTransitionCancel(Transition transition) {
+                            isTransitioning = false;
+                        }
 
-                    @Override
-                    public void onTransitionResume(Transition transition) {}
-                });
-                TransitionManager.beginDelayedTransition(rootLayout, transition);
+                        @Override
+                        public void onTransitionPause(Transition transition) {}
+
+                        @Override
+                        public void onTransitionResume(Transition transition) {}
+                    });
+                    TransitionManager.beginDelayedTransition(rootLayout, transition);
+                } else {
+                    isTransitioning = false;
+                }
             }
             carLayoutManager.applyLayout(isWidgetPanelOpen, layoutMode);
 

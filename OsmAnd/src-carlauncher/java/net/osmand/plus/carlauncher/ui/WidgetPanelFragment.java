@@ -111,8 +111,8 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     private void initListLayout() {
         if (listRecyclerView == null) return;
         
-        // Layout Manager (Grid)
-        listRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 1));
+        // Layout Manager (Grid) - Baslangicta 2 sutunlu iOS duzeni (Turkce karakter yok)
+        listRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
         
         // Post configuration update
         listRecyclerView.post(() -> {
@@ -171,7 +171,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                     item.setChecked(isPinned);
                     PreferenceManager.getDefaultSharedPreferences(getContext())
                         .edit().putBoolean(PREF_IS_PINNED, isPinned).apply();
-
+ 
                     if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
                         ((net.osmand.plus.activities.MapActivity) getActivity()).updateWidgetPanelMode();
                     }
@@ -222,9 +222,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             slots = 4; // Metro Mode: Fixed 4-column Grid
         } else {
              // CLASSIC Mode: Slots determines "Items Per Screen" for sizing, NOT columns.
-             // Columns should always be 1 (List).
              if (isSystemPortrait) {
-                // Portrait mode: Always force 1 slot for maximum clarity
                 slots = 1; 
             } else {
                 slots = settings.getLandscapeSlotCount();
@@ -235,7 +233,13 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         boolean changed = false;
         
         // Determine actual Span Count for Layout Manager
-        int targetSpanCount = isMetro ? 4 : 1; 
+        // Classic modda dikey kaydirirken 2 sutunlu iOS stili grid yapisi kullanilir (Turkce karakter yok)
+        int targetSpanCount;
+        if (isMetro) {
+            targetSpanCount = 4;
+        } else {
+            targetSpanCount = isHorizontalScroll ? 1 : 2;
+        }
         
         if (glm.getSpanCount() != targetSpanCount) {
             glm.setSpanCount(targetSpanCount);
@@ -270,7 +274,28 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                 }
             });
         } else {
-            glm.setSpanSizeLookup(new GridLayoutManager.DefaultSpanSizeLookup());
+            if (isHorizontalScroll) {
+                glm.setSpanSizeLookup(new GridLayoutManager.DefaultSpanSizeLookup());
+            } else {
+                // Classic Vertical: 2 columns, Large spans 2 (full width), others span 1 (half width) (Turkce karakter yok)
+                glm.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+                    @Override
+                    public int getSpanSize(int position) {
+                        if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
+                            WidgetListAdapter adapter = (WidgetListAdapter) listRecyclerView.getAdapter();
+                            if (position < adapter.getItemCount()) {
+                                net.osmand.plus.carlauncher.widgets.BaseWidget w = adapter.getWidgetAt(position);
+                                if (w != null) {
+                                    if (w.getSize() == net.osmand.plus.carlauncher.widgets.BaseWidget.WidgetSize.LARGE) {
+                                        return 2; // Genis widget full width kaplar (Turkce karakter yok)
+                                    }
+                                }
+                            }
+                        }
+                        return 1; // Digerleri yarim genislik kaplayarak yan yana yerlesir
+                    }
+                });
+            }
         }
 
         if (changed && listRecyclerView.getAdapter() != null) {
