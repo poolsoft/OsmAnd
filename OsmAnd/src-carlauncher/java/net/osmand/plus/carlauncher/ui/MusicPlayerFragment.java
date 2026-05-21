@@ -61,7 +61,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private LinearLayout trackListPanel;
     private View playerPanel;
     private View musicSideDock;
-    private ImageButton btnDockPlayer;
     private ImageButton btnDockPlaylist;
     private ImageView appIcon;
     private View appSelectorLaunch;
@@ -112,7 +111,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         trackListPanel = root.findViewById(net.osmand.plus.R.id.track_list_panel);
         playerPanel = root.findViewById(net.osmand.plus.R.id.player_panel);
         musicSideDock = root.findViewById(net.osmand.plus.R.id.music_side_dock);
-        btnDockPlayer = root.findViewById(net.osmand.plus.R.id.btn_dock_player);
         btnDockPlaylist = root.findViewById(net.osmand.plus.R.id.btn_dock_playlist);
         appIcon = root.findViewById(net.osmand.plus.R.id.app_icon);
         appSelectorLaunch = root.findViewById(net.osmand.plus.R.id.app_selector_launch);
@@ -227,26 +225,13 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     }
 
     private void setupListeners() {
-        // Dikey Dock Buton Tiklama Dinleyicileri
-        if (btnDockPlayer != null) {
-            btnDockPlayer.setOnClickListener(v -> {
-                if (!isExternalMode) {
-                    if (playerPanel != null) {
-                        playerPanel.setVisibility(playerPanel.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
-                    }
-                    updateDockButtonsUI();
-                }
-            });
-        }
-
+        // Dikey Dock Buton Tiklama Dinleyicileri (Turkce karakter yok)
         if (btnDockPlaylist != null) {
             btnDockPlaylist.setOnClickListener(v -> {
-                if (!isExternalMode) {
-                    if (trackListPanel != null) {
-                        trackListPanel.setVisibility(trackListPanel.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
-                    }
-                    updateDockButtonsUI();
+                if (trackListPanel != null) {
+                    trackListPanel.setVisibility(trackListPanel.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
                 }
+                updateDockButtonsUI();
             });
         }
 
@@ -523,46 +508,20 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     }
 
     private void updateDockButtonsUI() {
-        if (btnDockPlayer == null || btnDockPlaylist == null) return;
+        if (btnDockPlaylist == null) return;
 
-        if (isExternalMode) {
-            // Harici modda player butonu pasif (harici oynatici ekrani acik kalir)
-            btnDockPlayer.setColorFilter(0xFF00FFFF); // Cyan
-            btnDockPlayer.setBackgroundResource(net.osmand.plus.R.drawable.bg_circle_translucent_white);
-            btnDockPlayer.setAlpha(0.5f);
-            btnDockPlayer.setEnabled(false);
-
-            // Playlist butonu ise AKTIF kalir! Boylece basinca playlist acilabilir
-            btnDockPlaylist.setEnabled(true);
-            btnDockPlaylist.setAlpha(1.0f);
-            if (trackListPanel != null && trackListPanel.getVisibility() == View.VISIBLE) {
-                btnDockPlaylist.setColorFilter(0xFF00FFFF); // Cyan
-                btnDockPlaylist.setBackgroundResource(net.osmand.plus.R.drawable.bg_circle_translucent_white);
-            } else {
-                btnDockPlaylist.setColorFilter(0xFFFFFFFF); // Beyaz
-                btnDockPlaylist.setBackgroundResource(0);
-            }
+        // Calma listesi butonu her zaman aktif kalmalidir
+        btnDockPlaylist.setEnabled(true);
+        btnDockPlaylist.setAlpha(1.0f);
+        
+        if (trackListPanel != null && trackListPanel.getVisibility() == View.VISIBLE) {
+            // Panel aciksa buton cyan rengine boyanir ve yari saydam beyaz arka plan verilir
+            btnDockPlaylist.setColorFilter(0xFF00FFFF); 
+            btnDockPlaylist.setBackgroundResource(net.osmand.plus.R.drawable.bg_circle_translucent_white);
         } else {
-            // Dahili modda butonlar aktif
-            btnDockPlayer.setEnabled(true);
-            btnDockPlayer.setAlpha(1.0f);
-            if (playerPanel != null && playerPanel.getVisibility() == View.VISIBLE) {
-                btnDockPlayer.setColorFilter(0xFF00FFFF); // Cyan
-                btnDockPlayer.setBackgroundResource(net.osmand.plus.R.drawable.bg_circle_translucent_white);
-            } else {
-                btnDockPlayer.setColorFilter(0xFFFFFFFF); // Beyaz
-                btnDockPlayer.setBackgroundResource(0);
-            }
-
-            btnDockPlaylist.setEnabled(true);
-            btnDockPlaylist.setAlpha(1.0f);
-            if (trackListPanel != null && trackListPanel.getVisibility() == View.VISIBLE) {
-                btnDockPlaylist.setColorFilter(0xFF00FFFF); // Cyan
-                btnDockPlaylist.setBackgroundResource(net.osmand.plus.R.drawable.bg_circle_translucent_white);
-            } else {
-                btnDockPlaylist.setColorFilter(0xFFFFFFFF); // Beyaz
-                btnDockPlaylist.setBackgroundResource(0);
-            }
+            // Panel kapaliysa buton beyaz renge boyanir ve arka plan temizlenir
+            btnDockPlaylist.setColorFilter(0xFFFFFFFF); 
+            btnDockPlaylist.setBackgroundResource(0);
         }
     }
 

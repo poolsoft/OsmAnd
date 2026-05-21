@@ -703,7 +703,7 @@ public class AppDockFragment extends Fragment
                 ll.setOrientation(isVertical ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
                 // CRITICAL: Force TOP alignment in Sidebar mode
                 ll.setGravity(isVertical ? android.view.Gravity.CENTER_HORIZONTAL | android.view.Gravity.TOP : android.view.Gravity.CENTER_VERTICAL);
-                ll.setPadding(isVertical ? 0 : dpToPx(16), isVertical ? dpToPx(2) : 0, isVertical ? 0 : dpToPx(16), isVertical ? dpToPx(2) : 0);
+                ll.setPadding(0, isVertical ? dpToPx(2) : 0, 0, isVertical ? dpToPx(2) : 0);
                 
                 ViewGroup.LayoutParams lp = ll.getLayoutParams();
                 lp.height = ViewGroup.LayoutParams.MATCH_PARENT;

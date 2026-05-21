@@ -194,6 +194,17 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
         }
 
         public void bind(AppShortcut shortcut) {
+            // Dinamik olarak guncel ikon boyutunu ata (ViewHolder yeniden kullanildiginda boyutun guncellenmesi icin)
+            int iconSize = getScaledIconSize();
+            ViewGroup.LayoutParams lp = iconView.getLayoutParams();
+            if (lp != null) {
+                lp.width = iconSize;
+                lp.height = iconSize;
+                iconView.setLayoutParams(lp);
+            } else {
+                iconView.setLayoutParams(new LinearLayout.LayoutParams(iconSize, iconSize));
+            }
+
             iconView.setImageDrawable(shortcut.getIcon());
             nameView.setText(shortcut.getAppName());
 

@@ -13,12 +13,16 @@
     <!-- 1. App Drawer Button -->
     <ImageButton
         android:id="@+id/btn_app_list"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
         android:background="?attr/selectableItemBackgroundBorderless" 
         android:contentDescription="Apps"
-        android:padding="8dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:paddingStart="0dp"
+        android:paddingEnd="12dp"
         android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
         android:src="@drawable/dashboard_grid"
         app:tint="@color/cl_primary"
         android:visibility="visible" />
@@ -37,7 +41,9 @@
     <LinearLayout
         android:id="@+id/mini_music_container"
         android:layout_width="160dp"
-        android:layout_height="38dp"
+        android:layout_height="match_parent"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="@drawable/bg_drawer_rounded" 
@@ -115,13 +121,18 @@
     <!-- Desktop Mode Button -->
     <ImageButton
         android:id="@+id/btn_desktop_mode"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
         android:layout_gravity="center_vertical"
         android:layout_marginStart="4dp"
         android:src="@drawable/ic_desktop_mode"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:padding="8dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
         app:tint="@color/cl_text_hint"/>
 
     <!-- 6. Layout Toggle (3-dot Menu) -->
