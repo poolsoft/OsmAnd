@@ -839,6 +839,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	@Override
 	public void setPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent content) {
+		if (isTransitioning) {
+			return; // Animasyon devam ederken icerik degisimini engelle (Turkce karakter yok)
+		}
 		if (panelContentManager != null) {
 			// Eger DESKTOP disinda bir sey aciliyorsa Masaustu modundan cik
 			if (content != net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.DESKTOP && isDesktopMode) {

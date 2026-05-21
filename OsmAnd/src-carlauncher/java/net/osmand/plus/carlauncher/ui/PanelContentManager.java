@@ -61,12 +61,6 @@ public class PanelContentManager {
         Fragment fragment = null;
         String tag = content.name();
 
-        // Mevcut fragment'i temizle
-        Fragment old = fragmentManager.findFragmentById(containerId);
-        if (old != null) {
-            fragmentManager.beginTransaction().remove(old).commitNowAllowingStateLoss();
-        }
-
         switch (content) {
             case WIDGETS:
                 // Varsayilan: widget listesi yerine premium birlesik panel
@@ -96,7 +90,6 @@ public class PanelContentManager {
 
         if (fragment != null) {
             fragmentManager.beginTransaction()
-                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
                     .replace(containerId, fragment, tag)
                     .commitAllowingStateLoss();
         }
