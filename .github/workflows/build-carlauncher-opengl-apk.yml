@@ -1,0 +1,119 @@
+name: Build CarLauncher OpenGL.apk
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout OsmAnd
+      uses: actions/checkout@v6
+      with:
+        path: android
+    - name: checkout OsmAnd-resources
+      uses: actions/checkout@v6
+      with:
+        repository: osmandapp/OsmAnd-resources
+        path: resources
+    - name: checkout OsmAnd-core
+      uses: actions/checkout@v6
+      with:
+        repository: osmandapp/OsmAnd-core
+        path: core
+    - name: checkout OsmAnd-core-legacy
+      uses: actions/checkout@v6
+      with:
+        repository: osmandapp/OsmAnd-core-legacy
+        path: core-legacy
+    - name: checkout OsmAnd-build
+      uses: actions/checkout@v6
+      with:
+        repository: osmandapp/OsmAnd-build
+        path: build
+    - name: checkout OsmAnd-tools
+      uses: actions/checkout@v6
+      with:
+        repository: osmandapp/OsmAnd-tools
+        path: tools
+    - name: checkout OsmAnd-misc
+      uses: actions/checkout@v6
+      with:
+        repository: osmandapp/OsmAnd-misc
+        path: misc
+
+    - name: Setup Android SDK and NDK
+      uses: android-actions/setup-android@v3
+      with:
+        packages: 'ndk;25.1.8937393'
+
+    - name: set up JDK 17
+      uses: actions/setup-java@v5
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Grant execute permission for gradlew
+      working-directory: ./android
+      run: chmod +x gradlew
+
+    - name: Prepare Dynamic Version Info
+      working-directory: ./android
+      run: |
+        # OsmAnd ana surumunu build.gradle'dan oku
+        BASE_VERSION=$(grep -E 'versionName\s+"[0-9.]+"' OsmAnd/build.gradle | head -n 1 | sed -E 's/.*"([0-9.]+)".*/\1/')
+        if [ -z "$BASE_VERSION" ]; then BASE_VERSION="5.4.0"; fi
+        
+        # RUN_NUMBER her workflow calistirilista otomatik artar (1,2,3...)
+        # versionName: 5.4.0.123 seklinde olsun (RUN_NUMBER ile)
+        VERSION_CODE=$((GITHUB_RUN_NUMBER + 30000))
+        VERSION_NAME="${BASE_VERSION}.${GITHUB_RUN_NUMBER}-opengl"
+        
+        echo "APK_NUMBER_VERSION=${VERSION_CODE}" >> $GITHUB_ENV
+        echo "APK_VERSION=${BASE_VERSION}" >> $GITHUB_ENV
+        echo "APK_VERSION_SUFFIX=.${GITHUB_RUN_NUMBER}-opengl" >> $GITHUB_ENV
+        echo "{\"versionCode\": ${VERSION_CODE}, \"versionName\": \"${VERSION_NAME}\", \"apkUrl\": \"https://github.com/${{ github.repository }}/releases/latest/download/CarLauncher-OpenGL.apk\"}" > version.json
+
+    - name: Build with Gradle (Quiet mode)
+      working-directory: ./android
+      run: ./gradlew assemblecarlauncherOpenglFatDebug -x test --no-daemon -q
+
+    - name: Rename APK
+      working-directory: ./android
+      run: cp OsmAnd/build/outputs/apk/carlauncherOpenglFat/debug/OsmAnd-carlauncher-opengl-fat-debug.apk CarLauncher-OpenGL.apk
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: CarLauncher-OpenGL-APK
+        path: android/CarLauncher-OpenGL.apk
+
+    - name: Force Update Latest Tag
+      working-directory: ./android
+      run: |
+        git config --global user.email "action@github.com"
+        git config --global user.name "GitHub Action"
+        git tag -f latest || true
+        git push origin latest --force
+
+    - name: Update Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: latest
+        name: Latest CarLauncher Build
+        body: |
+          ### 🚀 Güncel Derleme Bilgileri (OpenGL)
+          - **Versiyon:** `${{ env.VERSION_NAME }}`
+          - **İşlem (SHA):** `${{ github.sha }}`
+          
+          *Bu sürüm her başarılı derleme sonrası otomatik olarak güncellenir.*
+        files: |
+          android/CarLauncher-OpenGL.apk
+          android/version.json
+        draft: false
+        prerelease: false
+        make_latest: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
