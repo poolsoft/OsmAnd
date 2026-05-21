@@ -83,8 +83,8 @@ public class MusicRepository {
                 MediaStore.Audio.Media.ALBUM_ID
         };
 
-        // Filter for music only
-        String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
+        // Filter for music only (USB muzikleri elememek icin secim filtresi kaldirildi)
+        String selection = null;
 
         try (Cursor cursor = context.getContentResolver().query(
                 collection,
@@ -119,8 +119,15 @@ public class MusicRepository {
                     if (path != null) {
                         String lowerPath = path.toLowerCase(java.util.Locale.ROOT);
 
-                        // Allowed extensions (User requested MP3/MP4)
-                        if (!lowerPath.endsWith(".mp3") && !lowerPath.endsWith(".mp4")) {
+                        // Allowed extensions (Genisletilmis format destegi)
+                        if (!lowerPath.endsWith(".mp3") && 
+                                !lowerPath.endsWith(".mp4") && 
+                                !lowerPath.endsWith(".flac") && 
+                                !lowerPath.endsWith(".m4a") && 
+                                !lowerPath.endsWith(".wav") && 
+                                !lowerPath.endsWith(".wma") && 
+                                !lowerPath.endsWith(".aac") && 
+                                !lowerPath.endsWith(".ogg")) {
                             continue;
                         }
 

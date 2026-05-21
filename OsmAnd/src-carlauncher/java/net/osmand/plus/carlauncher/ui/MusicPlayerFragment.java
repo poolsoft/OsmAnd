@@ -60,6 +60,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     // UI Elements
     private LinearLayout trackListPanel;
     private View playerPanel;
+    private View musicSideDock;
+    private ImageButton btnDockPlayer;
+    private ImageButton btnDockPlaylist;
     private ImageView appIcon;
     private View appSelectorLaunch;
     private View appSelectorArrow;
@@ -108,6 +111,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         // Find Views
         trackListPanel = root.findViewById(net.osmand.plus.R.id.track_list_panel);
         playerPanel = root.findViewById(net.osmand.plus.R.id.player_panel);
+        musicSideDock = root.findViewById(net.osmand.plus.R.id.music_side_dock);
+        btnDockPlayer = root.findViewById(net.osmand.plus.R.id.btn_dock_player);
+        btnDockPlaylist = root.findViewById(net.osmand.plus.R.id.btn_dock_playlist);
         appIcon = root.findViewById(net.osmand.plus.R.id.app_icon);
         appSelectorLaunch = root.findViewById(net.osmand.plus.R.id.app_selector_launch);
         appSelectorArrow = root.findViewById(net.osmand.plus.R.id.app_selector_arrow);
@@ -221,6 +227,29 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     }
 
     private void setupListeners() {
+        // Dikey Dock Buton Tiklama Dinleyicileri
+        if (btnDockPlayer != null) {
+            btnDockPlayer.setOnClickListener(v -> {
+                if (!isExternalMode) {
+                    if (playerPanel != null) {
+                        playerPanel.setVisibility(playerPanel.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+                    }
+                    updateDockButtonsUI();
+                }
+            });
+        }
+
+        if (btnDockPlaylist != null) {
+            btnDockPlaylist.setOnClickListener(v -> {
+                if (!isExternalMode) {
+                    if (trackListPanel != null) {
+                        trackListPanel.setVisibility(trackListPanel.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+                    }
+                    updateDockButtonsUI();
+                }
+            });
+        }
+
         // Close
         if (btnClose != null)
             btnClose.setOnClickListener(v -> closeFragment());
@@ -454,21 +483,78 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     }
 
     private void updateModeUI() {
-        // Track list visible in both modes (handled by layout)
-
-        // Dahili moddaysa veya liste bossa (izin varsa yükle, yoksa iste)
+        // Dahili moddaysa veya liste bossa (izin varsa yukle, yoksa iste)
         if (allTracks.isEmpty()) {
             checkPermissionsAndLoadTracks();
         }
 
-        // Uygulama ikonunu güncelle
+        // Uygulama ikonunu guncelle
         updateAppIcon();
 
-        // Seekbar görünürlüğü (Opsiyonel: External modda seekbar çalışmayabilir)
+        // Seekbar gorunurlugu (Opsiyonel: External modda seekbar calismayabilir)
         if (seekbar != null) {
             seekbar.setEnabled(!isExternalMode);
             if (isExternalMode)
                 seekbar.setProgress(0);
+        }
+
+        // Kaynak durumuna gore panellerin gorunurlugunu dinamik yonet
+        if (isExternalMode) {
+            if (trackListPanel != null) {
+                trackListPanel.setVisibility(View.GONE);
+            }
+            if (playerPanel != null) {
+                playerPanel.setVisibility(View.VISIBLE);
+            }
+        } else {
+            // Dahili oynatici modunda varsayilan olarak ikisi de acik gelir
+            if (trackListPanel != null) {
+                trackListPanel.setVisibility(View.VISIBLE);
+            }
+            if (playerPanel != null) {
+                playerPanel.setVisibility(View.VISIBLE);
+            }
+        }
+
+        // Dock butonlarini guncelle
+        updateDockButtonsUI();
+    }
+
+    private void updateDockButtonsUI() {
+        if (btnDockPlayer == null || btnDockPlaylist == null) return;
+
+        if (isExternalMode) {
+            // Harici modda sadece player gosterilir, playlist butonu devre disi
+            btnDockPlayer.setColorFilter(0xFF00FFFF); // Cyan
+            btnDockPlayer.setBackgroundResource(net.osmand.plus.R.drawable.bg_circle_translucent_white);
+            btnDockPlayer.setAlpha(0.5f);
+            btnDockPlayer.setEnabled(false);
+
+            btnDockPlaylist.setColorFilter(0xFF888888); // Pasif gri
+            btnDockPlaylist.setBackgroundResource(0);
+            btnDockPlaylist.setAlpha(0.3f);
+            btnDockPlaylist.setEnabled(false);
+        } else {
+            // Dahili modda butonlar aktif
+            btnDockPlayer.setEnabled(true);
+            btnDockPlayer.setAlpha(1.0f);
+            if (playerPanel != null && playerPanel.getVisibility() == View.VISIBLE) {
+                btnDockPlayer.setColorFilter(0xFF00FFFF); // Cyan
+                btnDockPlayer.setBackgroundResource(net.osmand.plus.R.drawable.bg_circle_translucent_white);
+            } else {
+                btnDockPlayer.setColorFilter(0xFFFFFFFF); // Beyaz
+                btnDockPlayer.setBackgroundResource(0);
+            }
+
+            btnDockPlaylist.setEnabled(true);
+            btnDockPlaylist.setAlpha(1.0f);
+            if (trackListPanel != null && trackListPanel.getVisibility() == View.VISIBLE) {
+                btnDockPlaylist.setColorFilter(0xFF00FFFF); // Cyan
+                btnDockPlaylist.setBackgroundResource(net.osmand.plus.R.drawable.bg_circle_translucent_white);
+            } else {
+                btnDockPlaylist.setColorFilter(0xFFFFFFFF); // Beyaz
+                btnDockPlaylist.setBackgroundResource(0);
+            }
         }
     }
 
