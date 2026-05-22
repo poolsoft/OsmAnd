@@ -7,7 +7,8 @@ package net.osmand.plus.carlauncher.ui;
 public enum LayoutPreset {
     NAVIGATION("Navigasyon"),
     MEDIA("Medya"),
-    MINIMALIST("Minimalist");
+    MINIMALIST("Minimalist"),
+    USER("Kullanici");
 
     private final String title;
 

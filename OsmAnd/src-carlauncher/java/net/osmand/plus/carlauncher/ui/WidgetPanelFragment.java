@@ -131,13 +131,13 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), menuBtn);
             
             // 1. Edit Widgets
-            popup.getMenu().add(0, 1, 0, "Widget Düzenle");
+            popup.getMenu().add(0, 1, 0, "Widget Duzenle");
             
             // 2. Settings (NEW: Access settings when clock is hidden)
-            popup.getMenu().add(0, 4, 1, "Launcher Ayarları");
+            popup.getMenu().add(0, 4, 1, "Launcher Ayarlari");
             
             // 3. Layout Mode Submenu
-            android.view.Menu layoutMenu = popup.getMenu().addSubMenu(0, 3, 2, "Görünüm");
+            android.view.Menu layoutMenu = popup.getMenu().addSubMenu(0, 3, 2, "Gorunum");
             android.view.MenuItem itemClassic = layoutMenu.add(0, 31, 0, "Klasik (Liste)");
             android.view.MenuItem itemMetro = layoutMenu.add(0, 32, 1, "Metro (Izgara)");
             
@@ -149,8 +149,18 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             if (isMetro) itemMetro.setChecked(true);
             else itemClassic.setChecked(true);
             
-            // 4. Pin Toggle
-            android.view.MenuItem pinItem = popup.getMenu().add(0, 2, 3, "Sabitle (Pinned)");
+            // 4. Widget Presets Submenu
+            android.view.Menu presetsMenu = popup.getMenu().addSubMenu(0, 5, 3, "Widget Profilleri");
+            presetsMenu.add(0, 51, 0, "Navigasyon Odakli");
+            presetsMenu.add(0, 52, 1, "Medya Odakli");
+            presetsMenu.add(0, 53, 2, "Minimalist");
+            presetsMenu.add(0, 54, 3, "Kullanici Secimi");
+            
+            // 5. Save Current Layout
+            popup.getMenu().add(0, 6, 4, "Mevcut Duzeni Kaydet");
+            
+            // 6. Pin Toggle
+            android.view.MenuItem pinItem = popup.getMenu().add(0, 2, 5, "Sabitle (Pinned)");
             pinItem.setCheckable(true);
             
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
@@ -189,6 +199,27 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                         settings.setMetroMode(true);
                         updateLayoutConfiguration();
                         applyWidgetsToView();
+                    }
+                    return true;
+                } else if (id == 51) { // Navigasyon Odakli
+                    applyLayoutPreset(LayoutPreset.NAVIGATION);
+                    return true;
+                } else if (id == 52) { // Medya Odakli
+                    applyLayoutPreset(LayoutPreset.MEDIA);
+                    return true;
+                } else if (id == 53) { // Minimalist
+                    applyLayoutPreset(LayoutPreset.MINIMALIST);
+                    return true;
+                } else if (id == 54) { // Kullanici Secimi
+                    applyLayoutPreset(LayoutPreset.USER);
+                    return true;
+                } else if (id == 6) { // Mevcut Duzeni Kaydet
+                    if (widgetManager != null) {
+                        widgetManager.saveUserLayout();
+                        if (getView() != null) {
+                            getView().performHapticFeedback(android.view.HapticFeedbackConstants.CONFIRM);
+                        }
+                        android.widget.Toast.makeText(getContext(), "Mevcut widget duzeni basariyla kaydedildi", android.widget.Toast.LENGTH_SHORT).show();
                     }
                     return true;
                 }
@@ -250,6 +281,12 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             case MINIMALIST:
                 widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.Material3ClockWidget(getContext()));
                 widgetManager.addWidget(new SpeedWidget(getContext(), app));
+                break;
+            case USER:
+                if (!widgetManager.loadUserLayout()) {
+                    android.widget.Toast.makeText(getContext(), "Kaydedilmis kullanici duzeni bulunamadi", android.widget.Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 break;
         }
 

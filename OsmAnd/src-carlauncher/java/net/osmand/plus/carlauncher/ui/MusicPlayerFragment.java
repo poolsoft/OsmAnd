@@ -1452,7 +1452,13 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
     private void applyThemeColor(int color) {
         // Butonlarin tint renklerini guncelle (Turkce karakter yok)
-        if (btnPlay != null) btnPlay.setColorFilter(color);
+        if (btnPlay != null) {
+            android.graphics.drawable.Drawable bg = btnPlay.getBackground();
+            if (bg != null) {
+                bg.setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+            }
+            btnPlay.setColorFilter(0xFFFFFFFF); // Simge her zaman net sekilde beyaz kalacak (Turkce karakter yok)
+        }
         if (btnNext != null) btnNext.setColorFilter(color);
         if (btnPrev != null) btnPrev.setColorFilter(color);
         

@@ -45,4 +45,18 @@
         <item>classic</item>
         <item>minimal</item>
     </string-array>
+
+    <!-- Gece Karartma Modu Secenekleri (Turkce karakter yok) -->
+    <string-array name="night_dim_mode_entries">
+        <item>OsmAnd Ayari</item>
+        <item>Otomatik (Zamana Gore)</item>
+        <item>Gunduz (Her Zaman Pasif)</item>
+        <item>Gece (Her Zaman Aktif)</item>
+    </string-array>
+    <string-array name="night_dim_mode_values">
+        <item>osmand</item>
+        <item>auto</item>
+        <item>day</item>
+        <item>night</item>
+    </string-array>
 </resources>

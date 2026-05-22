@@ -54,6 +54,15 @@
             android:defaultValue="false"
             android:iconSpaceReserved="false" />
 
+        <androidx.preference.ListPreference
+            android:key="car_launcher_night_dim_mode"
+            android:title="Gece Karartma Modu"
+            android:summary="%s"
+            android:entries="@array/night_dim_mode_entries"
+            android:entryValues="@array/night_dim_mode_values"
+            android:defaultValue="osmand"
+            android:iconSpaceReserved="false" />
+
     </androidx.preference.PreferenceCategory>
 
     <androidx.preference.PreferenceCategory

@@ -431,6 +431,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 					onDesktopModeToggle();
 				} else if ("net.osmand.carlauncher.ACTION_OPEN_SETTINGS".equals(action)) {
 					openCarLauncherSettings();
+				} else if ("net.osmand.carlauncher.NIGHT_DIM_CHANGED".equals(action)) {
+					applyNightDimMode();
 				}
 			}
 		};
@@ -438,6 +440,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		floatFilter.addAction("net.osmand.carlauncher.ACTION_LAYOUT_TOGGLE");
 		floatFilter.addAction("net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE");
 		floatFilter.addAction("net.osmand.carlauncher.ACTION_OPEN_SETTINGS");
+		floatFilter.addAction("net.osmand.carlauncher.NIGHT_DIM_CHANGED");
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 			registerReceiver(carFloatingButtonReceiver, floatFilter, Context.RECEIVER_NOT_EXPORTED);
 		} else {
@@ -613,15 +616,29 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 
 
-	private void applyNightDimMode() {
+	public void applyNightDimMode() {
 		try {
 			View nightDimOverlay = findViewById(R.id.night_dim_overlay);
 			if (nightDimOverlay != null) {
 				boolean isNight = false;
-				net.osmand.plus.helpers.DayNightHelper helper = app.getDaynightHelper();
-				if (helper != null) {
-					isNight = helper.isNightMode(net.osmand.plus.settings.enums.ThemeUsageContext.APP);
+				net.osmand.plus.carlauncher.CarLauncherSettings clSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(this);
+				String mode = clSettings.getNightDimMode();
+				
+				if ("osmand".equals(mode)) {
+					net.osmand.plus.helpers.DayNightHelper helper = app.getDaynightHelper();
+					if (helper != null) {
+						isNight = helper.isNightMode(net.osmand.plus.settings.enums.ThemeUsageContext.APP);
+					}
+				} else if ("auto".equals(mode)) {
+					// Zamana gore otomatik mod (19:00 - 07:00 arasi gece)
+					int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
+					isNight = (hour >= 19 || hour < 7);
+				} else if ("day".equals(mode)) {
+					isNight = false; // Her zaman gunduz (pasif)
+				} else if ("night".equals(mode)) {
+					isNight = true; // Her zaman gece (aktif)
 				}
+				
 				if (isNight) {
 					if (nightDimOverlay.getVisibility() != View.VISIBLE) {
 						nightDimOverlay.setVisibility(View.VISIBLE);

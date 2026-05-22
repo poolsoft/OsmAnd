@@ -369,6 +369,24 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+
+        // Gece karartma modu (Turkce karakter yok)
+        androidx.preference.ListPreference nightDimModePref = findPreference(CarLauncherSettings.KEY_NIGHT_DIM_MODE);
+        if (nightDimModePref != null) {
+            nightDimModePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                String val = (String) newValue;
+                if (settings != null) {
+                    settings.setNightDimMode(val);
+                }
+                if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                    ((net.osmand.plus.activities.MapActivity) getActivity()).applyNightDimMode();
+                } else if (getContext() != null) {
+                    Intent intent = new Intent("net.osmand.carlauncher.NIGHT_DIM_CHANGED");
+                    getContext().sendBroadcast(intent);
+                }
+                return true;
+            });
+        }
     }
 
     private void applyStatusBarVisibility(boolean show) {

@@ -35,6 +35,7 @@ public class CarLauncherSettings {
     public static final String KEY_DARK_THEME = "car_launcher_dark_theme";
     public static final String KEY_PORTRAIT_MAP_ONLY = "car_launcher_portrait_map_only";
     public static final String KEY_FLOATING_BUTTON = "car_launcher_floating_button";
+    public static final String KEY_NIGHT_DIM_MODE = "car_launcher_night_dim_mode";
 
     // Music Keys
     public static final String KEY_MUSIC_APP = "car_launcher_music_app";
@@ -311,6 +312,14 @@ public class CarLauncherSettings {
 
     public void setWidgetConfig(String widgetId, String config) {
         prefs.edit().putString(KEY_WIDGET_CONFIG_PREFIX + widgetId, config).apply();
+    }
+
+    public String getNightDimMode() {
+        return prefs.getString(KEY_NIGHT_DIM_MODE, "osmand");
+    }
+
+    public void setNightDimMode(String mode) {
+        prefs.edit().putString(KEY_NIGHT_DIM_MODE, mode).apply();
     }
 
     public SharedPreferences getPrefs() {

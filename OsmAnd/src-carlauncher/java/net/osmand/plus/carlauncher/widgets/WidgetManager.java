@@ -413,4 +413,50 @@ public class WidgetManager {
     public List<BaseWidget> getVisibleWidgets() {
         return new ArrayList<>(visibleWidgets);
     }
+
+    /**
+     * Mevcut widget config ve durumlarini user_ prefix'i ile SharedPreferences'a kaydeder.
+     * Turkce karakter kullanilmamistir.
+     */
+    public void saveUserLayout() {
+        String savedConfig = prefs.getString(KEY_WIDGET_CONFIG, "");
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("user_" + KEY_WIDGET_CONFIG, savedConfig);
+        
+        for (BaseWidget widget : allWidgets) {
+            String id = widget.getId();
+            editor.putBoolean("user_visible_" + id, widget.isVisible());
+            editor.putInt("user_size_" + id, widget.getSize().ordinal());
+        }
+        editor.apply();
+    }
+
+    /**
+     * user_ prefix'i ile kaydedilmis olan widget config ve durumlarini yukler.
+     * Turkce karakter kullanilmamistir.
+     */
+    public boolean loadUserLayout() {
+        if (!prefs.contains("user_" + KEY_WIDGET_CONFIG)) {
+            return false;
+        }
+        
+        String userConfig = prefs.getString("user_" + KEY_WIDGET_CONFIG, "");
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(KEY_WIDGET_CONFIG, userConfig);
+        
+        if (!userConfig.isEmpty()) {
+            String[] ids = userConfig.split(",");
+            for (String id : ids) {
+                if (id.isEmpty()) continue;
+                if (prefs.contains("user_visible_" + id)) {
+                    editor.putBoolean("visible_" + id, prefs.getBoolean("user_visible_" + id, true));
+                }
+                if (prefs.contains("user_size_" + id)) {
+                    editor.putInt("size_" + id, prefs.getInt("user_size_" + id, BaseWidget.WidgetSize.SMALL.ordinal()));
+                }
+            }
+        }
+        editor.apply();
+        return loadWidgetConfig();
+    }
 }
