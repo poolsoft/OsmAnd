@@ -31,18 +31,15 @@ public class WeatherConfigDialog extends DialogFragment {
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(getContext(), R.style.OsmandDarkTheme));
-        builder.setTitle("Hava Durumu Ayarları");
+        builder.setTitle("Hava Durumu Ayarlari");
 
-        View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_widget_control, null); // Reusing generic layout or creating new programmatically?
-        // Let's build programmatically for simplicity like VehicleDataConfigDialog
-        
         android.widget.LinearLayout layout = new android.widget.LinearLayout(getContext());
         layout.setOrientation(android.widget.LinearLayout.VERTICAL);
         layout.setPadding(40, 30, 40, 30);
         
         // 1. Update Interval Label
         android.widget.TextView lblInterval = new android.widget.TextView(getContext());
-        lblInterval.setText("Güncelleme Sıklığı");
+        lblInterval.setText("Guncelleme Sikligi");
         lblInterval.setTextColor(0xFFFFFFFF);
         lblInterval.setPadding(0, 0, 0, 16);
         layout.addView(lblInterval);
@@ -53,9 +50,6 @@ public class WeatherConfigDialog extends DialogFragment {
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, intervals);
         spinner.setAdapter(adapter);
         
-        // Load current selection
-        // Assuming WeatherManager has prefs, but check WeatherWidget usage
-        // Let's use a logical mapping for now
         int currentInterval = WeatherManager.getInstance(getContext()).getUpdateIntervalMinutes();
         int selIndex = 1; // Default 30
         if (currentInterval == 15) selIndex = 0;
@@ -68,10 +62,10 @@ public class WeatherConfigDialog extends DialogFragment {
         
         // 3. Force Update Button
         Button btnUpdate = new Button(getContext());
-        btnUpdate.setText("Şimdi Güncelle");
+        btnUpdate.setText("Simdi Guncelle");
         btnUpdate.setOnClickListener(v -> {
             WeatherManager.getInstance(getContext()).forceRefresh();
-            Toast.makeText(getContext(), "Güncelleme isteği gönderildi.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Guncelleme istegi gonderildi.", Toast.LENGTH_SHORT).show();
             dismiss();
         });
         android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
@@ -95,8 +89,9 @@ public class WeatherConfigDialog extends DialogFragment {
             WeatherManager.getInstance(getContext()).setUpdateIntervalMinutes(min);
         });
 
-        builder.setNegativeButton("İptal", null);
+        builder.setNegativeButton("Iptal", null);
 
         return builder.create();
     }
 }
+

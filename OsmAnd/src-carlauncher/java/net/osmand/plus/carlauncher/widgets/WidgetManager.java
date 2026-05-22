@@ -408,6 +408,19 @@ public class WidgetManager {
                     widget.setSize(BaseWidget.WidgetSize.values()[sizeOrd]);
                 }
                 
+                // Grid koordinatlarini geri yukleme
+                int page = prefs.getInt("page_" + id, 0);
+                int cellx = prefs.getInt("cellx_" + id, -1);
+                int celly = prefs.getInt("celly_" + id, -1);
+                int spanx = prefs.getInt("spanx_" + id, 1);
+                int spany = prefs.getInt("spany_" + id, 1);
+                
+                widget.setPageIndex(page);
+                widget.setCellX(cellx);
+                widget.setCellY(celly);
+                widget.setSpanX(spanx);
+                widget.setSpanY(spany);
+                
                 restoredWidgets.add(widget);
             }
         }
@@ -460,6 +473,13 @@ public class WidgetManager {
             String id = widget.getId();
             editor.putBoolean("user_visible_" + id, widget.isVisible());
             editor.putInt("user_size_" + id, widget.getSize().ordinal());
+            
+            // Grid koordinatlarini da yedekle
+            editor.putInt("user_page_" + id, widget.getPageIndex());
+            editor.putInt("user_cellx_" + id, widget.getCellX());
+            editor.putInt("user_celly_" + id, widget.getCellY());
+            editor.putInt("user_spanx_" + id, widget.getSpanX());
+            editor.putInt("user_spany_" + id, widget.getSpanY());
         }
         editor.apply();
     }
@@ -486,6 +506,21 @@ public class WidgetManager {
                 }
                 if (prefs.contains("user_size_" + id)) {
                     editor.putInt("size_" + id, prefs.getInt("user_size_" + id, BaseWidget.WidgetSize.SMALL.ordinal()));
+                }
+                if (prefs.contains("user_page_" + id)) {
+                    editor.putInt("page_" + id, prefs.getInt("user_page_" + id, 0));
+                }
+                if (prefs.contains("user_cellx_" + id)) {
+                    editor.putInt("cellx_" + id, prefs.getInt("user_cellx_" + id, -1));
+                }
+                if (prefs.contains("user_celly_" + id)) {
+                    editor.putInt("celly_" + id, prefs.getInt("user_celly_" + id, -1));
+                }
+                if (prefs.contains("user_spanx_" + id)) {
+                    editor.putInt("spanx_" + id, prefs.getInt("user_spanx_" + id, 1));
+                }
+                if (prefs.contains("user_spany_" + id)) {
+                    editor.putInt("spany_" + id, prefs.getInt("user_spany_" + id, 1));
                 }
             }
         }

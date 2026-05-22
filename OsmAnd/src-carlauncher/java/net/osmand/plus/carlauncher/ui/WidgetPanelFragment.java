@@ -10,8 +10,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.SharedPreferences;
 import androidx.preference.PreferenceManager;
@@ -29,16 +27,19 @@ import net.osmand.plus.plugins.PluginsHelper;
 import net.osmand.plus.carlauncher.AutoLaunchManager;
 import net.osmand.plus.carlauncher.CarLauncherInterface;
 import net.osmand.plus.OsmandApplication;
+import net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter;
 
 /**
- * Widget paneli fragment.
- * Android Auto UI: bottom nav ile icerik paneli yonetimi.
+ * Cok Sayfali Premium Grid Widget Workspace Fragment.
+ * ViewPager2 tabanli, 4x4 Grid sayfali ve premium micro-indicator animasyonlu.
+ * Kod icerisinde kesinlikle Turkce karakter kullanilmamistir.
  */
 public class WidgetPanelFragment extends Fragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     public static final String TAG = "WidgetPanelFragment";
 
-    private RecyclerView listRecyclerView;
+    private androidx.viewpager2.widget.ViewPager2 viewPager;
+    private android.widget.LinearLayout pageIndicator;
     private WidgetManager widgetManager;
     private OsmandApplication app;
     private ViewGroup rootContent;
@@ -46,7 +47,6 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     
     private boolean isPinned = true; 
     private static final String PREF_IS_PINNED = "widget_panel_pinned";
-    private int currentUnitSize = 0;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -54,15 +54,14 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         if (getContext() != null) {
             app = (OsmandApplication) getContext().getApplicationContext();
             widgetManager = WidgetManager.getInstance(getContext());
-            widgetManager.forceResetForNewSession(); // Clean start
+            widgetManager.forceResetForNewSession(); // Temiz baslangic
             widgetManager.updateActivityContext(getContext());
             
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
             isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
 
-            
             if (!widgetManager.loadWidgetConfig()) {
-                initializeWidgets(); // Load default if empty
+                initializeWidgets(); // Default widget'lari yukle
             }
         }
     }
@@ -70,16 +69,15 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        // XML Layout Implementation (Engineering Recommendation)
         View root;
         try {
             root = inflater.inflate(net.osmand.plus.R.layout.fragment_widget_panel, container, false);
         } catch (Exception e) {
-            // Fallback if XML missing in rare case
             return createProgrammaticView();
         }
 
-        listRecyclerView = root.findViewById(net.osmand.plus.R.id.widget_recycler_view);
+        viewPager = root.findViewById(net.osmand.plus.R.id.widget_view_pager);
+        pageIndicator = root.findViewById(net.osmand.plus.R.id.workspace_page_indicator);
         View menuBtn = root.findViewById(net.osmand.plus.R.id.btn_widget_menu);
         
         // Bottom Navigation
@@ -95,33 +93,25 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
 
         initListLayout();
         setupMenuButton(menuBtn);
-        setupPresetsButton(root.findViewById(net.osmand.plus.R.id.btn_widget_presets));
         
         return root;
     }
     
-    // Fallback Method (just in case)
     private View createProgrammaticView() {
         FrameLayout contentFrame = new FrameLayout(getContext());
         contentFrame.setBackgroundColor(0xFF111111);
-        listRecyclerView = new RecyclerView(getContext());
-        contentFrame.addView(listRecyclerView);
+        viewPager = new androidx.viewpager2.widget.ViewPager2(getContext());
+        contentFrame.addView(viewPager);
         return contentFrame;
     }
 
     private void initListLayout() {
-        if (listRecyclerView == null) return;
-        
-        // Layout Manager (Grid) - Baslangicta 2 sutunlu iOS duzeni (Turkce karakter yok)
-        listRecyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
-        
-        // Post configuration update
-        listRecyclerView.post(() -> {
-              if (getView() != null) {
-                  updateLayoutConfiguration(); 
-                  applyWidgetsToView();
-              }
-         });
+        if (viewPager == null) return;
+        viewPager.post(() -> {
+            if (getView() != null) {
+                applyWidgetsToView();
+            }
+        });
     }
 
     private void setupMenuButton(View menuBtn) {
@@ -130,54 +120,33 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         menuBtn.setOnClickListener(v -> {
             android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), menuBtn);
             
-            // 1. Edit Widgets
-            popup.getMenu().add(0, 1, 0, "Widget Duzenle");
+            popup.getMenu().add(0, 1, 0, "Widget Ekle (Yeni)");
+            popup.getMenu().add(0, 2, 1, "Launcher Ayarlari");
             
-            // 2. Settings (NEW: Access settings when clock is hidden)
-            popup.getMenu().add(0, 4, 1, "Launcher Ayarlari");
+            // Profil Secenekleri
+            android.view.Menu presetsMenu = popup.getMenu().addSubMenu(0, 3, 2, "Widget Profilleri");
+            presetsMenu.add(0, 31, 0, "Navigasyon Odakli");
+            presetsMenu.add(0, 32, 1, "Medya Odakli");
+            presetsMenu.add(0, 33, 2, "Minimalist");
+            presetsMenu.add(0, 34, 3, "Kullanici Secimi");
             
-            // 3. Layout Mode Submenu
-            android.view.Menu layoutMenu = popup.getMenu().addSubMenu(0, 3, 2, "Gorunum");
-            android.view.MenuItem itemClassic = layoutMenu.add(0, 31, 0, "Klasik (Liste)");
-            android.view.MenuItem itemMetro = layoutMenu.add(0, 32, 1, "Metro (Izgara)");
+            popup.getMenu().add(0, 4, 3, "Mevcut Duzeni Kaydet");
             
-            itemClassic.setCheckable(true);
-            itemMetro.setCheckable(true);
-            
-            CarLauncherSettings settings = new CarLauncherSettings(getContext());
-            boolean isMetro = settings.isMetroMode();
-            if (isMetro) itemMetro.setChecked(true);
-            else itemClassic.setChecked(true);
-            
-            // 4. Widget Presets Submenu
-            android.view.Menu presetsMenu = popup.getMenu().addSubMenu(0, 5, 3, "Widget Profilleri");
-            presetsMenu.add(0, 51, 0, "Navigasyon Odakli");
-            presetsMenu.add(0, 52, 1, "Medya Odakli");
-            presetsMenu.add(0, 53, 2, "Minimalist");
-            presetsMenu.add(0, 54, 3, "Kullanici Secimi");
-            
-            // 5. Save Current Layout
-            popup.getMenu().add(0, 6, 4, "Mevcut Duzeni Kaydet");
-            
-            // 6. Pin Toggle
-            android.view.MenuItem pinItem = popup.getMenu().add(0, 2, 5, "Sabitle (Pinned)");
+            android.view.MenuItem pinItem = popup.getMenu().add(0, 5, 4, "Sabitle (Pinned)");
             pinItem.setCheckable(true);
-            
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-            isPinned = prefs.getBoolean(PREF_IS_PINNED, true);
             pinItem.setChecked(isPinned);
             
             popup.setOnMenuItemClickListener(item -> {
                 int id = item.getItemId();
-                if (id == 1) { // Edit
+                if (id == 1) {
                     showWidgetControlDialog();
                     return true;
-                } else if (id == 4) { // Settings
+                } else if (id == 2) {
                     if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
                         ((net.osmand.plus.activities.MapActivity) getActivity()).openCarLauncherSettings();
                     }
                     return true;
-                } else if (id == 2) { // Pin
+                } else if (id == 5) {
                     isPinned = !isPinned;
                     item.setChecked(isPinned);
                     PreferenceManager.getDefaultSharedPreferences(getContext())
@@ -187,33 +156,19 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                         ((net.osmand.plus.activities.MapActivity) getActivity()).updateWidgetPanelMode();
                     }
                     return true;
-                } else if (id == 31) { // Classic
-                    if (settings.isMetroMode()) {
-                        settings.setMetroMode(false);
-                        updateLayoutConfiguration();
-                        applyWidgetsToView();
-                    }
-                    return true;
-                } else if (id == 32) { // Metro
-                    if (!settings.isMetroMode()) {
-                        settings.setMetroMode(true);
-                        updateLayoutConfiguration();
-                        applyWidgetsToView();
-                    }
-                    return true;
-                } else if (id == 51) { // Navigasyon Odakli
+                } else if (id == 31) {
                     applyLayoutPreset(LayoutPreset.NAVIGATION);
                     return true;
-                } else if (id == 52) { // Medya Odakli
+                } else if (id == 32) {
                     applyLayoutPreset(LayoutPreset.MEDIA);
                     return true;
-                } else if (id == 53) { // Minimalist
+                } else if (id == 33) {
                     applyLayoutPreset(LayoutPreset.MINIMALIST);
                     return true;
-                } else if (id == 54) { // Kullanici Secimi
+                } else if (id == 34) {
                     applyLayoutPreset(LayoutPreset.USER);
                     return true;
-                } else if (id == 6) { // Mevcut Duzeni Kaydet
+                } else if (id == 4) {
                     if (widgetManager != null) {
                         widgetManager.saveUserLayout();
                         if (getView() != null) {
@@ -229,39 +184,13 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         });
     }
 
-    private void setupPresetsButton(View presetsBtn) {
-        if (presetsBtn == null) return;
-        
-        presetsBtn.setOnClickListener(v -> {
-            android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), presetsBtn);
-            
-            // Hazir duzenleri popup menuye ekle (Turkce karakter yok)
-            popup.getMenu().add(0, 1, 0, "Navigasyon Odakli");
-            popup.getMenu().add(0, 2, 1, "Medya Odakli");
-            popup.getMenu().add(0, 3, 2, "Minimalist");
-            
-            popup.setOnMenuItemClickListener(item -> {
-                int id = item.getItemId();
-                if (id == 1) {
-                    applyLayoutPreset(LayoutPreset.NAVIGATION);
-                    return true;
-                } else if (id == 2) {
-                    applyLayoutPreset(LayoutPreset.MEDIA);
-                    return true;
-                } else if (id == 3) {
-                    applyLayoutPreset(LayoutPreset.MINIMALIST);
-                    return true;
-                }
-                return false;
-            });
-            popup.show();
-        });
+    private enum LayoutPreset {
+        NAVIGATION, MEDIA, MINIMALIST, USER
     }
 
     private void applyLayoutPreset(LayoutPreset preset) {
         if (widgetManager == null || getContext() == null) return;
 
-        // Tum widget'lari durdur (Turkce karakter yok)
         widgetManager.stopAllWidgets();
         widgetManager.forceResetForNewSession();
         widgetManager.updateActivityContext(getContext());
@@ -290,289 +219,108 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                 break;
         }
 
-        // Kaydet (Turkce karakter yok)
         widgetManager.saveWidgetConfig();
-
-        // Yeniden baslat ve guncelle
         widgetManager.startAllWidgets();
-        updateLayoutConfiguration();
         applyWidgetsToView();
         
-        // Haptic feedback ile degisikligi kullaniciya hissettir
         if (getView() != null) {
             getView().performHapticFeedback(android.view.HapticFeedbackConstants.CONFIRM);
         }
     }
 
     private void showWidgetControlDialog() {
-        WidgetControlDialog dialog = new WidgetControlDialog();
+        WidgetPickerDialog dialog = new WidgetPickerDialog();
         dialog.setWidgetManager(widgetManager);
         dialog.setOnDismissCallback(() -> {
-            updateLayoutConfiguration();
             applyWidgetsToView();
         });
-        dialog.show(getChildFragmentManager(), "WidgetControlDialog");
+        dialog.show(getChildFragmentManager(), "WidgetPickerDialog");
     }
-
-    private void updateLayoutConfiguration() {
-        if (listRecyclerView == null || !(listRecyclerView.getLayoutManager() instanceof GridLayoutManager)) return;
-        
-        CarLauncherSettings settings = new CarLauncherSettings(getContext());
-        int systemOrientation = getResources().getConfiguration().orientation;
-        boolean isSystemPortrait = systemOrientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-        boolean isHorizontalScroll = isSystemPortrait;
-        
-        boolean isMetro = settings.isMetroMode();
-        int slots;
-
-        if (isMetro) {
-            slots = 4; // Metro Mode: Fixed 4-column Grid
-        } else {
-             // CLASSIC Mode: Slots determines "Items Per Screen" for sizing, NOT columns.
-             if (isSystemPortrait) {
-                slots = 1; 
-            } else {
-                slots = settings.getLandscapeSlotCount();
-            }
-        }
-
-        GridLayoutManager glm = (GridLayoutManager) listRecyclerView.getLayoutManager();
-        boolean changed = false;
-        
-        // Determine actual Span Count for Layout Manager
-        // Classic modda dikey kaydirirken 2 sutunlu iOS stili grid yapisi kullanilir (Turkce karakter yok)
-        int targetSpanCount;
-        if (isMetro) {
-            targetSpanCount = 4;
-        } else {
-            targetSpanCount = isHorizontalScroll ? 1 : 2;
-        }
-        
-        if (glm.getSpanCount() != targetSpanCount) {
-            glm.setSpanCount(targetSpanCount);
-            changed = true;
-        }
-        
-        int targetOrientation = isHorizontalScroll ? GridLayoutManager.HORIZONTAL : GridLayoutManager.VERTICAL;
-        if (glm.getOrientation() != targetOrientation) {
-            glm.setOrientation(targetOrientation);
-            changed = true;
-        }
-        
-        // Custom Span Lookup for Metro Mode
-        if (isMetro) {
-            glm.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
-                @Override
-                public int getSpanSize(int position) {
-                    if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
-                        WidgetListAdapter adapter = (WidgetListAdapter) listRecyclerView.getAdapter();
-                        if (position < adapter.getItemCount()) {
-                            net.osmand.plus.carlauncher.widgets.BaseWidget w = adapter.getWidgetAt(position);
-                            if (w != null) {
-                                switch (w.getSize()) {
-                                    case MEDIUM: return 2; // 2x1 (Wide)
-                                    case LARGE: return 2;  // 2x2 (Big)
-                                    default: return 1;     // 1x1 (Small)
-                                }
-                            }
-                        }
-                    }
-                    return 1;
-                }
-            });
-        } else {
-            if (isHorizontalScroll) {
-                glm.setSpanSizeLookup(new GridLayoutManager.DefaultSpanSizeLookup());
-            } else {
-                // Classic Vertical: 2 columns, Large spans 2 (full width), others span 1 (half width) (Turkce karakter yok)
-                glm.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
-                    @Override
-                    public int getSpanSize(int position) {
-                        if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
-                            WidgetListAdapter adapter = (WidgetListAdapter) listRecyclerView.getAdapter();
-                            if (position < adapter.getItemCount()) {
-                                net.osmand.plus.carlauncher.widgets.BaseWidget w = adapter.getWidgetAt(position);
-                                if (w != null) {
-                                    if (w.getSize() == net.osmand.plus.carlauncher.widgets.BaseWidget.WidgetSize.LARGE) {
-                                        return 2; // Genis widget full width kaplar (Turkce karakter yok)
-                                    }
-                                }
-                            }
-                        }
-                        return 1; // Digerleri yarim genislik kaplayarak yan yana yerlesir
-                    }
-                });
-            }
-        }
-
-        if (changed && listRecyclerView.getAdapter() != null) {
-            listRecyclerView.getAdapter().notifyDataSetChanged();
-        }
-        
-        updateUnitSize();
-    }
-    
-    private void updateUnitSize() {
-        if (listRecyclerView == null) return;
-        
-        CarLauncherSettings settings = new CarLauncherSettings(getContext());
-        boolean isMetro = settings.isMetroMode();
-        
-        int systemOrientation = getResources().getConfiguration().orientation;
-        boolean isSystemPortrait = systemOrientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-        boolean isHorizontalScroll = isSystemPortrait;
-        
-        // Recalculate slots locally for unit math
-        int slots;
-        if (isMetro) {
-            slots = 4;
-        } else {
-             if (isSystemPortrait) {
-                 // CRITICAL FIX: Ensure slots=1 in portrait for Unit Math too!
-                 slots = 1; 
-             } else {
-                 slots = settings.getLandscapeSlotCount();
-             }
-        }
-        if (slots <= 0) slots = 1;
-
-        if (isHorizontalScroll) {
-             // Horizontal Scroll: Width is flexible
-             int width = getView() != null ? getView().getWidth() : 0;
-             if (width > 0) {
-                 currentUnitSize = width / slots;
-             }
-        } else {
-             // Vertical Scroll (Landscape)
-             if (isMetro) {
-                 // Metro Vertical: Unit should be based on WIDTH to form squares
-                 // Total Width / Slots (4) = Unit Width
-                 int width = getView() != null ? getView().getWidth() : 0;
-                 if (width > 0) {
-                     currentUnitSize = width / slots;
-                 }
-             } else {
-                 // Classic Vertical: Unit based on HEIGHT (List style)
-                 int height = listRecyclerView.getHeight();
-                 if (height == 0 && getView() != null) height = getView().getHeight();
-                 
-                 if (height > 0) {
-                     currentUnitSize = height / slots;
-                 } else {
-                      currentUnitSize = (int) android.util.TypedValue.applyDimension(
-                         android.util.TypedValue.COMPLEX_UNIT_DIP, 85, getResources().getDisplayMetrics());
-                 }
-             }
-        }
-        
-        if (listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
-            ((WidgetListAdapter) listRecyclerView.getAdapter()).setMetroMode(isMetro);
-            ((WidgetListAdapter) listRecyclerView.getAdapter()).setUnitSize(currentUnitSize, isHorizontalScroll);
-        }
-    }
-    
-    private androidx.recyclerview.widget.ItemTouchHelper itemTouchHelper;
 
     private void applyWidgetsToView() {
-        if (listRecyclerView != null) {
-            CarLauncherSettings settings = new CarLauncherSettings(getContext());
-            int systemOrientation = getResources().getConfiguration().orientation;
-            boolean isSystemPortrait = systemOrientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-            
-            boolean isHorizontalScroll = isSystemPortrait;
-            
+        if (viewPager != null) {
             java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> visibleWidgets = widgetManager.getVisibleWidgets();
             for (net.osmand.plus.carlauncher.widgets.BaseWidget w : visibleWidgets) {
                 if (getActivity() != null) w.setContext(getActivity());
             }
 
-            WidgetListAdapter adapter = new WidgetListAdapter(
-                visibleWidgets, 
-                isHorizontalScroll, 
-                new WidgetListAdapter.OnWidgetActionListener() {
-                    @Override public void onWidgetLongClicked(View view, net.osmand.plus.carlauncher.widgets.BaseWidget widget) { }
-                    @Override public void onAddWidgetClicked() { 
-                         showWidgetControlDialog(); 
-                    }
-                    @Override public void onWidgetOrderChanged(java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> newOrder) {
-                        widgetManager.updateVisibleOrder(newOrder); 
-                    }
-                    @Override public void onWidgetRemoved(net.osmand.plus.carlauncher.widgets.BaseWidget widget) {
-                        widgetManager.removeWidget(widget);
-                        applyWidgetsToView(); 
-                    }
-                    @Override public void onStartDrag(RecyclerView.ViewHolder viewHolder) {
-                        if (itemTouchHelper != null) {
-                            itemTouchHelper.startDrag(viewHolder);
-                        }
+            WorkspacePageAdapter adapter = new WorkspacePageAdapter(
+                getContext(),
+                getChildFragmentManager(),
+                visibleWidgets,
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        updatePageIndicator();
                     }
                 }
             );
+            viewPager.setAdapter(adapter);
             
-            updateUnitSize(); // Ensure size is calculated
-            if (currentUnitSize > 0) {
-                adapter.setUnitSize(currentUnitSize, isHorizontalScroll);
-            }
-            listRecyclerView.setAdapter(adapter);
-            
-            // Single Widget Per Screen in Portrait (Snap Helper)
-            if (isHorizontalScroll) {
-                if (listRecyclerView.getOnFlingListener() == null) {
-                    androidx.recyclerview.widget.PagerSnapHelper snapHelper = new androidx.recyclerview.widget.PagerSnapHelper();
-                    snapHelper.attachToRecyclerView(listRecyclerView);
-                }
-            } else {
-                // Clear snap helper if switching to landscape
-                listRecyclerView.setOnFlingListener(null);
-            }
-            
-             androidx.recyclerview.widget.ItemTouchHelper.Callback callback = new androidx.recyclerview.widget.ItemTouchHelper.Callback() {
-                @Override public boolean isLongPressDragEnabled() { return false; } // Handled manually via onStartDrag
-                @Override public boolean isItemViewSwipeEnabled() { return false; }
-                @Override public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
-                    int dragFlags = androidx.recyclerview.widget.ItemTouchHelper.UP | androidx.recyclerview.widget.ItemTouchHelper.DOWN |
-                                    androidx.recyclerview.widget.ItemTouchHelper.START | androidx.recyclerview.widget.ItemTouchHelper.END;
-                    return makeMovementFlags(dragFlags, 0);
-                }
-                @Override public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder source, @NonNull RecyclerView.ViewHolder target) {
-                    adapter.onItemMove(source.getAdapterPosition(), target.getAdapterPosition());
-                    return true;
-                }
-                @Override public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {}
-                
+            setupPageIndicator(adapter.getItemCount());
+            viewPager.registerOnPageChangeCallback(new androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
                 @Override
-                public void onSelectedChanged(@androidx.annotation.Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
-                    super.onSelectedChanged(viewHolder, actionState);
-                    if (actionState == androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG) {
-                         if (viewHolder instanceof WidgetListAdapter.WidgetViewHolder) {
-                            ((WidgetListAdapter.WidgetViewHolder) viewHolder).setDragState(true);
-                             // Haptic feedback
-                            viewHolder.itemView.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
-                        }
-                    }
+                public void onPageSelected(int position) {
+                    super.onPageSelected(position);
+                    updatePageIndicatorSelection(position);
                 }
-
-                @Override public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
-                    super.clearView(recyclerView, viewHolder);
-                    
-                    if (viewHolder instanceof WidgetListAdapter.WidgetViewHolder) {
-                        ((WidgetListAdapter.WidgetViewHolder) viewHolder).setDragState(false);
-                    }
-                    
-                    if (recyclerView.getAdapter() instanceof WidgetListAdapter) {
-                        WidgetListAdapter adapter = (WidgetListAdapter) recyclerView.getAdapter();
-                         if (widgetManager != null) {
-                            widgetManager.updateVisibleOrder(adapter.getWidgets());
-                        }
-                    }
-                }
-            };
-            itemTouchHelper = new androidx.recyclerview.widget.ItemTouchHelper(callback);
-            itemTouchHelper.attachToRecyclerView(listRecyclerView);
+            });
         }
     }
 
+    private void setupPageIndicator(int count) {
+        if (pageIndicator == null) return;
+        pageIndicator.removeAllViews();
+        int margin = (int) android.util.TypedValue.applyDimension(
+                android.util.TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics());
+        for (int i = 0; i < count; i++) {
+            View dot = new View(getContext());
+            android.widget.LinearLayout.LayoutParams params = new android.widget.LinearLayout.LayoutParams(
+                    (int) android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics()),
+                    (int) android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics())
+            );
+            params.setMargins(margin, 0, margin, 0);
+            dot.setLayoutParams(params);
+            
+            // Programatik GradientDrawable (Sifir risk, maksimum premium gorunum)
+            android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+            gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            gd.setColor(0x55FFFFFF);
+            dot.setBackground(gd);
+            
+            pageIndicator.addView(dot);
+        }
+        updatePageIndicatorSelection(0);
+    }
 
+    private void updatePageIndicatorSelection(int selectedPosition) {
+        if (pageIndicator == null) return;
+        for (int i = 0; i < pageIndicator.getChildCount(); i++) {
+            View dot = pageIndicator.getChildAt(i);
+            android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+            gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            
+            android.view.ViewGroup.LayoutParams params = dot.getLayoutParams();
+            if (i == selectedPosition) {
+                gd.setColor(0xFFFFFFFF);
+                params.width = (int) android.util.TypedValue.applyDimension(
+                        android.util.TypedValue.COMPLEX_UNIT_DIP, 12, getResources().getDisplayMetrics());
+            } else {
+                gd.setColor(0x55FFFFFF);
+                params.width = (int) android.util.TypedValue.applyDimension(
+                        android.util.TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics());
+            }
+            dot.setBackground(gd);
+            dot.setLayoutParams(params);
+        }
+    }
+
+    private void updatePageIndicator() {
+        if (viewPager != null && viewPager.getAdapter() != null) {
+            setupPageIndicator(viewPager.getAdapter().getItemCount());
+            updatePageIndicatorSelection(viewPager.getCurrentItem());
+        }
+    }
 
     @Override
     public void onResume() {
@@ -598,11 +346,9 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                 widgetManager.startAllWidgets();
             }
             
-            // Adapter mevcutsa yeniden olusturma — sadece listeyi guncelle (RAM tasarrufu)
-            if (listRecyclerView != null && listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
-                ((WidgetListAdapter) listRecyclerView.getAdapter())
-                        .refresh(widgetManager.getVisibleWidgets());
-                updateLayoutConfiguration();
+            if (viewPager != null && viewPager.getAdapter() != null) {
+                viewPager.getAdapter().notifyDataSetChanged();
+                updatePageIndicator();
             } else {
                 applyWidgetsToView();
             }
@@ -613,9 +359,9 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         if (widgetManager != null) {
             if (visible) {
                 widgetManager.startAllWidgets();
-                if (listRecyclerView != null && listRecyclerView.getAdapter() instanceof WidgetListAdapter) {
-                    ((WidgetListAdapter) listRecyclerView.getAdapter())
-                            .refresh(widgetManager.getVisibleWidgets());
+                if (viewPager != null && viewPager.getAdapter() != null) {
+                    viewPager.getAdapter().notifyDataSetChanged();
+                    updatePageIndicator();
                 }
             } else {
                 widgetManager.stopAllWidgets();
@@ -634,7 +380,6 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             widgetManager.stopAllWidgets();
         }
     }
-
 
     private void initializeWidgets() {
         if (widgetManager == null || app == null) return;
@@ -659,11 +404,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         }
     }
 
-    /**
-     * Bottom navigation bar click handler.
-     */
     private void setupBottomNav(View navWidgets, View navNavigation, View navApps, View navSettings) {
-        // Varsayilan: Widgets secili
         setActiveNav(navWidgets);
 
         if (navWidgets != null) {
@@ -674,7 +415,6 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         if (navNavigation != null) {
             navNavigation.setOnClickListener(v -> {
                 setActiveNav(navNavigation);
-                // Navigation panel - su an icin sadece widget'lara geri don
             });
         }
         if (navApps != null) {
@@ -698,7 +438,6 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     }
 
     private void setActiveNav(View active) {
-        // Tum nav item'larini pasif yap
         View root = getView();
         if (root == null) return;
         int[] navIds = {net.osmand.plus.R.id.nav_widgets, net.osmand.plus.R.id.nav_navigation, 
@@ -709,7 +448,6 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                 ((TextView) v).setTextColor(0xFF888888);
             }
         }
-        // Secili olani aktif yap
         if (active instanceof TextView) {
             ((TextView) active).setTextColor(0xFFFFFFFF);
         }
@@ -721,10 +459,8 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (CarLauncherSettings.KEY_WIDGET_SLOTS_PORTRAIT.equals(key) || 
-            CarLauncherSettings.KEY_WIDGET_SLOTS_LANDSCAPE.equals(key)) {
-            updateLayoutConfiguration();
-            applyWidgetsToView();
-        }
+        // No-op for now since slots concept is handled by workspace grid
     }
+}
+
 }
