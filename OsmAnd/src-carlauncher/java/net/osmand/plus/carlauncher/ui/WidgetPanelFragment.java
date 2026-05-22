@@ -462,5 +462,3 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         // No-op for now since slots concept is handled by workspace grid
     }
 }
-
-}
