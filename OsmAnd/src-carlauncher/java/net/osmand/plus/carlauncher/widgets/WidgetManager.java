@@ -1,5 +1,6 @@
 package net.osmand.plus.carlauncher.widgets;
 
+import android.appwidget.AppWidgetHost;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.view.View;
@@ -34,6 +35,7 @@ public class WidgetManager {
 
     private final List<BaseWidget> allWidgets;
     private final List<BaseWidget> visibleWidgets;
+    private final AppWidgetHost appWidgetHost;
 
     private static WidgetManager instance;
     
@@ -60,6 +62,11 @@ public class WidgetManager {
         this.prefs = this.context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         this.allWidgets = new ArrayList<>();
         this.visibleWidgets = new ArrayList<>();
+        this.appWidgetHost = new AppWidgetHost(this.context, 1024);
+    }
+
+    public AppWidgetHost getAppWidgetHost() {
+        return appWidgetHost;
     }
 
     private boolean configLoaded = false;
@@ -261,6 +268,11 @@ public class WidgetManager {
      */
     public void startAllWidgets() {
         isStarted = true;
+        try {
+            appWidgetHost.startListening();
+        } catch (Exception e) {
+            android.util.Log.e("WidgetManager", "AppWidgetHost dinlemesi baslatilamadi: " + e.getMessage());
+        }
         for (BaseWidget widget : visibleWidgets) {
             widget.onStart();
         }
@@ -271,6 +283,11 @@ public class WidgetManager {
      */
     public void stopAllWidgets() {
         isStarted = false;
+        try {
+            appWidgetHost.stopListening();
+        } catch (Exception e) {
+            android.util.Log.e("WidgetManager", "AppWidgetHost dinlemesi durdurulamadi: " + e.getMessage());
+        }
         for (BaseWidget widget : visibleWidgets) {
             widget.onStop();
         }
@@ -287,6 +304,13 @@ public class WidgetManager {
             ids.add(widget.getId());
             editor.putBoolean("visible_" + widget.getId(), widget.isVisible());
             editor.putInt("size_" + widget.getId(), widget.getSize().ordinal());
+            
+            // Grid koordinatlari ve boyutlari
+            editor.putInt("page_" + widget.getId(), widget.getPageIndex());
+            editor.putInt("cellx_" + widget.getId(), widget.getCellX());
+            editor.putInt("celly_" + widget.getId(), widget.getCellY());
+            editor.putInt("spanx_" + widget.getId(), widget.getSpanX());
+            editor.putInt("spany_" + widget.getId(), widget.getSpanY());
         }
         
         // Join Ids
@@ -330,26 +354,35 @@ public class WidgetManager {
             
             // If not found, try to create it (Dynamic Widget)
             if (widget == null) {
-                // ID format: type OR type_timestamp
-                String type = id.split("_")[0];
-                
-                // DATA HEALING: If this ID was already processed, it's a DUPLICATE in the config.
-                // We must recover it as a NEW unique widget.
-                if (processingIds.contains(id)) {
-                    android.util.Log.w("WidgetDebug", "Heal: Duplicate ID found: " + id + ". Creating new instance.");
-                    widget = WidgetRegistry.createUniqueWidget(context, app, type); // Generates new ID
-                    // Note: We cannot restore settings for this one effectively since keys clash, 
-                    // but we save the instance.
+                if (id.startsWith("appwidget_")) {
+                    try {
+                        int appWidgetId = Integer.parseInt(id.substring("appwidget_".length()));
+                        widget = new SystemAppWidget(context, appWidgetId);
+                    } catch (Exception e) {
+                        android.util.Log.e("WidgetManager", "SystemAppWidget geri yuklenirken hata: " + e.getMessage());
+                    }
                 } else {
-                    // Normal Creation
-                    widget = WidgetRegistry.createWidget(context, app, type);
-                    if (widget != null) {
-                         try {
-                             // Restore ID hack
-                            java.lang.reflect.Field idField = BaseWidget.class.getDeclaredField("id");
-                            idField.setAccessible(true);
-                            idField.set(widget, id);
-                        } catch (Exception e) {}
+                    // ID format: type OR type_timestamp
+                    String type = id.split("_")[0];
+                    
+                    // DATA HEALING: If this ID was already processed, it's a DUPLICATE in the config.
+                    // We must recover it as a NEW unique widget.
+                    if (processingIds.contains(id)) {
+                        android.util.Log.w("WidgetDebug", "Heal: Duplicate ID found: " + id + ". Creating new instance.");
+                        widget = WidgetRegistry.createUniqueWidget(context, app, type); // Generates new ID
+                        // Note: We cannot restore settings for this one effectively since keys clash, 
+                        // but we save the instance.
+                    } else {
+                        // Normal Creation
+                        widget = WidgetRegistry.createWidget(context, app, type);
+                        if (widget != null) {
+                             try {
+                                 // Restore ID hack
+                                java.lang.reflect.Field idField = BaseWidget.class.getDeclaredField("id");
+                                idField.setAccessible(true);
+                                idField.set(widget, id);
+                            } catch (Exception e) {}
+                        }
                     }
                 }
             } else {

@@ -18,6 +18,13 @@ public abstract class BaseWidget {
     protected int order;
     protected Context context;
     protected View rootView;
+    
+    // Cok sayfali grid koordinatlari ve boyutlari
+    protected int pageIndex = 0;
+    protected int cellX = -1;
+    protected int cellY = -1;
+    protected int spanX = 1;
+    protected int spanY = 1;
 
     public void setContext(Context context) {
         this.context = context;
@@ -123,6 +130,21 @@ public abstract class BaseWidget {
 
     public void setSize(WidgetSize size) {
         this.size = size;
+        switch (size) {
+            case MEDIUM:
+                this.spanX = 2;
+                this.spanY = 1;
+                break;
+            case LARGE:
+                this.spanX = 2;
+                this.spanY = 2;
+                break;
+            case SMALL:
+            default:
+                this.spanX = 1;
+                this.spanY = 1;
+                break;
+        }
         onSizeChanged(size);
     }
     
@@ -154,4 +176,19 @@ public abstract class BaseWidget {
     public void openConfig(androidx.fragment.app.FragmentManager fragmentManager) {
         // Varsayılan boş implementation
     }
+
+    public int getPageIndex() { return pageIndex; }
+    public void setPageIndex(int pageIndex) { this.pageIndex = pageIndex; }
+
+    public int getCellX() { return cellX; }
+    public void setCellX(int cellX) { this.cellX = cellX; }
+
+    public int getCellY() { return cellY; }
+    public void setCellY(int cellY) { this.cellY = cellY; }
+
+    public int getSpanX() { return spanX; }
+    public void setSpanX(int spanX) { this.spanX = spanX; }
+
+    public int getSpanY() { return spanY; }
+    public void setSpanY(int spanY) { this.spanY = spanY; }
 }
