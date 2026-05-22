@@ -315,7 +315,7 @@ public class UnifiedPanelFragment extends Fragment
                 musicMiniArt.setPadding(0, 0, 0, 0);
                 musicMiniArt.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 musicMiniArt.setImageBitmap(albumArt);
-                musicMiniArt.setVisibility(View.VISIBLE);
+                musicMiniArt.setVisibility(View.GONE);
             }
         } else {
             if (albumArtBg != null) albumArtBg.setImageResource(R.drawable.bg_default_music_art);
@@ -327,7 +327,7 @@ public class UnifiedPanelFragment extends Fragment
                 }
                 musicMiniArt.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 musicMiniArt.setImageResource(R.drawable.ic_default_album_art);
-                musicMiniArt.setVisibility(View.VISIBLE);
+                musicMiniArt.setVisibility(View.GONE);
             }
         }
     }

@@ -179,6 +179,7 @@
             android:tint="#88FFFFFF"
             android:background="@drawable/bg_track_art_placeholder"
             android:padding="12dp"
+            android:visibility="gone"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
