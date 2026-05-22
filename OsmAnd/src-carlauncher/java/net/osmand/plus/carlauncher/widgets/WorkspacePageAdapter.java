@@ -4,7 +4,6 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.GridLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -13,12 +12,13 @@ import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import net.osmand.plus.R;
+import net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ViewPager2 icinde her bir 4x4 grid sayfasini dolduran Adapter sinifi.
+ * ViewPager2 icinde her bir 4x4 WorkspaceCellLayout sayfasini dolduran Adapter sinifi.
  * Kod icerisinde kesinlikle Turkce karakter kullanilmamistir.
  */
 public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdapter.PageViewHolder> {
@@ -54,15 +54,15 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
     }
 
     class PageViewHolder extends RecyclerView.ViewHolder {
-        GridLayout gridLayout;
+        WorkspaceCellLayout cellLayout;
 
         public PageViewHolder(@NonNull View itemView) {
             super(itemView);
-            gridLayout = itemView.findViewById(R.id.workspace_grid);
+            cellLayout = itemView.findViewById(R.id.workspace_grid);
         }
 
         public void bind(int pageIndex) {
-            gridLayout.removeAllViews();
+            cellLayout.removeAllViews();
             
             // Bu sayfadaki gorunur widget'lari bul
             List<BaseWidget> pageWidgets = new ArrayList<>();
@@ -91,7 +91,7 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                 }
             }
 
-            // Şimdi koordinati olmayan widget'lara bos yer bulup atayalim
+            // Simdi koordinati olmayan widget'lara bos yer bulup atayalim
             boolean needsSave = false;
             for (BaseWidget widget : pageWidgets) {
                 if (widget.getCellX() == -1 || widget.getCellY() == -1) {
@@ -121,7 +121,7 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
 
             if (needsSave) {
                 WidgetManager.getInstance(context).saveWidgetConfig();
-                gridLayout.post(new Runnable() {
+                cellLayout.post(new Runnable() {
                     @Override
                     public void run() {
                         notifyDataSetChanged();
@@ -132,7 +132,7 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                 });
             }
 
-            // Sayfadaki tum widget'lari GridLayout'a ekleyelim
+            // Sayfadaki tum widget'lari WorkspaceCellLayout'a ekleyelim
             for (final BaseWidget widget : pageWidgets) {
                 if (widget.getCellX() == -1 || widget.getCellY() == -1) {
                     continue; // Yer bulunamadiysa ekleme
@@ -150,17 +150,16 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                         parent.removeView(widgetView);
                     }
 
-                    // Izgara boyut parametreleri
-                    GridLayout.Spec rowSpec = GridLayout.spec(widget.getCellY(), widget.getSpanY(), GridLayout.FILL, 1f);
-                    GridLayout.Spec colSpec = GridLayout.spec(widget.getCellX(), widget.getSpanX(), GridLayout.FILL, 1f);
+                    // WorkspaceCellLayout LayoutParams olustur
+                    WorkspaceCellLayout.LayoutParams params = new WorkspaceCellLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, 
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                    );
+                    params.cellX = widget.getCellX();
+                    params.cellY = widget.getCellY();
+                    params.spanX = widget.getSpanX();
+                    params.spanY = widget.getSpanY();
                     
-                    GridLayout.LayoutParams params = new GridLayout.LayoutParams(rowSpec, colSpec);
-                    params.width = 0;
-                    params.height = 0;
-                    
-                    // Margins
-                    int margin = dpToPx(6);
-                    params.setMargins(margin, margin, margin, margin);
                     widgetView.setLayoutParams(params);
 
                     // Uzun basma olayi (Premium Duzenleme Menusu)
@@ -172,7 +171,7 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                         }
                     });
 
-                    gridLayout.addView(widgetView);
+                    cellLayout.addView(widgetView);
                 }
             }
         }
@@ -252,11 +251,107 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
             popup.show();
         }
 
+        private boolean canWidgetFitAt(BaseWidget targetWidget, int pageIndex, int cellX, int cellY, int spanX, int spanY) {
+            if (cellX < 0 || cellX + spanX > 4 || cellY < 0 || cellY + spanY > 4) {
+                return false;
+            }
+
+            // Hedef sayfa doluluk matrisini olustur (TargetWidget haric)
+            boolean[][] occupied = new boolean[4][4];
+            for (BaseWidget w : widgetsList) {
+                if (w != targetWidget && w.isVisible() && w.getPageIndex() == pageIndex) {
+                    int cx = w.getCellX();
+                    int cy = w.getCellY();
+                    int sx = w.getSpanX();
+                    int sy = w.getSpanY();
+                    if (cx >= 0 && cx + sx <= 4 && cy >= 0 && cy + sy <= 4) {
+                        for (int x = cx; x < cx + sx; x++) {
+                            for (int y = cy; y < cy + sy; y++) {
+                                occupied[x][y] = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Cakisma olup olmadigini test et
+            for (int x = cellX; x < cellX + spanX; x++) {
+                for (int y = cellY; y < cellY + spanY; y++) {
+                    if (occupied[x][y]) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        private Point findNewPositionForWidget(BaseWidget targetWidget, int pageIndex, int spanX, int spanY) {
+            boolean[][] occupied = new boolean[4][4];
+            for (BaseWidget w : widgetsList) {
+                if (w != targetWidget && w.isVisible() && w.getPageIndex() == pageIndex) {
+                    int cx = w.getCellX();
+                    int cy = w.getCellY();
+                    int sx = w.getSpanX();
+                    int sy = w.getSpanY();
+                    if (cx >= 0 && cx + sx <= 4 && cy >= 0 && cy + sy <= 4) {
+                        for (int x = cx; x < cx + sx; x++) {
+                            for (int y = cy; y < cy + sy; y++) {
+                                occupied[x][y] = true;
+                            }
+                        }
+                    }
+                }
+            }
+            return findEmptySpace(occupied, spanX, spanY);
+        }
+
         private void changeWidgetSize(BaseWidget widget, BaseWidget.WidgetSize newSize) {
-            widget.setSize(newSize);
-            // Boyut degistikten sonra koordinatlari sifirlayalim ki bos yere otomatik yerlessin
-            widget.setCellX(-1);
-            widget.setCellY(-1);
+            int targetSpanX = 1;
+            int targetSpanY = 1;
+            if (newSize == BaseWidget.WidgetSize.MEDIUM) {
+                targetSpanX = 2;
+                targetSpanY = 1;
+            } else if (newSize == BaseWidget.WidgetSize.LARGE) {
+                targetSpanX = 2;
+                targetSpanY = 2;
+            }
+
+            // Cakisma kontrolü: Bu sayfadaki diger widget'lar ile cakismadan bu boyuta gecip gecemeyecegini kontrol et
+            boolean fits = canWidgetFitAt(widget, widget.getPageIndex(), widget.getCellX(), widget.getCellY(), targetSpanX, targetSpanY);
+            
+            if (fits) {
+                widget.setSize(newSize);
+            } else {
+                // Eger koordinatinda sigmiyorsa, sayfada baska bir bos yer ara
+                Point p = findNewPositionForWidget(widget, widget.getPageIndex(), targetSpanX, targetSpanY);
+                if (p != null) {
+                    widget.setSize(newSize);
+                    widget.setCellX(p.x);
+                    widget.setCellY(p.y);
+                } else {
+                    // Sayfada hic yer yoksa, diger sayfalarda bosluk ara
+                    boolean foundInOtherPage = false;
+                    for (int page = 0; page < pageCount; page++) {
+                        if (page != widget.getPageIndex()) {
+                            Point op = findNewPositionForWidget(widget, page, targetSpanX, targetSpanY);
+                            if (op != null) {
+                                widget.setSize(newSize);
+                                widget.setPageIndex(page);
+                                widget.setCellX(op.x);
+                                widget.setCellY(op.y);
+                                foundInOtherPage = true;
+                                Toast.makeText(context, widget.getTitle() + " " + (page + 1) + ". sayfaya tasinarak buyutuldu.", Toast.LENGTH_LONG).show();
+                                break;
+                            }
+                        }
+                    }
+                    if (!foundInOtherPage) {
+                        Toast.makeText(context, "Hicbir sayfada bu boyuta uygun bos alan bulunamadi!", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                }
+            }
+
             WidgetManager.getInstance(context).saveWidgetConfig();
             notifyDataSetChanged();
             if (onWidgetsChangedListener != null) {
@@ -266,13 +361,23 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
         }
 
         private void moveWidgetToPage(BaseWidget widget, int targetPage) {
-            widget.setPageIndex(targetPage);
-            widget.setCellX(-1);
-            widget.setCellY(-1);
-            WidgetManager.getInstance(context).saveWidgetConfig();
-            notifyDataSetChanged();
-            if (onWidgetsChangedListener != null) {
-                onWidgetsChangedListener.run();
+            int targetSpanX = widget.getSpanX();
+            int targetSpanY = widget.getSpanY();
+            
+            Point p = findNewPositionForWidget(widget, targetPage, targetSpanX, targetSpanY);
+            if (p != null) {
+                widget.setPageIndex(targetPage);
+                widget.setCellX(p.x);
+                widget.setCellY(p.y);
+                
+                WidgetManager.getInstance(context).saveWidgetConfig();
+                notifyDataSetChanged();
+                if (onWidgetsChangedListener != null) {
+                    onWidgetsChangedListener.run();
+                }
+                Toast.makeText(context, widget.getTitle() + " " + (targetPage + 1) + ". sayfaya tasindi.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(context, "Hedef sayfada bu widget icin yeterli bos alan bulunamadi!", Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -285,11 +390,6 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
             }
             Toast.makeText(context, widget.getTitle() + " kaldirildi.", Toast.LENGTH_SHORT).show();
         }
-
-        private int dpToPx(int dp) {
-            float density = context.getResources().getDisplayMetrics().density;
-            return Math.round(dp * density);
-        }
     }
 
     private static class Point {
@@ -300,3 +400,4 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
         }
     }
 }
+

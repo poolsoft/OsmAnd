@@ -55,6 +55,7 @@ public class WidgetPickerDialog extends BottomSheetDialogFragment {
     private WidgetManager widgetManager;
     private Runnable onDismissCallback;
     private OsmandApplication app;
+    private int activePageIndex = 0;
 
     private LinearLayout itemsContainer;
     private TextView titleView;
@@ -68,6 +69,10 @@ public class WidgetPickerDialog extends BottomSheetDialogFragment {
 
     public void setOnDismissCallback(Runnable callback) {
         this.onDismissCallback = callback;
+    }
+
+    public void setActivePageIndex(int pageIndex) {
+        this.activePageIndex = pageIndex;
     }
 
     @Override
@@ -447,8 +452,8 @@ public class WidgetPickerDialog extends BottomSheetDialogFragment {
         }
 
         if (widget != null) {
-            // Bos bir alan bulup sayfa 0'a veya uygun ilk sayfaya yerlestirilecek
-            widget.setPageIndex(0);
+            // Bos bir alan bulup aktif sayfaya veya uygun ilk sayfaya yerlestirilecek
+            widget.setPageIndex(activePageIndex);
             widget.setCellX(-1);
             widget.setCellY(-1);
             widget.setSize(info.defaultSize);
@@ -561,7 +566,7 @@ public class WidgetPickerDialog extends BottomSheetDialogFragment {
         if (widgetManager != null && ctx != null) {
             net.osmand.plus.carlauncher.widgets.SystemAppWidget widget = 
                 new net.osmand.plus.carlauncher.widgets.SystemAppWidget(ctx, appWidgetId);
-            widget.setPageIndex(0); 
+            widget.setPageIndex(activePageIndex); 
             widget.setCellX(-1);
             widget.setCellY(-1);
             

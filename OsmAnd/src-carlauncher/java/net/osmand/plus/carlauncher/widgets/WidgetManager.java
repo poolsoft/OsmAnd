@@ -132,7 +132,15 @@ public class WidgetManager {
         int spanX = widget.getSpanX();
         int spanY = widget.getSpanY();
         
-        for (int page = 0; page < pageCount; page++) {
+        // Oncelikle widget'in kendi pageIndex sayfasini dene
+        int targetPage = widget.getPageIndex();
+        if (targetPage < 0 || targetPage >= pageCount) {
+            targetPage = 0;
+        }
+        
+        // Sayfalari hedef sayfadan baslayarak sirayla kontrol et
+        for (int i = 0; i < pageCount; i++) {
+            int page = (targetPage + i) % pageCount;
             boolean[][] occupied = new boolean[4][4];
             
             // Bu sayfadaki diger gorunur widget'lari bulup isaretle

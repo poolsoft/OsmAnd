@@ -63,6 +63,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             if (!widgetManager.loadWidgetConfig()) {
                 initializeWidgets(); // Default widget'lari yukle
             }
+            widgetManager.updateActivityContext(getContext()); // Yukleme sonrasinda context'leri guncelle
         }
     }
 
@@ -231,6 +232,9 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     private void showWidgetControlDialog() {
         WidgetPickerDialog dialog = new WidgetPickerDialog();
         dialog.setWidgetManager(widgetManager);
+        if (viewPager != null) {
+            dialog.setActivePageIndex(viewPager.getCurrentItem());
+        }
         dialog.setOnDismissCallback(() -> {
             applyWidgetsToView();
         });
