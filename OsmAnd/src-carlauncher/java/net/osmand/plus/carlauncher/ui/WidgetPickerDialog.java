@@ -43,16 +43,24 @@ import java.util.List;
 /**
  * Premium BottomSheet tabanli Widget Ekleme Arayuzu.
  * Kendi widget'larimizi ve harici Android Sistem Widget'larini (AppWidget) eklemeyi saglar.
+ * Android Automotive / Custom ROM'larda coken ACTION_APPWIDGET_PICK yerine
+ * kendi premium entegre secim listesini ve programatik bind (ACTION_APPWIDGET_BIND) yapisini kullanir.
  * Kod icerisinde kesinlikle Turkce karakter kullanilmamistir.
  */
 public class WidgetPickerDialog extends BottomSheetDialogFragment {
 
-    private static final int REQUEST_PICK_APPWIDGET = 501;
     private static final int REQUEST_CREATE_APPWIDGET = 502;
+    private static final int REQUEST_BIND_APPWIDGET = 503;
 
     private WidgetManager widgetManager;
     private Runnable onDismissCallback;
     private OsmandApplication app;
+
+    private LinearLayout itemsContainer;
+    private TextView titleView;
+    private Button btnSystemWidget;
+    private boolean showingSystemWidgets = false;
+    private int pendingAppWidgetId = -1;
 
     public void setWidgetManager(WidgetManager wm) {
         this.widgetManager = wm;
@@ -100,14 +108,14 @@ public class WidgetPickerDialog extends BottomSheetDialogFragment {
         root.addView(handle);
 
         // Baslik
-        TextView title = new TextView(ctx);
-        title.setText("Widget Ekle");
-        title.setTextSize(20);
-        title.setTextColor(Color.WHITE);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        title.setGravity(Gravity.CENTER_HORIZONTAL);
-        title.setPadding(0, 0, 0, dpToPx(16));
-        root.addView(title);
+        titleView = new TextView(ctx);
+        titleView.setText("Widget Ekle");
+        titleView.setTextSize(20);
+        titleView.setTextColor(Color.WHITE);
+        titleView.setTypeface(null, android.graphics.Typeface.BOLD);
+        titleView.setGravity(Gravity.CENTER_HORIZONTAL);
+        titleView.setPadding(0, 0, 0, dpToPx(16));
+        root.addView(titleView);
 
         // ScrollView
         ScrollView scrollView = new ScrollView(ctx);
@@ -115,15 +123,9 @@ public class WidgetPickerDialog extends BottomSheetDialogFragment {
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f);
         scrollView.setLayoutParams(scrollParams);
         
-        LinearLayout itemsContainer = new LinearLayout(ctx);
+        itemsContainer = new LinearLayout(ctx);
         itemsContainer.setOrientation(LinearLayout.VERTICAL);
         
-        // Kendi Widget listemizi olustur
-        List<WidgetInfo> availableWidgets = getAvailableWidgets();
-        for (final WidgetInfo info : availableWidgets) {
-            itemsContainer.addView(createWidgetRow(ctx, info));
-        }
-
         scrollView.addView(itemsContainer);
         root.addView(scrollView);
 
@@ -136,8 +138,8 @@ public class WidgetPickerDialog extends BottomSheetDialogFragment {
         root.addView(divider);
 
         // Premium Sistem Widget Ekle Butonu
-        Button btnSystemWidget = new Button(ctx);
-        btnSystemWidget.setText("Sistem Widget'i Ekle (Spotify, Maps vb.)");
+        btnSystemWidget = new Button(ctx);
+        btnSystemWidget.setText("Sistem Widgeti Ekle (Spotify, Maps vb.)");
         btnSystemWidget.setTextColor(Color.WHITE);
         btnSystemWidget.setTextSize(14);
         btnSystemWidget.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -157,12 +159,59 @@ public class WidgetPickerDialog extends BottomSheetDialogFragment {
         btnSystemWidget.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                selectSystemAppWidget();
+                showingSystemWidgets = !showingSystemWidgets;
+                updatePickerView();
             }
         });
         root.addView(btnSystemWidget);
 
+        // Ilk listeyi doldur
+        updatePickerView();
+
         return root;
+    }
+
+    private void updatePickerView() {
+        Context ctx = getContext();
+        if (ctx == null || itemsContainer == null || titleView == null || btnSystemWidget == null) return;
+
+        itemsContainer.removeAllViews();
+
+        if (!showingSystemWidgets) {
+            titleView.setText("Widget Ekle");
+            btnSystemWidget.setText("Sistem Widgeti Ekle (Spotify, Maps vb.)");
+
+            List<WidgetInfo> availableWidgets = getAvailableWidgets();
+            for (WidgetInfo info : availableWidgets) {
+                itemsContainer.addView(createWidgetRow(ctx, info));
+            }
+        } else {
+            titleView.setText("Sistem Widgeti Secin");
+            btnSystemWidget.setText("Geri Don");
+
+            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(ctx);
+            List<AppWidgetProviderInfo> providers = null;
+            try {
+                providers = appWidgetManager.getInstalledProviders();
+            } catch (Exception e) {
+                android.util.Log.e("WidgetPickerDialog", "getInstalledProviders hatasi: " + e.getMessage());
+            }
+            android.content.pm.PackageManager pm = ctx.getPackageManager();
+
+            if (providers == null || providers.isEmpty()) {
+                TextView noWidgets = new TextView(ctx);
+                noWidgets.setText("Yuklu sistem widgeti bulunamadi.");
+                noWidgets.setTextColor(Color.GRAY);
+                noWidgets.setGravity(Gravity.CENTER);
+                noWidgets.setPadding(0, dpToPx(32), 0, dpToPx(32));
+                itemsContainer.addView(noWidgets);
+                return;
+            }
+
+            for (AppWidgetProviderInfo provider : providers) {
+                itemsContainer.addView(createSystemWidgetRow(ctx, provider, pm));
+            }
+        }
     }
 
     private List<WidgetInfo> getAvailableWidgets() {
@@ -280,6 +329,101 @@ public class WidgetPickerDialog extends BottomSheetDialogFragment {
         return row;
     }
 
+    private View createSystemWidgetRow(final Context ctx, final AppWidgetProviderInfo provider, android.content.pm.PackageManager pm) {
+        LinearLayout row = new LinearLayout(ctx);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dpToPx(12), dpToPx(10), dpToPx(12), dpToPx(10));
+        row.setClickable(true);
+        row.setFocusable(true);
+
+        // Satir Arkaplani ve Hover Efekti
+        GradientDrawable rowBg = new GradientDrawable();
+        rowBg.setColor(0x11FFFFFF);
+        rowBg.setCornerRadius(dpToPx(8));
+        row.setBackground(rowBg);
+
+        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rowParams.bottomMargin = dpToPx(8);
+        row.setLayoutParams(rowParams);
+
+        // Uygulama Ikonu
+        android.widget.ImageView iconView = new android.widget.ImageView(ctx);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dpToPx(36), dpToPx(36));
+        iconParams.rightMargin = dpToPx(12);
+        iconView.setLayoutParams(iconParams);
+        try {
+            iconView.setImageDrawable(provider.loadIcon(ctx, ctx.getResources().getDisplayMetrics().densityDpi));
+        } catch (Exception e) {
+            iconView.setImageResource(android.R.drawable.sym_def_app_icon);
+        }
+        row.addView(iconView);
+
+        // Yazi Alani
+        LinearLayout textContainer = new LinearLayout(ctx);
+        textContainer.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
+        textContainer.setLayoutParams(textParams);
+
+        String label = provider.loadLabel(pm);
+        if (label == null || label.trim().isEmpty()) {
+            label = provider.provider.getShortClassName();
+        }
+
+        TextView txtTitle = new TextView(ctx);
+        txtTitle.setText(label);
+        txtTitle.setTextColor(Color.WHITE);
+        txtTitle.setTextSize(15);
+        txtTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        textContainer.addView(txtTitle);
+
+        int spanX = Math.max(1, Math.min(4, Math.round(provider.minWidth / 70f)));
+        int spanY = Math.max(1, Math.min(4, Math.round(provider.minHeight / 70f)));
+        
+        String appName = "";
+        try {
+            appName = pm.getApplicationLabel(pm.getApplicationInfo(provider.provider.getPackageName(), 0)).toString();
+        } catch (Exception e) {
+            appName = provider.provider.getPackageName();
+        }
+
+        TextView txtDesc = new TextView(ctx);
+        txtDesc.setText(appName + " (" + spanX + "x" + spanY + ")");
+        txtDesc.setTextColor(0xAAFFFFFF);
+        txtDesc.setTextSize(12);
+        textContainer.addView(txtDesc);
+
+        row.addView(textContainer);
+
+        // Ekle Butonu
+        Button btnAdd = new Button(ctx);
+        btnAdd.setText("Ekle");
+        btnAdd.setTextColor(Color.WHITE);
+        btnAdd.setTextSize(12);
+        btnAdd.setAllCaps(false);
+
+        LinearLayout.LayoutParams addBtnParams = new LinearLayout.LayoutParams(dpToPx(64), dpToPx(32));
+        addBtnParams.leftMargin = dpToPx(8);
+        btnAdd.setLayoutParams(addBtnParams);
+
+        GradientDrawable addBtnBg = new GradientDrawable();
+        addBtnBg.setColor(0x33FFFFFF);
+        addBtnBg.setCornerRadius(dpToPx(16));
+        addBtnBg.setStroke(dpToPx(1), 0x55FFFFFF);
+        btnAdd.setBackground(addBtnBg);
+
+        btnAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addSystemWidgetSelected(provider);
+            }
+        });
+        row.addView(btnAdd);
+
+        return row;
+    }
+
     private void addNewWidget(WidgetInfo info) {
         if (widgetManager == null || getContext() == null || app == null) return;
 
@@ -318,74 +462,128 @@ public class WidgetPickerDialog extends BottomSheetDialogFragment {
         }
     }
 
-    private void selectSystemAppWidget() {
-        if (widgetManager == null) return;
+    private void addSystemWidgetSelected(AppWidgetProviderInfo provider) {
+        if (widgetManager == null || getContext() == null) return;
         AppWidgetHost host = widgetManager.getAppWidgetHost();
         if (host == null) return;
 
         try {
             int appWidgetId = host.allocateAppWidgetId();
-            Intent pickIntent = new Intent(AppWidgetManager.ACTION_APPWIDGET_PICK);
-            pickIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-            startActivityForResult(pickIntent, REQUEST_PICK_APPWIDGET);
+            pendingAppWidgetId = appWidgetId;
+            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(getContext());
+            
+            // Programatik olarak bind etmeye calis
+            boolean allowed = appWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId, provider.provider);
+            if (allowed) {
+                configureOrAddSystemWidget(appWidgetId, provider);
+            } else {
+                // Launcher bind yetkisine sahip degilse, sistem bind onay ekranini ac
+                Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_BIND);
+                intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+                intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, provider.provider);
+                startActivityForResult(intent, REQUEST_BIND_APPWIDGET);
+            }
         } catch (Exception e) {
-            Toast.makeText(getContext(), "Sistem widget secimi baslatilamadi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Sistem widgeti eklenemedi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void configureOrAddSystemWidget(int appWidgetId, AppWidgetProviderInfo info) {
+        if (info.configure != null) {
+            try {
+                Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE);
+                intent.setComponent(info.configure);
+                intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
+                startActivityForResult(intent, REQUEST_CREATE_APPWIDGET);
+            } catch (Exception e) {
+                Toast.makeText(getContext(), "Widget konfigurasyon ekrani acilamadi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                // Konfigurasyon acilamazsa yine de widget'i eklemeyi dene
+                addSystemAppWidgetToWorkspace(appWidgetId);
+            }
+        } else {
+            addSystemAppWidgetToWorkspace(appWidgetId);
         }
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != Activity.RESULT_OK) {
-            if (requestCode == REQUEST_PICK_APPWIDGET && data != null) {
-                int appWidgetId = data.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1);
+        
+        Context ctx = getContext();
+        if (ctx == null) return;
+
+        if (requestCode == REQUEST_BIND_APPWIDGET) {
+            int appWidgetId = (data != null) ? data.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1) : pendingAppWidgetId;
+            if (appWidgetId == -1) appWidgetId = pendingAppWidgetId;
+            
+            if (resultCode == Activity.RESULT_OK && appWidgetId != -1) {
+                AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(ctx);
+                AppWidgetProviderInfo info = appWidgetManager.getAppWidgetInfo(appWidgetId);
+                if (info != null) {
+                    configureOrAddSystemWidget(appWidgetId, info);
+                } else {
+                    addSystemAppWidgetToWorkspace(appWidgetId);
+                }
+            } else {
                 if (appWidgetId != -1 && widgetManager != null && widgetManager.getAppWidgetHost() != null) {
-                    widgetManager.getAppWidgetHost().deleteAppWidgetId(appWidgetId);
+                    try {
+                        widgetManager.getAppWidgetHost().deleteAppWidgetId(appWidgetId);
+                    } catch (Exception e) {
+                        android.util.Log.e("WidgetPickerDialog", "deleteAppWidgetId hatasi: " + e.getMessage());
+                    }
                 }
             }
+            pendingAppWidgetId = -1;
             return;
         }
 
-        if (requestCode == REQUEST_PICK_APPWIDGET && data != null) {
-            int appWidgetId = data.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1);
-            if (appWidgetId != -1) {
-                configureSystemAppWidget(appWidgetId);
-            }
-        } else if (requestCode == REQUEST_CREATE_APPWIDGET && data != null) {
-            int appWidgetId = data.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1);
-            if (appWidgetId != -1) {
+        if (requestCode == REQUEST_CREATE_APPWIDGET) {
+            int appWidgetId = (data != null) ? data.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1) : pendingAppWidgetId;
+            if (appWidgetId == -1) appWidgetId = pendingAppWidgetId;
+
+            if (resultCode == Activity.RESULT_OK && appWidgetId != -1) {
                 addSystemAppWidgetToWorkspace(appWidgetId);
+            } else {
+                if (appWidgetId != -1 && widgetManager != null && widgetManager.getAppWidgetHost() != null) {
+                    try {
+                        widgetManager.getAppWidgetHost().deleteAppWidgetId(appWidgetId);
+                    } catch (Exception e) {
+                        android.util.Log.e("WidgetPickerDialog", "deleteAppWidgetId hatasi: " + e.getMessage());
+                    }
+                }
             }
-        }
-    }
-
-    private void configureSystemAppWidget(int appWidgetId) {
-        Context ctx = getContext();
-        if (ctx == null) return;
-        
-        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(ctx);
-        AppWidgetProviderInfo appWidgetInfo = appWidgetManager.getAppWidgetInfo(appWidgetId);
-
-        if (appWidgetInfo != null && appWidgetInfo.configure != null) {
-            Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE);
-            intent.setComponent(appWidgetInfo.configure);
-            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
-            startActivityForResult(intent, REQUEST_CREATE_APPWIDGET);
-        } else {
-            addSystemAppWidgetToWorkspace(appWidgetId);
+            pendingAppWidgetId = -1;
         }
     }
 
     private void addSystemAppWidgetToWorkspace(int appWidgetId) {
-        if (widgetManager != null && getContext() != null) {
+        Context ctx = getContext();
+        if (widgetManager != null && ctx != null) {
             net.osmand.plus.carlauncher.widgets.SystemAppWidget widget = 
-                new net.osmand.plus.carlauncher.widgets.SystemAppWidget(getContext(), appWidgetId);
+                new net.osmand.plus.carlauncher.widgets.SystemAppWidget(ctx, appWidgetId);
             widget.setPageIndex(0); 
             widget.setCellX(-1);
             widget.setCellY(-1);
-            widget.setSize(BaseWidget.WidgetSize.MEDIUM); // 2x1 varsayilan sistem widget boyutu
+            
+            // AppWidgetProviderInfo'ya bakarak boyutu dinamik ata
+            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(ctx);
+            AppWidgetProviderInfo info = appWidgetManager.getAppWidgetInfo(appWidgetId);
+            if (info != null) {
+                int spanX = Math.max(1, Math.min(4, Math.round(info.minWidth / 70f)));
+                int spanY = Math.max(1, Math.min(4, Math.round(info.minHeight / 70f)));
+                if (spanX == 1 && spanY == 1) {
+                    widget.setSize(BaseWidget.WidgetSize.SMALL);
+                } else if (spanX <= 2 && spanY == 1) {
+                    widget.setSize(BaseWidget.WidgetSize.MEDIUM);
+                } else {
+                    widget.setSize(BaseWidget.WidgetSize.LARGE);
+                }
+            } else {
+                widget.setSize(BaseWidget.WidgetSize.MEDIUM); // Default fallback
+            }
+
             widgetManager.addWidget(widget);
-            Toast.makeText(getContext(), "Sistem widget'i eklendi.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(ctx, "Sistem widgeti eklendi.", Toast.LENGTH_SHORT).show();
             dismiss();
             if (onDismissCallback != null) {
                 onDismissCallback.run();

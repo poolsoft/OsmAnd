@@ -98,21 +98,104 @@ public class WidgetManager {
         }
     }
 
+    private static class Point {
+        int x, y;
+        Point(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    private Point findEmptySpace(boolean[][] occupied, int spanX, int spanY) {
+        for (int y = 0; y <= 4 - spanY; y++) {
+            for (int x = 0; x <= 4 - spanX; x++) {
+                boolean fits = true;
+                for (int sy = 0; sy < spanY; sy++) {
+                    for (int sx = 0; sx < spanX; sx++) {
+                        if (occupied[x + sx][y + sy]) {
+                            fits = false;
+                            break;
+                        }
+                    }
+                    if (!fits) break;
+                }
+                if (fits) {
+                    return new Point(x, y);
+                }
+            }
+        }
+        return null;
+    }
+
+    private void autoPlaceWidget(BaseWidget widget) {
+        int pageCount = 3;
+        int spanX = widget.getSpanX();
+        int spanY = widget.getSpanY();
+        
+        for (int page = 0; page < pageCount; page++) {
+            boolean[][] occupied = new boolean[4][4];
+            
+            // Bu sayfadaki diger gorunur widget'lari bulup isaretle
+            for (BaseWidget w : allWidgets) {
+                if (w != widget && w.isVisible() && w.getPageIndex() == page) {
+                    int cx = w.getCellX();
+                    int cy = w.getCellY();
+                    int sx = w.getSpanX();
+                    int sy = w.getSpanY();
+                    if (cx >= 0 && cx + sx <= 4 && cy >= 0 && cy + sy <= 4) {
+                        for (int x = cx; x < cx + sx; x++) {
+                            for (int y = cy; y < cy + sy; y++) {
+                                occupied[x][y] = true;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            Point p = findEmptySpace(occupied, spanX, spanY);
+            if (p != null) {
+                widget.setPageIndex(page);
+                widget.setCellX(p.x);
+                widget.setCellY(p.y);
+                return;
+            }
+        }
+        
+        // Sayfalarda yer kalmadiysa, en son sayfaya fallback olarak 0,0 ata
+        widget.setPageIndex(pageCount - 1);
+        widget.setCellX(0);
+        widget.setCellY(0);
+    }
+
     /**
-     * Widget ekle.
+     * Widget ekle veya zaten varsa goster.
+     * Bos yerleri dinamik olarak otomatik hesaplar ve yerlestirir.
+     * Kod icinde kesinlikle Turkce karakter kullanilmamistir.
      */
     public void addWidget(@NonNull BaseWidget widget) {
-        if (findWidgetById(widget.getId()) != null) {
-            return; // Duplicate — sessizce atla
-        }
-        if (!allWidgets.contains(widget)) {
-            allWidgets.add(widget);
-            updateVisibleWidgets();
-            if (isStarted) {
-                widget.onStart();
+        BaseWidget targetWidget = widget;
+        BaseWidget existing = findWidgetById(widget.getId());
+        if (existing != null) {
+            existing.setVisible(true);
+            existing.setSize(widget.getSize());
+            targetWidget = existing;
+        } else {
+            if (!allWidgets.contains(widget)) {
+                allWidgets.add(widget);
             }
-            saveWidgetConfig();
+            targetWidget = widget;
         }
+
+        // Eger koordinatlar -1 ise bos yer bulup yerlestir
+        if (targetWidget.getCellX() == -1 || targetWidget.getCellY() == -1) {
+            autoPlaceWidget(targetWidget);
+        }
+
+        updateVisibleWidgets();
+        if (isStarted && !targetWidget.isStarted()) {
+            targetWidget.onStart();
+        }
+        saveWidgetConfig();
     }
 
     /**

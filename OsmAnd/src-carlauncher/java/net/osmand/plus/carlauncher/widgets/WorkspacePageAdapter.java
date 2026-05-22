@@ -121,6 +121,15 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
 
             if (needsSave) {
                 WidgetManager.getInstance(context).saveWidgetConfig();
+                gridLayout.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        notifyDataSetChanged();
+                        if (onWidgetsChangedListener != null) {
+                            onWidgetsChangedListener.run();
+                        }
+                    }
+                });
             }
 
             // Sayfadaki tum widget'lari GridLayout'a ekleyelim
