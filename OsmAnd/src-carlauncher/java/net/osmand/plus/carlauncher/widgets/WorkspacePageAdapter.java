@@ -12,7 +12,7 @@ import androidx.appcompat.widget.PopupMenu;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import net.osmand.plus.carlauncher.R;
+import net.osmand.plus.R;
 
 import java.util.ArrayList;
 import java.util.List;
