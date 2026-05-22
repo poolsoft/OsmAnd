@@ -1513,6 +1513,26 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     }
                     return true;
                 }
+            } else {
+                if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                    if (getContext() != null) {
+                        android.media.AudioManager audioManager = (android.media.AudioManager) getContext().getSystemService(android.content.Context.AUDIO_SERVICE);
+                        if (audioManager != null) {
+                            if (diffY > 0) {
+                                // Asagi kaydirma -> Sesi azalt (Turkce karakter yok)
+                                audioManager.adjustStreamVolume(android.media.AudioManager.STREAM_MUSIC,
+                                    android.media.AudioManager.ADJUST_LOWER,
+                                    android.media.AudioManager.FLAG_SHOW_UI);
+                            } else {
+                                // Yukari kaydirma -> Sesi artir (Turkce karakter yok)
+                                audioManager.adjustStreamVolume(android.media.AudioManager.STREAM_MUSIC,
+                                    android.media.AudioManager.ADJUST_RAISE,
+                                    android.media.AudioManager.FLAG_SHOW_UI);
+                            }
+                        }
+                    }
+                    return true;
+                }
             }
             return false;
         }
