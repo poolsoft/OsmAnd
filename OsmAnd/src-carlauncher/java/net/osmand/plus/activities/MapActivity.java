@@ -518,14 +518,36 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		    widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_more_vert);
 		    widgetHandle.setColorFilter(0xCCFFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
 		    
-		    widgetHandle.setOnClickListener(new View.OnClickListener() {
+		    widgetHandle.setOnTouchListener(new View.OnTouchListener() {
+		        private float initialTouchX;
+		        private float initialTouchY;
+		        private boolean isDragging = false;
+		        private static final int TOUCH_SLOP = 10; // Surukleme esigi
+
 		        @Override
-		        public void onClick(View v) {
-		            if (carLayoutManager != null) {
-		                // Panellerin yerini swap (toggle) yapar
-		                carLayoutManager.setContentFullScreen(!carLayoutManager.isContentFullScreen());
-		                applyWidgetPanelState();
+		        public boolean onTouch(View v, MotionEvent event) {
+		            switch (event.getAction()) {
+		                case MotionEvent.ACTION_DOWN:
+		                    initialTouchX = event.getRawX();
+		                    initialTouchY = event.getRawY();
+		                    isDragging = false;
+		                    break;
+		                case MotionEvent.ACTION_MOVE:
+		                    float dx = event.getRawX() - initialTouchX;
+		                    float dy = event.getRawY() - initialTouchY;
+		                    if (!isDragging && (Math.abs(dx) > TOUCH_SLOP || Math.abs(dy) > TOUCH_SLOP)) {
+		                        isDragging = true;
+		                    }
+		                    if (isDragging) {
+		                        updateCarWidgetPanelSize(event.getRawX(), event.getRawY());
+		                    }
+		                    break;
+		                case MotionEvent.ACTION_UP:
+		                case MotionEvent.ACTION_CANCEL:
+		                    // Surukleme modu yalnizca surukleyince calisacak, performClick veya swap olmayacak
+		                    break;
 		            }
+		            return true;
 		        }
 		    });
 		}
@@ -614,7 +636,47 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		applyNightDimMode();
 	}
 
-
+	private void updateCarWidgetPanelSize(float rawX, float rawY) {
+		if (carLayoutManager == null) return;
+		
+		boolean isPortrait = getResources().getConfiguration().orientation 
+				== android.content.res.Configuration.ORIENTATION_PORTRAIT;
+				
+		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(this);
+		
+		if (isPortrait) {
+			int screenHeight = getResources().getDisplayMetrics().heightPixels;
+			if (screenHeight <= 0) return;
+			
+			float rawPercent = (screenHeight - rawY) / (float) screenHeight;
+			// %25 ile %40 arasinda sinirla, %5'lik adimlarla yuvarla
+			float percent = Math.round(rawPercent * 20f) / 20f;
+			percent = Math.max(0.25f, Math.min(0.40f, percent));
+			
+			carSettings.setWidgetPanelHeightPortrait(percent);
+		} else {
+			int screenWidth = getResources().getDisplayMetrics().widthPixels;
+			if (screenWidth <= 0) return;
+			
+			String widgetPos = carSettings.getWidgetPanelPosition();
+			boolean isLeft = "left".equals(widgetPos);
+			
+			float rawPercent;
+			if (isLeft) {
+				rawPercent = rawX / (float) screenWidth;
+			} else {
+				rawPercent = (screenWidth - rawX) / (float) screenWidth;
+			}
+			
+			// %25 ile %40 arasinda sinirla, %5'lik adimlarla yuvarla
+			float percent = Math.round(rawPercent * 20f) / 20f;
+			percent = Math.max(0.25f, Math.min(0.40f, percent));
+			
+			carSettings.setWidgetPanelWidthPercent(percent);
+		}
+		
+		applyWidgetPanelState();
+	}
 
 	public void applyNightDimMode() {
 		try {
