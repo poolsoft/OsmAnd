@@ -611,17 +611,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		applyNightDimMode();
 	}
 
-	@Override
-	protected void onResume() {
-		super.onResume();
-		applyNightDimMode();
-	}
 
-	@Override
-	public void onConfigurationChanged(Configuration newConfig) {
-		super.onConfigurationChanged(newConfig);
-		applyNightDimMode();
-	}
 
 	private void applyNightDimMode() {
 		try {
@@ -1252,6 +1242,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	protected void onResume() {
 		super.onResume();
+		applyNightDimMode();
 		hideSystemUI();
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -2431,6 +2422,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	public void onConfigurationChanged(@NonNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
+		applyNightDimMode(); // Gece modu karartma overlay guncellemesi (Turkce karakter yok)
 
 		app.getLocaleHelper().setLanguage(this);
 		app.runInUIThread(fragmentsHelper::updateFragments);
