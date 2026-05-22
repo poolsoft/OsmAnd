@@ -189,6 +189,25 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         // Find Visualizer
         visualizerView = root.findViewById(net.osmand.plus.R.id.player_visualizer);
 
+        // Gesture ve Double Tap Kontrollerinin Tanimlanmasi (Turkce karakter yok)
+        View cardAlbumArt = root.findViewById(net.osmand.plus.R.id.card_album_art);
+        View playerInfoContainer = root.findViewById(net.osmand.plus.R.id.player_info_container);
+
+        android.view.GestureDetector gestureDetector = new android.view.GestureDetector(getContext(), new MusicGestureListener());
+        View.OnTouchListener touchListener = new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, android.view.MotionEvent event) {
+                return gestureDetector.onTouchEvent(event);
+            }
+        };
+
+        if (cardAlbumArt != null) {
+            cardAlbumArt.setOnTouchListener(touchListener);
+        }
+        if (playerInfoContainer != null) {
+            playerInfoContainer.setOnTouchListener(touchListener);
+        }
+
         return root;
     }
 
@@ -1021,6 +1040,11 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     if (nowPlayingArtBlur != null) {
                         nowPlayingArtBlur.setImageBitmap(albumArt);
                     }
+                    
+                    // Dinamik renk analizi ve yumusak renk gecisi (Turkce karakter yok)
+                    int dominantColor = getDominantColor(albumArt);
+                    int visibleColor = ensureVisibleColor(dominantColor);
+                    animateThemeColorChange(visibleColor);
                 } else {
                     int p = (int) (32 * getResources().getDisplayMetrics().density);
                     nowPlayingArt.setPadding(p, p, p, p);
@@ -1029,6 +1053,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     if (nowPlayingArtBlur != null) {
                         nowPlayingArtBlur.setImageResource(net.osmand.plus.R.drawable.bg_default_music_art);
                     }
+                    
+                    // Varsayilan Cyan temaya yumusak gecis (Turkce karakter yok)
+                    animateThemeColorChange(0xFF00FFFF);
                 }
             }
 
@@ -1350,5 +1377,138 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         int statusIcon;
         String statusText;
         int statusColor;
+    }
+
+    // --- Dinamik Renk Temasi Metotlari (Turkce karakter yok) ---
+    private int currentThemeColor = 0xFF00FFFF;
+
+    private int getDominantColor(Bitmap bitmap) {
+        if (bitmap == null) return 0xFF00FFFF;
+
+        // Performans icin bitmap'i cok kucuk boyutlara indirip piksellerini analiz edelim (Turkce karakter yok)
+        Bitmap resized = Bitmap.createScaledBitmap(bitmap, 16, 16, false);
+        int width = resized.getWidth();
+        int height = resized.getHeight();
+        
+        long sumR = 0, sumG = 0, sumB = 0;
+        int count = 0;
+        
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                int color = resized.getPixel(x, y);
+                int r = (color >> 16) & 0xFF;
+                int g = (color >> 8) & 0xFF;
+                int b = color & 0xFF;
+                
+                // Cok karanlik veya cok parlak olan pikselleri analiz disi birakalim ki (Turkce karakter yok)
+                // daha canli ve belirgin bir renk yakalayalim
+                int luminance = (int) (0.299 * r + 0.587 * g + 0.114 * b);
+                if (luminance > 30 && luminance < 225) {
+                    sumR += r;
+                    sumG += g;
+                    sumB += b;
+                    count++;
+                }
+            }
+        }
+        
+        resized.recycle();
+        
+        if (count == 0) return 0xFF00FFFF;
+        
+        int avgR = (int) (sumR / count);
+        int avgG = (int) (sumG / count);
+        int avgB = (int) (sumB / count);
+        
+        return 0xFF000000 | (avgR << 16) | (avgG << 8) | avgB;
+    }
+
+    private int ensureVisibleColor(int color) {
+        float[] hsv = new float[3];
+        android.graphics.Color.colorToHSV(color, hsv);
+        // Eger renk cok karanliksa parlakligini (Value) artiralim (Turkce karakter yok)
+        if (hsv[2] < 0.5f) {
+            hsv[2] = 0.7f;
+        }
+        // Doygunlugu (Saturation) da canli gorunmesi icin yuksek tutalim
+        if (hsv[1] < 0.4f) {
+            hsv[1] = 0.6f;
+        }
+        return android.graphics.Color.HSVToColor(hsv);
+    }
+
+    private void animateThemeColorChange(int targetColor) {
+        int startColor = currentThemeColor;
+        android.animation.ValueAnimator colorAnimation = android.animation.ValueAnimator.ofObject(
+            new android.animation.ArgbEvaluator(), startColor, targetColor);
+        colorAnimation.setDuration(400); // 400ms yumusak gecis
+        colorAnimation.addUpdateListener(animator -> {
+            int animatedColor = (int) animator.getAnimatedValue();
+            applyThemeColor(animatedColor);
+        });
+        colorAnimation.start();
+        currentThemeColor = targetColor;
+    }
+
+    private void applyThemeColor(int color) {
+        // Butonlarin tint renklerini guncelle (Turkce karakter yok)
+        if (btnPlay != null) btnPlay.setColorFilter(color);
+        if (btnNext != null) btnNext.setColorFilter(color);
+        if (btnPrev != null) btnPrev.setColorFilter(color);
+        
+        // Seekbar progress tint ve thumb tint rengini guncelle
+        if (seekbar != null) {
+            seekbar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                if (seekbar.getThumb() != null) {
+                    seekbar.getThumb().setTint(color);
+                }
+            }
+        }
+    }
+
+    /**
+     * Muzik calar icin kaydirma (Gesture) ve cift tiklama (Double Tap) dinleyicisi (Turkce karakter yok)
+     */
+    private class MusicGestureListener extends android.view.GestureDetector.SimpleOnGestureListener {
+        private static final int SWIPE_THRESHOLD = 100;
+        private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+
+        @Override
+        public boolean onDown(android.view.MotionEvent e) {
+            return true;
+        }
+
+        @Override
+        public boolean onDoubleTap(android.view.MotionEvent e) {
+            if (isExternalMode) {
+                musicManager.togglePlayPause();
+            } else {
+                if (musicManager.getInternalPlayer() != null) {
+                    musicManager.getInternalPlayer().playPause();
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public boolean onFling(android.view.MotionEvent e1, android.view.MotionEvent e2, float velocityX, float velocityY) {
+            if (e1 == null || e2 == null) return false;
+            float diffX = e2.getX() - e1.getX();
+            float diffY = e2.getY() - e1.getY();
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                    if (diffX > 0) {
+                        // Saga kaydirma -> Onceki sarki (Turkce karakter yok)
+                        musicManager.skipToPrevious();
+                    } else {
+                        // Sola kaydirma -> Sonraki sarki (Turkce karakter yok)
+                        musicManager.skipToNext();
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }

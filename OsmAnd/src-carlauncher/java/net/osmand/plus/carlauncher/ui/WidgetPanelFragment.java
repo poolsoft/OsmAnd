@@ -95,6 +95,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
 
         initListLayout();
         setupMenuButton(menuBtn);
+        setupPresetsButton(root.findViewById(net.osmand.plus.R.id.btn_widget_presets));
         
         return root;
     }
@@ -195,6 +196,75 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             });
             popup.show();
         });
+    }
+
+    private void setupPresetsButton(View presetsBtn) {
+        if (presetsBtn == null) return;
+        
+        presetsBtn.setOnClickListener(v -> {
+            android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), presetsBtn);
+            
+            // Hazir duzenleri popup menuye ekle (Turkce karakter yok)
+            popup.getMenu().add(0, 1, 0, "Navigasyon Odakli");
+            popup.getMenu().add(0, 2, 1, "Medya Odakli");
+            popup.getMenu().add(0, 3, 2, "Minimalist");
+            
+            popup.setOnMenuItemClickListener(item -> {
+                int id = item.getItemId();
+                if (id == 1) {
+                    applyLayoutPreset(LayoutPreset.NAVIGATION);
+                    return true;
+                } else if (id == 2) {
+                    applyLayoutPreset(LayoutPreset.MEDIA);
+                    return true;
+                } else if (id == 3) {
+                    applyLayoutPreset(LayoutPreset.MINIMALIST);
+                    return true;
+                }
+                return false;
+            });
+            popup.show();
+        });
+    }
+
+    private void applyLayoutPreset(LayoutPreset preset) {
+        if (widgetManager == null || getContext() == null) return;
+
+        // Tum widget'lari durdur (Turkce karakter yok)
+        widgetManager.stopAllWidgets();
+        widgetManager.forceResetForNewSession();
+        widgetManager.updateActivityContext(getContext());
+
+        switch (preset) {
+            case NAVIGATION:
+                widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.Material3ClockWidget(getContext()));
+                widgetManager.addWidget(new SpeedWidget(getContext(), app));
+                widgetManager.addWidget(new DirectionWidget(getContext(), app));
+                widgetManager.addWidget(new NavigationWidget(getContext(), app));
+                break;
+            case MEDIA:
+                widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.Material3ClockWidget(getContext()));
+                widgetManager.addWidget(new MusicWidget(getContext(), app));
+                widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.WeatherWidget(getContext(), app));
+                break;
+            case MINIMALIST:
+                widgetManager.addWidget(new net.osmand.plus.carlauncher.widgets.Material3ClockWidget(getContext()));
+                widgetManager.addWidget(new SpeedWidget(getContext(), app));
+                break;
+        }
+
+        // Kaydet (Turkce karakter yok)
+        widgetManager.saveWidgetConfig();
+
+        // Yeniden baslat ve guncelle
+        widgetManager.startAllWidgets();
+        updateLayoutConfiguration();
+        applyWidgetsToView();
+        
+        // Haptic feedback ile degisikligi kullaniciya hissettir
+        if (getView() != null) {
+            getView().performHapticFeedback(android.view.HapticFeedbackConstants.CONFIRM);
+        }
     }
 
     private void showWidgetControlDialog() {

@@ -82,4 +82,15 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- NIGHT DIM OVERLAY (Gece Karartma Katmani - Turkce karakter yok) -->
+    <View
+        android:id="@+id/night_dim_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#66000000"
+        android:visibility="gone"
+        android:elevation="100dp"
+        android:clickable="false"
+        android:focusable="false"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

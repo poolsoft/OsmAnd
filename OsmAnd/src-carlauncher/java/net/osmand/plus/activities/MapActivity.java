@@ -606,6 +606,52 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 		// 6. Check for permissions
 		checkOverlayPermission();
+
+		// Gece karartma overlay kontrolu (Turkce karakter yok)
+		applyNightDimMode();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		applyNightDimMode();
+	}
+
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		applyNightDimMode();
+	}
+
+	private void applyNightDimMode() {
+		try {
+			View nightDimOverlay = findViewById(R.id.night_dim_overlay);
+			if (nightDimOverlay != null) {
+				boolean isNight = false;
+				net.osmand.plus.helpers.DayNightHelper helper = app.getDaynightHelper();
+				if (helper != null) {
+					isNight = helper.isNightMode(net.osmand.plus.settings.enums.ThemeUsageContext.APP);
+				}
+				if (isNight) {
+					if (nightDimOverlay.getVisibility() != View.VISIBLE) {
+						nightDimOverlay.setVisibility(View.VISIBLE);
+						nightDimOverlay.setAlpha(0f);
+						nightDimOverlay.animate().alpha(1f).setDuration(400).start();
+					}
+				} else {
+					if (nightDimOverlay.getVisibility() == View.VISIBLE) {
+						nightDimOverlay.animate().alpha(0f).setDuration(400).withEndAction(new Runnable() {
+							@Override
+							public void run() {
+								nightDimOverlay.setVisibility(View.GONE);
+							}
+						}).start();
+					}
+				}
+			}
+		} catch (Exception e) {
+			// ignore
+		}
 	}
 
 	private void embedWidgetPanel() {
