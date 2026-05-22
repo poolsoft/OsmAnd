@@ -232,14 +232,9 @@ public class AppDockFragment extends Fragment
                 }
             });
             
-            // Uzun basma: Yüzen buton asistan menüsünü tetikle
+            // Uzun basma: Ayarlari ac
             btnDesktopMode.setOnLongClickListener(v -> {
-                android.content.Intent intent = new android.content.Intent("net.osmand.carlauncher.ACTION_SHOW_ASSISTANT_MENU");
-                intent.setPackage(getContext().getPackageName());
-                getContext().sendBroadcast(intent);
-                
-                androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(getContext())
-                        .sendBroadcast(new android.content.Intent("net.osmand.carlauncher.ACTION_SHOW_ASSISTANT_MENU"));
+                openSettings();
                 return true;
             });
         }

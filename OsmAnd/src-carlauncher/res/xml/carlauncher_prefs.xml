@@ -8,7 +8,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <androidx.preference.PreferenceCategory
         android:key="category_appearance"
-        android:title="📺 Görünüm"
+        android:title="Görünüm"
         android:iconSpaceReserved="false">
 
         <androidx.preference.SwitchPreferenceCompat
@@ -58,7 +58,7 @@
 
     <androidx.preference.PreferenceCategory
         android:key="category_layout_portrait"
-        android:title="📱 Dikey Mod (Portrait) Ayarları"
+        android:title="Dikey Mod (Portrait) Ayarları"
         android:iconSpaceReserved="false">
 
         <androidx.preference.SeekBarPreference
@@ -75,7 +75,7 @@
 
     <androidx.preference.PreferenceCategory
         android:key="category_layout_landscape"
-        android:title="📺 Yatay Mod (Landscape) Ayarları"
+        android:title="Yatay Mod (Landscape) Ayarları"
         android:iconSpaceReserved="false">
 
         <androidx.preference.SeekBarPreference
@@ -95,7 +95,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <androidx.preference.PreferenceCategory
         android:key="category_music"
-        android:title="🎵 Müzik"
+        android:title="Müzik"
         android:iconSpaceReserved="false">
 
         <androidx.preference.Preference
@@ -124,7 +124,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <androidx.preference.PreferenceCategory
         android:key="category_weather"
-        android:title="⛅ Hava Durumu"
+        android:title="Hava Durumu"
         android:iconSpaceReserved="false">
 
         <androidx.preference.SwitchPreferenceCompat
@@ -141,7 +141,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <androidx.preference.PreferenceCategory
         android:key="category_autolaunch"
-        android:title="🚀 Otomatik Başlatma"
+        android:title="Otomatik Başlatma"
         android:iconSpaceReserved="false">
 
         <androidx.preference.SwitchPreferenceCompat
@@ -172,7 +172,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <androidx.preference.PreferenceCategory
         android:key="category_backup"
-        android:title="💾 Yedekle ve Geri Yükle"
+        android:title="Yedekle ve Geri Yükle"
         android:iconSpaceReserved="false">
 
         <androidx.preference.Preference
@@ -194,7 +194,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <androidx.preference.PreferenceCategory
         android:key="category_dock"
-        android:title="🚗 Uygulama Dock (Sidebar)"
+        android:title="Uygulama Dock (Sidebar)"
         android:iconSpaceReserved="false">
 
         <androidx.preference.ListPreference
@@ -256,7 +256,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <androidx.preference.PreferenceCategory
         android:key="category_about"
-        android:title="ℹ️ Hakkında"
+        android:title="Hakkında"
         android:iconSpaceReserved="false">
 
         <androidx.preference.Preference
