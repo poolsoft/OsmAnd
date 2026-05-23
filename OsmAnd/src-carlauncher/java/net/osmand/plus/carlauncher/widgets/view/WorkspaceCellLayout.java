@@ -59,6 +59,7 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
         setClipChildren(false);
         setClipToPadding(false);
         setOnDragListener(this);
+        setClickable(true); // Tiklanabilir yaparak bos sayfada edit modundan cikisi garanti eder
 
         // Hucreler arasi default margin (6dp)
         float density = context.getResources().getDisplayMetrics().density;
@@ -165,8 +166,8 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
         int cellWidth = usableWidth / 4;
         int cellHeight = usableHeight / 4;
 
-        // 1. Duzenleme / Surukleme sirasinda 4x4 Izgara Kilavuz cizgilerini ciz
-        if (isDragging) {
+        // 1. Duzenleme / Surukleme / Edit Modu sirasinda 4x4 Izgara Kilavuz cizgilerini ciz
+        if (isDragging || net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter.isEditMode) {
             // Dikey Cizgiler
             for (int i = 1; i < 4; i++) {
                 float x = getPaddingLeft() + (i * cellWidth);

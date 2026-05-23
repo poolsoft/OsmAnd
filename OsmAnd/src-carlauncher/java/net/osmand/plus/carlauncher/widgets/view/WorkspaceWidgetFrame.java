@@ -204,6 +204,20 @@ public class WorkspaceWidgetFrame extends FrameLayout {
             public void onClick(View v) {
                 widget.setVisible(false);
                 WidgetManager.getInstance(getContext()).saveWidgetConfig();
+                
+                // Sayfadaki diger gorunur widget'lari kontrol et (Son widget silindiyse Duzenleme Modunu kapat)
+                java.util.List<BaseWidget> list = WidgetManager.getInstance(getContext()).getAllWidgets();
+                boolean hasVisibleWidgetsOnPage = false;
+                for (BaseWidget w : list) {
+                    if (w.isVisible() && w.getPageIndex() == widget.getPageIndex()) {
+                        hasVisibleWidgetsOnPage = true;
+                        break;
+                    }
+                }
+                if (!hasVisibleWidgetsOnPage) {
+                    net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter.isEditMode = false;
+                }
+                
                 if (onWidgetsChanged != null) {
                     onWidgetsChanged.run();
                 }

@@ -1,9 +1,6 @@
 name: Build CarLauncher OpenGL.apk
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - android-auto-ui
 
 permissions:
   contents: write
