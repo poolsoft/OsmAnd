@@ -35,7 +35,7 @@ public class WidgetManager {
 
     private final List<BaseWidget> allWidgets;
     private final List<BaseWidget> visibleWidgets;
-    private final AppWidgetHost appWidgetHost;
+    private AppWidgetHost appWidgetHost;
 
     private static WidgetManager instance;
     
@@ -93,18 +93,27 @@ public class WidgetManager {
      * Kod icerisinde kesinlikle Turkce karakter kullanilmamistir.
      */
     public void updateActivityContext(Context activityContext) {
-        if (isStarted && this.appWidgetHost != null) {
+        if (this.appWidgetHost != null) {
             try {
                 this.appWidgetHost.stopListening();
+            } catch (Exception e) {
+                android.util.Log.e("WidgetManager", "stopListening hatasi: " + e.getMessage());
+            }
+        }
+        
+        // Yeni Activity Context ile AppWidgetHost'u yeniden yarat (Sistem widget'larinin eklenmesi ve calismasi icin sarttir!)
+        this.appWidgetHost = new AppWidgetHost(activityContext, 1024);
+        if (isStarted) {
+            try {
                 this.appWidgetHost.startListening();
             } catch (Exception e) {
-                android.util.Log.e("WidgetManager", "AppWidgetHost tazeleme hatasi: " + e.getMessage());
+                android.util.Log.e("WidgetManager", "startListening hatasi: " + e.getMessage());
             }
         }
         
         for (BaseWidget widget : allWidgets) {
             widget.setContext(activityContext);
-             // Yeni context ile yeniden olusturulmasi icin eski view'i temizle
+            // Yeni context ile yeniden olusturulmasi icin eski view'i temizle
             widget.onDestroy(); 
         }
     }

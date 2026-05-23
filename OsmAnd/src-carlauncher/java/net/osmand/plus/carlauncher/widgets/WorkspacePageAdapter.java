@@ -34,9 +34,19 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
 
     private final Context context;
     private final FragmentManager fragmentManager;
-    private final int pageCount = 3; // Toplam masaustu sayfa sayisi
     private final List<BaseWidget> widgetsList;
     private final Runnable onWidgetsChangedListener;
+
+    public int getPageCount() {
+        int maxPage = 0;
+        for (BaseWidget w : widgetsList) {
+            if (w.isVisible()) {
+                maxPage = Math.max(maxPage, w.getPageIndex());
+            }
+        }
+        // En az 1 sayfa olmali, en fazla 3 sayfa
+        return Math.max(1, Math.min(3, maxPage + 1));
+    }
 
     public WorkspacePageAdapter(Context context, FragmentManager fragmentManager, List<BaseWidget> widgets, Runnable onWidgetsChangedListener) {
         this.context = context;
@@ -63,7 +73,7 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
 
     @Override
     public int getItemCount() {
-        return pageCount;
+        return getPageCount();
     }
 
     class PageViewHolder extends RecyclerView.ViewHolder {
@@ -137,8 +147,8 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                         }
                         needsSave = true;
                     } else {
-                        // Sayfa doluysa, bir sonraki sayfaya tasi
-                        if (pageIndex < pageCount - 1) {
+                        // Sayfa doluysa, bir sonraki sayfaya tasi (maksimum 3 sayfa)
+                        if (pageIndex < 2) {
                             widget.setPageIndex(pageIndex + 1);
                             widget.setCellX(-1);
                             widget.setCellY(-1);
@@ -270,7 +280,7 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
             if (widget.getPageIndex() > 0) {
                 popup.getMenu().add(0, 5, 4, "Sola Tasi (Sayfa " + widget.getPageIndex() + ")");
             }
-            if (widget.getPageIndex() < pageCount - 1) {
+            if (widget.getPageIndex() < 2) {
                 popup.getMenu().add(0, 6, 5, "Saga Tasi (Sayfa " + (widget.getPageIndex() + 2) + ")");
             }
             
@@ -388,7 +398,7 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                 } else {
                     // Sayfada hic yer yoksa, diger sayfalarda bosluk ara
                     boolean foundInOtherPage = false;
-                    for (int page = 0; page < pageCount; page++) {
+                    for (int page = 0; page < 3; page++) {
                         if (page != widget.getPageIndex()) {
                             Point op = findNewPositionForWidget(widget, page, targetSpanX, targetSpanY);
                             if (op != null) {
