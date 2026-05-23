@@ -216,14 +216,36 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         addView(overlayContainer, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
+    public BaseWidget getWidget() {
+        return widget;
+    }
+
+    public void setWidgetView(View widgetView) {
+        // Temizlik: overlayContainer disindaki eski widget view'larini kaldirir
+        for (int i = getChildCount() - 1; i >= 0; i--) {
+            View child = getChildAt(i);
+            if (child != overlayContainer) {
+                removeViewAt(i);
+            }
+        }
+        // Widget gorunumunu 0. indekse ekle (en alta)
+        addView(widgetView, 0, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        // overlayContainer'in her zaman en ustte oldugundan emin ol
+        overlayContainer.bringToFront();
+    }
+
     public void setEditMode(boolean editMode) {
         this.isEditMode = editMode;
         if (editMode) {
             overlayContainer.setVisibility(VISIBLE);
+            // Sistem widget'lari yuksek elevasyona sahip olabildigi icin overlayContainer'i yukseltelim
+            overlayContainer.setElevation(dpToPx(30));
+            overlayContainer.bringToFront(); // Butonlari her zaman en ust katmana tasir
             configBtn.setVisibility(widget.isConfigurable() ? VISIBLE : GONE);
             startShakeAnimation();
         } else {
             overlayContainer.setVisibility(GONE);
+            overlayContainer.setElevation(0);
             stopShakeAnimation();
             setAlpha(1.0f);
         }

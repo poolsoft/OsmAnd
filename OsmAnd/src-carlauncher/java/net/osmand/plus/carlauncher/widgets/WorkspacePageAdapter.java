@@ -197,11 +197,7 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                     );
                     
                     // Widget view'i frame'e ekle
-                    FrameLayout.LayoutParams frameChildParams = new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                    );
-                    widgetFrame.addView(widgetView, frameChildParams);
+                    widgetFrame.setWidgetView(widgetView);
                     widgetFrame.setEditMode(isEditMode);
 
                     // WorkspaceCellLayout LayoutParams olustur

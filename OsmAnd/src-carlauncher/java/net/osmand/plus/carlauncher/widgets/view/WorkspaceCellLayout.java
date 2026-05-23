@@ -329,24 +329,7 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
     }
 
     private BaseWidget findWidgetForFrame(WorkspaceWidgetFrame frame) {
-        java.util.List<BaseWidget> list = WidgetManager.getInstance(getContext()).getAllWidgets();
-        for (BaseWidget w : list) {
-            if (frame.hashCode() == frame.hashCode() && w.getId().equals(getWidgetIdFromFrame(frame))) {
-                return w;
-            }
-        }
-        return null;
-    }
-
-    private String getWidgetIdFromFrame(WorkspaceWidgetFrame frame) {
-        // Yansima veya basit getter ile widget id'sine ulasalim
-        try {
-            java.lang.reflect.Field field = WorkspaceWidgetFrame.class.getDeclaredField("widget");
-            field.setAccessible(true);
-            BaseWidget w = (BaseWidget) field.get(frame);
-            if (w != null) return w.getId();
-        } catch (Exception e) {}
-        return "";
+        return frame != null ? frame.getWidget() : null;
     }
 
     private boolean canWidgetFitAt(BaseWidget targetWidget, int pageIndex, int cellX, int cellY, int spanX, int spanY) {
