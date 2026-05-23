@@ -100,6 +100,13 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     public void setPreferredPackage(String packageName) {
         this.preferredPackage = packageName;
 
+        // XYAuto yerel muzik baglantisi
+        if ("com.acloud.stub.localmusic".equals(packageName)) {
+            bindXyPlayService();
+        } else {
+            unbindXyPlayService();
+        }
+
         // If switching to external app, pause internal player
         if (packageName != null && !packageName.equals("usage.internal.player")) {
             if (internalPlayer != null && internalPlayer.isPlaying()) {
@@ -119,6 +126,39 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 updateActiveController(mediaSessionManager.getActiveSessions(listenerComp));
             } catch (Exception e) {
                 Log.w(TAG, "Failed to update controller for preferred package: " + e.getMessage());
+            }
+        }
+    }
+
+    public int getXyDuration() {
+        if (xyPlayService != null && xyServiceBound) {
+            try {
+                return xyPlayService.getDuration();
+            } catch (Exception e) {
+                Log.e(TAG, "XYPlayService getDuration hatasi: " + e.getMessage());
+            }
+        }
+        return 0;
+    }
+
+    public int getXyPosition() {
+        if (xyPlayService != null && xyServiceBound) {
+            try {
+                return xyPlayService.getPosition();
+            } catch (Exception e) {
+                Log.e(TAG, "XYPlayService getPosition hatasi: " + e.getMessage());
+            }
+        }
+        return 0;
+    }
+
+    public void seekXy(int position) {
+        if (xyPlayService != null && xyServiceBound) {
+            try {
+                xyPlayService.seekTo(position);
+                Log.d(TAG, "XYPlayService seekTo: " + position);
+            } catch (Exception e) {
+                Log.e(TAG, "XYPlayService seekTo hatasi: " + e.getMessage());
             }
         }
     }
@@ -243,6 +283,61 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     
     private MusicSource lastActiveSource = MusicSource.INTERNAL; // Default
 
+    private com.acloud.stub.service.aidl.IPlayService xyPlayService;
+    private boolean xyServiceBound = false;
+
+    private final android.content.ServiceConnection xyServiceConnection = new android.content.ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, android.os.IBinder service) {
+            xyPlayService = com.acloud.stub.service.aidl.IPlayService.Stub.asInterface(service);
+            xyServiceBound = true;
+            Log.d(TAG, "XYPlayService baglantisi kuruldu.");
+            notifyStateChanged();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            xyPlayService = null;
+            xyServiceBound = false;
+            Log.d(TAG, "XYPlayService baglantisi kesildi.");
+            notifyStateChanged();
+        }
+    };
+
+    private void bindXyPlayService() {
+        if (xyServiceBound) return;
+        try {
+            Intent intent = new Intent("com.acloud.stub.service.aidl.IPlayService");
+            intent.setClassName("com.acloud.stub.localmusic", "com.acloud.stub.service.XYPlayerService");
+            context.bindService(intent, xyServiceConnection, Context.BIND_AUTO_CREATE);
+            Log.d(TAG, "XYPlayService baglaniyor...");
+        } catch (Exception e) {
+            Log.e(TAG, "XYPlayService baglanirken hata: " + e.getMessage());
+        }
+    }
+
+    private void unbindXyPlayService() {
+        if (!xyServiceBound) return;
+        try {
+            context.unbindService(xyServiceConnection);
+            xyPlayService = null;
+            xyServiceBound = false;
+            Log.d(TAG, "XYPlayService baglantisi koparildi.");
+        } catch (Exception e) {
+            Log.e(TAG, "XYPlayService baglantisi koparilirken hata: " + e.getMessage());
+        }
+    }
+
+    private void sendXyMusicBroadcast(String action) {
+        try {
+            Intent intent = new Intent(action);
+            context.sendBroadcast(intent);
+            Log.d(TAG, "Sent XY music broadcast: " + action);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to send XY music broadcast: " + action, e);
+        }
+    }
+
     private void sendMediaKey(int keycode) {
         try {
             android.media.AudioManager am = (android.media.AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
@@ -280,6 +375,30 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         if (internalPlayer.isPlaying() || (preferredPackage != null && preferredPackage.equals("usage.internal.player"))) {
             internalPlayer.playPause();
             lastActiveSource = MusicSource.INTERNAL;
+            return;
+        }
+
+        // XYAuto yerel muzik entegrasyonu
+        if ("com.acloud.stub.localmusic".equals(preferredPackage)) {
+            if (xyPlayService != null && xyServiceBound) {
+                try {
+                    int state = xyPlayService.getState();
+                    if (state == 3 || isPlaying()) { // 3 = playing
+                        xyPlayService.pause();
+                    } else {
+                        xyPlayService.start();
+                    }
+                    sendXyMusicBroadcast("xy.android.playpause");
+                    lastActiveSource = MusicSource.EXTERNAL;
+                    notifyStateChanged();
+                    return;
+                } catch (Exception e) {
+                    Log.e(TAG, "XYPlayService togglePlayPause hatasi: " + e.getMessage());
+                }
+            }
+            sendXyMusicBroadcast("xy.android.playpause");
+            lastActiveSource = MusicSource.EXTERNAL;
+            notifyStateChanged();
             return;
         }
 
@@ -334,6 +453,10 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             internalPlayer.playNext();
             return;
         }
+        if ("com.acloud.stub.localmusic".equals(preferredPackage)) {
+            sendXyMusicBroadcast("xy.android.nextmedia");
+            return;
+        }
         if (activeExternalController != null) {
             try {
                 activeExternalController.getTransportControls().skipToNext();
@@ -348,6 +471,10 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     public void skipToPrevious() {
         if (internalPlayer.isPlaying() || (preferredPackage != null && preferredPackage.equals("usage.internal.player"))) {
             internalPlayer.playPrevious();
+            return;
+        }
+        if ("com.acloud.stub.localmusic".equals(preferredPackage)) {
+            sendXyMusicBroadcast("xy.android.previousmedia");
             return;
         }
         if (activeExternalController != null) {

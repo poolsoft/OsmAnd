@@ -313,10 +313,29 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (fromUser && !isExternalMode && musicManager.getInternalPlayer() != null) {
-                        int duration = musicManager.getInternalPlayer().getDuration();
-                        int newPos = (int) ((progress / 100f) * duration);
-                        musicManager.getInternalPlayer().seekTo(newPos);
+                    if (fromUser) {
+                        if (!isExternalMode && musicManager.getInternalPlayer() != null) {
+                            int duration = musicManager.getInternalPlayer().getDuration();
+                            int newPos = (int) ((progress / 100f) * duration);
+                            musicManager.getInternalPlayer().seekTo(newPos);
+                        } else if (isExternalMode) {
+                            String pkg = musicManager.getPreferredPackage();
+                            if ("com.acloud.stub.localmusic".equals(pkg)) {
+                                int duration = musicManager.getXyDuration();
+                                int newPos = (int) ((progress / 100f) * duration);
+                                musicManager.seekXy(newPos);
+                            } else if (musicManager.getActiveExternalController() != null) {
+                                android.media.session.MediaController controller = musicManager.getActiveExternalController();
+                                android.media.MediaMetadata metadata = controller.getMetadata();
+                                if (metadata != null) {
+                                    long duration = metadata.getLong(android.media.MediaMetadata.METADATA_KEY_DURATION);
+                                    if (duration > 0) {
+                                        long newPos = (long) ((progress / 100f) * duration);
+                                        controller.getTransportControls().seekTo(newPos);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -474,9 +493,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         // Seekbar gorunurlugu (Opsiyonel: External modda seekbar calismayabilir)
         if (seekbar != null) {
-            seekbar.setEnabled(!isExternalMode);
-            if (isExternalMode)
-                seekbar.setProgress(0);
+            seekbar.setEnabled(true);
         }
 
         // Kaynak durumuna gore panellerin gorunurlugunu dinamik yonet
@@ -994,13 +1011,50 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     }
 
     private void updateSeekbar() {
-        // Eğer External moddaysak veya player yoksa güncelleme yapma
-        if (isExternalMode || musicManager == null || musicManager.getInternalPlayer() == null)
-            return;
+        if (musicManager == null) return;
 
-        // Internal Player'dan süreyi al
-        long current = musicManager.getInternalPlayer().getCurrentPosition();
-        long duration = musicManager.getInternalPlayer().getDuration();
+        long current = 0;
+        long duration = 0;
+
+        if (!isExternalMode) {
+            // Dahili Calar
+            if (musicManager.getInternalPlayer() != null) {
+                current = musicManager.getInternalPlayer().getCurrentPosition();
+                duration = musicManager.getInternalPlayer().getDuration();
+            }
+        } else {
+            // Harici Calar Modu
+            String pkg = musicManager.getPreferredPackage();
+            if ("com.acloud.stub.localmusic".equals(pkg)) {
+                // XYAuto Yerel Muzik AIDL baglantisi
+                current = musicManager.getXyPosition();
+                duration = musicManager.getXyDuration();
+            } else if (musicManager.getActiveExternalController() != null) {
+                // Standart MediaController (Spotify, Youtube vb.)
+                android.media.session.MediaController controller = musicManager.getActiveExternalController();
+                android.media.MediaMetadata metadata = controller.getMetadata();
+                android.media.session.PlaybackState state = controller.getPlaybackState();
+
+                if (metadata != null) {
+                    duration = metadata.getLong(android.media.MediaMetadata.METADATA_KEY_DURATION);
+                }
+
+                if (state != null) {
+                    current = state.getPosition();
+                    if (state.getState() == android.media.session.PlaybackState.STATE_PLAYING) {
+                        long timeDiff = android.os.SystemClock.elapsedRealtime() - state.getLastPositionUpdateTime();
+                        if (timeDiff > 0) {
+                            current += (long) (timeDiff * state.getPlaybackSpeed());
+                        }
+                    }
+                }
+            }
+        }
+
+        // Sure sinirlamalarini denetle
+        if (current < 0) current = 0;
+        if (duration < 0) duration = 0;
+        if (current > duration) current = duration;
 
         if (duration > 0 && seekbar != null && !seekbar.isPressed()) {
             int progress = (int) ((current * 100) / duration);
