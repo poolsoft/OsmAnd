@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -81,12 +82,16 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         overlayContainer.setClipChildren(false);
         overlayContainer.setClipToPadding(false);
         overlayContainer.setVisibility(GONE);
+        overlayContainer.setClickable(true); // Dokunmalari asil widget'a gecirmeyip yutar
+        overlayContainer.setFocusable(true);
 
         // 1. Drag Handle (Tasima Tutamaci - Orta Bolge)
         dragHandle = new ImageView(context);
         dragHandle.setImageResource(android.R.drawable.ic_menu_directions);
         dragHandle.setColorFilter(0xEEFFFFFF);
         dragHandle.setBackgroundResource(android.R.drawable.alert_light_frame);
+        dragHandle.setClickable(true);
+        dragHandle.setFocusable(true);
         int handleSize = dpToPx(36);
         LayoutParams dragParams = new LayoutParams(handleSize, handleSize);
         dragParams.gravity = Gravity.CENTER;
@@ -113,6 +118,8 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         resizeHandle.setImageResource(android.R.drawable.ic_menu_crop);
         resizeHandle.setColorFilter(0xFF00E5FF);
         resizeHandle.setBackgroundResource(android.R.drawable.alert_light_frame);
+        resizeHandle.setClickable(true);
+        resizeHandle.setFocusable(true);
         int resizeSize = dpToPx(28);
         LayoutParams resizeParams = new LayoutParams(resizeSize, resizeSize);
         resizeParams.gravity = Gravity.BOTTOM | Gravity.RIGHT;
@@ -172,15 +179,46 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         });
         overlayContainer.addView(resizeHandle);
 
-        // 3. Delete Button (Kapat/Sil Butonu - Sol Ust Kose)
+        // Ust Sag Kose Kontrol Paneli (Ayarlar ve Silme Yan Yana)
+        LinearLayout topControls = new LinearLayout(context);
+        topControls.setOrientation(LinearLayout.HORIZONTAL);
+        LayoutParams topParams = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        topParams.gravity = Gravity.TOP | Gravity.RIGHT;
+        topParams.topMargin = dpToPx(6);
+        topParams.rightMargin = dpToPx(6);
+        topControls.setLayoutParams(topParams);
+
+        int btnSize = dpToPx(30);
+
+        // 3. Config Button (Ayarlar Butonu)
+        configBtn = new ImageView(context);
+        configBtn.setImageResource(android.R.drawable.ic_menu_preferences);
+        configBtn.setColorFilter(0xFFFFB300); // Premium Sari/Turuncu
+        configBtn.setBackgroundResource(android.R.drawable.alert_light_frame);
+        configBtn.setClickable(true);
+        configBtn.setFocusable(true);
+        LinearLayout.LayoutParams configLp = new LinearLayout.LayoutParams(btnSize, btnSize);
+        configLp.rightMargin = dpToPx(6);
+        configBtn.setLayoutParams(configLp);
+        configBtn.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (widget.isConfigurable()) {
+                    widget.openConfig(fragmentManager);
+                }
+            }
+        });
+        topControls.addView(configBtn);
+
+        // 4. Delete Button (Kapat/Sil Butonu)
         deleteBtn = new ImageView(context);
         deleteBtn.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
         deleteBtn.setColorFilter(0xFFFF3333); // Neon Kirmizi
         deleteBtn.setBackgroundResource(android.R.drawable.alert_light_frame);
-        int btnSize = dpToPx(28);
-        LayoutParams deleteParams = new LayoutParams(btnSize, btnSize);
-        deleteParams.gravity = Gravity.TOP | Gravity.LEFT;
-        deleteBtn.setLayoutParams(deleteParams);
+        deleteBtn.setClickable(true);
+        deleteBtn.setFocusable(true);
+        LinearLayout.LayoutParams deleteLp = new LinearLayout.LayoutParams(btnSize, btnSize);
+        deleteBtn.setLayoutParams(deleteLp);
         deleteBtn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -192,26 +230,9 @@ public class WorkspaceWidgetFrame extends FrameLayout {
                 Toast.makeText(getContext(), widget.getTitle() + " kaldirildi.", Toast.LENGTH_SHORT).show();
             }
         });
-        overlayContainer.addView(deleteBtn);
+        topControls.addView(deleteBtn);
 
-        // 4. Config Button (Ayarlar Butonu - Sag Ust Kose)
-        configBtn = new ImageView(context);
-        configBtn.setImageResource(android.R.drawable.ic_menu_preferences);
-        configBtn.setColorFilter(0xFFFFB300); // Premium Sari/Turuncu
-        configBtn.setBackgroundResource(android.R.drawable.alert_light_frame);
-        LayoutParams configParams = new LayoutParams(btnSize, btnSize);
-        configParams.gravity = Gravity.TOP | Gravity.RIGHT;
-        configBtn.setLayoutParams(configParams);
-        configBtn.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (widget.isConfigurable()) {
-                    widget.openConfig(fragmentManager);
-                }
-            }
-        });
-        overlayContainer.addView(configBtn);
-
+        overlayContainer.addView(topControls);
         addView(overlayContainer, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
