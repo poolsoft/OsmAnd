@@ -45,6 +45,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
     private ResizeHandleView resizeHandle;
     private DeleteButtonView deleteBtn;
     private ConfigButtonView configBtn;
+    private DoneButtonView doneBtn;
 
     private Paint borderPaint;
     private RectF borderRect;
@@ -226,6 +227,24 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         });
         topControls.addView(deleteBtn);
 
+        // 5. Done Button (Duzenlemeyi Bitir / Tamam Butonu - Sol Alt Kose)
+        doneBtn = new DoneButtonView(context);
+        int doneSize = dpToPx(44); // Genis dokunma alani
+        LayoutParams doneParams = new LayoutParams(doneSize, doneSize);
+        doneParams.gravity = Gravity.BOTTOM | Gravity.LEFT;
+        doneBtn.setLayoutParams(doneParams);
+        doneBtn.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter.isEditMode = false;
+                if (onWidgetsChanged != null) {
+                    onWidgetsChanged.run();
+                }
+                Toast.makeText(getContext(), "Duzenlemeler Kaydedildi.", Toast.LENGTH_SHORT).show();
+            }
+        });
+        overlayContainer.addView(doneBtn);
+
         overlayContainer.addView(topControls);
         addView(overlayContainer, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
     }
@@ -256,6 +275,9 @@ public class WorkspaceWidgetFrame extends FrameLayout {
             overlayContainer.setElevation(dpToPx(30));
             overlayContainer.bringToFront(); // Butonlari her zaman en ust katmana tasir
             configBtn.setVisibility(widget.isConfigurable() ? VISIBLE : GONE);
+            if (doneBtn != null) {
+                doneBtn.setVisibility(VISIBLE);
+            }
             startShakeAnimation();
         } else {
             overlayContainer.setVisibility(GONE);
@@ -523,6 +545,94 @@ public class WorkspaceWidgetFrame extends FrameLayout {
             canvas.drawLine(cx - size, cy + size, cx + size, cy + size, iconPaint); // Yatay
             canvas.drawLine(cx + size, cy - size, cx + size, cy + size, iconPaint); // Dikey
             canvas.drawLine(cx - size, cy - size, cx + size, cy + size, iconPaint); // Kosegen
+        }
+    }
+
+    /**
+     * Yesil Onay (Done) Butonu.
+     * Tiklandiginda edit modundan cikar.
+     * Kod icerisinde kesinlikle Turkce karakter kullanilmamistir.
+     */
+    private static class DoneButtonView extends View {
+        private final Paint bgPaint;
+        private final Paint iconPaint;
+        private final float density;
+        private boolean isPressed = false;
+
+        public DoneButtonView(Context context) {
+            super(context);
+            density = context.getResources().getDisplayMetrics().density;
+            setClickable(true);
+            setFocusable(true);
+
+            bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            bgPaint.setStyle(Paint.Style.FILL);
+            bgPaint.setColor(0xEE222222); // Koyu gri yari saydam arkaplan
+
+            iconPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            iconPaint.setStyle(Paint.Style.STROKE);
+            iconPaint.setStrokeWidth(3f * density); // Daha net ve kalin cizgi
+            iconPaint.setColor(0xFF00E676); // Neon Yesil
+            iconPaint.setStrokeCap(Paint.Cap.ROUND);
+        }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent event) {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    isPressed = true;
+                    invalidate();
+                    return true;
+                case MotionEvent.ACTION_UP:
+                    if (isPressed) {
+                        isPressed = false;
+                        invalidate();
+                        performClick(); // Tiklama olayini tetikle
+                    }
+                    return true;
+                case MotionEvent.ACTION_CANCEL:
+                    isPressed = false;
+                    invalidate();
+                    return true;
+            }
+            return super.onTouchEvent(event);
+        }
+
+        @Override
+        public boolean performClick() {
+            return super.performClick();
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            float cx = getWidth() / 2f;
+            float cy = getHeight() / 2f;
+            float radius = 16f * density; // 32dp cap
+
+            // Basildiginda renk ve boyut degisimi (Premium geri bildirim)
+            if (isPressed) {
+                bgPaint.setColor(0xFF00E676); // Arkaplan yesil olur
+                iconPaint.setColor(0xFF222222); // Simge koyu gri olur
+                radius = 13.5f * density; // Kuculme efekti
+            } else {
+                bgPaint.setColor(0xEE222222);
+                iconPaint.setColor(0xFF00E676);
+            }
+
+            // Daire arkaplani ciz
+            canvas.drawCircle(cx, cy, radius, bgPaint);
+
+            // Onay (Checkmark) isaretini ciz
+            float x1 = cx - 5f * density;
+            float y1 = cy - 0.5f * density;
+            float x2 = cx - 1.5f * density;
+            float y2 = cy + 3.5f * density;
+            float x3 = cx + 5.5f * density;
+            float y3 = cy - 3.5f * density;
+
+            canvas.drawLine(x1, y1, x2, y2, iconPaint);
+            canvas.drawLine(x2, y2, x3, y3, iconPaint);
         }
     }
 }

@@ -37,15 +37,78 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
     private final List<BaseWidget> widgetsList;
     private final Runnable onWidgetsChangedListener;
 
-    public int getPageCount() {
-        int maxPage = 0;
+    private boolean hasExtraPage = false;
+
+    public int getBasePageCount() {
+        int maxPageOfWidgets = 0;
         for (BaseWidget w : widgetsList) {
             if (w.isVisible()) {
-                maxPage = Math.max(maxPage, w.getPageIndex());
+                maxPageOfWidgets = Math.max(maxPageOfWidgets, w.getPageIndex());
             }
         }
-        // En az 1 sayfa olmali, en fazla 3 sayfa
-        return Math.max(1, Math.min(3, maxPage + 1));
+        // Temel sayfa sayisi her zaman en az 3'tur (Kullanici istegi)
+        return Math.max(3, maxPageOfWidgets + 1);
+    }
+
+    public int getPageCount() {
+        int baseCount = getBasePageCount();
+        if (hasExtraPage) {
+            return baseCount + 1;
+        }
+        return baseCount;
+    }
+
+    public boolean tryAddExtraPageForDrag() {
+        // Sagda zaten yeni eklenen bos sayfa varken ikinciyi eklemesin
+        if (hasExtraPage) {
+            return false;
+        }
+        hasExtraPage = true;
+        int newPageIndex = getPageCount() - 1;
+        notifyItemInserted(newPageIndex);
+        if (onWidgetsChangedListener != null) {
+            onWidgetsChangedListener.run(); // Page indicator'i da guncelle
+        }
+        return true;
+    }
+
+    public void checkAndRemoveUnusedExtraPage(final androidx.viewpager2.widget.ViewPager2 vp) {
+        if (!hasExtraPage) return;
+        
+        final int extraPageIndex = getPageCount() - 1;
+        boolean hasWidgetsOnExtraPage = false;
+        for (BaseWidget w : widgetsList) {
+            if (w.isVisible() && w.getPageIndex() == extraPageIndex) {
+                hasWidgetsOnExtraPage = true;
+                break;
+            }
+        }
+        
+        // Eger ekstra sayfaya hicbir widget birakilmadiysa, bu sayfayi kaldir
+        if (!hasWidgetsOnExtraPage) {
+            hasExtraPage = false;
+            if (vp != null && vp.getCurrentItem() == extraPageIndex) {
+                // Eger su an silinecek olan ekstra sayfadaysak, once bir onceki sayfaya kaydiralim
+                vp.setCurrentItem(extraPageIndex - 1, true);
+                vp.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        notifyItemRemoved(extraPageIndex);
+                        if (onWidgetsChangedListener != null) {
+                            onWidgetsChangedListener.run(); // Page indicator'i da guncelle
+                        }
+                    }
+                }, 300); // 300ms animasyon suresi sonrasi silme
+            } else {
+                notifyItemRemoved(extraPageIndex);
+                if (onWidgetsChangedListener != null) {
+                    onWidgetsChangedListener.run(); // Page indicator'i da guncelle
+                }
+            }
+        } else {
+            // Eger widget birakilmissa, bu sayfa artik kalici hale gelir ve hasExtraPage sifirlanir
+            hasExtraPage = false;
+        }
     }
 
     public WorkspacePageAdapter(Context context, FragmentManager fragmentManager, List<BaseWidget> widgets, Runnable onWidgetsChangedListener) {

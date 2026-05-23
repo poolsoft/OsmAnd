@@ -233,20 +233,49 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
                         if (now - lastPageScrollTime > 1500) {
                             float dragX = event.getX();
                             int boundary = dpToPx(40);
+                            final androidx.viewpager2.widget.ViewPager2 finalVp = vp;
                             if (dragX < boundary && vp.getCurrentItem() > 0) {
-                                vp.setCurrentItem(vp.getCurrentItem() - 1, true);
+                                vp.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        finalVp.setCurrentItem(finalVp.getCurrentItem() - 1, true);
+                                    }
+                                });
                                 lastPageScrollTime = now;
                                 targetCellX = -1;
                                 targetCellY = -1;
                                 invalidate();
                                 return true;
-                            } else if (dragX > getWidth() - boundary && vp.getCurrentItem() < vp.getAdapter().getItemCount() - 1) {
-                                vp.setCurrentItem(vp.getCurrentItem() + 1, true);
-                                lastPageScrollTime = now;
-                                targetCellX = -1;
-                                targetCellY = -1;
-                                invalidate();
-                                return true;
+                            } else if (dragX > getWidth() - boundary) {
+                                if (vp.getCurrentItem() < vp.getAdapter().getItemCount() - 1) {
+                                    vp.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            finalVp.setCurrentItem(finalVp.getCurrentItem() + 1, true);
+                                        }
+                                    });
+                                    lastPageScrollTime = now;
+                                    targetCellX = -1;
+                                    targetCellY = -1;
+                                    invalidate();
+                                    return true;
+                                } else if (vp.getAdapter() instanceof net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter) {
+                                    net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter adapter = 
+                                        (net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter) vp.getAdapter();
+                                    if (adapter.tryAddExtraPageForDrag()) {
+                                        vp.post(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                finalVp.setCurrentItem(finalVp.getCurrentItem() + 1, true);
+                                            }
+                                        });
+                                        lastPageScrollTime = now;
+                                        targetCellX = -1;
+                                        targetCellY = -1;
+                                        invalidate();
+                                        return true;
+                                    }
+                                }
                             }
                         }
                     }
@@ -323,6 +352,15 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
                 if (dragFrame != null) {
                     dragFrame.setAlpha(1.0f); // Opakligi sifirla
                 }
+                
+                // Ekstra bos sayfayi temizleme kontrolu
+                androidx.viewpager2.widget.ViewPager2 vp2 = findViewPager();
+                if (vp2 != null && vp2.getAdapter() instanceof net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter) {
+                    net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter adapter = 
+                        (net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter) vp2.getAdapter();
+                    adapter.checkAndRemoveUnusedExtraPage(vp2);
+                }
+                
                 invalidate();
                 return true;
         }
