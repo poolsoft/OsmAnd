@@ -480,4 +480,14 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         // No-op for now since slots concept is handled by workspace grid
     }
+
+    @Override
+    public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (getContext() != null && widgetManager != null) {
+            widgetManager.updateActivityContext(getContext());
+            widgetManager.loadWidgetConfig();
+            applyWidgetsToView();
+        }
+    }
 }

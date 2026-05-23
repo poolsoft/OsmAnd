@@ -505,7 +505,13 @@ public class WidgetPickerDialog extends DialogFragment {
             pendingAppWidgetId = appWidgetId;
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(getContext());
             
-            boolean allowed = appWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId, provider.provider);
+            boolean allowed = false;
+            try {
+                allowed = appWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId, provider.provider);
+            } catch (SecurityException se) {
+                allowed = false; // Yetki hatasini yutup guvenli bind intent'ine yonlendir
+            }
+            
             if (allowed) {
                 configureOrAddSystemWidget(appWidgetId, provider);
             } else {

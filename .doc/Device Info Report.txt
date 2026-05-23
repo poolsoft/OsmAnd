@@ -1,0 +1,250 @@
+Device Info 3.3.5.5
+Date Created 2026-05-20 18:27:20
+
+Device
+--------------------------------------------------------
+Device Name : L9211B
+Model : L9211B
+Manufacturer : alps
+Device : 8227L_demo
+Board : unknown
+Hardware : ac8227l
+Brand : alps
+Build Fingerprint : alps/full_8227L_demo/8227L_demo:10.0/O11019/1698927852:user/test-keys
+
+
+System
+--------------------------------------------------------
+Android Version : 9.1
+Version Name : Oreo
+Released Date : Ağustos 21, 2017
+Code Name : Oreo MR1
+API Level : 27
+Security Patch Level : 2020-02-01
+Bootloader : unknown
+Build Number : F9212B_00020_V001
+Baseband : 
+Java VM : 2.1.0
+Kernel : 3.18.79
+Language : Türkçe (tr_TR)
+OpenGL ES : 2.0
+Root Management Apps : No Apps Detected
+SELinux : Permissive
+Google Play Services : 26.16.31 (040300-900800821)
+Vulkan : Supported (1.0)
+Treble : Supported
+Seamless Updates : Not Supported
+
+
+CPU
+--------------------------------------------------------
+SoC : unknown (no)
+no
+Processor : ARMv7 Processor rev 3 (v7l)
+CPU Architecture : 4 x 1,51 GHz
+Supported ABIs : armeabi-v7a, armeabi
+CPU Hardware : AC8227L
+CPU Type : 32 Bit
+CPU Governor : performance
+Cores : 4
+CPU Frequency : 4 x 598 MHz - 1508 MHz
+GPU Renderer : Mali-450 MP
+GPU Vendor : ARM
+GPU Version : OpenGL ES 2.0 58bf738
+
+
+Battery
+--------------------------------------------------------
+Health : Good
+Level : 100%
+Status : Charging
+Power Source : Battery
+Technology : 
+Temperature : 42 ℃
+Voltage : 4200 mV
+
+
+
+Connectivity
+--------------------------------------------------------
+Bluetooth
+------------------
+Bluetooth : Supported
+Multiple Advertisements : Not Supported
+Offloaded Filtering : Not Supported
+Offloaded Scan Batching : Not Supported
+Bluetooth LE (Low Energy) : Not Supported
+LE 2M PHY (High Speed) : Not Supported
+LE Coded PHY (Long Range) : Not Supported
+LE Extended Advertising : Not Supported
+LE Periodic Advertising : Not Supported
+
+Wi-Fi
+------------------
+WiFi Direct : Supported
+5GHz : Not Supported
+
+NFC
+------------------
+NFC : Not Supported
+
+Ultra Wide Band
+------------------
+Ultra Wide Band : Not Supported
+
+USB
+------------------
+USB Host : Supported
+USB Accessory : Supported
+USB Debugging : On
+
+
+Display
+--------------------------------------------------------
+Resolution : 480 x 1280 Pixels
+Density : 186 dpi (MDPI)
+Font Scale : 1.3
+Physical Size : 8.5 inches
+Refresh Rate : • 60,0 Hz
+HDR : Not Supported
+HDR Capabilities : None
+Brightness Level : 20%
+Brightness Mode : Manual
+Screen Timeout : 1879048 Seconds
+Orientation : Landscape
+
+
+Memory
+--------------------------------------------------------
+Random Access Memory
+------------------
+Total : 2048,0MB
+Available : 955,0MB
+Used : 1129,0MB
+Used Percentage : 53%
+
+System Storage
+------------------
+Total : 1,45GB
+Available : 0,16GB
+Used : 1,29GB
+Used Percentage : 88%
+
+Internal Storage
+------------------
+Total : 26,37GB
+Available : 21,43GB
+Used : 4,93GB
+Used Percentage : 18%
+
+External Storage
+------------------
+Total : 7,49GB
+Available : 4,46GB
+Used : 3,03GB
+Used Percentage : 40%
+
+
+Camera
+--------------------------------------------------------
+Camera - 0
+------------------
+Position : Back
+Mega Pixels : 2 MP
+Resolution : 1904 x 1064
+Focal Length : 3.5mm
+
+Camera - 1
+------------------
+Position : Front
+Mega Pixels : 2 MP
+Resolution : 1904 x 1064
+Focal Length : 3.5mm
+
+Camera - 5
+------------------
+Position : Back
+Mega Pixels : 1 MP
+Resolution : 1280 x 720
+Focal Length : 1.0mm
+
+
+
+Sensors
+--------------------------------------------------------
+
+
+Apps
+--------------------------------------------------------
+AutoADB Controller
+com.launcheravto.adbcontrol
+Version : 1.0.0
+
+Net Navi
+com.pve.naviguide
+Version : 1.1.6
+
+Yerelradyo
+com.acloud.stub.extradio
+Version : 9260.30000.0014.9
+
+LecoAuto
+com.lecoauto
+Version : 1.8.6.7
+
+Original Car
+com.kyhero.car.myhost
+Version : 1.020
+
+OsmAnd CarLauncher
+net.osmand.carlauncher
+Version : 5.4.0.465
+
+SWAP - No ROOT
+com.allakore.swapnoroot
+Version : v3.17.1
+
+AutoZen
+com.zenthek.autozen
+Version : 5.0.1596
+
+Oscilloscope
+com.xyz.scope
+Version : 2.2
+
+CanBus2
+com.kyhero.car.myhost2
+Version : 1.020
+
+Chrome
+com.android.chrome
+Version : 63.0.3239.111
+
+Device Info
+com.ytheekshana.deviceinfo
+Version : 3.3.5.5
+
+ZLINK5
+com.zjinnova.zlink
+Version : 5.3.31
+
+Hesap Makinesi
+com.android.calculator2
+Version : 10.0
+
+SetEdit
+by4a.setedit22
+Version : 2023.11.16
+
+Overlays
+com.applay.overlay
+Version : 9.2
+
+radyo
+com.jancar.radio
+Version : 1.6.8.20220810-113755
+
+CPU-Z
+com.cpuid.cpu_z
+Version : 1.77
+

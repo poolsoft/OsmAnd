@@ -147,23 +147,63 @@ public class WidgetManager {
         return null;
     }
 
+    private String getOrientationSuffix() {
+        int orientation = context.getResources().getConfiguration().orientation;
+        if (orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT) {
+            return "_portrait";
+        }
+        return "_landscape";
+    }
+
     private void autoPlaceWidget(BaseWidget widget) {
-        int pageCount = 3;
+        int maxPage = 2; // En az 3 sayfa (0, 1, 2) varsayilan
+        for (BaseWidget w : allWidgets) {
+            if (w.isVisible()) {
+                maxPage = Math.max(maxPage, w.getPageIndex());
+            }
+        }
+        int pageCount = maxPage + 1;
         int spanX = widget.getSpanX();
         int spanY = widget.getSpanY();
         
-        // Oncelikle widget'in kendi pageIndex sayfasini dene
+        // 1. Adim: Kullanicinin o an bulundugu aktif sayfada yer ara
         int targetPage = widget.getPageIndex();
-        if (targetPage < 0 || targetPage >= pageCount) {
+        if (targetPage < 0) {
             targetPage = 0;
         }
         
-        // Sayfalari hedef sayfadan baslayarak sirayla kontrol et
-        for (int i = 0; i < pageCount; i++) {
-            int page = (targetPage + i) % pageCount;
+        // Aktif sayfada yer var mi kontrol et
+        if (targetPage < pageCount) {
             boolean[][] occupied = new boolean[4][4];
+            for (BaseWidget w : allWidgets) {
+                if (w != widget && w.isVisible() && w.getPageIndex() == targetPage) {
+                    int cx = w.getCellX();
+                    int cy = w.getCellY();
+                    int sx = w.getSpanX();
+                    int sy = w.getSpanY();
+                    if (cx >= 0 && cx + sx <= 4 && cy >= 0 && cy + sy <= 4) {
+                        for (int x = cx; x < cx + sx; x++) {
+                            for (int y = cy; y < cy + sy; y++) {
+                                occupied[x][y] = true;
+                            }
+                        }
+                    }
+                }
+            }
+            Point p = findEmptySpace(occupied, spanX, spanY);
+            if (p != null) {
+                widget.setPageIndex(targetPage);
+                widget.setCellX(p.x);
+                widget.setCellY(p.y);
+                return;
+            }
+        }
+
+        // 2. Adim: Diger tum mevcut sayfalarda sirayla bos yer ara
+        for (int page = 0; page < pageCount; page++) {
+            if (page == targetPage) continue; // Zaten denemistik
             
-            // Bu sayfadaki diger gorunur widget'lari bulup isaretle
+            boolean[][] occupied = new boolean[4][4];
             for (BaseWidget w : allWidgets) {
                 if (w != widget && w.isVisible() && w.getPageIndex() == page) {
                     int cx = w.getCellX();
@@ -189,8 +229,9 @@ public class WidgetManager {
             }
         }
         
-        // Sayfalarda yer kalmadiysa, en son sayfaya fallback olarak 0,0 ata
-        widget.setPageIndex(pageCount - 1);
+        // 3. Adim: Hicbir sayfada yer kalmadiysa, yeni bir sayfa olustur ve oraya koy
+        int newPage = pageCount; // Yeni sayfa indeksi
+        widget.setPageIndex(newPage);
         widget.setCellX(0);
         widget.setCellY(0);
     }
@@ -414,19 +455,20 @@ public class WidgetManager {
      */
     public void saveWidgetConfig() {
         SharedPreferences.Editor editor = prefs.edit();
+        String suffix = getOrientationSuffix();
         
         List<String> ids = new ArrayList<>();
         for (BaseWidget widget : allWidgets) {
             ids.add(widget.getId());
-            editor.putBoolean("visible_" + widget.getId(), widget.isVisible());
-            editor.putInt("size_" + widget.getId(), widget.getSize().ordinal());
+            editor.putBoolean("visible_" + widget.getId() + suffix, widget.isVisible());
+            editor.putInt("size_" + widget.getId() + suffix, widget.getSize().ordinal());
             
             // Grid koordinatlari ve boyutlari
-            editor.putInt("page_" + widget.getId(), widget.getPageIndex());
-            editor.putInt("cellx_" + widget.getId(), widget.getCellX());
-            editor.putInt("celly_" + widget.getId(), widget.getCellY());
-            editor.putInt("spanx_" + widget.getId(), widget.getSpanX());
-            editor.putInt("spany_" + widget.getId(), widget.getSpanY());
+            editor.putInt("page_" + widget.getId() + suffix, widget.getPageIndex());
+            editor.putInt("cellx_" + widget.getId() + suffix, widget.getCellX());
+            editor.putInt("celly_" + widget.getId() + suffix, widget.getCellY());
+            editor.putInt("spanx_" + widget.getId() + suffix, widget.getSpanX());
+            editor.putInt("spany_" + widget.getId() + suffix, widget.getSpanY());
         }
         
         // Join Ids
@@ -435,21 +477,42 @@ public class WidgetManager {
             sb.append(ids.get(i));
             if (i < ids.size() - 1) sb.append(",");
         }
-        editor.putString(KEY_WIDGET_CONFIG, sb.toString());
+        editor.putString(KEY_WIDGET_CONFIG + suffix, sb.toString());
         editor.apply();
     }
 
-    /**
-     * Widget config'i yukle.
-     */
     public boolean loadWidgetConfig() {
-        // Check if key exists. If not, it means first run -> return false to load defaults.
-        if (!prefs.contains(KEY_WIDGET_CONFIG)) return false;
+        String suffix = getOrientationSuffix();
+        String configKey = KEY_WIDGET_CONFIG + suffix;
         
-        String savedConfig = prefs.getString(KEY_WIDGET_CONFIG, "");
+        // Eger bu yon icin daha once hic kayit yapilmadiysa, diger yonu kopyalayarak basla
+        if (!prefs.contains(configKey)) {
+            String fallbackSuffix = suffix.equals("_portrait") ? "_landscape" : "_portrait";
+            String fallbackKey = KEY_WIDGET_CONFIG + fallbackSuffix;
+            if (prefs.contains(fallbackKey)) {
+                String savedConfig = prefs.getString(fallbackKey, "");
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putString(configKey, savedConfig);
+                if (!savedConfig.isEmpty()) {
+                    String[] ids = savedConfig.split(",");
+                    for (String id : ids) {
+                        if (id.isEmpty()) continue;
+                        editor.putBoolean("visible_" + id + suffix, prefs.getBoolean("visible_" + id + fallbackSuffix, true));
+                        editor.putInt("size_" + id + suffix, prefs.getInt("size_" + id + fallbackSuffix, BaseWidget.WidgetSize.SMALL.ordinal()));
+                        editor.putInt("page_" + id + suffix, prefs.getInt("page_" + id + fallbackSuffix, 0));
+                        editor.putInt("cellx_" + id + suffix, prefs.getInt("cellx_" + id + fallbackSuffix, -1));
+                        editor.putInt("celly_" + id + suffix, prefs.getInt("celly_" + id + fallbackSuffix, -1));
+                        editor.putInt("spanx_" + id + suffix, prefs.getInt("spanx_" + id + fallbackSuffix, 1));
+                        editor.putInt("spany_" + id + suffix, prefs.getInt("spany_" + id + fallbackSuffix, 1));
+                    }
+                }
+                editor.apply();
+            } else {
+                return false; // Ilk calistirmada varsayilanlar yuklensin
+            }
+        }
         
-        // If key exists but is empty, it means user cleared all widgets.
-        // We should return TRUE (loaded successfully, result is empty) instead of FALSE (defaults).
+        String savedConfig = prefs.getString(configKey, "");
         if (savedConfig.isEmpty()) {
             allWidgets.clear();
             visibleWidgets.clear();
@@ -463,12 +526,7 @@ public class WidgetManager {
         for (String id : ids) {
             if (id.isEmpty()) continue;
             
-            // (Deduplication moved to creation logic)
-            
-            // Try to find existing (default) widget
             BaseWidget widget = findWidgetById(id);
-            
-            // If not found, try to create it (Dynamic Widget)
             if (widget == null) {
                 if (id.startsWith("appwidget_")) {
                     try {
@@ -478,22 +536,13 @@ public class WidgetManager {
                         android.util.Log.e("WidgetManager", "SystemAppWidget geri yuklenirken hata: " + e.getMessage());
                     }
                 } else {
-                    // ID format: type OR type_timestamp
                     String type = id.split("_")[0];
-                    
-                    // DATA HEALING: If this ID was already processed, it's a DUPLICATE in the config.
-                    // We must recover it as a NEW unique widget.
                     if (processingIds.contains(id)) {
-                        android.util.Log.w("WidgetDebug", "Heal: Duplicate ID found: " + id + ". Creating new instance.");
-                        widget = WidgetRegistry.createUniqueWidget(context, app, type); // Generates new ID
-                        // Note: We cannot restore settings for this one effectively since keys clash, 
-                        // but we save the instance.
+                        widget = WidgetRegistry.createUniqueWidget(context, app, type);
                     } else {
-                        // Normal Creation
                         widget = WidgetRegistry.createWidget(context, app, type);
                         if (widget != null) {
                              try {
-                                 // Restore ID hack
                                 java.lang.reflect.Field idField = BaseWidget.class.getDeclaredField("id");
                                 idField.setAccessible(true);
                                 idField.set(widget, id);
@@ -503,33 +552,26 @@ public class WidgetManager {
                 }
             } else {
                  if (processingIds.contains(id)) {
-                     // Existing Default Widget is duplicated? This shouldn't happen normally for Singletons,
-                     // but if it does, we can't clone the Singleton (like SpeedWidget).
-                     // We skip duplicates of Singletons.
                      continue;
                  }
             }
             
             if (widget != null) {
-                processingIds.add(widget.getId()); // Add the FINAL id (handles healed ones)
-            }
-            
-            if (widget != null) {
-                // Restore Properties
-                boolean visible = prefs.getBoolean("visible_" + id, true);
-                int sizeOrd = prefs.getInt("size_" + id, BaseWidget.WidgetSize.SMALL.ordinal());
+                processingIds.add(widget.getId());
+                
+                boolean visible = prefs.getBoolean("visible_" + id + suffix, true);
+                int sizeOrd = prefs.getInt("size_" + id + suffix, BaseWidget.WidgetSize.SMALL.ordinal());
                 
                 widget.setVisible(visible);
                 if (sizeOrd >= 0 && sizeOrd < BaseWidget.WidgetSize.values().length) {
                     widget.setSize(BaseWidget.WidgetSize.values()[sizeOrd]);
                 }
                 
-                // Grid koordinatlarini geri yukleme
-                int page = prefs.getInt("page_" + id, 0);
-                int cellx = prefs.getInt("cellx_" + id, -1);
-                int celly = prefs.getInt("celly_" + id, -1);
-                int spanx = prefs.getInt("spanx_" + id, 1);
-                int spany = prefs.getInt("spany_" + id, 1);
+                int page = prefs.getInt("page_" + id + suffix, 0);
+                int cellx = prefs.getInt("cellx_" + id + suffix, -1);
+                int celly = prefs.getInt("celly_" + id + suffix, -1);
+                int spanx = prefs.getInt("spanx_" + id + suffix, 1);
+                int spany = prefs.getInt("spany_" + id + suffix, 1);
                 
                 widget.setPageIndex(page);
                 widget.setCellX(cellx);
@@ -541,7 +583,6 @@ public class WidgetManager {
             }
         }
         
-        // Replace current list with restored list
         allWidgets.clear();
         allWidgets.addAll(restoredWidgets);
         
@@ -581,62 +622,60 @@ public class WidgetManager {
      * Turkce karakter kullanilmamistir.
      */
     public void saveUserLayout() {
-        String savedConfig = prefs.getString(KEY_WIDGET_CONFIG, "");
+        String suffix = getOrientationSuffix();
+        String savedConfig = prefs.getString(KEY_WIDGET_CONFIG + suffix, "");
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("user_" + KEY_WIDGET_CONFIG, savedConfig);
+        editor.putString("user_" + KEY_WIDGET_CONFIG + suffix, savedConfig);
         
         for (BaseWidget widget : allWidgets) {
             String id = widget.getId();
-            editor.putBoolean("user_visible_" + id, widget.isVisible());
-            editor.putInt("user_size_" + id, widget.getSize().ordinal());
+            editor.putBoolean("user_visible_" + id + suffix, widget.isVisible());
+            editor.putInt("user_size_" + id + suffix, widget.getSize().ordinal());
             
             // Grid koordinatlarini da yedekle
-            editor.putInt("user_page_" + id, widget.getPageIndex());
-            editor.putInt("user_cellx_" + id, widget.getCellX());
-            editor.putInt("user_celly_" + id, widget.getCellY());
-            editor.putInt("user_spanx_" + id, widget.getSpanX());
-            editor.putInt("user_spany_" + id, widget.getSpanY());
+            editor.putInt("user_page_" + id + suffix, widget.getPageIndex());
+            editor.putInt("user_cellx_" + id + suffix, widget.getCellX());
+            editor.putInt("user_celly_" + id + suffix, widget.getCellY());
+            editor.putInt("user_spanx_" + id + suffix, widget.getSpanX());
+            editor.putInt("user_spany_" + id + suffix, widget.getSpanY());
         }
         editor.apply();
     }
 
-    /**
-     * user_ prefix'i ile kaydedilmis olan widget config ve durumlarini yukler.
-     * Turkce karakter kullanilmamistir.
-     */
     public boolean loadUserLayout() {
-        if (!prefs.contains("user_" + KEY_WIDGET_CONFIG)) {
+        String suffix = getOrientationSuffix();
+        if (!prefs.contains("user_" + KEY_WIDGET_CONFIG + suffix)) {
             return false;
         }
         
-        String userConfig = prefs.getString("user_" + KEY_WIDGET_CONFIG, "");
+        String userConfig = prefs.getString("user_" + KEY_WIDGET_CONFIG + suffix, "");
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(KEY_WIDGET_CONFIG, userConfig);
+        editor.putString(KEY_WIDGET_CONFIG + suffix, userConfig);
         
         if (!userConfig.isEmpty()) {
             String[] ids = userConfig.split(",");
             for (String id : ids) {
                 if (id.isEmpty()) continue;
-                if (prefs.contains("user_visible_" + id)) {
-                    editor.putBoolean("visible_" + id, prefs.getBoolean("user_visible_" + id, true));
+                if (prefs.contains("user_visible_" + id + suffix)) {
+                    editor.putBoolean("visible_" + id + suffix, prefs.getBoolean("user_visible_" + id + suffix, true));
                 }
-                if (prefs.contains("user_size_" + id)) {
-                    editor.putInt("size_" + id, prefs.getInt("user_size_" + id, BaseWidget.WidgetSize.SMALL.ordinal()));
+                if (prefs.contains("user_size_" + id + suffix)) {
+                    editor.putInt("size_" + id + suffix, prefs.getInt("user_size_" + id + suffix, BaseWidget.WidgetSize.SMALL.ordinal()));
                 }
-                if (prefs.contains("user_page_" + id)) {
-                    editor.putInt("page_" + id, prefs.getInt("user_page_" + id, 0));
+                if (prefs.contains("user_page_" + id + suffix)) {
+                    editor.putInt("page_" + id + suffix, prefs.getInt("user_page_" + id + suffix, 0));
                 }
-                if (prefs.contains("user_cellx_" + id)) {
-                    editor.putInt("cellx_" + id, prefs.getInt("user_cellx_" + id, -1));
+                if (prefs.contains("user_cellx_" + id + suffix)) {
+                    editor.putInt("cellx_" + id + suffix, prefs.getInt("user_cellx_" + id + suffix, -1));
                 }
-                if (prefs.contains("user_celly_" + id)) {
-                    editor.putInt("celly_" + id, prefs.getInt("user_celly_" + id, -1));
+                if (prefs.contains("user_celly_" + id + suffix)) {
+                    editor.putInt("celly_" + id + suffix, prefs.getInt("user_celly_" + id + suffix, -1));
                 }
-                if (prefs.contains("user_spanx_" + id)) {
-                    editor.putInt("spanx_" + id, prefs.getInt("user_spanx_" + id, 1));
+                if (prefs.contains("user_spanx_" + id + suffix)) {
+                    editor.putInt("spanx_" + id + suffix, prefs.getInt("user_spanx_" + id + suffix, 1));
                 }
-                if (prefs.contains("user_spany_" + id)) {
-                    editor.putInt("spany_" + id, prefs.getInt("user_spany_" + id, 1));
+                if (prefs.contains("user_spany_" + id + suffix)) {
+                    editor.putInt("spany_" + id + suffix, prefs.getInt("user_spany_" + id + suffix, 1));
                 }
             }
         }
