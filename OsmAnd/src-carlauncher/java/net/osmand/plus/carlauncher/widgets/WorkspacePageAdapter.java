@@ -23,6 +23,13 @@ import java.util.List;
  */
 public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdapter.PageViewHolder> {
 
+    public interface EditModeListener {
+        void onEditModeChanged(boolean isEditMode);
+    }
+
+    public static boolean isEditMode = false;
+    private EditModeListener editModeListener;
+
     private final Context context;
     private final FragmentManager fragmentManager;
     private final int pageCount = 3; // Toplam masaustu sayfa sayisi
@@ -34,6 +41,10 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
         this.fragmentManager = fragmentManager;
         this.widgetsList = widgets;
         this.onWidgetsChangedListener = onWidgetsChangedListener;
+    }
+
+    public void setEditModeListener(EditModeListener listener) {
+        this.editModeListener = listener;
     }
 
     @NonNull
@@ -63,6 +74,22 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
 
         public void bind(int pageIndex) {
             cellLayout.removeAllViews();
+            cellLayout.setPageIndex(pageIndex);
+            cellLayout.setOnWidgetsChangedListener(onWidgetsChangedListener);
+
+            // Edit modundan cikmak icin cellLayout'a tiklama
+            cellLayout.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (isEditMode) {
+                        isEditMode = false;
+                        if (editModeListener != null) {
+                            editModeListener.onEditModeChanged(false);
+                        }
+                        notifyDataSetChanged();
+                    }
+                }
+            });
             
             // Bu sayfadaki gorunur widget'lari bul
             List<BaseWidget> pageWidgets = new ArrayList<>();
@@ -150,6 +177,31 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                         parent.removeView(widgetView);
                     }
 
+                    // WorkspaceWidgetFrame olustur
+                    WorkspaceWidgetFrame widgetFrame = new WorkspaceWidgetFrame(
+                            context,
+                            widget,
+                            cellLayout,
+                            fragmentManager,
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    notifyDataSetChanged();
+                                    if (onWidgetsChangedListener != null) {
+                                        onWidgetsChangedListener.run();
+                                    }
+                                }
+                            }
+                    );
+                    
+                    // Widget view'i frame'e ekle
+                    FrameLayout.LayoutParams frameChildParams = new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                    );
+                    widgetFrame.addView(widgetView, frameChildParams);
+                    widgetFrame.setEditMode(isEditMode);
+
                     // WorkspaceCellLayout LayoutParams olustur
                     WorkspaceCellLayout.LayoutParams params = new WorkspaceCellLayout.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT, 
@@ -160,18 +212,25 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                     params.spanX = widget.getSpanX();
                     params.spanY = widget.getSpanY();
                     
-                    widgetView.setLayoutParams(params);
+                    widgetFrame.setLayoutParams(params);
 
-                    // Uzun basma olayi (Premium Duzenleme Menusu)
+                    // Normal moddayken uzun basinca Duzenleme Modunu aktif et
                     widgetView.setOnLongClickListener(new View.OnLongClickListener() {
                         @Override
                         public boolean onLongClick(View v) {
-                            showWidgetOptionsPopupMenu(v, widget);
-                            return true;
+                            if (!isEditMode) {
+                                isEditMode = true;
+                                if (editModeListener != null) {
+                                    editModeListener.onEditModeChanged(true);
+                                }
+                                notifyDataSetChanged();
+                                return true;
+                            }
+                            return false;
                         }
                     });
 
-                    cellLayout.addView(widgetView);
+                    cellLayout.addView(widgetFrame);
                 }
             }
         }

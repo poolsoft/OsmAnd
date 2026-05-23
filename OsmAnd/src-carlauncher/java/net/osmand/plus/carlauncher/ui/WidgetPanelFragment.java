@@ -259,6 +259,21 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                     }
                 }
             );
+            adapter.setEditModeListener(new WorkspacePageAdapter.EditModeListener() {
+                @Override
+                public void onEditModeChanged(boolean isEditMode) {
+                    viewPager.setUserInputEnabled(!isEditMode);
+                    if (isEditMode) {
+                        android.widget.Toast.makeText(getContext(), 
+                            "Duzenleme Modu Aktif. Cikmak icin bos alana tiklayin.", 
+                            android.widget.Toast.LENGTH_LONG).show();
+                    } else {
+                        android.widget.Toast.makeText(getContext(), 
+                            "Duzenlemeler Kaydedildi.", 
+                            android.widget.Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
             viewPager.setAdapter(adapter);
             
             setupPageIndicator(adapter.getItemCount());
