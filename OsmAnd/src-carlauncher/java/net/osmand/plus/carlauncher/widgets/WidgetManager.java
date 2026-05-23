@@ -376,6 +376,8 @@ public class WidgetManager {
 
     /**
      * Tum widget'lari baslat.
+     * Sistem widget'larinin eski view referanslarini sifirlayarak taze context ile baslatir.
+     * Kod icerisinde kesinlikle Turkce karakter kullanilmamistir.
      */
     public void startAllWidgets() {
         isStarted = true;
@@ -385,6 +387,9 @@ public class WidgetManager {
             android.util.Log.e("WidgetManager", "AppWidgetHost dinlemesi baslatilamadi: " + e.getMessage());
         }
         for (BaseWidget widget : visibleWidgets) {
+            if (widget instanceof SystemAppWidget) {
+                widget.onDestroy(); // Taze context ile yeniden yaratilmasi icin view referansini sifirla
+            }
             widget.onStart();
         }
     }

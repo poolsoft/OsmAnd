@@ -64,6 +64,11 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
         float density = context.getResources().getDisplayMetrics().density;
         marginPx = Math.round(6 * density);
 
+        // Premium Kenar Padding'i (12dp sol/sag, 8dp ust/alt)
+        int paddingSide = Math.round(12 * density);
+        int paddingTopBottom = Math.round(8 * density);
+        setPadding(paddingSide, paddingTopBottom, paddingSide, paddingTopBottom);
+
         // Grid Kilavuz Cizgisi Boyasi (Neon Kesikli Beyaz)
         gridLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         gridLinePaint.setStyle(Paint.Style.STROKE);
