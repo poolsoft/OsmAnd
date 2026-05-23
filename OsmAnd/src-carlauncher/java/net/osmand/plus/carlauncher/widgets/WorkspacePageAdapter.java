@@ -31,6 +31,20 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
 
     public static boolean isEditMode = false;
     private EditModeListener editModeListener;
+    private static WorkspacePageAdapter activeAdapterInstance;
+
+    public static void exitEditMode() {
+        isEditMode = false;
+        if (activeAdapterInstance != null) {
+            if (activeAdapterInstance.editModeListener != null) {
+                activeAdapterInstance.editModeListener.onEditModeChanged(false);
+            }
+            activeAdapterInstance.notifyDataSetChanged();
+            if (activeAdapterInstance.onWidgetsChangedListener != null) {
+                activeAdapterInstance.onWidgetsChangedListener.run();
+            }
+        }
+    }
 
     private final Context context;
     private final FragmentManager fragmentManager;
@@ -116,6 +130,7 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
         this.fragmentManager = fragmentManager;
         this.widgetsList = widgets;
         this.onWidgetsChangedListener = onWidgetsChangedListener;
+        activeAdapterInstance = this;
     }
 
     public void setEditModeListener(EditModeListener listener) {

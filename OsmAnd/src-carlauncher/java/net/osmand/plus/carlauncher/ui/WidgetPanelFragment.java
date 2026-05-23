@@ -236,19 +236,31 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             dialog.setActivePageIndex(viewPager.getCurrentItem());
         }
         dialog.setOnDismissCallback(() -> {
-            applyWidgetsToView();
+            int targetPage = viewPager != null ? viewPager.getCurrentItem() : 0;
+            java.util.List<BaseWidget> list = widgetManager.getVisibleWidgets();
+            if (!list.isEmpty()) {
+                // En son eklenen widget'in sayfa indeksini hedefliyoruz
+                BaseWidget lastAdded = list.get(list.size() - 1);
+                targetPage = lastAdded.getPageIndex();
+            }
+            applyWidgetsToView(targetPage);
         });
         dialog.show(getChildFragmentManager(), "WidgetPickerDialog");
     }
 
     private void applyWidgetsToView() {
+        applyWidgetsToView(-1);
+    }
+
+    private void applyWidgetsToView(final int forcePageIndex) {
         if (viewPager != null) {
+            final int currentItem = forcePageIndex >= 0 ? forcePageIndex : viewPager.getCurrentItem();
             java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> visibleWidgets = widgetManager.getVisibleWidgets();
             for (net.osmand.plus.carlauncher.widgets.BaseWidget w : visibleWidgets) {
                 if (getActivity() != null) w.setContext(getActivity());
             }
 
-            WorkspacePageAdapter adapter = new WorkspacePageAdapter(
+            final WorkspacePageAdapter adapter = new WorkspacePageAdapter(
                 getContext(),
                 getChildFragmentManager(),
                 visibleWidgets,
@@ -282,6 +294,16 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                 public void onPageSelected(int position) {
                     super.onPageSelected(position);
                     updatePageIndicatorSelection(position);
+                }
+            });
+
+            // Sayfayi asenkron olarak hedef sayfa konumuna kaydir ve koru
+            viewPager.post(new Runnable() {
+                @Override
+                public void run() {
+                    int count = adapter.getItemCount();
+                    int targetPage = Math.max(0, Math.min(count - 1, currentItem));
+                    viewPager.setCurrentItem(targetPage, false);
                 }
             });
         }

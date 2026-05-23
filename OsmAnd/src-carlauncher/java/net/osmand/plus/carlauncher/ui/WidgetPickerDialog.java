@@ -575,14 +575,9 @@ public class WidgetPickerDialog extends DialogFragment {
             int appWidgetId = (data != null) ? data.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1) : pendingAppWidgetId;
             if (appWidgetId == -1) appWidgetId = pendingAppWidgetId;
 
-            if (resultCode == Activity.RESULT_OK && appWidgetId != -1) {
+            // Otomobil ekranlarindaki konfigurasyon bitis bug'ini cozmek icin RESULT_CANCELED durumunda da eklemeye izin veriyoruz
+            if (appWidgetId != -1) {
                 addSystemAppWidgetToWorkspace(appWidgetId);
-            } else {
-                if (appWidgetId != -1 && widgetManager != null && widgetManager.getAppWidgetHost() != null) {
-                    try {
-                        widgetManager.getAppWidgetHost().deleteAppWidgetId(appWidgetId);
-                    } catch (Exception e) {}
-                }
             }
             pendingAppWidgetId = -1;
         }
