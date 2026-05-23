@@ -11,8 +11,10 @@ import androidx.appcompat.widget.PopupMenu;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.widget.FrameLayout;
 import net.osmand.plus.R;
 import net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout;
+import net.osmand.plus.carlauncher.widgets.view.WorkspaceWidgetFrame;
 
 import java.util.ArrayList;
 import java.util.List;
