@@ -14,7 +14,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -28,6 +27,7 @@ import net.osmand.plus.carlauncher.widgets.WidgetManager;
  * Premium Duzenleme Modu icin Widget Sarmalayici Sinif.
  * Duzenleme modundayken titreme animasyonu, kenar cizgileri,
  * tasima (Drag & Drop), boyutlandirma (Resize), ayar ve silme butonlari sunar.
+ * Butun kontrol butonlari Canvas ile jilet keskinliginde programatik cizilmistir.
  * Kod icerisinde kesinlikle Turkce karakter kullanilmamistir.
  */
 public class WorkspaceWidgetFrame extends FrameLayout {
@@ -41,10 +41,10 @@ public class WorkspaceWidgetFrame extends FrameLayout {
     private ObjectAnimator shakeAnimator;
 
     private FrameLayout overlayContainer;
-    private ImageView dragHandle;
-    private ImageView resizeHandle;
-    private ImageView deleteBtn;
-    private ImageView configBtn;
+    private DragHandleView dragHandle;
+    private ResizeHandleView resizeHandle;
+    private DeleteButtonView deleteBtn;
+    private ConfigButtonView configBtn;
 
     private Paint borderPaint;
     private RectF borderRect;
@@ -86,13 +86,8 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         overlayContainer.setFocusable(true);
 
         // 1. Drag Handle (Tasima Tutamaci - Orta Bolge)
-        dragHandle = new ImageView(context);
-        dragHandle.setImageResource(android.R.drawable.ic_menu_directions);
-        dragHandle.setColorFilter(0xEEFFFFFF);
-        dragHandle.setBackgroundResource(android.R.drawable.alert_light_frame);
-        dragHandle.setClickable(true);
-        dragHandle.setFocusable(true);
-        int handleSize = dpToPx(36);
+        dragHandle = new DragHandleView(context);
+        int handleSize = dpToPx(48); // Genis dokunma alani
         LayoutParams dragParams = new LayoutParams(handleSize, handleSize);
         dragParams.gravity = Gravity.CENTER;
         dragHandle.setLayoutParams(dragParams);
@@ -114,13 +109,8 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         overlayContainer.addView(dragHandle);
 
         // 2. Resize Handle (Boyutlandirma Tutamaci - Sag Alt Kose)
-        resizeHandle = new ImageView(context);
-        resizeHandle.setImageResource(android.R.drawable.ic_menu_crop);
-        resizeHandle.setColorFilter(0xFF00E5FF);
-        resizeHandle.setBackgroundResource(android.R.drawable.alert_light_frame);
-        resizeHandle.setClickable(true);
-        resizeHandle.setFocusable(true);
-        int resizeSize = dpToPx(28);
+        resizeHandle = new ResizeHandleView(context);
+        int resizeSize = dpToPx(44); // Genis dokunma alani
         LayoutParams resizeParams = new LayoutParams(resizeSize, resizeSize);
         resizeParams.gravity = Gravity.BOTTOM | Gravity.RIGHT;
         resizeHandle.setLayoutParams(resizeParams);
@@ -184,21 +174,16 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         topControls.setOrientation(LinearLayout.HORIZONTAL);
         LayoutParams topParams = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         topParams.gravity = Gravity.TOP | Gravity.RIGHT;
-        topParams.topMargin = dpToPx(6);
-        topParams.rightMargin = dpToPx(6);
+        topParams.topMargin = dpToPx(4);
+        topParams.rightMargin = dpToPx(4);
         topControls.setLayoutParams(topParams);
 
-        int btnSize = dpToPx(30);
+        int btnSize = dpToPx(44); // Genis dokunma alani
 
         // 3. Config Button (Ayarlar Butonu)
-        configBtn = new ImageView(context);
-        configBtn.setImageResource(android.R.drawable.ic_menu_preferences);
-        configBtn.setColorFilter(0xFFFFB300); // Premium Sari/Turuncu
-        configBtn.setBackgroundResource(android.R.drawable.alert_light_frame);
-        configBtn.setClickable(true);
-        configBtn.setFocusable(true);
+        configBtn = new ConfigButtonView(context);
         LinearLayout.LayoutParams configLp = new LinearLayout.LayoutParams(btnSize, btnSize);
-        configLp.rightMargin = dpToPx(6);
+        configLp.rightMargin = dpToPx(4);
         configBtn.setLayoutParams(configLp);
         configBtn.setOnClickListener(new OnClickListener() {
             @Override
@@ -211,12 +196,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         topControls.addView(configBtn);
 
         // 4. Delete Button (Kapat/Sil Butonu)
-        deleteBtn = new ImageView(context);
-        deleteBtn.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
-        deleteBtn.setColorFilter(0xFFFF3333); // Neon Kirmizi
-        deleteBtn.setBackgroundResource(android.R.drawable.alert_light_frame);
-        deleteBtn.setClickable(true);
-        deleteBtn.setFocusable(true);
+        deleteBtn = new DeleteButtonView(context);
         LinearLayout.LayoutParams deleteLp = new LinearLayout.LayoutParams(btnSize, btnSize);
         deleteBtn.setLayoutParams(deleteLp);
         deleteBtn.setOnClickListener(new OnClickListener() {
@@ -316,5 +296,197 @@ public class WorkspaceWidgetFrame extends FrameLayout {
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
+    }
+
+    // ==========================================
+    // PREMIUM CANVAS TABANLI CUSTOM VIEW SINIFLARI
+    // ==========================================
+
+    /**
+     * Kirmizi Carpi (X) Kapat/Sil Butonu.
+     */
+    private static class DeleteButtonView extends View {
+        private final Paint bgPaint;
+        private final Paint iconPaint;
+        private final float density;
+
+        public DeleteButtonView(Context context) {
+            super(context);
+            density = context.getResources().getDisplayMetrics().density;
+            setClickable(true);
+            setFocusable(true);
+
+            bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            bgPaint.setStyle(Paint.Style.FILL);
+            bgPaint.setColor(0xEE222222); // Koyu gri yari saydam arkaplan
+
+            iconPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            iconPaint.setStyle(Paint.Style.STROKE);
+            iconPaint.setStrokeWidth(2.5f * density);
+            iconPaint.setColor(0xFFFF3333); // Neon Kirmizi
+            iconPaint.setStrokeCap(Paint.Cap.ROUND);
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            float cx = getWidth() / 2f;
+            float cy = getHeight() / 2f;
+            float radius = 15f * density; // 30dp cap
+
+            // Daire arkaplani ciz
+            canvas.drawCircle(cx, cy, radius, bgPaint);
+
+            // Carpi isaretini ciz (X)
+            float size = 5f * density;
+            canvas.drawLine(cx - size, cy - size, cx + size, cy + size, iconPaint);
+            canvas.drawLine(cx + size, cy - size, cx - size, cy + size, iconPaint);
+        }
+    }
+
+    /**
+     * Premium Modern Ayarlar (⚙️) Butonu.
+     */
+    private static class ConfigButtonView extends View {
+        private final Paint bgPaint;
+        private final Paint iconPaint;
+        private final float density;
+
+        public ConfigButtonView(Context context) {
+            super(context);
+            density = context.getResources().getDisplayMetrics().density;
+            setClickable(true);
+            setFocusable(true);
+
+            bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            bgPaint.setStyle(Paint.Style.FILL);
+            bgPaint.setColor(0xEE222222);
+
+            iconPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            iconPaint.setStyle(Paint.Style.STROKE);
+            iconPaint.setStrokeWidth(2f * density);
+            iconPaint.setColor(0xFFFFB300); // Premium Sari/Turuncu
+            iconPaint.setStrokeCap(Paint.Cap.ROUND);
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            float cx = getWidth() / 2f;
+            float cy = getHeight() / 2f;
+            float radius = 15f * density;
+
+            canvas.drawCircle(cx, cy, radius, bgPaint);
+
+            // Modern Ayar/Slider simgesi (2 yatay cizgi ve uzerinde kucuk daireler)
+            float lineY1 = cy - 4f * density;
+            float lineY2 = cy + 4f * density;
+            float startX = cx - 6f * density;
+            float endX = cx + 6f * density;
+
+            // Cizgiler
+            canvas.drawLine(startX, lineY1, endX, lineY1, iconPaint);
+            canvas.drawLine(startX, lineY2, endX, lineY2, iconPaint);
+
+            // Kaydirici daireler
+            Paint circlePaint = new Paint(iconPaint);
+            circlePaint.setStyle(Paint.Style.FILL);
+            canvas.drawCircle(cx - 2f * density, lineY1, 2.5f * density, circlePaint);
+            canvas.drawCircle(cx + 2f * density, lineY2, 2.5f * density, circlePaint);
+        }
+    }
+
+    /**
+     * Launcher3 Tarzi 6 Noktali Tasima (Drag) Butonu.
+     */
+    private static class DragHandleView extends View {
+        private final Paint bgPaint;
+        private final Paint dotPaint;
+        private final float density;
+
+        public DragHandleView(Context context) {
+            super(context);
+            density = context.getResources().getDisplayMetrics().density;
+            setClickable(true);
+            setFocusable(true);
+
+            bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            bgPaint.setStyle(Paint.Style.FILL);
+            bgPaint.setColor(0xEE222222);
+
+            dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            dotPaint.setStyle(Paint.Style.FILL);
+            dotPaint.setColor(Color.WHITE);
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            float cx = getWidth() / 2f;
+            float cy = getHeight() / 2f;
+            float radius = 18f * density; // 36dp cap
+
+            canvas.drawCircle(cx, cy, radius, bgPaint);
+
+            // 6 surukleme noktasini cizelim
+            float dotRadius = 2.2f * density;
+            float spacingX = 5f * density;
+            float spacingY = 5f * density;
+
+            float x1 = cx - spacingX / 2f;
+            float x2 = cx + spacingX / 2f;
+            float y1 = cy - spacingY;
+            float y2 = cy;
+            float y3 = cy + spacingY;
+
+            canvas.drawCircle(x1, y1, dotRadius, dotPaint);
+            canvas.drawCircle(x2, y1, dotRadius, dotPaint);
+            canvas.drawCircle(x1, y2, dotRadius, dotPaint);
+            canvas.drawCircle(x2, y2, dotRadius, dotPaint);
+            canvas.drawCircle(x1, y3, dotRadius, dotPaint);
+            canvas.drawCircle(x2, y3, dotRadius, dotPaint);
+        }
+    }
+
+    /**
+     * Neon Mavi Resize Handle.
+     */
+    private static class ResizeHandleView extends View {
+        private final Paint bgPaint;
+        private final Paint iconPaint;
+        private final float density;
+
+        public ResizeHandleView(Context context) {
+            super(context);
+            density = context.getResources().getDisplayMetrics().density;
+            setClickable(true);
+            setFocusable(true);
+
+            bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            bgPaint.setStyle(Paint.Style.FILL);
+            bgPaint.setColor(0xEE222222);
+
+            iconPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            iconPaint.setStyle(Paint.Style.STROKE);
+            iconPaint.setStrokeWidth(2.2f * density);
+            iconPaint.setColor(0xFF00E5FF); // Neon Mavi
+            iconPaint.setStrokeCap(Paint.Cap.ROUND);
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            float cx = getWidth() / 2f;
+            float cy = getHeight() / 2f;
+            float radius = 15f * density; // 30dp cap
+
+            canvas.drawCircle(cx, cy, radius, bgPaint);
+
+            // Resize L seklinde kucuk ok cizimi
+            float size = 4.5f * density;
+            canvas.drawLine(cx - size, cy + size, cx + size, cy + size, iconPaint); // Yatay
+            canvas.drawLine(cx + size, cy - size, cx + size, cy + size, iconPaint); // Dikey
+            canvas.drawLine(cx - size, cy - size, cx + size, cy + size, iconPaint); // Kosegen
+        }
     }
 }
