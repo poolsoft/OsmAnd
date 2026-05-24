@@ -508,7 +508,20 @@ public class WidgetPickerDialog extends DialogFragment {
             
             boolean allowed = false;
             try {
-                allowed = appWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId, provider.provider);
+                Bundle options = new Bundle();
+                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, provider.minWidth);
+                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, provider.minHeight);
+                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, provider.minWidth > 0 ? provider.minWidth * 2 : 500);
+                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, provider.minHeight > 0 ? provider.minHeight * 2 : 500);
+                // Xiaomi/Huawei gibi ureticilerin widget'lari uygulamanin "Home Screen" olup olmadigini sorabilir.
+                options.putInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY, AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN);
+                
+                // Cihaz ve Android versiyonuna gore Bundle'i destekleyen overload'u deneyelim
+                try {
+                    allowed = appWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId, provider.provider, options);
+                } catch (NoSuchMethodError e) {
+                    allowed = appWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId, provider.provider);
+                }
             } catch (Exception se) {
                 allowed = false; // Herhangi bir hata olursa yetki yoku kabul edip intent'e dusur
             }
