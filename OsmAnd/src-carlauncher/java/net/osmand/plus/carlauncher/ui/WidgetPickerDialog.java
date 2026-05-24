@@ -509,10 +509,8 @@ public class WidgetPickerDialog extends DialogFragment {
             boolean allowed = false;
             try {
                 Bundle options = new Bundle();
-                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, provider.minWidth);
-                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, provider.minHeight);
-                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, provider.minWidth > 0 ? provider.minWidth * 2 : 500);
-                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, provider.minHeight > 0 ? provider.minHeight * 2 : 500);
+                // 3. parti widget'larin (BatteryGuru vb.) min/max boyut bundle verilerinde dp/px uyuşmazligindan oturu cökmesini engellemek amaciyla sadece Host Category'i veriyoruz.
+                options.putInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY, AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN);
                 // Xiaomi/Huawei gibi ureticilerin widget'lari uygulamanin "Home Screen" olup olmadigini sorabilir.
                 options.putInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY, AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN);
                 

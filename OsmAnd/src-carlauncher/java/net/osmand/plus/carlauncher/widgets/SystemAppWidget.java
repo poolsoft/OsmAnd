@@ -60,10 +60,8 @@ public class SystemAppWidget extends BaseWidget {
             
             try {
                 android.os.Bundle options = new android.os.Bundle();
-                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, appWidgetInfo.minWidth);
-                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, appWidgetInfo.minHeight);
-                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, appWidgetInfo.minWidth > 0 ? appWidgetInfo.minWidth * 2 : 500);
-                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, appWidgetInfo.minHeight > 0 ? appWidgetInfo.minHeight * 2 : 500);
+                // 3. parti widgetlar icin sadece kategori yolluyoruz, min/max boyutlarini Android Framework yonetsin.
+                options.putInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY, AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN);
                 options.putInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY, AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN);
                 hostView.updateAppWidgetOptions(options);
                 appWidgetManager.updateAppWidgetOptions(appWidgetId, options);
