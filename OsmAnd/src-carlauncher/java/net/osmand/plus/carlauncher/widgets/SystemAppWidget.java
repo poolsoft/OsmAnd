@@ -4,7 +4,9 @@ import android.appwidget.AppWidgetHost;
 import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -14,6 +16,15 @@ import androidx.annotation.NonNull;
 /**
  * Android Sistem Widget'larini (Spotify, Google Haritalar vb.)
  * Car Launcher widget panelinde gostermek icin sarmalayici sinif.
+ * 
+ * Widget provider'larin bazilarinin (BatteryGuru, Google Keep, Weather vb.)
+ * initialLayout'lari bizim context'imizde inflate edilemiyor.
+ * Bu yuzden createView() sonrasinda provider'a ACTION_APPWIDGET_UPDATE
+ * broadcast'i gondererek gercek RemoteViews'i tetikliyoruz.
+ * 
+ * hostView bir kez olusturulur ve cache'lenir, her sayfa degisiminde
+ * yeniden olusturulmaz.
+ * 
  * Kod icerisinde kesinlikle Turkce karakter kullanilmamistir.
  */
 public class SystemAppWidget extends BaseWidget {
@@ -39,34 +50,31 @@ public class SystemAppWidget extends BaseWidget {
             currentContext = context;
         }
 
+        // Eger daha once olusturulmus bir hostView varsa, onu tekrar kullan.
+        // Bu sayede ViewPager2 sayfa degisimlerinde widget yeniden olusturulmaz
+        // ve provider'in gonderdigi RemoteViews kaybolmaz.
+        if (hostView != null) {
+            rootView = hostView;
+            return hostView;
+        }
+
         try {
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(currentContext);
             AppWidgetProviderInfo appWidgetInfo = appWidgetManager.getAppWidgetInfo(appWidgetId);
 
             if (appWidgetInfo == null) {
-                // Widget bilgisi bulunamadi hatasi (Silinmis veya gecersiz ID)
                 return createErrorView(currentContext, "Widget bulunamadi (ID: " + appWidgetId + ")");
             }
 
-            // AppWidgetHost ornegini WidgetManager uzerinden aliyoruz
             AppWidgetHost host = WidgetManager.getInstance(currentContext).getAppWidgetHost();
             if (host == null) {
                 return createErrorView(currentContext, "Widget Host hazir degil");
             }
 
-            // HostView olustur ve yerlestir
+            // HostView olustur
             hostView = host.createView(currentContext, appWidgetId, appWidgetInfo);
             hostView.setAppWidget(appWidgetId, appWidgetInfo);
-            
-            try {
-                android.os.Bundle options = new android.os.Bundle();
-                // 3. parti widgetlar icin sadece kategori yolluyoruz, min/max boyutlarini Android Framework yonetsin.
-                options.putInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY, AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN);
-                options.putInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY, AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN);
-                hostView.updateAppWidgetOptions(options);
-                appWidgetManager.updateAppWidgetOptions(appWidgetId, options);
-            } catch (Exception ignored) {}
-            
+
             // Layout parametrelerini ayarla
             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
@@ -74,6 +82,20 @@ public class SystemAppWidget extends BaseWidget {
             hostView.setLayoutParams(params);
 
             rootView = hostView;
+
+            // Provider'a "guncelleme yolla" broadcast'i gonder.
+            // BatteryGuru, Google Keep, Weather gibi veri-bagimlisi widget'lar
+            // initialLayout inflate basarisiz olsa bile, bu broadcast sayesinde
+            // gercek RemoteViews'lerini gonderecekler ve hostView otomatik guncellenecek.
+            try {
+                Intent updateIntent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+                updateIntent.setComponent(appWidgetInfo.provider);
+                updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{appWidgetId});
+                currentContext.sendBroadcast(updateIntent);
+            } catch (Exception broadcastErr) {
+                android.util.Log.w("SystemAppWidget", "Widget update broadcast gonderilemedi: " + broadcastErr.getMessage());
+            }
+
             return hostView;
 
         } catch (Exception e) {
@@ -85,14 +107,14 @@ public class SystemAppWidget extends BaseWidget {
     private View createErrorView(Context ctx, String errorMessage) {
         TextView errView = new TextView(ctx);
         errView.setText(errorMessage);
-        errView.setTextColor(0xFFFF3333); // Kirmizi hata rengi
+        errView.setTextColor(0xFFFF3333);
         errView.setPadding(16, 16, 16, 16);
         errView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-        
+
         FrameLayout container = new FrameLayout(ctx);
-        container.setBackgroundColor(0x33FF0000); // Yari saydam kirmizi arka plan
+        container.setBackgroundColor(0x33FF0000);
         container.addView(errView);
-        
+
         rootView = container;
         return container;
     }
@@ -105,13 +127,11 @@ public class SystemAppWidget extends BaseWidget {
     @Override
     public void onStart() {
         super.onStart();
-        // Gerekli baslatma islemleri
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        // Durdurma islemleri
     }
 
     @Override

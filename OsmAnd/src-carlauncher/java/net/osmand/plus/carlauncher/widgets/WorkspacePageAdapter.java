@@ -194,8 +194,8 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                 }
             }
 
-            // Izgara doluluk matrisi (4x4)
-            boolean[][] occupied = new boolean[4][4];
+            // Izgara doluluk matrisi
+            boolean[][] occupied = new boolean[WorkspaceCellLayout.COL_COUNT][WorkspaceCellLayout.ROW_COUNT];
 
             // Once koordinati belli olan widget'lari yerlestirelim ve matrisi isaretleyelim
             for (BaseWidget widget : pageWidgets) {
@@ -204,7 +204,7 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                 int sx = widget.getSpanX();
                 int sy = widget.getSpanY();
 
-                if (cx >= 0 && cx + sx <= 4 && cy >= 0 && cy + sy <= 4) {
+                if (cx >= 0 && cx + sx <= WorkspaceCellLayout.COL_COUNT && cy >= 0 && cy + sy <= WorkspaceCellLayout.ROW_COUNT) {
                     for (int x = cx; x < cx + sx; x++) {
                         for (int y = cy; y < cy + sy; y++) {
                             occupied[x][y] = true;
@@ -327,8 +327,8 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
         }
 
         private Point findEmptySpace(boolean[][] occupied, int spanX, int spanY) {
-            for (int y = 0; y <= 4 - spanY; y++) {
-                for (int x = 0; x <= 4 - spanX; x++) {
+            for (int y = 0; y <= WorkspaceCellLayout.ROW_COUNT - spanY; y++) {
+                for (int x = 0; x <= WorkspaceCellLayout.COL_COUNT - spanX; x++) {
                     boolean fits = true;
                     for (int sy = 0; sy < spanY; sy++) {
                         for (int sx = 0; sx < spanX; sx++) {
@@ -402,19 +402,19 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
         }
 
         private boolean canWidgetFitAt(BaseWidget targetWidget, int pageIndex, int cellX, int cellY, int spanX, int spanY) {
-            if (cellX < 0 || cellX + spanX > 4 || cellY < 0 || cellY + spanY > 4) {
+            if (cellX < 0 || cellX + spanX > WorkspaceCellLayout.COL_COUNT || cellY < 0 || cellY + spanY > WorkspaceCellLayout.ROW_COUNT) {
                 return false;
             }
 
             // Hedef sayfa doluluk matrisini olustur (TargetWidget haric)
-            boolean[][] occupied = new boolean[4][4];
+            boolean[][] occupied = new boolean[WorkspaceCellLayout.COL_COUNT][WorkspaceCellLayout.ROW_COUNT];
             for (BaseWidget w : widgetsList) {
                 if (w != targetWidget && w.isVisible() && w.getPageIndex() == pageIndex) {
                     int cx = w.getCellX();
                     int cy = w.getCellY();
                     int sx = w.getSpanX();
                     int sy = w.getSpanY();
-                    if (cx >= 0 && cx + sx <= 4 && cy >= 0 && cy + sy <= 4) {
+                    if (cx >= 0 && cx + sx <= WorkspaceCellLayout.COL_COUNT && cy >= 0 && cy + sy <= WorkspaceCellLayout.ROW_COUNT) {
                         for (int x = cx; x < cx + sx; x++) {
                             for (int y = cy; y < cy + sy; y++) {
                                 occupied[x][y] = true;
@@ -436,14 +436,14 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
         }
 
         private Point findNewPositionForWidget(BaseWidget targetWidget, int pageIndex, int spanX, int spanY) {
-            boolean[][] occupied = new boolean[4][4];
+            boolean[][] occupied = new boolean[WorkspaceCellLayout.COL_COUNT][WorkspaceCellLayout.ROW_COUNT];
             for (BaseWidget w : widgetsList) {
                 if (w != targetWidget && w.isVisible() && w.getPageIndex() == pageIndex) {
                     int cx = w.getCellX();
                     int cy = w.getCellY();
                     int sx = w.getSpanX();
                     int sy = w.getSpanY();
-                    if (cx >= 0 && cx + sx <= 4 && cy >= 0 && cy + sy <= 4) {
+                    if (cx >= 0 && cx + sx <= WorkspaceCellLayout.COL_COUNT && cy >= 0 && cy + sy <= WorkspaceCellLayout.ROW_COUNT) {
                         for (int x = cx; x < cx + sx; x++) {
                             for (int y = cy; y < cy + sy; y++) {
                                 occupied[x][y] = true;
