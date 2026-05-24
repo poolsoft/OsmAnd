@@ -508,8 +508,8 @@ public class WidgetPickerDialog extends DialogFragment {
             boolean allowed = false;
             try {
                 allowed = appWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId, provider.provider);
-            } catch (SecurityException se) {
-                allowed = false; // Yetki hatasini yutup guvenli bind intent'ine yonlendir
+            } catch (Exception se) {
+                allowed = false; // Herhangi bir hata olursa yetki yoku kabul edip intent'e dusur
             }
             
             if (allowed) {
@@ -521,7 +521,28 @@ public class WidgetPickerDialog extends DialogFragment {
                 startActivityForResult(intent, REQUEST_BIND_APPWIDGET);
             }
         } catch (Exception e) {
-            Toast.makeText(getContext(), "Sistem widgeti eklenemedi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Sistem widgeti baslatilamadi (Izin eksikligi/Servis hatasi): " + e.getMessage(), Toast.LENGTH_LONG).show();
+            android.util.Log.e("WidgetPickerDialog", "Sistem widgeti eklenemedi", e);
+            writeExceptionToLogFile(e);
+        }
+    }
+
+    private void writeExceptionToLogFile(Exception e) {
+        try {
+            if (getContext() == null) return;
+            java.io.File logDir = getContext().getExternalFilesDir(null);
+            if (logDir != null) {
+                java.io.File logFile = new java.io.File(logDir, "carlauncher_widget_error.log");
+                java.io.FileWriter fw = new java.io.FileWriter(logFile, true);
+                java.io.PrintWriter pw = new java.io.PrintWriter(fw);
+                pw.println("--- Exception at " + new java.util.Date().toString() + " ---");
+                e.printStackTrace(pw);
+                pw.println();
+                pw.close();
+                fw.close();
+            }
+        } catch (Exception ex) {
+            // Ignore log writing errors
         }
     }
 

@@ -236,8 +236,10 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         doneBtn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter.exitEditMode();
-                Toast.makeText(getContext(), "Duzenlemeler Kaydedildi.", Toast.LENGTH_SHORT).show();
+                v.post(() -> {
+                    net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter.exitEditMode();
+                    Toast.makeText(getContext(), "Duzenlemeler Kaydedildi.", Toast.LENGTH_SHORT).show();
+                });
             }
         });
         overlayContainer.addView(doneBtn);

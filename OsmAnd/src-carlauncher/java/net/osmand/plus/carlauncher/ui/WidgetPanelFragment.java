@@ -237,12 +237,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         }
         dialog.setOnDismissCallback(() -> {
             int targetPage = viewPager != null ? viewPager.getCurrentItem() : 0;
-            java.util.List<BaseWidget> list = widgetManager.getVisibleWidgets();
-            if (!list.isEmpty()) {
-                // En son eklenen widget'in sayfa indeksini hedefliyoruz
-                BaseWidget lastAdded = list.get(list.size() - 1);
-                targetPage = lastAdded.getPageIndex();
-            }
+            // Let the post method inside applyWidgetsToView find the exact final page index after binding
             applyWidgetsToView(targetPage);
         });
         dialog.show(getChildFragmentManager(), "WidgetPickerDialog");
@@ -301,8 +296,15 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             viewPager.post(new Runnable() {
                 @Override
                 public void run() {
+                    int targetPage = currentItem;
+                    java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> list = widgetManager.getVisibleWidgets();
+                    if (!list.isEmpty()) {
+                        // Adapter render olduktan sonra eger yer yoktuysa widget baska sayfaya tasinmis olabilir
+                        net.osmand.plus.carlauncher.widgets.BaseWidget lastAdded = list.get(list.size() - 1);
+                        targetPage = lastAdded.getPageIndex();
+                    }
                     int count = adapter.getItemCount();
-                    int targetPage = Math.max(0, Math.min(count - 1, currentItem));
+                    targetPage = Math.max(0, Math.min(count - 1, targetPage));
                     viewPager.setCurrentItem(targetPage, false);
                 }
             });
