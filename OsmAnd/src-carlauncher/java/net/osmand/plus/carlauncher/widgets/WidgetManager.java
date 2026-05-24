@@ -62,7 +62,7 @@ public class WidgetManager {
         this.prefs = this.context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         this.allWidgets = new ArrayList<>();
         this.visibleWidgets = new ArrayList<>();
-        this.appWidgetHost = new AppWidgetHost(this.context, 1024);
+        this.appWidgetHost = new CarAppWidgetHost(this.context, 1024);
     }
 
     public AppWidgetHost getAppWidgetHost() {
@@ -574,14 +574,10 @@ public class WidgetManager {
                 int page = prefs.getInt("page_" + id + suffix, 0);
                 int cellx = prefs.getInt("cellx_" + id + suffix, -1);
                 int celly = prefs.getInt("celly_" + id + suffix, -1);
-                int spanx = prefs.getInt("spanx_" + id + suffix, 1);
-                int spany = prefs.getInt("spany_" + id + suffix, 1);
                 
                 widget.setPageIndex(page);
                 widget.setCellX(cellx);
                 widget.setCellY(celly);
-                widget.setSpanX(spanx);
-                widget.setSpanY(spany);
                 
                 restoredWidgets.add(widget);
             }
@@ -674,12 +670,6 @@ public class WidgetManager {
                 }
                 if (prefs.contains("user_celly_" + id + suffix)) {
                     editor.putInt("celly_" + id + suffix, prefs.getInt("user_celly_" + id + suffix, -1));
-                }
-                if (prefs.contains("user_spanx_" + id + suffix)) {
-                    editor.putInt("spanx_" + id + suffix, prefs.getInt("user_spanx_" + id + suffix, 1));
-                }
-                if (prefs.contains("user_spany_" + id + suffix)) {
-                    editor.putInt("spany_" + id + suffix, prefs.getInt("user_spany_" + id + suffix, 1));
                 }
             }
         }
