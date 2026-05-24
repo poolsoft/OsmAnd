@@ -93,24 +93,11 @@ public class WidgetManager {
      * Kod icerisinde kesinlikle Turkce karakter kullanilmamistir.
      */
     public void updateActivityContext(Context activityContext) {
-        if (this.appWidgetHost != null) {
-            try {
-                this.appWidgetHost.stopListening();
-            } catch (Exception e) {
-                android.util.Log.e("WidgetManager", "stopListening hatasi: " + e.getMessage());
-            }
-        }
-        
-        // Yeni Activity Context ile AppWidgetHost'u yeniden yarat (Sistem widget'larinin eklenmesi ve calismasi icin sarttir!)
-        this.appWidgetHost = new AppWidgetHost(activityContext, 1024);
-        if (isStarted) {
-            try {
-                this.appWidgetHost.startListening();
-            } catch (Exception e) {
-                android.util.Log.e("WidgetManager", "startListening hatasi: " + e.getMessage());
-            }
-        }
-        
+        // AppWidgetHost nesnesinin surekli yeniden yaratilmasi Android'in widget binding state'ini
+        // bozar ve "Widget eklenemedi" (Problem loading widget) hatasina sebep olur.
+        // Bu yuzden Host sadece WidgetManager constructor'inda 1 kez yaratilmali.
+        // Burada sadece widget'lara yeni Activity Context'i geciriyoruz.
+
         for (BaseWidget widget : allWidgets) {
             widget.setContext(activityContext);
             // Yeni context ile yeniden olusturulmasi icin eski view'i temizle

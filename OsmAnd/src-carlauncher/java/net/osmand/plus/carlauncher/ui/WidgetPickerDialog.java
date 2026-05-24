@@ -481,6 +481,7 @@ public class WidgetPickerDialog extends DialogFragment {
         }
 
         if (widget != null) {
+            widget.setId(info.type + "_" + System.currentTimeMillis());
             widget.setPageIndex(activePageIndex);
             widget.setCellX(-1);
             widget.setCellY(-1);
@@ -596,9 +597,16 @@ public class WidgetPickerDialog extends DialogFragment {
             int appWidgetId = (data != null) ? data.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1) : pendingAppWidgetId;
             if (appWidgetId == -1) appWidgetId = pendingAppWidgetId;
 
-            // Otomobil ekranlarindaki konfigurasyon bitis bug'ini cozmek icin RESULT_CANCELED durumunda da eklemeye izin veriyoruz
-            if (appWidgetId != -1) {
+            if (resultCode == Activity.RESULT_OK && appWidgetId != -1) {
                 addSystemAppWidgetToWorkspace(appWidgetId);
+            } else {
+                // Kullanici konfigurasyon ekranini iptal etti veya bir hata olustu.
+                if (appWidgetId != -1 && widgetManager != null && widgetManager.getAppWidgetHost() != null) {
+                    try {
+                        widgetManager.getAppWidgetHost().deleteAppWidgetId(appWidgetId);
+                    } catch (Exception e) {}
+                }
+                Toast.makeText(getContext(), "Widget yapilandirmasi iptal edildi.", Toast.LENGTH_SHORT).show();
             }
             pendingAppWidgetId = -1;
         }
