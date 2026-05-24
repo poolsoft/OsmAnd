@@ -4,27 +4,32 @@ import android.appwidget.AppWidgetHost;
 import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
+import net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout;
+
 /**
- * Android Sistem Widget'larini (Spotify, Google Haritalar vb.)
- * Car Launcher widget panelinde gostermek icin sarmalayici sinif.
- * 
- * Widget provider'larin bazilarinin (BatteryGuru, Google Keep, Weather vb.)
- * initialLayout'lari bizim context'imizde inflate edilemiyor.
- * Bu yuzden createView() sonrasinda provider'a ACTION_APPWIDGET_UPDATE
- * broadcast'i gondererek gercek RemoteViews'i tetikliyoruz.
- * 
- * hostView bir kez olusturulur ve cache'lenir, her sayfa degisiminde
- * yeniden olusturulmaz.
- * 
+ * Android Sistem Widget'larini Car Launcher widget panelinde gostermek icin sarmalayici sinif.
+ *
+ * Widget provider'larin cogu, RemoteViews olusturmadan once
+ * kendilerine ne kadar alan ayrildigini bilmek ister.
+ * Bu bilgi AppWidgetOptions (MIN_WIDTH, MIN_HEIGHT, MAX_WIDTH, MAX_HEIGHT)
+ * Bundle'i ile DP cinsinden iletilir.
+ *
+ * Eger bu bilgi verilmezse, provider RemoteViews gondermez ve
+ * getErrorView() tetiklenir. Bu sinif, gercek hucre boyutlarini
+ * DP'ye cevirip provider'a ileterek bu sorunu cozer.
+ *
+ * hostView bir kez olusturulur ve cache'lenir.
+ *
  * Kod icerisinde kesinlikle Turkce karakter kullanilmamistir.
  */
 public class SystemAppWidget extends BaseWidget {
@@ -35,7 +40,7 @@ public class SystemAppWidget extends BaseWidget {
     public SystemAppWidget(@NonNull Context context, int appWidgetId) {
         super(context, "appwidget_" + appWidgetId, "Sistem Widget");
         this.appWidgetId = appWidgetId;
-        this.size = WidgetSize.MEDIUM; // Varsayilan olarak orta boy
+        this.size = WidgetSize.MEDIUM;
     }
 
     public int getAppWidgetId() {
@@ -50,9 +55,7 @@ public class SystemAppWidget extends BaseWidget {
             currentContext = context;
         }
 
-        // Eger daha once olusturulmus bir hostView varsa, onu tekrar kullan.
-        // Bu sayede ViewPager2 sayfa degisimlerinde widget yeniden olusturulmaz
-        // ve provider'in gonderdigi RemoteViews kaybolmaz.
+        // Cache: Daha once olusturulmus hostView'i tekrar kullan
         if (hostView != null) {
             rootView = hostView;
             return hostView;
@@ -80,13 +83,15 @@ public class SystemAppWidget extends BaseWidget {
                     FrameLayout.LayoutParams.MATCH_PARENT,
                     FrameLayout.LayoutParams.MATCH_PARENT);
             hostView.setLayoutParams(params);
-
             rootView = hostView;
 
-            // Provider'a "guncelleme yolla" broadcast'i gonder.
-            // BatteryGuru, Google Keep, Weather gibi veri-bagimlisi widget'lar
-            // initialLayout inflate basarisiz olsa bile, bu broadcast sayesinde
-            // gercek RemoteViews'lerini gonderecekler ve hostView otomatik guncellenecek.
+            // ---- KRITIK: Provider'a gercek boyut bilgisini DP cinsinden gonder ----
+            // Cogu widget provider (BatteryGuru, Weather, Google Keep vb.)
+            // onAppWidgetOptionsChanged() callback'ini kullanarak boyuta gore
+            // RemoteViews olusturur. Bu bilgi olmadan provider hicbir sey gondermez.
+            sendWidgetSizeOptions(currentContext, appWidgetManager, appWidgetInfo);
+
+            // Ek olarak provider'a update broadcast'i gonder
             try {
                 Intent updateIntent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
                 updateIntent.setComponent(appWidgetInfo.provider);
@@ -101,6 +106,89 @@ public class SystemAppWidget extends BaseWidget {
         } catch (Exception e) {
             android.util.Log.e("SystemAppWidget", "Widget olusturulurken hata: " + e.getMessage());
             return createErrorView(currentContext, "Yukleme hatasi: " + e.getLocalizedMessage());
+        }
+    }
+
+    /**
+     * Widget provider'a gercek boyut bilgisini DP cinsinden gonderir.
+     * Bu metot, ekranin piksel boyutlarindan grid hucre boyutlarini hesaplar,
+     * widget'in spanX ve spanY degerlerine gore toplam alani DP'ye cevirir
+     * ve AppWidgetOptions Bundle icinde provider'a iletir.
+     *
+     * Provider bu bilgiyle onAppWidgetOptionsChanged() callback'ini alir
+     * ve dogru boyutta RemoteViews olusturup gonderir.
+     */
+    private void sendWidgetSizeOptions(Context ctx, AppWidgetManager awm, AppWidgetProviderInfo info) {
+        try {
+            DisplayMetrics dm = ctx.getResources().getDisplayMetrics();
+            float density = dm.density;
+
+            // Ekranin kullanilabilir alanini piksel cinsinden al
+            int screenWidthPx = dm.widthPixels;
+            int screenHeightPx = dm.heightPixels;
+
+            // WorkspaceCellLayout padding'lerini cikar (12dp sol/sag, 8dp ust/alt)
+            int paddingSidePx = Math.round(12 * density);
+            int paddingTopBottomPx = Math.round(8 * density);
+            int usableWidthPx = screenWidthPx - (2 * paddingSidePx);
+            int usableHeightPx = screenHeightPx - (2 * paddingTopBottomPx);
+
+            // Taskbar yuksekligini cikar (yakl. 56dp)
+            int taskbarPx = Math.round(56 * density);
+            usableHeightPx -= taskbarPx;
+
+            // Tek hucre boyutunu piksel cinsinden hesapla
+            int cellWidthPx = usableWidthPx / WorkspaceCellLayout.COL_COUNT;
+            int cellHeightPx = usableHeightPx / WorkspaceCellLayout.ROW_COUNT;
+
+            // Widget'in kapladigi toplam alani piksel cinsinden hesapla
+            int spanX = getSpanX();
+            int spanY = getSpanY();
+            int widgetWidthPx = cellWidthPx * spanX;
+            int widgetHeightPx = cellHeightPx * spanY;
+
+            // Pikselleri DP'ye cevir (provider DP bekler)
+            int widthDp = Math.round(widgetWidthPx / density);
+            int heightDp = Math.round(widgetHeightPx / density);
+
+            // Minimum 40dp olsun (cok kucuk degerlerden kacinmak icin)
+            widthDp = Math.max(40, widthDp);
+            heightDp = Math.max(40, heightDp);
+
+            Bundle options = new Bundle();
+            options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, widthDp);
+            options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, heightDp);
+            options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, widthDp);
+            options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, heightDp);
+            options.putInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY,
+                    AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN);
+
+            awm.updateAppWidgetOptions(appWidgetId, options);
+
+            android.util.Log.d("SystemAppWidget", "Widget " + appWidgetId +
+                    " boyut bilgisi gonderildi: " + widthDp + "x" + heightDp + "dp" +
+                    " (span: " + spanX + "x" + spanY + ")");
+
+        } catch (Exception e) {
+            android.util.Log.w("SystemAppWidget", "Widget boyut bilgisi gonderilemedi: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Widget boyutu degistiginde (resize sonrasi) provider'a
+     * yeni boyut bilgisini gonderir.
+     */
+    public void notifySizeChanged() {
+        Context ctx = getContext();
+        if (ctx == null) ctx = context;
+        try {
+            AppWidgetManager awm = AppWidgetManager.getInstance(ctx);
+            AppWidgetProviderInfo info = awm.getAppWidgetInfo(appWidgetId);
+            if (info != null) {
+                sendWidgetSizeOptions(ctx, awm, info);
+            }
+        } catch (Exception e) {
+            android.util.Log.w("SystemAppWidget", "notifySizeChanged hatasi: " + e.getMessage());
         }
     }
 
@@ -121,7 +209,7 @@ public class SystemAppWidget extends BaseWidget {
 
     @Override
     public void update() {
-        // Sistem widget'lari kendi kendilerini gunceller, ekstra tetiklemeye gerek yoktur.
+        // Sistem widget'lari kendi kendilerini gunceller.
     }
 
     @Override

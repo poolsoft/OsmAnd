@@ -509,19 +509,50 @@ public class WidgetPickerDialog extends DialogFragment {
             boolean allowed = false;
             try {
                 Bundle options = new Bundle();
-                // 3. parti widget'larin (BatteryGuru vb.) min/max boyut bundle verilerinde dp/px uyuşmazligindan oturu cökmesini engellemek amaciyla sadece Host Category'i veriyoruz.
-                options.putInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY, AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN);
-                // Xiaomi/Huawei gibi ureticilerin widget'lari uygulamanin "Home Screen" olup olmadigini sorabilir.
+                
+                // Provider'a gercek boyut bilgisini DP cinsinden gonder.
+                // Bircok widget provider (BatteryGuru, Weather vb.)
+                // onAppWidgetOptionsChanged() callback'ini kullanarak
+                // boyuta gore RemoteViews olusturur. Bu bilgi olmadan
+                // provider hicbir sey gondermez.
+                android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+                float density = dm.density;
+                int screenWidthPx = dm.widthPixels;
+                int screenHeightPx = dm.heightPixels;
+                
+                // Padding ve taskbar'i cikar
+                int paddingSidePx = Math.round(12 * density);
+                int paddingTopBottomPx = Math.round(8 * density);
+                int taskbarPx = Math.round(56 * density);
+                int usableWidthPx = screenWidthPx - (2 * paddingSidePx);
+                int usableHeightPx = screenHeightPx - (2 * paddingTopBottomPx) - taskbarPx;
+                
+                // Tek hucre boyutu piksel
+                int cellWidthPx = usableWidthPx / net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.COL_COUNT;
+                int cellHeightPx = usableHeightPx / net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.ROW_COUNT;
+                
+                // Widget boyut hesabi (varsayilan span 2x2 olarak provider.minWidth'e gore)
+                int spanX = Math.max(1, Math.min(net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.COL_COUNT, 
+                        Math.round(provider.minWidth / (70f * density) * 2)));
+                int spanY = Math.max(1, Math.min(net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.ROW_COUNT, 
+                        Math.round(provider.minHeight / (70f * density) * 2)));
+                
+                int widthDp = Math.max(40, Math.round((cellWidthPx * spanX) / density));
+                int heightDp = Math.max(40, Math.round((cellHeightPx * spanY) / density));
+                
+                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, widthDp);
+                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, heightDp);
+                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, widthDp);
+                options.putInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, heightDp);
                 options.putInt(AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY, AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN);
                 
-                // Cihaz ve Android versiyonuna gore Bundle'i destekleyen overload'u deneyelim
                 try {
                     allowed = appWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId, provider.provider, options);
                 } catch (NoSuchMethodError e) {
                     allowed = appWidgetManager.bindAppWidgetIdIfAllowed(appWidgetId, provider.provider);
                 }
             } catch (Exception se) {
-                allowed = false; // Herhangi bir hata olursa yetki yoku kabul edip intent'e dusur
+                allowed = false;
             }
             
             if (allowed) {
