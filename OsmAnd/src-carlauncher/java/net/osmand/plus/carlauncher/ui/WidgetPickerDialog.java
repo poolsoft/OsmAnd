@@ -391,8 +391,8 @@ public class WidgetPickerDialog extends DialogFragment {
         card.addView(preview);
 
         // Widget Boyut Hesaplamalari (1x1, 2x1 vb.)
-        int spanX = Math.max(1, Math.min(4, Math.round(provider.minWidth / 70f)));
-        int spanY = Math.max(1, Math.min(4, Math.round(provider.minHeight / 70f)));
+        int spanX = Math.max(1, Math.min(net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.COL_COUNT, Math.round(provider.minWidth / 70f)));
+        int spanY = Math.max(1, Math.min(net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.ROW_COUNT, Math.round(provider.minHeight / 70f)));
 
         String label = provider.loadLabel(pm);
         if (label == null || label.trim().isEmpty()) {
@@ -637,11 +637,11 @@ public class WidgetPickerDialog extends DialogFragment {
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(ctx);
             AppWidgetProviderInfo info = appWidgetManager.getAppWidgetInfo(appWidgetId);
             if (info != null) {
-                int spanX = Math.max(1, Math.min(4, Math.round(info.minWidth / 70f)));
-                int spanY = Math.max(1, Math.min(4, Math.round(info.minHeight / 70f)));
-                if (spanX == 1 && spanY == 1) {
+                int spanX = Math.max(1, Math.min(net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.COL_COUNT, Math.round(info.minWidth / 70f)));
+                int spanY = Math.max(1, Math.min(net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.ROW_COUNT, Math.round(info.minHeight / 70f)));
+                if (spanX <= 2 && spanY == 1) {
                     widget.setSize(BaseWidget.WidgetSize.SMALL);
-                } else if (spanX <= 2 && spanY == 1) {
+                } else if (spanX <= 4 && spanY == 1) {
                     widget.setSize(BaseWidget.WidgetSize.MEDIUM);
                 } else {
                     widget.setSize(BaseWidget.WidgetSize.LARGE);

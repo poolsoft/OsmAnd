@@ -114,8 +114,10 @@ public class WidgetManager {
     }
 
     private Point findEmptySpace(boolean[][] occupied, int spanX, int spanY) {
-        for (int y = 0; y <= 4 - spanY; y++) {
-            for (int x = 0; x <= 4 - spanX; x++) {
+        int maxCol = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.COL_COUNT;
+        int maxRow = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.ROW_COUNT;
+        for (int y = 0; y <= maxRow - spanY; y++) {
+            for (int x = 0; x <= maxCol - spanX; x++) {
                 boolean fits = true;
                 for (int sy = 0; sy < spanY; sy++) {
                     for (int sx = 0; sx < spanX; sx++) {
@@ -160,15 +162,17 @@ public class WidgetManager {
         }
         
         // Aktif sayfada yer var mi kontrol et
+        int maxCol = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.COL_COUNT;
+        int maxRow = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.ROW_COUNT;
         if (targetPage < pageCount) {
-            boolean[][] occupied = new boolean[4][4];
+            boolean[][] occupied = new boolean[maxCol][maxRow];
             for (BaseWidget w : allWidgets) {
                 if (w != widget && w.isVisible() && w.getPageIndex() == targetPage) {
                     int cx = w.getCellX();
                     int cy = w.getCellY();
                     int sx = w.getSpanX();
                     int sy = w.getSpanY();
-                    if (cx >= 0 && cx + sx <= 4 && cy >= 0 && cy + sy <= 4) {
+                    if (cx >= 0 && cx + sx <= maxCol && cy >= 0 && cy + sy <= maxRow) {
                         for (int x = cx; x < cx + sx; x++) {
                             for (int y = cy; y < cy + sy; y++) {
                                 occupied[x][y] = true;
@@ -190,14 +194,14 @@ public class WidgetManager {
         for (int page = 0; page < pageCount; page++) {
             if (page == targetPage) continue; // Zaten denemistik
             
-            boolean[][] occupied = new boolean[4][4];
+            boolean[][] occupied = new boolean[maxCol][maxRow];
             for (BaseWidget w : allWidgets) {
                 if (w != widget && w.isVisible() && w.getPageIndex() == page) {
                     int cx = w.getCellX();
                     int cy = w.getCellY();
                     int sx = w.getSpanX();
                     int sy = w.getSpanY();
-                    if (cx >= 0 && cx + sx <= 4 && cy >= 0 && cy + sy <= 4) {
+                    if (cx >= 0 && cx + sx <= maxCol && cy >= 0 && cy + sy <= maxRow) {
                         for (int x = cx; x < cx + sx; x++) {
                             for (int y = cy; y < cy + sy; y++) {
                                 occupied[x][y] = true;

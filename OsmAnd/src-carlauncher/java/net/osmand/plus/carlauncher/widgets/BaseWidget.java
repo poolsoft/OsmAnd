@@ -132,16 +132,16 @@ public abstract class BaseWidget {
         this.size = size;
         switch (size) {
             case MEDIUM:
-                this.spanX = 2;
+                this.spanX = 4; // 8x4 sistemde ekranin yarisi
                 this.spanY = 1;
                 break;
             case LARGE:
-                this.spanX = 2;
+                this.spanX = 4; // 8x4 sistemde ekranin yarisi
                 this.spanY = 2;
                 break;
             case SMALL:
             default:
-                this.spanX = 1;
+                this.spanX = 2; // 8x4 sistemde ceyrek ekran genisligi (eski 1 birim)
                 this.spanY = 1;
                 break;
         }

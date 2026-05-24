@@ -21,6 +21,9 @@ import net.osmand.plus.carlauncher.widgets.WidgetManager;
  */
 public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListener {
 
+    public static final int COL_COUNT = 8;
+    public static final int ROW_COUNT = 4;
+
     private int marginPx = 0;
     
     // Drag & Drop Cizim Degiskenleri
@@ -104,8 +107,8 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
         int usableWidth = widthSize - paddingLeft - paddingRight;
         int usableHeight = heightSize - paddingTop - paddingBottom;
 
-        int cellWidth = usableWidth / 4;
-        int cellHeight = usableHeight / 4;
+        int cellWidth = usableWidth / COL_COUNT;
+        int cellHeight = usableHeight / ROW_COUNT;
 
         int count = getChildCount();
         for (int i = 0; i < count; i++) {
@@ -137,8 +140,8 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
         int usableWidth = (r - l) - paddingLeft - getPaddingRight();
         int usableHeight = (b - t) - paddingTop - getPaddingBottom();
 
-        int cellWidth = usableWidth / 4;
-        int cellHeight = usableHeight / 4;
+        int cellWidth = usableWidth / COL_COUNT;
+        int cellHeight = usableHeight / ROW_COUNT;
 
         int count = getChildCount();
         for (int i = 0; i < count; i++) {
@@ -163,18 +166,18 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
         int usableWidth = getWidth() - getPaddingLeft() - getPaddingRight();
         int usableHeight = getHeight() - getPaddingTop() - getPaddingBottom();
 
-        int cellWidth = usableWidth / 4;
-        int cellHeight = usableHeight / 4;
+        int cellWidth = usableWidth / COL_COUNT;
+        int cellHeight = usableHeight / ROW_COUNT;
 
-        // 1. Duzenleme / Surukleme / Edit Modu sirasinda 4x4 Izgara Kilavuz cizgilerini ciz
+        // 1. Duzenleme / Surukleme / Edit Modu sirasinda Izgara Kilavuz cizgilerini ciz
         if (isDragging || net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter.isEditMode) {
             // Dikey Cizgiler
-            for (int i = 1; i < 4; i++) {
+            for (int i = 1; i < COL_COUNT; i++) {
                 float x = getPaddingLeft() + (i * cellWidth);
                 canvas.drawLine(x, getPaddingTop(), x, getHeight() - getPaddingBottom(), gridLinePaint);
             }
             // Yatay Cizgiler
-            for (int i = 1; i < 4; i++) {
+            for (int i = 1; i < ROW_COUNT; i++) {
                 float y = getPaddingTop() + (i * cellHeight);
                 canvas.drawLine(getPaddingLeft(), y, getWidth() - getPaddingRight(), y, gridLinePaint);
             }
@@ -222,8 +225,8 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
                 return true;
 
             case DragEvent.ACTION_DRAG_LOCATION:
-                int cellWidth = getWidth() / 4;
-                int cellHeight = getHeight() / 4;
+                int cellWidth = getWidth() / COL_COUNT;
+                int cellHeight = getHeight() / ROW_COUNT;
 
                 if (cellWidth > 0 && cellHeight > 0) {
                     // Sayfalar arasi otomatik gecis (Auto-Scroll)
@@ -285,8 +288,8 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
                     int cy = (int) ((event.getY() - (cellHeight * targetSpanY / 2f)) / cellHeight + 0.5f);
 
                     // Sinirlandirma (Clamping)
-                    cx = Math.max(0, Math.min(4 - targetSpanX, cx));
-                    cy = Math.max(0, Math.min(4 - targetSpanY, cy));
+                    cx = Math.max(0, Math.min(COL_COUNT - targetSpanX, cx));
+                    cy = Math.max(0, Math.min(ROW_COUNT - targetSpanY, cy));
 
                     if (cx != targetCellX || cy != targetCellY) {
                         targetCellX = cx;
@@ -372,19 +375,19 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
     }
 
     private boolean canWidgetFitAt(BaseWidget targetWidget, int pageIndex, int cellX, int cellY, int spanX, int spanY) {
-        if (cellX < 0 || cellX + spanX > 4 || cellY < 0 || cellY + spanY > 4) {
+        if (cellX < 0 || cellX + spanX > COL_COUNT || cellY < 0 || cellY + spanY > ROW_COUNT) {
             return false;
         }
 
         java.util.List<BaseWidget> list = WidgetManager.getInstance(getContext()).getAllWidgets();
-        boolean[][] occupied = new boolean[4][4];
+        boolean[][] occupied = new boolean[COL_COUNT][ROW_COUNT];
         for (BaseWidget w : list) {
             if (w != targetWidget && w.isVisible() && w.getPageIndex() == pageIndex) {
                 int cx = w.getCellX();
                 int cy = w.getCellY();
                 int sx = w.getSpanX();
                 int sy = w.getSpanY();
-                if (cx >= 0 && cx + sx <= 4 && cy >= 0 && cy + sy <= 4) {
+                if (cx >= 0 && cx + sx <= COL_COUNT && cy >= 0 && cy + sy <= ROW_COUNT) {
                     for (int x = cx; x < cx + sx; x++) {
                         for (int y = cy; y < cy + sy; y++) {
                             occupied[x][y] = true;
