@@ -20,15 +20,30 @@ public class CarAppWidgetHostView extends AppWidgetHostView {
 
     @Override
     protected View getErrorView() {
-        String errMsg = "WIDGET FRAMEWORK HATASI: AppWidgetId " + getAppWidgetId() + " icin RemoteViews olusturulamadi veya gosterilemedi. " +
-                "Bunun nedeni widget'in bizim uygulamamizi (3rd party) reddetmesi, eksik bundle secenekleri veya cokmus olmasi olabilir.";
+        String causeStr = "Bilinmeyen Neden";
+        try {
+            // Android Framework icerisindeki AppWidgetHostView sinifinin gizli exception field'ini ariyoruz
+            for (java.lang.reflect.Field field : AppWidgetHostView.class.getDeclaredFields()) {
+                if (Throwable.class.isAssignableFrom(field.getType())) {
+                    field.setAccessible(true);
+                    Throwable t = (Throwable) field.get(this);
+                    if (t != null) {
+                        causeStr = android.util.Log.getStackTraceString(t);
+                    }
+                    break;
+                }
+            }
+        } catch (Exception ignored) {}
+
+        String errMsg = "WIDGET FRAMEWORK HATASI: AppWidgetId " + getAppWidgetId() + " icin RemoteViews olusturulamadi.\n\n" +
+                "--- ROOT CAUSE (EXCEPTION) ---\n" + causeStr + "\n-----------------------------";
         
         android.util.Log.e("CarAppWidgetHostView", errMsg);
         writeErrorToLogFile(errMsg);
 
-        // Kullaniciya ozel hata dondur ki Android'in standart siyah kutusu yerine bizim hatamizi gorsun
+        // Kullaniciya ozel hata dondur
         TextView errView = new TextView(getContext());
-        errView.setText("Android RemoteViews Hatasi!\nLog dosyasina bakiniz.\n(OEM kisitlamasi olabilir)");
+        errView.setText("Android RemoteViews Hatasi!\nLog dosyasina bakiniz.\nSebep: " + (causeStr.length() > 50 ? causeStr.substring(0,50)+"..." : causeStr));
         errView.setTextColor(Color.WHITE);
         errView.setPadding(16, 16, 16, 16);
         errView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
