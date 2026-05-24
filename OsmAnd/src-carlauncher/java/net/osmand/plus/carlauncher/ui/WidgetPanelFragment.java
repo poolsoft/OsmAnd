@@ -255,59 +255,80 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                 if (getActivity() != null) w.setContext(getActivity());
             }
 
-            final WorkspacePageAdapter adapter = new WorkspacePageAdapter(
-                getContext(),
-                getChildFragmentManager(),
-                visibleWidgets,
-                new Runnable() {
+            if (viewPager.getAdapter() instanceof WorkspacePageAdapter) {
+                final WorkspacePageAdapter adapter = (WorkspacePageAdapter) viewPager.getAdapter();
+                adapter.updateWidgetsList(visibleWidgets);
+                updatePageIndicator();
+
+                viewPager.post(new Runnable() {
                     @Override
                     public void run() {
-                        updatePageIndicator();
+                        int targetPage = currentItem;
+                        java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> list = widgetManager.getVisibleWidgets();
+                        if (!list.isEmpty()) {
+                            net.osmand.plus.carlauncher.widgets.BaseWidget lastAdded = list.get(list.size() - 1);
+                            targetPage = lastAdded.getPageIndex();
+                        }
+                        int count = adapter.getItemCount();
+                        targetPage = Math.max(0, Math.min(count - 1, targetPage));
+                        viewPager.setCurrentItem(targetPage, false);
                     }
-                }
-            );
-            adapter.setEditModeListener(new WorkspacePageAdapter.EditModeListener() {
-                @Override
-                public void onEditModeChanged(boolean isEditMode) {
-                    viewPager.setUserInputEnabled(!isEditMode);
-                    if (isEditMode) {
-                        android.widget.Toast.makeText(getContext(), 
-                            "Duzenleme Modu Aktif. Cikmak icin bos alana tiklayin.", 
-                            android.widget.Toast.LENGTH_LONG).show();
-                    } else {
-                        android.widget.Toast.makeText(getContext(), 
-                            "Duzenlemeler Kaydedildi.", 
-                            android.widget.Toast.LENGTH_SHORT).show();
+                });
+            } else {
+                final WorkspacePageAdapter adapter = new WorkspacePageAdapter(
+                    getContext(),
+                    getChildFragmentManager(),
+                    visibleWidgets,
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            updatePageIndicator();
+                        }
                     }
-                }
-            });
-            viewPager.setAdapter(adapter);
-            
-            setupPageIndicator(adapter.getItemCount());
-            viewPager.registerOnPageChangeCallback(new androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
-                @Override
-                public void onPageSelected(int position) {
-                    super.onPageSelected(position);
-                    updatePageIndicatorSelection(position);
-                }
-            });
+                );
+                adapter.setEditModeListener(new WorkspacePageAdapter.EditModeListener() {
+                    @Override
+                    public void onEditModeChanged(boolean isEditMode) {
+                        viewPager.setUserInputEnabled(!isEditMode);
+                        if (isEditMode) {
+                            android.widget.Toast.makeText(getContext(), 
+                                "Duzenleme Modu Aktif. Cikmak icin bos alana tiklayin.", 
+                                android.widget.Toast.LENGTH_LONG).show();
+                        } else {
+                            android.widget.Toast.makeText(getContext(), 
+                                "Duzenlemeler Kaydedildi.", 
+                                android.widget.Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+                viewPager.setAdapter(adapter);
+                
+                setupPageIndicator(adapter.getItemCount());
+                viewPager.registerOnPageChangeCallback(new androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        super.onPageSelected(position);
+                        updatePageIndicatorSelection(position);
+                    }
+                });
 
-            // Sayfayi asenkron olarak hedef sayfa konumuna kaydir ve koru
-            viewPager.post(new Runnable() {
-                @Override
-                public void run() {
-                    int targetPage = currentItem;
-                    java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> list = widgetManager.getVisibleWidgets();
-                    if (!list.isEmpty()) {
-                        // Adapter render olduktan sonra eger yer yoktuysa widget baska sayfaya tasinmis olabilir
-                        net.osmand.plus.carlauncher.widgets.BaseWidget lastAdded = list.get(list.size() - 1);
-                        targetPage = lastAdded.getPageIndex();
+                // Sayfayi asenkron olarak hedef sayfa konumuna kaydir ve koru
+                viewPager.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        int targetPage = currentItem;
+                        java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> list = widgetManager.getVisibleWidgets();
+                        if (!list.isEmpty()) {
+                            // Adapter render olduktan sonra eger yer yoktuysa widget baska sayfaya tasinmis olabilir
+                            net.osmand.plus.carlauncher.widgets.BaseWidget lastAdded = list.get(list.size() - 1);
+                            targetPage = lastAdded.getPageIndex();
+                        }
+                        int count = adapter.getItemCount();
+                        targetPage = Math.max(0, Math.min(count - 1, targetPage));
+                        viewPager.setCurrentItem(targetPage, false);
                     }
-                    int count = adapter.getItemCount();
-                    targetPage = Math.max(0, Math.min(count - 1, targetPage));
-                    viewPager.setCurrentItem(targetPage, false);
-                }
-            });
+                });
+            }
         }
     }
 

@@ -247,7 +247,15 @@ public class WidgetManager {
         if (existing != null) {
             existing.setVisible(true);
             existing.setSize(widget.getSize());
+            // Aktarim: Yeni eklenmek istenen sayfa indeksini mevcut widget'a veriyoruz
+            existing.setPageIndex(widget.getPageIndex());
+            existing.setCellX(-1);
+            existing.setCellY(-1);
             targetWidget = existing;
+
+            // Widget'i listenin sonuna tasiyoruz (En son eklenen olma ozelligi korunsun)
+            allWidgets.remove(existing);
+            allWidgets.add(existing);
         } else {
             if (!allWidgets.contains(widget)) {
                 allWidgets.add(widget);
@@ -258,6 +266,11 @@ public class WidgetManager {
         // Eger koordinatlar -1 ise bos yer bulup yerlestir
         if (targetWidget.getCellX() == -1 || targetWidget.getCellY() == -1) {
             autoPlaceWidget(targetWidget);
+        }
+
+        // Listede herkesin order degerini bulundugu siraya gore yenileyelim
+        for (int i = 0; i < allWidgets.size(); i++) {
+            allWidgets.get(i).setOrder(i);
         }
 
         updateVisibleWidgets();

@@ -48,8 +48,13 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
 
     private final Context context;
     private final FragmentManager fragmentManager;
-    private final List<BaseWidget> widgetsList;
+    private List<BaseWidget> widgetsList;
     private final Runnable onWidgetsChangedListener;
+
+    public void updateWidgetsList(List<BaseWidget> newWidgets) {
+        this.widgetsList = new ArrayList<>(newWidgets);
+        notifyDataSetChanged();
+    }
 
     private boolean hasExtraPage = false;
 
