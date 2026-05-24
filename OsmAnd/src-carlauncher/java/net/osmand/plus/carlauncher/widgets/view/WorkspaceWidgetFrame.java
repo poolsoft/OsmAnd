@@ -133,15 +133,15 @@ public class WorkspaceWidgetFrame extends FrameLayout {
                         float deltaX = event.getRawX() - initialX;
                         float deltaY = event.getRawY() - initialY;
 
-                        int cellWidth = parentLayout.getWidth() / 4;
-                        int cellHeight = parentLayout.getHeight() / 4;
+                        int cellWidth = parentLayout.getWidth() / WorkspaceCellLayout.COL_COUNT;
+                        int cellHeight = parentLayout.getHeight() / WorkspaceCellLayout.ROW_COUNT;
 
                         if (cellWidth > 0 && cellHeight > 0) {
                             int gridDeltaX = Math.round(deltaX / cellWidth);
                             int gridDeltaY = Math.round(deltaY / cellHeight);
 
-                            int newSpanX = Math.max(1, Math.min(4 - widget.getCellX(), initialSpanX + gridDeltaX));
-                            int newSpanY = Math.max(1, Math.min(4 - widget.getCellY(), initialSpanY + gridDeltaY));
+                            int newSpanX = Math.max(1, Math.min(WorkspaceCellLayout.COL_COUNT - widget.getCellX(), initialSpanX + gridDeltaX));
+                            int newSpanY = Math.max(1, Math.min(WorkspaceCellLayout.ROW_COUNT - widget.getCellY(), initialSpanY + gridDeltaY));
 
                             if (newSpanX != widget.getSpanX() || newSpanY != widget.getSpanY()) {
                                 if (canWidgetFitAt(widget.getPageIndex(), widget.getCellX(), widget.getCellY(), newSpanX, newSpanY)) {
@@ -318,19 +318,19 @@ public class WorkspaceWidgetFrame extends FrameLayout {
     }
 
     private boolean canWidgetFitAt(int pageIndex, int cellX, int cellY, int spanX, int spanY) {
-        if (cellX < 0 || cellX + spanX > 4 || cellY < 0 || cellY + spanY > 4) {
+        if (cellX < 0 || cellX + spanX > WorkspaceCellLayout.COL_COUNT || cellY < 0 || cellY + spanY > WorkspaceCellLayout.ROW_COUNT) {
             return false;
         }
 
         java.util.List<BaseWidget> list = WidgetManager.getInstance(getContext()).getAllWidgets();
-        boolean[][] occupied = new boolean[4][4];
+        boolean[][] occupied = new boolean[WorkspaceCellLayout.COL_COUNT][WorkspaceCellLayout.ROW_COUNT];
         for (BaseWidget w : list) {
             if (w != widget && w.isVisible() && w.getPageIndex() == pageIndex) {
                 int cx = w.getCellX();
                 int cy = w.getCellY();
                 int sx = w.getSpanX();
                 int sy = w.getSpanY();
-                if (cx >= 0 && cx + sx <= 4 && cy >= 0 && cy + sy <= 4) {
+                if (cx >= 0 && cx + sx <= WorkspaceCellLayout.COL_COUNT && cy >= 0 && cy + sy <= WorkspaceCellLayout.ROW_COUNT) {
                     for (int x = cx; x < cx + sx; x++) {
                         for (int y = cy; y < cy + sy; y++) {
                             occupied[x][y] = true;

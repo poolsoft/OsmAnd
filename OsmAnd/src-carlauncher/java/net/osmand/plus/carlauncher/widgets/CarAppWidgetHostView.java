@@ -19,36 +19,6 @@ public class CarAppWidgetHostView extends AppWidgetHostView {
     }
 
     @Override
-    public void updateAppWidgetSize(android.os.Bundle newOptions, int minWidth, int minHeight, int maxWidth, int maxHeight) {
-        // Android 12+ ve 3. parti widget'larda sifir (0) width/height veya anlamsiz limitler geldiginde (or. Layout hesaplanirken)
-        // widget'in cökmesini engellemek amaciyla asgari degerleri info icinden DP'ye cevirerek yedek (fallback) olarak ekliyoruz.
-        if (minWidth <= 0 || minHeight <= 0 || maxWidth <= 0 || maxHeight <= 0) {
-            android.appwidget.AppWidgetProviderInfo info = getAppWidgetInfo();
-            if (info != null) {
-                float density = getResources().getDisplayMetrics().density;
-                minWidth = Math.max(minWidth, (int) (info.minWidth / density));
-                minHeight = Math.max(minHeight, (int) (info.minHeight / density));
-                maxWidth = Math.max(maxWidth, (int) (info.minWidth / density));
-                maxHeight = Math.max(maxHeight, (int) (info.minHeight / density));
-            } else {
-                minWidth = Math.max(minWidth, 100);
-                minHeight = Math.max(minHeight, 100);
-                maxWidth = Math.max(maxWidth, 100);
-                maxHeight = Math.max(maxHeight, 100);
-            }
-        }
-        
-        if (newOptions == null) {
-            newOptions = new android.os.Bundle();
-        }
-        // Xiaomi/OEM widget'larinin engellenmemesi icin Host Category belirteci
-        newOptions.putInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY, 
-                          android.appwidget.AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN);
-                          
-        super.updateAppWidgetSize(newOptions, minWidth, minHeight, maxWidth, maxHeight);
-    }
-
-    @Override
     protected View getErrorView() {
         String causeStr = "Bilinmeyen Neden";
         try {
