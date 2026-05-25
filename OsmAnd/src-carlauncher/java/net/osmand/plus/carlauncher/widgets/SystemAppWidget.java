@@ -55,6 +55,16 @@ public class SystemAppWidget extends BaseWidget {
             currentContext = context;
         }
 
+        // 3. parti widget'larin (BatteryGuru, Wellbeing vb.) Material 3 / Dinamik renk
+        // ozniteliklerini (attribute) bulabilmesi ve APPLY_FAILURE hatasi vermemesi icin
+        // baglami (context) sistemin DeviceDefault temasiyla sarmaliyoruz.
+        Context themedContext = currentContext;
+        try {
+            themedContext = new android.view.ContextThemeWrapper(currentContext, android.R.style.Theme_DeviceDefault_DayNight);
+        } catch (Exception e) {
+            android.util.Log.e("SystemAppWidget", "Tema sarmalama hatasi: " + e.getMessage());
+        }
+
         // Cache: Daha once olusturulmus hostView'i tekrar kullan
         if (hostView != null) {
             rootView = hostView;
@@ -62,20 +72,20 @@ public class SystemAppWidget extends BaseWidget {
         }
 
         try {
-            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(currentContext);
+            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(themedContext);
             AppWidgetProviderInfo appWidgetInfo = appWidgetManager.getAppWidgetInfo(appWidgetId);
 
             if (appWidgetInfo == null) {
-                return createErrorView(currentContext, "Widget bulunamadi (ID: " + appWidgetId + ")");
+                return createErrorView(themedContext, "Widget bulunamadi (ID: " + appWidgetId + ")");
             }
 
-            AppWidgetHost host = WidgetManager.getInstance(currentContext).getAppWidgetHost();
+            AppWidgetHost host = WidgetManager.getInstance(themedContext).getAppWidgetHost();
             if (host == null) {
-                return createErrorView(currentContext, "Widget Host hazir degil");
+                return createErrorView(themedContext, "Widget Host hazir degil");
             }
 
             // HostView olustur
-            hostView = host.createView(currentContext, appWidgetId, appWidgetInfo);
+            hostView = host.createView(themedContext, appWidgetId, appWidgetInfo);
             hostView.setAppWidget(appWidgetId, appWidgetInfo);
 
             // Layout parametrelerini ayarla
@@ -89,14 +99,14 @@ public class SystemAppWidget extends BaseWidget {
             // Cogu widget provider (BatteryGuru, Weather, Google Keep vb.)
             // onAppWidgetOptionsChanged() callback'ini kullanarak boyuta gore
             // RemoteViews olusturur. Bu bilgi olmadan provider hicbir sey gondermez.
-            sendWidgetSizeOptions(currentContext, appWidgetManager, appWidgetInfo);
+            sendWidgetSizeOptions(themedContext, appWidgetManager, appWidgetInfo);
 
             // Ek olarak provider'a update broadcast'i gonder
             try {
                 Intent updateIntent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
                 updateIntent.setComponent(appWidgetInfo.provider);
                 updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new int[]{appWidgetId});
-                currentContext.sendBroadcast(updateIntent);
+                themedContext.sendBroadcast(updateIntent);
             } catch (Exception broadcastErr) {
                 android.util.Log.w("SystemAppWidget", "Widget update broadcast gonderilemedi: " + broadcastErr.getMessage());
             }
@@ -105,7 +115,7 @@ public class SystemAppWidget extends BaseWidget {
 
         } catch (Exception e) {
             android.util.Log.e("SystemAppWidget", "Widget olusturulurken hata: " + e.getMessage());
-            return createErrorView(currentContext, "Yukleme hatasi: " + e.getLocalizedMessage());
+            return createErrorView(themedContext, "Yukleme hatasi: " + e.getLocalizedMessage());
         }
     }
 

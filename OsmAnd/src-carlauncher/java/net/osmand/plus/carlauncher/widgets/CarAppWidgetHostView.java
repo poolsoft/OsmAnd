@@ -66,6 +66,14 @@ public class CarAppWidgetHostView extends AppWidgetHostView {
             writeToLog("BASARILI: AppWidgetId " + getAppWidgetId() +
                     " icin RemoteViews alindi (package: " + remoteViews.getPackage() + ")");
 
+            // Hatanin gercek detayini yakalamak ve gunluge kaydetmek icin diagnostic apply cagrisi yapalim
+            try {
+                remoteViews.apply(getContext(), this);
+            } catch (Exception diagnosticErr) {
+                writeToLog("DIAGNOSTIC_APPLY_EXCEPTION: AppWidgetId " + getAppWidgetId() +
+                        "\n" + android.util.Log.getStackTraceString(diagnosticErr));
+            }
+
             try {
                 super.updateAppWidget(remoteViews);
             } catch (Exception e) {
