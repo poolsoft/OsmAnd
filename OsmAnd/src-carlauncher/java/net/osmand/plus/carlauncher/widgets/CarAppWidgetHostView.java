@@ -14,6 +14,8 @@ import android.widget.RemoteViews;
 import android.widget.TextView;
 import android.widget.FrameLayout;
 
+import android.view.MotionEvent;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -42,8 +44,45 @@ public class CarAppWidgetHostView extends AppWidgetHostView {
     private boolean hasReceivedRemoteViews = false;
     private final Handler handler = new Handler(Looper.getMainLooper());
 
+    private float downX;
+    private float downY;
+    private boolean isLongClickPending = false;
+    private final Runnable longClickRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isLongClickPending) {
+                isLongClickPending = false;
+                performLongClick();
+            }
+        }
+    };
+
     public CarAppWidgetHostView(Context context) {
         super(context);
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        switch (ev.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                downX = ev.getX();
+                downY = ev.getY();
+                isLongClickPending = true;
+                handler.postDelayed(longClickRunnable, 600); // 600ms uzun basma suresi
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (Math.abs(ev.getX() - downX) > 10 || Math.abs(ev.getY() - downY) > 10) {
+                    isLongClickPending = false;
+                    handler.removeCallbacks(longClickRunnable);
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                isLongClickPending = false;
+                handler.removeCallbacks(longClickRunnable);
+                break;
+        }
+        return super.onInterceptTouchEvent(ev);
     }
 
     /**

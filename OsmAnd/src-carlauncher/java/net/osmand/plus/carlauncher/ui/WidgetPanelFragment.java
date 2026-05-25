@@ -154,6 +154,8 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             pinItem.setCheckable(true);
             pinItem.setChecked(isPinned);
             
+            popup.getMenu().add(0, 6, 5, "Masaustunu Duzenle (Edit Mode)");
+            
             popup.setOnMenuItemClickListener(item -> {
                 int id = item.getItemId();
                 if (id == 1) {
@@ -172,6 +174,16 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
  
                     if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
                         ((net.osmand.plus.activities.MapActivity) getActivity()).updateWidgetPanelMode();
+                    }
+                    return true;
+                } else if (id == 6) {
+                    if (viewPager != null && viewPager.getAdapter() instanceof WorkspacePageAdapter) {
+                        WorkspacePageAdapter adapter = (WorkspacePageAdapter) viewPager.getAdapter();
+                        WorkspacePageAdapter.isEditMode = true;
+                        adapter.notifyDataSetChanged();
+                        if (adapter.getEditModeListener() != null) {
+                            adapter.getEditModeListener().onEditModeChanged(true);
+                        }
                     }
                     return true;
                 } else if (id == 31) {

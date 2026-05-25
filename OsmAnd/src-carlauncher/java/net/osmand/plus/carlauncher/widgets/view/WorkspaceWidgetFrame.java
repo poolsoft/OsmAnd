@@ -86,32 +86,9 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         overlayContainer.setClickable(true); // Dokunmalari asil widget'a gecirmeyip yutar
         overlayContainer.setFocusable(true);
 
-        // 1. Drag Handle (Tasima Tutamaci - Orta Bolge)
-        dragHandle = new DragHandleView(context);
-        int handleSize = dpToPx(48); // Genis dokunma alani
-        LayoutParams dragParams = new LayoutParams(handleSize, handleSize);
-        dragParams.gravity = Gravity.CENTER;
-        dragHandle.setLayoutParams(dragParams);
-        dragHandle.setOnTouchListener(new OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    ClipData data = ClipData.newPlainText("widget_id", widget.getId());
-                    DragShadowBuilder shadowBuilder = new DragShadowBuilder(WorkspaceWidgetFrame.this);
-                    startDragAndDrop(data, shadowBuilder, WorkspaceWidgetFrame.this, 0);
-                    
-                    // Surukleme baslarken kendi gorunurlugumuzu hafif yari saydam yapalim
-                    setAlpha(0.3f);
-                    return true;
-                }
-                return false;
-            }
-        });
-        overlayContainer.addView(dragHandle);
-
         // 2. Resize Handle (Boyutlandirma Tutamaci - Sag Alt Kose)
         resizeHandle = new ResizeHandleView(context);
-        int resizeSize = dpToPx(44); // Genis dokunma alani
+        int resizeSize = dpToPx(28); // Zarif ve ergonomik boyut (28dp)
         LayoutParams resizeParams = new LayoutParams(resizeSize, resizeSize);
         resizeParams.gravity = Gravity.BOTTOM | Gravity.RIGHT;
         resizeHandle.setLayoutParams(resizeParams);
@@ -168,6 +145,11 @@ public class WorkspaceWidgetFrame extends FrameLayout {
                 return false;
             }
         });
+        
+        // 1x1 Uygulama kisayollari icin boyutlandirma butonunu gizle (kalabaligi onler)
+        if (widget.getId() != null && widget.getId().startsWith("shortcut_")) {
+            resizeHandle.setVisibility(GONE);
+        }
         overlayContainer.addView(resizeHandle);
 
         // Ust Sag Kose Kontrol Paneli (Ayarlar ve Silme Yan Yana)
@@ -179,7 +161,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         topParams.rightMargin = dpToPx(4);
         topControls.setLayoutParams(topParams);
 
-        int btnSize = dpToPx(44); // Genis dokunma alani
+        int btnSize = dpToPx(28); // Zarif ve ergonomik boyut (28dp)
 
         // 3. Config Button (Ayarlar Butonu)
         configBtn = new ConfigButtonView(context);
@@ -198,7 +180,9 @@ public class WorkspaceWidgetFrame extends FrameLayout {
 
         // 4. Delete Button (Kapat/Sil Butonu)
         deleteBtn = new DeleteButtonView(context);
-        LinearLayout.LayoutParams deleteLp = new LinearLayout.LayoutParams(btnSize, btnSize);
+        LinearLayout.LayoutParams deleteLp = new LinearLayout.LayoutParams(btnSize, deleteLp.WRAP_CONTENT);
+        deleteLp.width = btnSize;
+        deleteLp.height = btnSize;
         deleteBtn.setLayoutParams(deleteLp);
         deleteBtn.setOnClickListener(new OnClickListener() {
             @Override
@@ -229,7 +213,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
 
         // 5. Done Button (Duzenlemeyi Bitir / Tamam Butonu - Sol Alt Kose)
         doneBtn = new DoneButtonView(context);
-        int doneSize = dpToPx(44); // Genis dokunma alani
+        int doneSize = dpToPx(28); // Zarif ve ergonomik boyut (28dp)
         LayoutParams doneParams = new LayoutParams(doneSize, doneSize);
         doneParams.gravity = Gravity.BOTTOM | Gravity.LEFT;
         doneBtn.setLayoutParams(doneParams);
@@ -245,6 +229,42 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         overlayContainer.addView(doneBtn);
 
         overlayContainer.addView(topControls);
+
+        // Govdeden Premium Tasima (Drag & Drop) Dinleyicisi
+        overlayContainer.setOnTouchListener(new OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    float x = event.getX();
+                    float y = event.getY();
+                    
+                    // Butonlarin sinirlari icinde mi kontrol et. Eger butonlara dokunulduysa dokunmayi yutma.
+                    // Ust sag kontrol butonlari alani (topControls)
+                    boolean inTopControls = x >= (getWidth() - topControls.getWidth() - dpToPx(8)) 
+                            && y <= (topControls.getHeight() + dpToPx(8));
+                            
+                    // Sol alt done butonu alani
+                    boolean inDoneBtn = x <= (doneBtn.getWidth() + dpToPx(8)) 
+                            && y >= (getHeight() - doneBtn.getHeight() - dpToPx(8));
+                            
+                    // Sag alt resize butonu alani
+                    boolean inResizeBtn = false;
+                    if (resizeHandle.getVisibility() == VISIBLE) {
+                        inResizeBtn = x >= (getWidth() - resizeHandle.getWidth() - dpToPx(8)) 
+                                && y >= (getHeight() - resizeHandle.getHeight() - dpToPx(8));
+                    }
+                    
+                    if (!inTopControls && !inDoneBtn && !inResizeBtn) {
+                        ClipData data = ClipData.newPlainText("widget_id", widget.getId());
+                        DragShadowBuilder shadowBuilder = new DragShadowBuilder(WorkspaceWidgetFrame.this);
+                        startDragAndDrop(data, shadowBuilder, WorkspaceWidgetFrame.this, 0);
+                        setAlpha(0.3f);
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
         addView(overlayContainer, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
@@ -379,7 +399,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
 
             iconPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             iconPaint.setStyle(Paint.Style.STROKE);
-            iconPaint.setStrokeWidth(2.5f * density);
+            iconPaint.setStrokeWidth(2.0f * density);
             iconPaint.setColor(0xFFFF3333); // Neon Kirmizi
             iconPaint.setStrokeCap(Paint.Cap.ROUND);
         }
@@ -389,13 +409,13 @@ public class WorkspaceWidgetFrame extends FrameLayout {
             super.onDraw(canvas);
             float cx = getWidth() / 2f;
             float cy = getHeight() / 2f;
-            float radius = 15f * density; // 30dp cap
+            float radius = 10f * density; // 20dp cap
 
             // Daire arkaplani ciz
             canvas.drawCircle(cx, cy, radius, bgPaint);
 
             // Carpi isaretini ciz (X)
-            float size = 5f * density;
+            float size = 3.5f * density;
             canvas.drawLine(cx - size, cy - size, cx + size, cy + size, iconPaint);
             canvas.drawLine(cx + size, cy - size, cx - size, cy + size, iconPaint);
         }
@@ -421,7 +441,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
 
             iconPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             iconPaint.setStyle(Paint.Style.STROKE);
-            iconPaint.setStrokeWidth(2f * density);
+            iconPaint.setStrokeWidth(1.8f * density);
             iconPaint.setColor(0xFFFFB300); // Premium Sari/Turuncu
             iconPaint.setStrokeCap(Paint.Cap.ROUND);
         }
@@ -431,15 +451,15 @@ public class WorkspaceWidgetFrame extends FrameLayout {
             super.onDraw(canvas);
             float cx = getWidth() / 2f;
             float cy = getHeight() / 2f;
-            float radius = 15f * density;
+            float radius = 10f * density;
 
             canvas.drawCircle(cx, cy, radius, bgPaint);
 
             // Modern Ayar/Slider simgesi (2 yatay cizgi ve uzerinde kucuk daireler)
-            float lineY1 = cy - 4f * density;
-            float lineY2 = cy + 4f * density;
-            float startX = cx - 6f * density;
-            float endX = cx + 6f * density;
+            float lineY1 = cy - 2.5f * density;
+            float lineY2 = cy + 2.5f * density;
+            float startX = cx - 4f * density;
+            float endX = cx + 4f * density;
 
             // Cizgiler
             canvas.drawLine(startX, lineY1, endX, lineY1, iconPaint);
@@ -448,8 +468,8 @@ public class WorkspaceWidgetFrame extends FrameLayout {
             // Kaydirici daireler
             Paint circlePaint = new Paint(iconPaint);
             circlePaint.setStyle(Paint.Style.FILL);
-            canvas.drawCircle(cx - 2f * density, lineY1, 2.5f * density, circlePaint);
-            canvas.drawCircle(cx + 2f * density, lineY2, 2.5f * density, circlePaint);
+            canvas.drawCircle(cx - 1.5f * density, lineY1, 1.8f * density, circlePaint);
+            canvas.drawCircle(cx + 1.5f * density, lineY2, 1.8f * density, circlePaint);
         }
     }
 
@@ -525,7 +545,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
 
             iconPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             iconPaint.setStyle(Paint.Style.STROKE);
-            iconPaint.setStrokeWidth(2.2f * density);
+            iconPaint.setStrokeWidth(1.8f * density);
             iconPaint.setColor(0xFF00E5FF); // Neon Mavi
             iconPaint.setStrokeCap(Paint.Cap.ROUND);
         }
@@ -535,12 +555,12 @@ public class WorkspaceWidgetFrame extends FrameLayout {
             super.onDraw(canvas);
             float cx = getWidth() / 2f;
             float cy = getHeight() / 2f;
-            float radius = 15f * density; // 30dp cap
+            float radius = 10f * density; // 20dp cap
 
             canvas.drawCircle(cx, cy, radius, bgPaint);
 
             // Resize L seklinde kucuk ok cizimi
-            float size = 4.5f * density;
+            float size = 3f * density;
             canvas.drawLine(cx - size, cy + size, cx + size, cy + size, iconPaint); // Yatay
             canvas.drawLine(cx + size, cy - size, cx + size, cy + size, iconPaint); // Dikey
             canvas.drawLine(cx - size, cy - size, cx + size, cy + size, iconPaint); // Kosegen
@@ -570,7 +590,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
 
             iconPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             iconPaint.setStyle(Paint.Style.STROKE);
-            iconPaint.setStrokeWidth(3f * density); // Daha net ve kalin cizgi
+            iconPaint.setStrokeWidth(2.2f * density); // Daha net ve kalin cizgi
             iconPaint.setColor(0xFF00E676); // Neon Yesil
             iconPaint.setStrokeCap(Paint.Cap.ROUND);
         }
@@ -607,13 +627,13 @@ public class WorkspaceWidgetFrame extends FrameLayout {
             super.onDraw(canvas);
             float cx = getWidth() / 2f;
             float cy = getHeight() / 2f;
-            float radius = 16f * density; // 32dp cap
+            float radius = 10.5f * density; // 21dp cap
 
             // Basildiginda renk ve boyut degisimi (Premium geri bildirim)
             if (isPressed) {
                 bgPaint.setColor(0xFF00E676); // Arkaplan yesil olur
                 iconPaint.setColor(0xFF222222); // Simge koyu gri olur
-                radius = 13.5f * density; // Kuculme efekti
+                radius = 9f * density; // Kuculme efekti
             } else {
                 bgPaint.setColor(0xEE222222);
                 iconPaint.setColor(0xFF00E676);
@@ -623,12 +643,12 @@ public class WorkspaceWidgetFrame extends FrameLayout {
             canvas.drawCircle(cx, cy, radius, bgPaint);
 
             // Onay (Checkmark) isaretini ciz
-            float x1 = cx - 5f * density;
-            float y1 = cy - 0.5f * density;
-            float x2 = cx - 1.5f * density;
-            float y2 = cy + 3.5f * density;
-            float x3 = cx + 5.5f * density;
-            float y3 = cy - 3.5f * density;
+            float x1 = cx - 3.5f * density;
+            float y1 = cy - 0.3f * density;
+            float x2 = cx - 1f * density;
+            float y2 = cy + 2.3f * density;
+            float x3 = cx + 3.8f * density;
+            float y3 = cy - 2.3f * density;
 
             canvas.drawLine(x1, y1, x2, y2, iconPaint);
             canvas.drawLine(x2, y2, x3, y3, iconPaint);
