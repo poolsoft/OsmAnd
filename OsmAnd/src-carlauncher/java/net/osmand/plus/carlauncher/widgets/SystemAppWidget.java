@@ -57,10 +57,13 @@ public class SystemAppWidget extends BaseWidget {
 
         // 3. parti widget'larin (BatteryGuru, Wellbeing vb.) Material 3 / Dinamik renk
         // ozniteliklerini (attribute) bulabilmesi ve APPLY_FAILURE hatasi vermemesi icin
-        // baglami (context) sistemin DeviceDefault temasiyla sarmaliyoruz.
+        // baglami (context) sarmaliyoruz. Burada LayoutInflater'in AppCompatViewInflater
+        // kullanip ImageView'u AppCompatImageView'a donusturmesini ve RemoteViews'u
+        // cokturmesini (ActionException) engellemek icin Application Context kullaniyoruz.
         Context themedContext = currentContext;
         try {
-            themedContext = new android.view.ContextThemeWrapper(currentContext, android.R.style.Theme_DeviceDefault_DayNight);
+            Context appCtx = currentContext.getApplicationContext() != null ? currentContext.getApplicationContext() : currentContext;
+            themedContext = new android.view.ContextThemeWrapper(appCtx, android.R.style.Theme_DeviceDefault_DayNight);
         } catch (Exception e) {
             android.util.Log.e("SystemAppWidget", "Tema sarmalama hatasi: " + e.getMessage());
         }
