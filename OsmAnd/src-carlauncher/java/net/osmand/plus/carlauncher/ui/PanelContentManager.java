@@ -79,12 +79,7 @@ public class PanelContentManager {
                 fragment = new WidgetPanelFragment();
                 break;
             case WEATHER:
-                try {
-                    Class<?> weatherClass = Class.forName("net.osmand.plus.carlauncher.ui.WeatherConfigDialog");
-                    fragment = (Fragment) weatherClass.newInstance();
-                } catch (Exception e) {
-                    fragment = new UnifiedPanelFragment(); // fallback
-                }
+                fragment = new WeatherDashboardFragment();
                 break;
         }
 
