@@ -142,6 +142,10 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
         this.editModeListener = listener;
     }
 
+    public EditModeListener getEditModeListener() {
+        return editModeListener;
+    }
+
     @NonNull
     @Override
     public PageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

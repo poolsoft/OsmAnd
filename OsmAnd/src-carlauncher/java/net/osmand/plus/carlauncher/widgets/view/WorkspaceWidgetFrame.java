@@ -180,9 +180,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
 
         // 4. Delete Button (Kapat/Sil Butonu)
         deleteBtn = new DeleteButtonView(context);
-        LinearLayout.LayoutParams deleteLp = new LinearLayout.LayoutParams(btnSize, deleteLp.WRAP_CONTENT);
-        deleteLp.width = btnSize;
-        deleteLp.height = btnSize;
+        LinearLayout.LayoutParams deleteLp = new LinearLayout.LayoutParams(btnSize, btnSize);
         deleteBtn.setLayoutParams(deleteLp);
         deleteBtn.setOnClickListener(new OnClickListener() {
             @Override
