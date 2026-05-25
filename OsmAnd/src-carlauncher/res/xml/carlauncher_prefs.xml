@@ -70,7 +70,7 @@
 
         <androidx.preference.ListPreference
             android:key="car_launcher_background_style"
-            android:title="Masaustu Arka Plan Temasi"
+            android:title="Parallax Arka Plan Secici"
             android:summary="%s"
             android:entries="@array/background_style_entries"
             android:entryValues="@array/background_style_values"
@@ -195,24 +195,6 @@
             android:entries="@array/dock_position_entries"
             android:entryValues="@array/dock_position_values"
             android:defaultValue="bottom"
-            android:iconSpaceReserved="false" />
-
-        <androidx.preference.ListPreference
-            android:key="widget_panel_position"
-            android:title="Widget Paneli Konumu"
-            android:summary="%s"
-            android:entries="@array/widget_panel_position_entries"
-            android:entryValues="@array/widget_panel_position_values"
-            android:defaultValue="right"
-            android:iconSpaceReserved="false" />
-
-        <androidx.preference.ListPreference
-            android:key="widget_card_style"
-            android:title="Widget Kart Stili"
-            android:summary="%s"
-            android:entries="@array/widget_card_style_entries"
-            android:entryValues="@array/widget_card_style_values"
-            android:defaultValue="modern"
             android:iconSpaceReserved="false" />
 
         <androidx.preference.SeekBarPreference

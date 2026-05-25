@@ -178,7 +178,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
 
             android.widget.FrameLayout.LayoutParams btnParams = new android.widget.FrameLayout.LayoutParams(
                     dpToPx(48), dpToPx(48)); 
-            btnParams.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
+            btnParams.gravity = android.view.Gravity.TOP | android.view.Gravity.START;
             btnParams.setMargins(dpToPx(24), dpToPx(24), dpToPx(24), dpToPx(24));
 
             container.addView(closeBtn, btnParams);
