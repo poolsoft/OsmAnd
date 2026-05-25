@@ -53,21 +53,26 @@ public class AppShortcutWidget extends BaseWidget {
             ctx = context;
         }
 
-        // Ana Yerlesim (Ortalanmis Dikey Kutu)
+        // Ana Yerlesim (Dinamik Olceklenebilir Dikey Kutu)
         LinearLayout layout = new LinearLayout(ctx);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
         
-        int padding = dpToPx(8);
+        // Kenar padding'ini kucuk tutuyoruz (2dp) ki ikon ve metne maksimum alan kalsin.
+        int padding = dpToPx(2);
         layout.setPadding(padding, padding, padding, padding);
 
-        // Uygulama Ikonu
+        // Uygulama Ikonu (Agirlik = 0.65f)
         ImageView iconView = new ImageView(ctx);
-        int iconSize = dpToPx(48); // Surus esnasinda gorunur ve rahat tiklanir 48dp boyut
-        LinearLayout.LayoutParams iconLp = new LinearLayout.LayoutParams(iconSize, iconSize);
-        iconLp.bottomMargin = dpToPx(6);
-        iconView.setLayoutParams(iconLp);
         iconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        
+        // Ikon yuksekligini dikeyde esnek yapiyoruz. Boylece ikon dikey alanin yaklasik %65'ini kaplar.
+        LinearLayout.LayoutParams iconLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 
+                0, 
+                0.65f);
+        iconLp.bottomMargin = dpToPx(4);
+        iconView.setLayoutParams(iconLp);
 
         try {
             Drawable icon = ctx.getPackageManager().getApplicationIcon(packageName);
@@ -77,18 +82,20 @@ public class AppShortcutWidget extends BaseWidget {
         }
         layout.addView(iconView);
 
-        // Uygulama Adi (Kucuk ve Net)
+        // Uygulama Adi (Kucuk ve Net, Agirlik = 0.25f)
         TextView labelView = new TextView(ctx);
         labelView.setText(title);
         labelView.setTextColor(Color.WHITE);
-        labelView.setTextSize(10); // Okunabilir kucuk punto
+        labelView.setTextSize(10); // Okunabilir sabit kucuk punto
         labelView.setGravity(Gravity.CENTER);
         labelView.setSingleLine(true);
         labelView.setEllipsize(TextUtils.TruncateAt.END);
         
+        // Metin alanini da dikeyde esnek yapiyoruz (Agirlik = 0.25f)
         LinearLayout.LayoutParams labelLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
+                0,
+                0.25f);
         labelView.setLayoutParams(labelLp);
         layout.addView(labelView);
 

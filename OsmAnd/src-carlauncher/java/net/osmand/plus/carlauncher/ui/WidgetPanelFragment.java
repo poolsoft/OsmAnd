@@ -44,6 +44,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     private OsmandApplication app;
     private ViewGroup rootContent;
     private View widgetContentFrame;
+    private android.widget.ImageView parallaxBg;
     
     private boolean isPinned = true; 
     private static final String PREF_IS_PINNED = "widget_panel_pinned";
@@ -81,6 +82,9 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         pageIndicator = root.findViewById(net.osmand.plus.R.id.workspace_page_indicator);
         View menuBtn = root.findViewById(net.osmand.plus.R.id.btn_widget_menu);
         
+        // Parallax arka plan baglantisi
+        parallaxBg = root.findViewById(net.osmand.plus.R.id.workspace_parallax_bg);
+        
         // Bottom Navigation
         View navWidgets = root.findViewById(net.osmand.plus.R.id.nav_widgets);
         View navNavigation = root.findViewById(net.osmand.plus.R.id.nav_navigation);
@@ -91,9 +95,10 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         
         widgetContentFrame = root;
         rootContent = (ViewGroup) root;
-
+ 
         initListLayout();
         setupMenuButton(menuBtn);
+        setupViewPagerCallback();
         
         return root;
     }
@@ -101,8 +106,20 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     private View createProgrammaticView() {
         FrameLayout contentFrame = new FrameLayout(getContext());
         contentFrame.setBackgroundColor(0xFF111111);
+        
+        // Programatik parallax arka plan
+        parallaxBg = new android.widget.ImageView(getContext());
+        parallaxBg.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+        parallaxBg.setImageResource(net.osmand.plus.R.drawable.bg_panel_modern);
+        contentFrame.addView(parallaxBg, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+
         viewPager = new androidx.viewpager2.widget.ViewPager2(getContext());
-        contentFrame.addView(viewPager);
+        contentFrame.addView(viewPager, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        setupViewPagerCallback();
         return contentFrame;
     }
 
@@ -304,13 +321,6 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                 viewPager.setAdapter(adapter);
                 
                 setupPageIndicator(adapter.getItemCount());
-                viewPager.registerOnPageChangeCallback(new androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
-                    @Override
-                    public void onPageSelected(int position) {
-                        super.onPageSelected(position);
-                        updatePageIndicatorSelection(position);
-                    }
-                });
 
                 // Sayfayi asenkron olarak hedef sayfa konumuna kaydir ve koru
                 viewPager.post(new Runnable() {
@@ -377,6 +387,28 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             dot.setBackground(gd);
             dot.setLayoutParams(params);
         }
+    }
+
+    private void setupViewPagerCallback() {
+        if (viewPager == null) return;
+        viewPager.registerOnPageChangeCallback(new androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                super.onPageScrolled(position, positionOffset, positionOffsetPixels);
+                if (parallaxBg != null) {
+                    float totalScroll = position + positionOffset;
+                    int width = viewPager.getWidth() > 0 ? viewPager.getWidth() : getResources().getDisplayMetrics().widthPixels;
+                    float translationX = -totalScroll * width * 0.2f; // Premium parallax kaydirma katsayisi
+                    parallaxBg.setTranslationX(translationX);
+                }
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                updatePageIndicatorSelection(position);
+            }
+        });
     }
 
     private void updatePageIndicator() {
