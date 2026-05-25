@@ -84,6 +84,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         
         // Parallax arka plan baglantisi
         parallaxBg = root.findViewById(net.osmand.plus.R.id.workspace_parallax_bg);
+        updateBackgroundStyle();
         
         // Bottom Navigation
         View navWidgets = root.findViewById(net.osmand.plus.R.id.nav_widgets);
@@ -110,10 +111,10 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         // Programatik parallax arka plan
         parallaxBg = new android.widget.ImageView(getContext());
         parallaxBg.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
-        parallaxBg.setImageResource(net.osmand.plus.R.drawable.bg_panel_modern);
         contentFrame.addView(parallaxBg, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
+        updateBackgroundStyle();
 
         viewPager = new androidx.viewpager2.widget.ViewPager2(getContext());
         contentFrame.addView(viewPager, new FrameLayout.LayoutParams(
@@ -410,7 +411,12 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                 if (parallaxBg != null) {
                     float totalScroll = position + positionOffset;
                     int width = viewPager.getWidth() > 0 ? viewPager.getWidth() : getResources().getDisplayMetrics().widthPixels;
-                    float translationX = -totalScroll * width * 0.2f; // Premium parallax kaydirma katsayisi
+                    float intensity = 20f;
+                    if (getContext() != null) {
+                        CarLauncherSettings settings = new CarLauncherSettings(getContext());
+                        intensity = settings.getParallaxIntensity();
+                    }
+                    float translationX = -totalScroll * width * (intensity / 100f); // Premium parallax kaydirma katsayisi
                     parallaxBg.setTranslationX(translationX);
                 }
             }
@@ -433,6 +439,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     @Override
     public void onResume() {
         super.onResume();
+        updateBackgroundStyle();
         if (getContext() != null) {
             PreferenceManager.getDefaultSharedPreferences(getContext())
                     .registerOnSharedPreferenceChangeListener(this);
@@ -567,7 +574,24 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        // No-op for now since slots concept is handled by workspace grid
+        if (CarLauncherSettings.KEY_BACKGROUND_STYLE.equals(key)) {
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(this::updateBackgroundStyle);
+            }
+        }
+    }
+
+    private void updateBackgroundStyle() {
+        if (parallaxBg == null || getContext() == null) return;
+        CarLauncherSettings settings = new CarLauncherSettings(getContext());
+        String style = settings.getBackgroundStyle();
+        int resId = net.osmand.plus.R.drawable.bg_panel_modern;
+        if ("carbon".equals(style)) {
+            resId = net.osmand.plus.R.drawable.bg_panel_carbon;
+        } else if ("space".equals(style)) {
+            resId = net.osmand.plus.R.drawable.bg_panel_space;
+        }
+        parallaxBg.setImageResource(resId);
     }
 
     @Override

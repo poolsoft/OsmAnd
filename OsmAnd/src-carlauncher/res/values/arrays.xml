@@ -59,4 +59,16 @@
         <item>day</item>
         <item>night</item>
     </string-array>
+    
+    <!-- Masaustu Arka Plan Temalari -->
+    <string-array name="background_style_entries">
+        <item>Modern Gradient (Mavi/Mor)</item>
+        <item>Carbon Black (Spor Siyah)</item>
+        <item>Deep Space (Uzay Grisi)</item>
+    </string-array>
+    <string-array name="background_style_values">
+        <item>modern</item>
+        <item>carbon</item>
+        <item>space</item>
+    </string-array>
 </resources>

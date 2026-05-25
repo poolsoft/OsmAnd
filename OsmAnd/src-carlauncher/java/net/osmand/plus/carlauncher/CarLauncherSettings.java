@@ -36,6 +36,8 @@ public class CarLauncherSettings {
     public static final String KEY_PORTRAIT_MAP_ONLY = "car_launcher_portrait_map_only";
     public static final String KEY_FLOATING_BUTTON = "car_launcher_floating_button";
     public static final String KEY_NIGHT_DIM_MODE = "car_launcher_night_dim_mode";
+    public static final String KEY_PARALLAX_INTENSITY = "car_launcher_parallax_intensity";
+    public static final String KEY_BACKGROUND_STYLE = "car_launcher_background_style";
 
     // Music Keys
     public static final String KEY_MUSIC_APP = "car_launcher_music_app";
@@ -320,6 +322,23 @@ public class CarLauncherSettings {
 
     public void setNightDimMode(String mode) {
         prefs.edit().putString(KEY_NIGHT_DIM_MODE, mode).apply();
+    }
+
+    // --- Premium Appearance Settings ---
+    public int getParallaxIntensity() {
+        return prefs.getInt(KEY_PARALLAX_INTENSITY, 20);
+    }
+
+    public void setParallaxIntensity(int intensity) {
+        prefs.edit().putInt(KEY_PARALLAX_INTENSITY, intensity).apply();
+    }
+
+    public String getBackgroundStyle() {
+        return prefs.getString(KEY_BACKGROUND_STYLE, "modern");
+    }
+
+    public void setBackgroundStyle(String style) {
+        prefs.edit().putString(KEY_BACKGROUND_STYLE, style).apply();
     }
 
     public SharedPreferences getPrefs() {

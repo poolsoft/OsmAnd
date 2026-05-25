@@ -387,6 +387,38 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+
+        // Premium Parallax Intensity
+        SeekBarPreference parallaxIntensityPref = findPreference(CarLauncherSettings.KEY_PARALLAX_INTENSITY);
+        if (parallaxIntensityPref != null) {
+            parallaxIntensityPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                int val = (Integer) newValue;
+                if (settings != null) {
+                    settings.setParallaxIntensity(val);
+                }
+                if (getActivity() != null) {
+                    Intent intent = new Intent("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
+                    getActivity().sendBroadcast(intent);
+                }
+                return true;
+            });
+        }
+
+        // Premium Background Style
+        androidx.preference.ListPreference backgroundStylePref = findPreference(CarLauncherSettings.KEY_BACKGROUND_STYLE);
+        if (backgroundStylePref != null) {
+            backgroundStylePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                String val = (String) newValue;
+                if (settings != null) {
+                    settings.setBackgroundStyle(val);
+                }
+                if (getActivity() != null) {
+                    Intent intent = new Intent("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
+                    getActivity().sendBroadcast(intent);
+                }
+                return true;
+            });
+        }
     }
 
     private void applyStatusBarVisibility(boolean show) {

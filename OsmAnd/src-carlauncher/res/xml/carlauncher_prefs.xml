@@ -25,19 +25,13 @@
             android:defaultValue="true"
             android:iconSpaceReserved="false" />
 
-        <androidx.preference.Preference
-            android:key="car_launcher_widget_manager"
-            android:title="Widget Sıralaması"
-            android:summary="Sürükle bırak ile düzenle"
-            android:iconSpaceReserved="false" />
-            
         <androidx.preference.ListPreference
-            android:key="widget_layout_mode_v2"
+            android:key="widget_display_mode"
             android:title="Widget Görünüm Modu"
             android:summary="%s"
-            android:entries="@array/widget_layout_mode_entries"
-            android:entryValues="@array/widget_layout_mode_values"
-            android:defaultValue="classic"
+            android:entries="@array/widget_display_mode_entries"
+            android:entryValues="@array/widget_display_mode_values"
+            android:defaultValue="0"
             android:iconSpaceReserved="false" />
 
         <androidx.preference.SwitchPreferenceCompat
@@ -63,41 +57,29 @@
             android:defaultValue="osmand"
             android:iconSpaceReserved="false" />
 
-    </androidx.preference.PreferenceCategory>
-
-    <androidx.preference.PreferenceCategory
-        android:key="category_layout_portrait"
-        android:title="Dikey Mod (Portrait) Ayarları"
-        android:iconSpaceReserved="false">
-
+        <!-- Premium Kisiklestirme Ayarlari -->
         <androidx.preference.SeekBarPreference
-            android:key="widget_slot_count_portrait_v2"
-            android:title="Widget Sayısı (Ekrana Sığacak)"
-            android:summary="Dikey ekranda kaç widget görünecek (Varsayılan: 3)"
-            android:defaultValue="3"
-            android:max="6"
-            app:min="1"
+            android:key="car_launcher_parallax_intensity"
+            android:title="Parallax Arka Plan Gucu"
+            android:summary="ViewPager kaydirilirken arka planin kayma miktarini ayarlar (Varsayilan: %20)"
+            android:defaultValue="20"
+            android:max="50"
+            app:min="0"
             app:showSeekBarValue="true"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.ListPreference
+            android:key="car_launcher_background_style"
+            android:title="Masaustu Arka Plan Temasi"
+            android:summary="%s"
+            android:entries="@array/background_style_entries"
+            android:entryValues="@array/background_style_values"
+            android:defaultValue="modern"
             android:iconSpaceReserved="false" />
 
     </androidx.preference.PreferenceCategory>
 
-    <androidx.preference.PreferenceCategory
-        android:key="category_layout_landscape"
-        android:title="Yatay Mod (Landscape) Ayarları"
-        android:iconSpaceReserved="false">
 
-        <androidx.preference.SeekBarPreference
-            android:key="widget_slot_count_landscape_v2"
-            android:title="Widget Sayısı (Ekrana Sığacak)"
-            android:summary="Yatay ekranda kaç widget görünecek (Varsayılan: 3)"
-            android:defaultValue="3"
-            android:max="6"
-            app:min="1"
-            app:showSeekBarValue="true"
-            android:iconSpaceReserved="false" />
-
-    </androidx.preference.PreferenceCategory>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- MÜZİK AYARLARI -->
