@@ -196,7 +196,35 @@ public class WidgetPickerDialog extends DialogFragment {
         divider.setBackgroundColor(0x1FFFFFFF);
         mainContainer.addView(divider);
 
-        // 2. Kisim: Sistem Widget'lari (Paket Bazli Gruplanmis)
+        // 2. Kisim: Uygulama Kisayollari (Yatay Kart Listesi)
+        TextView shortcutsTitle = new TextView(ctx);
+        shortcutsTitle.setText("Uygulama Kisayollari");
+        shortcutsTitle.setTextColor(Color.WHITE);
+        shortcutsTitle.setTextSize(15);
+        shortcutsTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        shortcutsTitle.setPadding(0, 0, 0, dpToPx(8));
+        mainContainer.addView(shortcutsTitle);
+
+        HorizontalScrollView shortcutsScroll = new HorizontalScrollView(ctx);
+        shortcutsScroll.setClipToPadding(false);
+        shortcutsScroll.setPadding(0, 0, 0, dpToPx(16));
+        
+        LinearLayout shortcutsList = new LinearLayout(ctx);
+        shortcutsList.setOrientation(LinearLayout.HORIZONTAL);
+
+        buildShortcutsSection(ctx, shortcutsList);
+        shortcutsScroll.addView(shortcutsList);
+        mainContainer.addView(shortcutsScroll);
+
+        // Ayirici 2
+        View divider2 = new View(ctx);
+        LinearLayout.LayoutParams divLp2 = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(1));
+        divLp2.setMargins(0, dpToPx(8), 0, dpToPx(16));
+        divider2.setLayoutParams(divLp2);
+        divider2.setBackgroundColor(0x1FFFFFFF);
+        mainContainer.addView(divider2);
+
+        // 3. Kisim: Sistem Widget'lari (Paket Bazli Gruplanmis)
         TextView systemTitle = new TextView(ctx);
         systemTitle.setText("Sistem Uygulama Widget'lari");
         systemTitle.setTextColor(Color.WHITE);
@@ -824,6 +852,99 @@ public class WidgetPickerDialog extends DialogFragment {
                 }
             }
         }
+    }
+
+    private void buildShortcutsSection(Context ctx, LinearLayout container) {
+        android.content.pm.PackageManager pm = ctx.getPackageManager();
+        Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
+        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        List<android.content.pm.ResolveInfo> launchables = pm.queryIntentActivities(mainIntent, 0);
+
+        // Uygulamalari basliklarina gore alfabetik sirala
+        java.util.Collections.sort(launchables, new java.util.Comparator<android.content.pm.ResolveInfo>() {
+            @Override
+            public int compare(android.content.pm.ResolveInfo a, android.content.pm.ResolveInfo b) {
+                return a.loadLabel(pm).toString().compareToIgnoreCase(b.loadLabel(pm).toString());
+            }
+        });
+
+        for (android.content.pm.ResolveInfo info : launchables) {
+            String packageName = info.activityInfo.packageName;
+            String label = info.loadLabel(pm).toString();
+            android.graphics.drawable.Drawable icon = null;
+            try {
+                icon = info.loadIcon(pm);
+            } catch (Exception e) {
+                icon = ctx.getResources().getDrawable(android.R.drawable.sym_def_app_icon);
+            }
+
+            container.addView(createShortcutCard(ctx, packageName, label, icon));
+        }
+    }
+
+    private View createShortcutCard(Context ctx, String packageName, String label, android.graphics.drawable.Drawable icon) {
+        LinearLayout card = new LinearLayout(ctx);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setGravity(Gravity.CENTER_HORIZONTAL);
+        card.setPadding(dpToPx(10), dpToPx(10), dpToPx(10), dpToPx(10));
+
+        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(dpToPx(120), ViewGroup.LayoutParams.WRAP_CONTENT);
+        cardLp.rightMargin = dpToPx(12);
+        card.setLayoutParams(cardLp);
+
+        GradientDrawable cardBg = new GradientDrawable();
+        cardBg.setColor(0x0FFFFFFF);
+        cardBg.setCornerRadius(dpToPx(10));
+        cardBg.setStroke(dpToPx(1), 0x1FFFFFFF);
+        card.setBackground(cardBg);
+
+        // Ikon (ImageView)
+        android.widget.ImageView iconView = new android.widget.ImageView(ctx);
+        LinearLayout.LayoutParams iconLp = new LinearLayout.LayoutParams(dpToPx(48), dpToPx(48));
+        iconLp.bottomMargin = dpToPx(8);
+        iconView.setLayoutParams(iconLp);
+        iconView.setImageDrawable(icon);
+        card.addView(iconView);
+
+        // Uygulama Baslik
+        TextView title = new TextView(ctx);
+        title.setText(label);
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(12);
+        title.setGravity(Gravity.CENTER);
+        title.setSingleLine(true);
+        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        title.setPadding(0, 0, 0, dpToPx(16));
+        card.addView(title);
+
+        // Ekle Butonu
+        Button btnAdd = new Button(ctx);
+        btnAdd.setText("Ekle");
+        btnAdd.setTextColor(Color.WHITE);
+        btnAdd.setTextSize(11);
+        btnAdd.setAllCaps(false);
+        LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(28));
+        btnAdd.setLayoutParams(btnLp);
+
+        GradientDrawable btnBg = new GradientDrawable();
+        btnBg.setColor(0x22FFFFFF);
+        btnBg.setCornerRadius(dpToPx(14));
+        btnAdd.setBackground(btnBg);
+
+        btnAdd.setOnClickListener(v -> {
+            net.osmand.plus.carlauncher.widgets.AppShortcutWidget shortcut =
+                    new net.osmand.plus.carlauncher.widgets.AppShortcutWidget(ctx, packageName, label);
+            widgetManager.addWidget(shortcut);
+            dismiss();
+            if (onDismissCallback != null) {
+                onDismissCallback.run();
+            }
+        });
+
+        card.addView(btnAdd);
+
+        return card;
     }
 
     private static class WidgetInfo {
