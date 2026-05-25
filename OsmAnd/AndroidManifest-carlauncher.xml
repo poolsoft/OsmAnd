@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.BIND_APPWIDGET" tools:ignore="ProtectedPermissions"/>
     <!-- ListView/StackView iceren koleksiyon widget'lari (BatteryGuru, Google Keep vb.) icin zorunludur -->
     <uses-permission android:name="android.permission.BIND_REMOTEVIEWS" tools:ignore="ProtectedPermissions"/>
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 
     <application
         android:icon="@mipmap/icon_nightly"
@@ -93,7 +94,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="net.osmand.carlauncher.fileprovider"
+            android:authorities="${applicationId}.fileprovider"
             tools:replace="android:authorities"/>
     </application>
 </manifest> 
