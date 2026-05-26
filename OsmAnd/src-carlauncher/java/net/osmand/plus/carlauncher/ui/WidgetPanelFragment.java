@@ -134,6 +134,8 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         });
     }
 
+    private static final int RC_SELECT_WALLPAPER = 105;
+
     private void setupMenuButton(View menuBtn) {
         if (menuBtn == null) return;
         menuBtn.setOnClickListener(v -> showPopupMenu(v));
@@ -146,22 +148,16 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         
         popup.getMenu().add(0, 1, 0, "Widget Ekle (Yeni)");
         popup.getMenu().add(0, 2, 1, "Launcher Ayarlari");
-        
-        // Profil Secenekleri
-        android.view.Menu presetsMenu = popup.getMenu().addSubMenu(0, 3, 2, "Widget Profilleri");
-        presetsMenu.add(0, 31, 0, "Navigasyon Odakli");
-        presetsMenu.add(0, 32, 1, "Medya Odakli");
-        presetsMenu.add(0, 33, 2, "Minimalist");
-        presetsMenu.add(0, 34, 3, "Kullanici Secimi");
-        
-        popup.getMenu().add(0, 4, 3, "Mevcut Duzeni Kaydet");
-        popup.getMenu().add(0, 6, 4, "Masaustunu Duzenle (Edit Mode)");
+        popup.getMenu().add(0, 4, 2, "Mevcut Duzeni Kaydet");
+        popup.getMenu().add(0, 6, 3, "Masaustunu Duzenle (Edit Mode)");
 
         // Premium Arka Plan Secenekleri
-        android.view.Menu bgMenu = popup.getMenu().addSubMenu(0, 7, 5, "Arka Plan Temasi");
+        android.view.Menu bgMenu = popup.getMenu().addSubMenu(0, 7, 4, "Arka Plan Temasi");
         bgMenu.add(0, 71, 0, "Modern Gradient");
         bgMenu.add(0, 72, 1, "Carbon Black");
         bgMenu.add(0, 73, 2, "Deep Space");
+        
+        popup.getMenu().add(0, 8, 5, "Arka Plan Resmi Sec");
         
         popup.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
@@ -193,17 +189,15 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             } else if (id == 73) {
                 settings.setBackgroundStyle("space");
                 return true;
-            } else if (id == 31) {
-                applyLayoutPreset(LayoutPreset.NAVIGATION);
-                return true;
-            } else if (id == 32) {
-                applyLayoutPreset(LayoutPreset.MEDIA);
-                return true;
-            } else if (id == 33) {
-                applyLayoutPreset(LayoutPreset.MINIMALIST);
-                return true;
-            } else if (id == 34) {
-                applyLayoutPreset(LayoutPreset.USER);
+            } else if (id == 8) {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("image/*");
+                    startActivityForResult(intent, RC_SELECT_WALLPAPER);
+                } catch (Exception e) {
+                    android.widget.Toast.makeText(getContext(), "Dosya secici acilamadi", android.widget.Toast.LENGTH_SHORT).show();
+                }
                 return true;
             } else if (id == 4) {
                 if (widgetManager != null) {
@@ -218,6 +212,30 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             return false;
         });
         popup.show();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == android.app.Activity.RESULT_OK && data != null && data.getData() != null) {
+            if (requestCode == RC_SELECT_WALLPAPER) {
+                android.net.Uri uri = data.getData();
+                if (getContext() != null) {
+                    try {
+                        getContext().getContentResolver().takePersistableUriPermission(
+                            uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        );
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                    CarLauncherSettings settings = new CarLauncherSettings(getContext());
+                    settings.getPrefs().edit().putString("car_launcher_wallpaper_uri", uri.toString()).apply();
+                    settings.setBackgroundStyle("custom");
+                    
+                    updateBackgroundStyle();
+                }
+            }
+        }
     }
 
     private enum LayoutPreset {
@@ -590,6 +608,20 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         if (parallaxBg == null || getContext() == null) return;
         CarLauncherSettings settings = new CarLauncherSettings(getContext());
         String style = settings.getBackgroundStyle();
+        
+        if ("custom".equals(style)) {
+            String uriString = settings.getPrefs().getString("car_launcher_wallpaper_uri", null);
+            if (uriString != null) {
+                try {
+                    android.net.Uri uri = android.net.Uri.parse(uriString);
+                    parallaxBg.setImageURI(uri);
+                    return;
+                } catch (Exception e) {
+                    android.util.Log.e("WidgetPanelFragment", "Wallpaper yuklenemedi", e);
+                }
+            }
+        }
+        
         int resId = net.osmand.plus.R.drawable.bg_panel_modern;
         if ("carbon".equals(style)) {
             resId = net.osmand.plus.R.drawable.bg_panel_carbon;

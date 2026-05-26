@@ -63,6 +63,7 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
         setClipToPadding(false);
         setOnDragListener(this);
         setClickable(true); // Tiklanabilir yaparak bos sayfada edit modundan cikisi garanti eder
+        setLongClickable(true);
 
         // Hucreler arasi default margin (6dp)
         float density = context.getResources().getDisplayMetrics().density;
