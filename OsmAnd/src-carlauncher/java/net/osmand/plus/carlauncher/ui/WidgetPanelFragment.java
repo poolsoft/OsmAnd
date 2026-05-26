@@ -99,6 +99,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
  
         initListLayout();
         setupMenuButton(menuBtn);
+        WorkspacePageAdapter.setWorkspaceLongClickListener(this::showPopupMenu);
         setupViewPagerCallback();
         
         return root;
@@ -135,84 +136,88 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
 
     private void setupMenuButton(View menuBtn) {
         if (menuBtn == null) return;
+        menuBtn.setOnClickListener(v -> showPopupMenu(v));
+    }
+
+    private void showPopupMenu(View anchorView) {
+        if (getContext() == null || anchorView == null) return;
         
-        menuBtn.setOnClickListener(v -> {
-            android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), menuBtn);
-            
-            popup.getMenu().add(0, 1, 0, "Widget Ekle (Yeni)");
-            popup.getMenu().add(0, 2, 1, "Launcher Ayarlari");
-            
-            // Profil Secenekleri
-            android.view.Menu presetsMenu = popup.getMenu().addSubMenu(0, 3, 2, "Widget Profilleri");
-            presetsMenu.add(0, 31, 0, "Navigasyon Odakli");
-            presetsMenu.add(0, 32, 1, "Medya Odakli");
-            presetsMenu.add(0, 33, 2, "Minimalist");
-            presetsMenu.add(0, 34, 3, "Kullanici Secimi");
-            
-            popup.getMenu().add(0, 4, 3, "Mevcut Duzeni Kaydet");
-            
-            android.view.MenuItem pinItem = popup.getMenu().add(0, 5, 4, "Sabitle (Pinned)");
-            pinItem.setCheckable(true);
-            pinItem.setChecked(isPinned);
-            
-            popup.getMenu().add(0, 6, 5, "Masaustunu Duzenle (Edit Mode)");
-            
-            popup.setOnMenuItemClickListener(item -> {
-                int id = item.getItemId();
-                if (id == 1) {
-                    showWidgetControlDialog();
-                    return true;
-                } else if (id == 2) {
-                    if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
-                        ((net.osmand.plus.activities.MapActivity) getActivity()).openCarLauncherSettings();
-                    }
-                    return true;
-                } else if (id == 5) {
-                    isPinned = !isPinned;
-                    item.setChecked(isPinned);
-                    PreferenceManager.getDefaultSharedPreferences(getContext())
-                        .edit().putBoolean(PREF_IS_PINNED, isPinned).apply();
- 
-                    if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
-                        ((net.osmand.plus.activities.MapActivity) getActivity()).updateWidgetPanelMode();
-                    }
-                    return true;
-                } else if (id == 6) {
-                    if (viewPager != null && viewPager.getAdapter() instanceof WorkspacePageAdapter) {
-                        WorkspacePageAdapter adapter = (WorkspacePageAdapter) viewPager.getAdapter();
-                        WorkspacePageAdapter.isEditMode = true;
-                        adapter.notifyDataSetChanged();
-                        if (adapter.getEditModeListener() != null) {
-                            adapter.getEditModeListener().onEditModeChanged(true);
-                        }
-                    }
-                    return true;
-                } else if (id == 31) {
-                    applyLayoutPreset(LayoutPreset.NAVIGATION);
-                    return true;
-                } else if (id == 32) {
-                    applyLayoutPreset(LayoutPreset.MEDIA);
-                    return true;
-                } else if (id == 33) {
-                    applyLayoutPreset(LayoutPreset.MINIMALIST);
-                    return true;
-                } else if (id == 34) {
-                    applyLayoutPreset(LayoutPreset.USER);
-                    return true;
-                } else if (id == 4) {
-                    if (widgetManager != null) {
-                        widgetManager.saveUserLayout();
-                        if (getView() != null) {
-                            getView().performHapticFeedback(android.view.HapticFeedbackConstants.CONFIRM);
-                        }
-                        android.widget.Toast.makeText(getContext(), "Mevcut widget duzeni basariyla kaydedildi", android.widget.Toast.LENGTH_SHORT).show();
-                    }
-                    return true;
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), anchorView);
+        
+        popup.getMenu().add(0, 1, 0, "Widget Ekle (Yeni)");
+        popup.getMenu().add(0, 2, 1, "Launcher Ayarlari");
+        
+        // Profil Secenekleri
+        android.view.Menu presetsMenu = popup.getMenu().addSubMenu(0, 3, 2, "Widget Profilleri");
+        presetsMenu.add(0, 31, 0, "Navigasyon Odakli");
+        presetsMenu.add(0, 32, 1, "Medya Odakli");
+        presetsMenu.add(0, 33, 2, "Minimalist");
+        presetsMenu.add(0, 34, 3, "Kullanici Secimi");
+        
+        popup.getMenu().add(0, 4, 3, "Mevcut Duzeni Kaydet");
+        popup.getMenu().add(0, 6, 4, "Masaustunu Duzenle (Edit Mode)");
+
+        // Premium Arka Plan Secenekleri
+        android.view.Menu bgMenu = popup.getMenu().addSubMenu(0, 7, 5, "Arka Plan Temasi");
+        bgMenu.add(0, 71, 0, "Modern Gradient");
+        bgMenu.add(0, 72, 1, "Carbon Black");
+        bgMenu.add(0, 73, 2, "Deep Space");
+        
+        popup.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            CarLauncherSettings settings = new CarLauncherSettings(getContext());
+            if (id == 1) {
+                showWidgetControlDialog();
+                return true;
+            } else if (id == 2) {
+                if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                    ((net.osmand.plus.activities.MapActivity) getActivity()).openCarLauncherSettings();
                 }
-                return false;
-            });
-            popup.show();
+                return true;
+            } else if (id == 6) {
+                if (viewPager != null && viewPager.getAdapter() instanceof WorkspacePageAdapter) {
+                    WorkspacePageAdapter adapter = (WorkspacePageAdapter) viewPager.getAdapter();
+                    WorkspacePageAdapter.isEditMode = true;
+                    adapter.notifyDataSetChanged();
+                    if (adapter.getEditModeListener() != null) {
+                        adapter.getEditModeListener().onEditModeChanged(true);
+                    }
+                }
+                return true;
+            } else if (id == 71) {
+                settings.setBackgroundStyle("modern");
+                return true;
+            } else if (id == 72) {
+                settings.setBackgroundStyle("carbon");
+                return true;
+            } else if (id == 73) {
+                settings.setBackgroundStyle("space");
+                return true;
+            } else if (id == 31) {
+                applyLayoutPreset(LayoutPreset.NAVIGATION);
+                return true;
+            } else if (id == 32) {
+                applyLayoutPreset(LayoutPreset.MEDIA);
+                return true;
+            } else if (id == 33) {
+                applyLayoutPreset(LayoutPreset.MINIMALIST);
+                return true;
+            } else if (id == 34) {
+                applyLayoutPreset(LayoutPreset.USER);
+                return true;
+            } else if (id == 4) {
+                if (widgetManager != null) {
+                    widgetManager.saveUserLayout();
+                    if (getView() != null) {
+                        getView().performHapticFeedback(android.view.HapticFeedbackConstants.CONFIRM);
+                    }
+                    android.widget.Toast.makeText(getContext(), "Mevcut widget duzeni basariyla kaydedildi", android.widget.Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            }
+            return false;
         });
+        popup.show();
     }
 
     private enum LayoutPreset {

@@ -29,9 +29,18 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
         void onEditModeChanged(boolean isEditMode);
     }
 
+    public interface OnWorkspaceLongClickListener {
+        void onWorkspaceLongClick(View anchorView);
+    }
+
     public static boolean isEditMode = false;
     private EditModeListener editModeListener;
+    private static OnWorkspaceLongClickListener workspaceLongClickListener;
     private static WorkspacePageAdapter activeAdapterInstance;
+
+    public static void setWorkspaceLongClickListener(OnWorkspaceLongClickListener listener) {
+        workspaceLongClickListener = listener;
+    }
 
     public static void exitEditMode() {
         isEditMode = false;
@@ -187,6 +196,17 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                         }
                         notifyDataSetChanged();
                     }
+                }
+            });
+
+            cellLayout.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    if (workspaceLongClickListener != null) {
+                        workspaceLongClickListener.onWorkspaceLongClick(v);
+                        return true;
+                    }
+                    return false;
                 }
             });
             
