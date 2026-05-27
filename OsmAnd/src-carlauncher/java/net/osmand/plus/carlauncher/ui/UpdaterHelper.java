@@ -103,7 +103,7 @@ public class UpdaterHelper {
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
         request.setTitle("Car Launcher Guncelleme");
         request.setDescription("Yeni surum indiriliyor...");
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
         request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "CarLauncher_Update.apk");
         
         request.setAllowedOverMetered(true);
@@ -116,7 +116,9 @@ public class UpdaterHelper {
             BroadcastReceiver receiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context c, Intent intent) {
-                    installApk(c, manager, downloadId);
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        installApk(c, manager, downloadId);
+                    }, 1000);
                     try {
                         context.getApplicationContext().unregisterReceiver(this);
                     } catch (Exception e) {
