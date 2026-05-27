@@ -46,6 +46,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     private ViewGroup rootContent;
     private View widgetContentFrame;
     private android.widget.ImageView parallaxBg;
+    private View menuBtn;
     
     private boolean isPinned = true; 
     private static final String PREF_IS_PINNED = "widget_panel_pinned";
@@ -81,7 +82,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
 
         viewPager = root.findViewById(net.osmand.plus.R.id.widget_view_pager);
         pageIndicator = root.findViewById(net.osmand.plus.R.id.workspace_page_indicator);
-        View menuBtn = root.findViewById(net.osmand.plus.R.id.btn_widget_menu);
+        menuBtn = root.findViewById(net.osmand.plus.R.id.btn_widget_menu);
         
         // Parallax arka plan baglantisi
         parallaxBg = root.findViewById(net.osmand.plus.R.id.workspace_parallax_bg);
@@ -113,10 +114,22 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         // Programatik parallax arka plan
         parallaxBg = new android.widget.ImageView(getContext());
         parallaxBg.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
-        contentFrame.addView(parallaxBg, new FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        contentFrame.addView(parallaxBg, lp);
         updateBackgroundStyle();
+        
+        contentFrame.post(() -> {
+            if (parallaxBg != null) {
+                int width = contentFrame.getWidth() > 0 ? contentFrame.getWidth() : getResources().getDisplayMetrics().widthPixels;
+                ViewGroup.LayoutParams vlp = parallaxBg.getLayoutParams();
+                if (vlp != null) {
+                    vlp.width = (int) (width * 1.5f);
+                    parallaxBg.setLayoutParams(vlp);
+                }
+            }
+        });
 
         viewPager = new androidx.viewpager2.widget.ViewPager2(getContext());
         contentFrame.addView(viewPager, new FrameLayout.LayoutParams(
@@ -130,6 +143,14 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         if (viewPager == null) return;
         viewPager.post(() -> {
             if (getView() != null) {
+                if (parallaxBg != null && viewPager != null) {
+                    int width = viewPager.getWidth() > 0 ? viewPager.getWidth() : getResources().getDisplayMetrics().widthPixels;
+                    ViewGroup.LayoutParams lp = parallaxBg.getLayoutParams();
+                    if (lp != null) {
+                        lp.width = (int) (width * 1.5f);
+                        parallaxBg.setLayoutParams(lp);
+                    }
+                }
                 applyWidgetsToView();
             }
         });
@@ -145,7 +166,12 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     private void showPopupMenu(View anchorView) {
         if (getContext() == null || anchorView == null) return;
         
-        android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), anchorView);
+        View actualAnchor = anchorView;
+        if (actualAnchor instanceof net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout && menuBtn != null) {
+            actualAnchor = menuBtn;
+        }
+        
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), actualAnchor);
         
         popup.getMenu().add(0, 1, 0, "Widget Ekle (Yeni)");
         popup.getMenu().add(0, 2, 1, "Launcher Ayarlari");
