@@ -903,7 +903,7 @@ public class WidgetPickerDialog extends DialogFragment {
                             list.add(item);
                         }
 
-                        Collections.sort(list, (a, b) -> a.label.compareToIgnoreCase(b.label));
+                        java.util.Collections.sort(list, (a, b) -> a.label.compareToIgnoreCase(b.label));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
