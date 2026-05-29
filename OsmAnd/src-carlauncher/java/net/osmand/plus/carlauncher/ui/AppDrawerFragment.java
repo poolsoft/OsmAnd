@@ -488,11 +488,7 @@ public class AppDrawerFragment extends Fragment {
                 activity.openMusicPlayer();
                 break;
             case "internal://antenna":
-                if (activity.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
-                    activity.openAntennaAlignmentInPanel();
-                } else {
-                    activity.openAntennaAlignmentFullscreen();
-                }
+                activity.openAntennaAlignmentInPanel();
                 break;
         }
     }
