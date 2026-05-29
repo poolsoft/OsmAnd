@@ -247,6 +247,13 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 	};
 
+	private android.content.BroadcastReceiver antennaPanelReceiver = new android.content.BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			setPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS);
+		}
+	};
+
     private final StateChangedListener<Integer> mapScreenOrientationSettingListener = new StateChangedListener<Integer>() {
 		@Override
 		public void stateChanged(Integer change) {
@@ -307,7 +314,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		mapRouteInfoMenu.setMapActivity(this);
 		trackDetailsMenu.setMapActivity(this);
 
-		// Register Music Drawer Receiver
 		androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this)
 				.registerReceiver(musicDrawerReceiver,
 						new android.content.IntentFilter("net.osmand.carlauncher.OPEN_MUSIC_DRAWER"));
@@ -319,6 +325,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			registerReceiver(musicDrawerReceiver,
 					new android.content.IntentFilter("net.osmand.carlauncher.OPEN_MUSIC_DRAWER"));
 		}
+
+		// Register Antenna Panel Close Receiver (Turkce karakter yok)
+		androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this)
+				.registerReceiver(antennaPanelReceiver,
+						new android.content.IntentFilter("net.osmand.carlauncher.CLOSE_ANTENNA_PANEL"));
 
 		// Register globalPackageReceiver for App Drawer cache dynamic sync (Turkce karakter yok)
 		globalPackageReceiver = new BroadcastReceiver() {
@@ -1801,6 +1812,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 		if (globalPackageReceiver != null) {
 			unregisterReceiver(globalPackageReceiver);
+		}
+		
+		// Unregister Antenna Panel Close Receiver (Turkce karakter yok)
+		if (antennaPanelReceiver != null) {
+			androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this)
+					.unregisterReceiver(antennaPanelReceiver);
 		}
 		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).hideButton();
 		app.getAidlApi().onDestroyMapActivity(this);

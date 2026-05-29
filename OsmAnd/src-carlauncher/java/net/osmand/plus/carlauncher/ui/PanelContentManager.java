@@ -51,7 +51,7 @@ public class PanelContentManager {
      */
     public void setContent(PanelContent content) {
         // Her zaman en guncel fullscreen durumunu set et
-        boolean needsFullScreen = (content == PanelContent.APP_DRAWER || content == PanelContent.MUSIC || content == PanelContent.SETTINGS || content == PanelContent.DESKTOP || content == PanelContent.ANTENNA);
+        boolean needsFullScreen = (content == PanelContent.APP_DRAWER || content == PanelContent.MUSIC || content == PanelContent.SETTINGS || content == PanelContent.DESKTOP);
         if (fullScreenListener != null) {
             fullScreenListener.onFullScreenStateChanged(needsFullScreen);
         }
@@ -83,7 +83,7 @@ public class PanelContentManager {
                 fragment = new WeatherDashboardFragment();
                 break;
             case ANTENNA:
-                fragment = new net.osmand.plus.carlauncher.antenna.AntennaAlignmentFragment();
+                fragment = new net.osmand.plus.carlauncher.antenna.AntennaWidgetFragment();
                 break;
         }
 

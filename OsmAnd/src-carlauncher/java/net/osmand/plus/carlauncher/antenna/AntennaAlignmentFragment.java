@@ -1,6 +1,7 @@
 package net.osmand.plus.carlauncher.antenna;
 
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -9,13 +10,12 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import net.osmand.plus.R;
 
@@ -34,9 +34,6 @@ public class AntennaAlignmentFragment extends Fragment implements SensorEventLis
     private TextView textTargetInfo;
     private TextView textCurrentAzimuth;
     private TextView textCurrentPitch;
-    private TextView textSource;
-    private TextView textTarget;
-    private View btnSwap;
 
     private float targetAzimuth = 0;
     private float targetPitch = 0;
@@ -73,46 +70,27 @@ public class AntennaAlignmentFragment extends Fragment implements SensorEventLis
         textTargetInfo = view.findViewById(R.id.text_target_info);
         textCurrentAzimuth = view.findViewById(R.id.text_current_azimuth);
         textCurrentPitch = view.findViewById(R.id.text_current_pitch);
-        textSource = view.findViewById(R.id.text_source);
-        textTarget = view.findViewById(R.id.text_target);
-        btnSwap = view.findViewById(R.id.btn_swap);
 
-        // Kapatma butonu aksiyonu (Turkce karakter yok)
-        View btnClose = view.findViewById(R.id.btn_close);
-        if (btnClose != null) {
-            btnClose.setOnClickListener(v -> {
-                if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
-                    // Sag panelde aciksa varsayilan widget listesine geri don
-                    ((net.osmand.plus.activities.MapActivity) getActivity()).setPanelContent(
-                            net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS
-                    );
-                } else if (getActivity() != null) {
+        // Geri butonu: Sadece pusulayi kapat (Turkce karakter yok)
+        View btnBack = view.findViewById(R.id.btn_back);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> {
+                if (getActivity() != null) {
                     getActivity().finish();
                 }
             });
         }
 
-        // Kaynak nokta secimi (Turkce karakter yok)
-        View btnSetSource = view.findViewById(R.id.btn_set_source);
-        if (btnSetSource != null) {
-            btnSetSource.setOnClickListener(v -> AntennaPointPickerDialog.show(
-                    requireContext(), manager, true, null));
-        }
-
-        // Hedef nokta secimi (Turkce karakter yok)
-        View btnSetTarget = view.findViewById(R.id.btn_set_target);
-        if (btnSetTarget != null) {
-            btnSetTarget.setOnClickListener(v -> AntennaPointPickerDialog.show(
-                    requireContext(), manager, false, null));
-        }
-
-        // Swap (Turkce karakter yok)
-        if (btnSwap != null) {
-            btnSwap.setOnClickListener(v -> {
-                if (manager.getSource() != null && manager.getTarget() != null) {
-                    manager.swapPoints();
-                } else {
-                    Toast.makeText(requireContext(), "Once kaynak ve hedef nokta secin.", Toast.LENGTH_SHORT).show();
+        // Kapat butonu: Hem pusulayi hem de sag paneli kapat (Turkce karakter yok)
+        View btnClose = view.findViewById(R.id.btn_close);
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> {
+                // Sag paneli kapatmasi icin MapActivity'ye broadcast gonder
+                LocalBroadcastManager.getInstance(requireContext())
+                        .sendBroadcast(new Intent("net.osmand.carlauncher.CLOSE_ANTENNA_PANEL"));
+                
+                if (getActivity() != null) {
+                    getActivity().finish();
                 }
             });
         }
@@ -219,45 +197,6 @@ public class AntennaAlignmentFragment extends Fragment implements SensorEventLis
     private void updateUI() {
         AntennaManager.AntennaPoint source = manager.getSource();
         AntennaManager.AntennaPoint target = manager.getTarget();
-
-        // Swap butonu durumu (Turkce karakter yok)
-        if (btnSwap != null) {
-            boolean both = source != null && target != null;
-            btnSwap.setEnabled(both);
-            btnSwap.setAlpha(both ? 1.0f : 0.3f);
-        }
-
-        // Kaynak etiketini guncelle (Turkce karakter yok)
-        if (source != null) {
-            String name = (source.name != null && !source.name.isEmpty())
-                    ? source.name
-                    : String.format(Locale.US, "%.4f, %.4f", source.lat, source.lon);
-            if (textSource != null) {
-                textSource.setText("Kaynak: " + name);
-                textSource.setTextColor(0xFF4FC3F7);
-            }
-        } else {
-            if (textSource != null) {
-                textSource.setText("Kaynak Sec...");
-                textSource.setTextColor(0xFF888888);
-            }
-        }
-
-        // Hedef etiketini guncelle (Turkce karakter yok)
-        if (target != null) {
-            String name = (target.name != null && !target.name.isEmpty())
-                    ? target.name
-                    : String.format(Locale.US, "%.4f, %.4f", target.lat, target.lon);
-            if (textTarget != null) {
-                textTarget.setText("Hedef: " + name);
-                textTarget.setTextColor(0xFFFFD700);
-            }
-        } else {
-            if (textTarget != null) {
-                textTarget.setText("Hedef Sec...");
-                textTarget.setTextColor(0xFF888888);
-            }
-        }
 
         // Hedef verilerini hesapla ve guncelle (Turkce karakter yok)
         if (source != null && target != null) {
