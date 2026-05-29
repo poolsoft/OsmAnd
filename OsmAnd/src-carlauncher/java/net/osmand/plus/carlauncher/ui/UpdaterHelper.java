@@ -103,7 +103,8 @@ public class UpdaterHelper {
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
         request.setTitle("Car Launcher Guncelleme");
         request.setDescription("Yeni surum indiriliyor...");
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
+        // Bildirimin indirme esnasinda periyodik gurultu yapmasini onlemek icin sadece tamamlandiginda bildirim gosteriyoruz
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_ONLY_COMPLETION);
         request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "CarLauncher_Update.apk");
         
         request.setAllowedOverMetered(true);
@@ -137,7 +138,7 @@ public class UpdaterHelper {
     }
 
     private static void installApk(Context context, DownloadManager manager, long downloadId) {
-        // Android 8.0+ icin Bilinmeyen Kaynaklar yükleme izni kontrolu
+        // Android 8.0+ icin Bilinmeyen Kaynaklar yukleme izni kontrolu
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (!context.getPackageManager().canRequestPackageInstalls()) {
                 Toast.makeText(context, "Uygulama yukleme izni verilmelidir. Ayarlar aciliyor...", Toast.LENGTH_LONG).show();
@@ -159,21 +160,52 @@ public class UpdaterHelper {
         if (cursor.moveToFirst()) {
             int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
             if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                // COLUMN_LOCAL_URI veya local path belirsizliklerini asmak icin statik dosya referansi kullaniyoruz
+                // 1. Yol: DownloadManager'in kendi guvenli content URI'sini kullanmayi deniyoruz (En garanti ve modern yol)
+                Uri downloadUri = null;
+                try {
+                    downloadUri = manager.getUriForDownloadedFile(downloadId);
+                } catch (Exception e) {
+                    android.util.Log.e("Updater", "DownloadManager URI alinirken hata olustu", e);
+                }
+
+                if (downloadUri != null) {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setDataAndType(downloadUri, "application/vnd.android.package-archive");
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(intent);
+                        cursor.close();
+                        return; // Basarili sekilde baslatildi
+                    } catch (Exception e) {
+                        android.util.Log.e("Updater", "DownloadManager URI ile kurulum baslatilamadi, FileProvider denenecek", e);
+                    }
+                }
+
+                // 2. Yol (Fallback): Eger ilk yol basarisiz olursa statik dosya referansi ve FileProvider kullaniyoruz
                 File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
                 File apkFile = new File(downloadsDir, "CarLauncher_Update.apk");
 
                 if (apkFile.exists()) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        Uri contentUri = FileProvider.getUriForFile(context, 
-                            context.getPackageName() + ".fileprovider", 
-                            apkFile);
-                        
-                        Intent intent = new Intent(Intent.ACTION_VIEW);
-                        intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
-                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        context.startActivity(intent);
+                        Uri contentUri = null;
+                        try {
+                            contentUri = FileProvider.getUriForFile(context, 
+                                context.getPackageName() + ".fileprovider", 
+                                apkFile);
+                        } catch (Exception e) {
+                            android.util.Log.e("Updater", "FileProvider URI olusturulurken hata", e);
+                        }
+
+                        if (contentUri != null) {
+                            Intent intent = new Intent(Intent.ACTION_VIEW);
+                            intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
+                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            context.startActivity(intent);
+                        } else {
+                            Toast.makeText(context, "Guncelleme dosyasi URI'si olusturulamadi", Toast.LENGTH_LONG).show();
+                        }
                     } else {
                         Uri apkUri = Uri.fromFile(apkFile);
                         Intent intent = new Intent(Intent.ACTION_VIEW);
