@@ -181,7 +181,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Noktalari Swap Et"
-                        android:backgroundTint="@color/cl_surface_variant"
+                        android:backgroundTint="@color/cl_surface"
                         android:textColor="@color/cl_text_primary" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
