@@ -1028,6 +1028,23 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 
 	@Override
+	public void openAntennaAlignmentInPanel() {
+		setPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.ANTENNA);
+	}
+
+	@Override
+	public void openAntennaAlignmentFullscreen() {
+		try {
+			android.content.Intent intent = new android.content.Intent(this,
+					net.osmand.plus.carlauncher.antenna.AntennaAlignmentActivity.class);
+			intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+			startActivity(intent);
+		} catch (Exception e) {
+			android.widget.Toast.makeText(this, "Hizalama ekrani baslatilirken hata.", android.widget.Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	@Override
 	public InsetTargetsCollection getInsetTargets() {
 		InsetTargetsCollection collection = new InsetTargetsCollection();
 		collection.add(InsetTarget.createCustomBuilder(R.id.menuItems)

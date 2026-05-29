@@ -15,6 +15,10 @@ public interface CarLauncherInterface {
     
     void openWeatherDashboard();
 
+    void openAntennaAlignmentInPanel();
+    
+    void openAntennaAlignmentFullscreen();
+
     /**
      * Sağ panel içeriğini değiştirir (Android Auto UI).
      * @param content PanelContent enum değeri

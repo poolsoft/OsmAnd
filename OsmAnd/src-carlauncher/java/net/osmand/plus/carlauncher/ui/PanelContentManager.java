@@ -16,12 +16,13 @@ public class PanelContentManager {
 
     public enum PanelContent {
         WIDGETS,      // Varsayilan: widget listesi
-        MUSIC,        // Müzik player
-        NOTIFICATION, // Bildirim + müzik (üst üste)
+        MUSIC,        // Muzik player
+        NOTIFICATION, // Bildirim + muzik (ust uste)
         APP_DRAWER,   // App drawer listesi
         WEATHER,      // Hava durumu
         SETTINGS,     // Ayarlar fragmenti
-        DESKTOP       // Masaustu Modu (WidgetPanelFragment)
+        DESKTOP,      // Masaustu Modu (WidgetPanelFragment)
+        ANTENNA       // Anten Hizalama
     }
 
     private PanelContent currentContent = null;
@@ -50,7 +51,7 @@ public class PanelContentManager {
      */
     public void setContent(PanelContent content) {
         // Her zaman en guncel fullscreen durumunu set et
-        boolean needsFullScreen = (content == PanelContent.APP_DRAWER || content == PanelContent.MUSIC || content == PanelContent.SETTINGS || content == PanelContent.DESKTOP);
+        boolean needsFullScreen = (content == PanelContent.APP_DRAWER || content == PanelContent.MUSIC || content == PanelContent.SETTINGS || content == PanelContent.DESKTOP || content == PanelContent.ANTENNA);
         if (fullScreenListener != null) {
             fullScreenListener.onFullScreenStateChanged(needsFullScreen);
         }
@@ -80,6 +81,9 @@ public class PanelContentManager {
                 break;
             case WEATHER:
                 fragment = new WeatherDashboardFragment();
+                break;
+            case ANTENNA:
+                fragment = new net.osmand.plus.carlauncher.antenna.AntennaAlignmentFragment();
                 break;
         }
 

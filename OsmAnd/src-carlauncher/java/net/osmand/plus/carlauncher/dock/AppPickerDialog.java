@@ -91,34 +91,98 @@ public class AppPickerDialog {
         if (!onlyMusicApps && cachedAllApps != null) return cachedAllApps;
 
         List<AppInfo> apps = new ArrayList<>();
-        PackageManager pm = context.getPackageManager();
-        Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
-        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        
+        // AppDrawer'daki cache'lenmis uygulamalari ve ikonlari kullan (Turkce karakter yok)
+        List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem> cachedList = 
+                net.osmand.plus.carlauncher.ui.AppDrawerFragment.getCachedApps();
+        android.util.LruCache<String, Drawable> cacheIcons = 
+                net.osmand.plus.carlauncher.ui.AppDrawerFragment.getIconCache();
 
         if (onlyMusicApps) {
             AppInfo internalPlayer = new AppInfo();
             internalPlayer.name = "Dahili Muzik Calar";
             internalPlayer.packageName = "usage.internal.player";
-            internalPlayer.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play);
+            internalPlayer.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
             apps.add(internalPlayer);
         }
 
-        List<ResolveInfo> resolveInfos = pm.queryIntentActivities(mainIntent, 0);
+        if (cachedList != null && !cachedList.isEmpty()) {
+            PackageManager pm = context.getPackageManager();
+            List<String> musicPackages = new ArrayList<>();
+            if (onlyMusicApps) {
+                Intent musicIntent = new Intent("android.media.browse.MediaBrowserService");
+                List<ResolveInfo> musicServices = pm.queryIntentServices(musicIntent, 0);
+                for (ResolveInfo info : musicServices) musicPackages.add(info.serviceInfo.packageName);
+                
+                musicPackages.add("com.acloud.stub.localmusic");
+                musicPackages.add("com.xyauto.music");
+                musicPackages.add("com.android.music");
+                musicPackages.add("com.txznet.music");
+                musicPackages.add("com.syd.music");
+                musicPackages.add("com.mediatek.music");
+                musicPackages.add("com.spotify.music");
+                musicPackages.add("com.google.android.apps.youtube.music");
+                musicPackages.add("com.google.android.youtube");
+                musicPackages.add("com.apple.android.music");
+                musicPackages.add("deezer.android.app");
+                musicPackages.add("com.aspiro.tidal");
+                musicPackages.add("com.soundcloud.android");
+                musicPackages.add("tunein.player");
+                musicPackages.add("org.videolan.vlc");
+            }
+
+            for (net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem item : cachedList) {
+                // Dahili uygulamalari secici listesinde gosterme (Turkce karakter yok)
+                if (item.packageName != null && item.packageName.startsWith("internal://")) {
+                    continue;
+                }
+                
+                if (onlyMusicApps && !musicPackages.contains(item.packageName)) {
+                    continue;
+                }
+
+                Drawable icon = null;
+                if (cacheIcons != null) {
+                    icon = cacheIcons.get(item.packageName);
+                }
+                if (icon == null) {
+                    try {
+                        icon = pm.getApplicationIcon(item.packageName);
+                    } catch (Exception e) {
+                        icon = context.getResources().getDrawable(android.R.drawable.sym_def_app_icon, null);
+                    }
+                }
+
+                AppInfo app = new AppInfo();
+                app.name = item.label;
+                app.packageName = item.packageName;
+                app.icon = icon;
+                apps.add(app);
+            }
+            
+            Collections.sort(apps, (a1, a2) -> a1.name.compareToIgnoreCase(a2.name));
+            if (onlyMusicApps) cachedMusicApps = apps;
+            else cachedAllApps = apps;
+            return apps;
+        }
+
+        // Cache henuz yuklenmemisse fallback olarak senkron cagirir (Turkce karakter yok)
+        PackageManager pm = context.getPackageManager();
+        Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
+        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+
         List<String> musicPackages = new ArrayList<>();
         if (onlyMusicApps) {
             Intent musicIntent = new Intent("android.media.browse.MediaBrowserService");
             List<ResolveInfo> musicServices = pm.queryIntentServices(musicIntent, 0);
             for (ResolveInfo info : musicServices) musicPackages.add(info.serviceInfo.packageName);
             
-            // Teyplerdeki standarda uymayan dahili yerel muzik calarlari listeye ekliyoruz
             musicPackages.add("com.acloud.stub.localmusic");
             musicPackages.add("com.xyauto.music");
             musicPackages.add("com.android.music");
             musicPackages.add("com.txznet.music");
             musicPackages.add("com.syd.music");
             musicPackages.add("com.mediatek.music");
-
-            // Populer muzik ve video uygulamalarini da listeye ekliyoruz (Spotify, YouTube vb.)
             musicPackages.add("com.spotify.music");
             musicPackages.add("com.google.android.apps.youtube.music");
             musicPackages.add("com.google.android.youtube");
@@ -130,6 +194,7 @@ public class AppPickerDialog {
             musicPackages.add("org.videolan.vlc");
         }
 
+        List<ResolveInfo> resolveInfos = pm.queryIntentActivities(mainIntent, 0);
         for (ResolveInfo info : resolveInfos) {
             try {
                 String packageName = info.activityInfo.packageName;

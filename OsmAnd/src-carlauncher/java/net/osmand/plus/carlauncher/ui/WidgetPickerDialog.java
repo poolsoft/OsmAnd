@@ -855,30 +855,76 @@ public class WidgetPickerDialog extends DialogFragment {
     }
 
     private void buildShortcutsSection(Context ctx, LinearLayout container) {
-        android.content.pm.PackageManager pm = ctx.getPackageManager();
-        Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
-        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-        List<android.content.pm.ResolveInfo> launchables = pm.queryIntentActivities(mainIntent, 0);
+        // AppDrawer'daki cache'lenmis uygulamalari ve ikonlari kullan (Turkce karakter yok)
+        List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem> cachedList = 
+                net.osmand.plus.carlauncher.ui.AppDrawerFragment.getCachedApps();
+        android.util.LruCache<String, Drawable> cacheIcons = 
+                net.osmand.plus.carlauncher.ui.AppDrawerFragment.getIconCache();
 
-        // Uygulamalari basliklarina gore alfabetik sirala
-        java.util.Collections.sort(launchables, new java.util.Comparator<android.content.pm.ResolveInfo>() {
-            @Override
-            public int compare(android.content.pm.ResolveInfo a, android.content.pm.ResolveInfo b) {
-                return a.loadLabel(pm).toString().compareToIgnoreCase(b.loadLabel(pm).toString());
+        if (cachedList != null && !cachedList.isEmpty()) {
+            for (net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem item : cachedList) {
+                // Dahili uygulamalari widget kisayolu olarak ekleme (Muzik Calici, Ayarlar vb.)
+                if (item.packageName != null && item.packageName.startsWith("internal://")) {
+                    continue;
+                }
+                
+                Drawable icon = null;
+                if (cacheIcons != null) {
+                    icon = cacheIcons.get(item.packageName);
+                }
+                
+                if (icon == null) {
+                    try {
+                        icon = ctx.getPackageManager().getApplicationIcon(item.packageName);
+                    } catch (Exception e) {
+                        icon = ctx.getResources().getDrawable(android.R.drawable.sym_def_app_icon, null);
+                    }
+                }
+                
+                container.addView(createShortcutCard(ctx, item.packageName, item.label, icon));
             }
-        });
+        } else {
+            // Eger cache henuz bos ise asenkron yukle (Turkce karakter yok)
+            new android.os.AsyncTask<Void, Void, List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem>>() {
+                @Override
+                protected List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem> doInBackground(Void... voids) {
+                    List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem> list = new ArrayList<>();
+                    try {
+                        android.content.pm.PackageManager pm = ctx.getPackageManager();
+                        Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
+                        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+                        List<android.content.pm.ResolveInfo> launchables = pm.queryIntentActivities(mainIntent, 0);
 
-        for (android.content.pm.ResolveInfo info : launchables) {
-            String packageName = info.activityInfo.packageName;
-            String label = info.loadLabel(pm).toString();
-            android.graphics.drawable.Drawable icon = null;
-            try {
-                icon = info.loadIcon(pm);
-            } catch (Exception e) {
-                icon = ctx.getResources().getDrawable(android.R.drawable.sym_def_app_icon);
-            }
+                        for (android.content.pm.ResolveInfo info : launchables) {
+                            net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem item = 
+                                    new net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem();
+                            item.label = info.loadLabel(pm).toString();
+                            item.packageName = info.activityInfo.packageName;
+                            list.add(item);
+                        }
 
-            container.addView(createShortcutCard(ctx, packageName, label, icon));
+                        Collections.sort(list, (a, b) -> a.label.compareToIgnoreCase(b.label));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    return list;
+                }
+
+                @Override
+                protected void onPostExecute(List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem> result) {
+                    if (result != null && !result.isEmpty() && container != null) {
+                        for (net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem item : result) {
+                            Drawable icon = null;
+                            try {
+                                icon = ctx.getPackageManager().getApplicationIcon(item.packageName);
+                            } catch (Exception e) {
+                                icon = ctx.getResources().getDrawable(android.R.drawable.sym_def_app_icon, null);
+                            }
+                            container.addView(createShortcutCard(ctx, item.packageName, item.label, icon));
+                        }
+                    }
+                }
+            }.execute();
         }
     }
 

@@ -57,9 +57,9 @@ public class AppDrawerFragment extends Fragment {
         }
     }
 
-    private static class AppItem { // Static class
-        String label;
-        String packageName;
+    public static class AppItem { // Public static class
+        public String label;
+        public String packageName;
     }
 
     // Kolay ve guvenli sekilde uygulama ikonunu yukleme yardimcisi (Turkce karakter yok)
@@ -76,6 +76,12 @@ public class AppDrawerFragment extends Fragment {
         } else if (packageName.equals("internal://music")) {
             try {
                 return context.getResources().getDrawable(android.R.drawable.ic_media_play);
+            } catch (Exception e) {
+                // fallback
+            }
+        } else if (packageName.equals("internal://antenna")) {
+            try {
+                return context.getResources().getDrawable(android.R.drawable.ic_menu_compass);
             } catch (Exception e) {
                 // fallback
             }
@@ -288,6 +294,12 @@ public class AppDrawerFragment extends Fragment {
             music.packageName = "internal://music";
             internal.add(music);
 
+            // Antenna Alignment
+            AppItem antenna = new AppItem();
+            antenna.label = "📡 Anten Hizalama";
+            antenna.packageName = "internal://antenna";
+            internal.add(antenna);
+
             return internal;
         }
 
@@ -475,7 +487,22 @@ public class AppDrawerFragment extends Fragment {
             case "internal://music":
                 activity.openMusicPlayer();
                 break;
+            case "internal://antenna":
+                if (activity.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+                    activity.openAntennaAlignmentInPanel();
+                } else {
+                    activity.openAntennaAlignmentFullscreen();
+                }
+                break;
         }
+    }
+
+    public static List<AppItem> getCachedApps() {
+        return cachedApps;
+    }
+
+    public static android.util.LruCache<String, Drawable> getIconCache() {
+        return iconCache;
     }
 
     private void showAppInfo(String packageName) {

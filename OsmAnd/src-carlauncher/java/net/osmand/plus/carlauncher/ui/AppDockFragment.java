@@ -442,8 +442,12 @@ public class AppDockFragment extends Fragment
     public void onShortcutClick(AppShortcut shortcut) {
         if (getContext() == null)
             return;
-        LaunchMode mode = shortcut.getLaunchMode();
         String packageName = shortcut.getPackageName();
+        if (packageName != null && packageName.startsWith("internal://")) {
+            handleInternalApp(packageName);
+            return;
+        }
+        LaunchMode mode = shortcut.getLaunchMode();
         try {
             switch (mode) {
                 case FULL_SCREEN:
@@ -465,6 +469,29 @@ public class AppDockFragment extends Fragment
             }
         } catch (Exception e) {
             Log.e(TAG, "Error launching app: " + packageName, e);
+        }
+    }
+
+    private void handleInternalApp(String internalUri) {
+        if (getActivity() == null || !(getActivity() instanceof net.osmand.plus.activities.MapActivity))
+            return;
+
+        net.osmand.plus.activities.MapActivity activity = (net.osmand.plus.activities.MapActivity) getActivity();
+
+        switch (internalUri) {
+            case "internal://settings":
+                activity.openCarLauncherSettings();
+                break;
+            case "internal://music":
+                activity.openMusicPlayer();
+                break;
+            case "internal://antenna":
+                if (activity.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+                    activity.openAntennaAlignmentInPanel();
+                } else {
+                    activity.openAntennaAlignmentFullscreen();
+                }
+                break;
         }
     }
 
