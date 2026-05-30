@@ -196,6 +196,34 @@ public class WidgetPickerDialog extends DialogFragment {
         divider.setBackgroundColor(0x1FFFFFFF);
         mainContainer.addView(divider);
 
+        // Car Launcher Kisayollari (Yatay Kart Listesi) (Turkce karakter yok)
+        TextView internalShortcutsTitle = new TextView(ctx);
+        internalShortcutsTitle.setText("Car Launcher Kisayollari");
+        internalShortcutsTitle.setTextColor(Color.WHITE);
+        internalShortcutsTitle.setTextSize(15);
+        internalShortcutsTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        internalShortcutsTitle.setPadding(0, 0, 0, dpToPx(8));
+        mainContainer.addView(internalShortcutsTitle);
+
+        HorizontalScrollView internalShortcutsScroll = new HorizontalScrollView(ctx);
+        internalShortcutsScroll.setClipToPadding(false);
+        internalShortcutsScroll.setPadding(0, 0, 0, dpToPx(16));
+        
+        LinearLayout internalShortcutsList = new LinearLayout(ctx);
+        internalShortcutsList.setOrientation(LinearLayout.HORIZONTAL);
+
+        buildInternalShortcutsSection(ctx, internalShortcutsList);
+        internalShortcutsScroll.addView(internalShortcutsList);
+        mainContainer.addView(internalShortcutsScroll);
+
+        // Ayirici Yeni (Turkce karakter yok)
+        View dividerNew = new View(ctx);
+        LinearLayout.LayoutParams divNewLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(1));
+        divNewLp.setMargins(0, dpToPx(8), 0, dpToPx(16));
+        dividerNew.setLayoutParams(divNewLp);
+        dividerNew.setBackgroundColor(0x1FFFFFFF);
+        mainContainer.addView(dividerNew);
+
         // 2. Kisim: Uygulama Kisayollari (Yatay Kart Listesi)
         TextView shortcutsTitle = new TextView(ctx);
         shortcutsTitle.setText("Uygulama Kisayollari");
@@ -853,6 +881,20 @@ public class WidgetPickerDialog extends DialogFragment {
             }
         }
     }
+    private void buildInternalShortcutsSection(Context ctx, LinearLayout container) {
+        // Dahili uygulamalari sirayla ekle (Turkce karakter yok)
+        String[][] internalApps = {
+            {"internal://settings", "Car Launcher Ayarlar"},
+            {"internal://music", "Muzik Calici"},
+            {"internal://antenna", "Anten Hizalama"}
+        };
+        for (String[] app : internalApps) {
+            String packageName = app[0];
+            String label = app[1];
+            Drawable icon = net.osmand.plus.carlauncher.ui.AppDrawerFragment.getAppIcon(ctx, packageName);
+            container.addView(createShortcutCard(ctx, packageName, label, icon));
+        }
+    }
 
     private void buildShortcutsSection(Context ctx, LinearLayout container) {
         // AppDrawer'daki cache'lenmis uygulamalari ve ikonlari kullan (Turkce karakter yok)
@@ -861,6 +903,9 @@ public class WidgetPickerDialog extends DialogFragment {
 
         if (cachedList != null && !cachedList.isEmpty()) {
             for (net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem item : cachedList) {
+                if (item.packageName != null && item.packageName.startsWith("internal://")) {
+                    continue;
+                }
                 Drawable icon = net.osmand.plus.carlauncher.ui.AppDrawerFragment.getAppIcon(ctx, item.packageName);
                 container.addView(createShortcutCard(ctx, item.packageName, item.label, icon));
             }
@@ -878,48 +923,26 @@ public class WidgetPickerDialog extends DialogFragment {
 
                         for (android.content.pm.ResolveInfo info : launchables) {
                             net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem item = 
-                                    new net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem();
+                                     new net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem();
                             item.label = info.loadLabel(pm).toString();
                             item.packageName = info.activityInfo.packageName;
                             list.add(item);
                         }
 
                         java.util.Collections.sort(list, (a, b) -> a.label.compareToIgnoreCase(b.label));
-
-                        // Dahili uygulamalari basina ekle (Turkce karakter yok)
-                        List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem> internalApps = getInternalApps();
-                        list.addAll(0, internalApps);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                     return list;
                 }
 
-                private List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem> getInternalApps() {
-                    List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem> internal = new ArrayList<>();
-                    
-                    net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem settings = new net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem();
-                    settings.label = "Car Launcher Ayarlar";
-                    settings.packageName = "internal://settings";
-                    internal.add(settings);
-
-                    net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem music = new net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem();
-                    music.label = "Muzik Calici";
-                    music.packageName = "internal://music";
-                    internal.add(music);
-
-                    net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem antenna = new net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem();
-                    antenna.label = "Anten Hizalama";
-                    antenna.packageName = "internal://antenna";
-                    internal.add(antenna);
-
-                    return internal;
-                }
-
                 @Override
                 protected void onPostExecute(List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem> result) {
                     if (result != null && !result.isEmpty() && container != null) {
                         for (net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem item : result) {
+                            if (item.packageName != null && item.packageName.startsWith("internal://")) {
+                                continue;
+                            }
                             Drawable icon = net.osmand.plus.carlauncher.ui.AppDrawerFragment.getAppIcon(ctx, item.packageName);
                             container.addView(createShortcutCard(ctx, item.packageName, item.label, icon));
                         }
