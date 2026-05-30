@@ -35,7 +35,14 @@ public class UpdaterHelper {
     // Latest Release altindaki version.json'a ulasacagiz.
     private static final String VERSION_JSON_URL = "https://github.com/poolsoft/OsmAnd/releases/latest/download/version.json";
 
+    // Indirme durumunu takip eden ve mukerrer tiklamalari onleyen bayrak (Turkce karakter yok)
+    private static boolean isDownloading = false;
+
     public static void checkUpdates(Context context, boolean showToastIfLatest) {
+        if (isDownloading) {
+            Toast.makeText(context, "Guncelleme indirme islemi zaten devam ediyor...", Toast.LENGTH_LONG).show();
+            return;
+        }
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 URL url = new URL(VERSION_JSON_URL);
@@ -81,16 +88,24 @@ public class UpdaterHelper {
         new AlertDialog.Builder(context)
                 .setTitle("Yeni Surum Mevcut!")
                 .setMessage("Car Launcher v" + versionName + " indirilebilir. Guncellemek istiyor musunuz?")
-                .setPositiveButton("Indir ve Yukle", (dialog, which) -> downloadAndInstallApk(context, apkUrl))
+                .setPositiveButton("Indir ve Yukle", (dialog, which) -> downloadAndInstallApk(context, apkUrl, versionName))
                 .setNegativeButton("Daha Sonra", null)
                 .show();
     }
 
-    private static void downloadAndInstallApk(Context context, String url) {
+    private static void downloadAndInstallApk(Context context, String url, String versionName) {
+        if (isDownloading) {
+            Toast.makeText(context, "Guncelleme indirme islemi zaten devam ediyor...", Toast.LENGTH_LONG).show();
+            return;
+        }
+        isDownloading = true;
+
+        String fileName = "CarLauncher_v" + versionName + ".apk";
+
         // Indirme baslamadan once eski indirilmis APK varsa siliyoruz (Cakismlari onlemek icin)
         try {
             File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            File oldApk = new File(downloadsDir, "CarLauncher_Update.apk");
+            File oldApk = new File(downloadsDir, fileName);
             if (oldApk.exists()) {
                 oldApk.delete();
             }
@@ -98,14 +113,14 @@ public class UpdaterHelper {
             android.util.Log.e("Updater", "Eski APK silinirken hata olustu", e);
         }
 
-        Toast.makeText(context, "Indirme baslatildi...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, "Indirme baslatildi. Tamamlandiginda kurulum ekrani acilacaktir. Lutfen bekleyin...", Toast.LENGTH_LONG).show();
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-        request.setTitle("Car Launcher Guncelleme");
+        request.setTitle("Car Launcher Guncelleme v" + versionName);
         request.setDescription("Yeni surum indiriliyor...");
         // Bildirimin indirme esnasinda periyodik gurultu yapmasini onlemek icin sadece tamamlandiginda bildirim gosteriyoruz
         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_ONLY_COMPLETION);
-        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "CarLauncher_Update.apk");
+        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
         
         request.setAllowedOverMetered(true);
         request.setAllowedOverRoaming(true);
@@ -118,7 +133,7 @@ public class UpdaterHelper {
                 @Override
                 public void onReceive(Context c, Intent intent) {
                     new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                        installApk(c, manager, downloadId);
+                        installApk(c, manager, downloadId, versionName);
                     }, 1000);
                     try {
                         context.getApplicationContext().unregisterReceiver(this);
@@ -134,10 +149,14 @@ public class UpdaterHelper {
             } else {
                 context.getApplicationContext().registerReceiver(receiver, filter);
             }
+        } else {
+            isDownloading = false; // Manager null ise durumu sifirla
         }
     }
 
-    private static void installApk(Context context, DownloadManager manager, long downloadId) {
+    private static void installApk(Context context, DownloadManager manager, long downloadId, String versionName) {
+        isDownloading = false; // Indirme islemi tamamlandigi icin durumu sifirliyoruz (Turkce karakter yok)
+        
         // Android 8.0+ icin Bilinmeyen Kaynaklar yukleme izni kontrolu
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (!context.getPackageManager().canRequestPackageInstalls()) {
@@ -183,8 +202,9 @@ public class UpdaterHelper {
                 }
 
                 // 2. Yol (Fallback): Eger ilk yol basarisiz olursa statik dosya referansi ve FileProvider kullaniyoruz
+                String fileName = "CarLauncher_v" + versionName + ".apk";
                 File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                File apkFile = new File(downloadsDir, "CarLauncher_Update.apk");
+                File apkFile = new File(downloadsDir, fileName);
 
                 if (apkFile.exists()) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
