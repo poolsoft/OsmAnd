@@ -216,7 +216,9 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
                 if (isEditMode) {
                     // Edit mode'da click ignore
                 } else {
-                    launchApp(shortcut);
+                    if (listener != null) {
+                        listener.onShortcutClick(shortcut);
+                    }
                 }
             });
 
