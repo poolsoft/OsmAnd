@@ -39,8 +39,7 @@ import java.util.Date;
  * Normal modda sag taraftaki panelde gosterilir.
  */
 public class UnifiedPanelFragment extends Fragment 
-        implements MusicManager.MusicUIListener, MusicManager.MusicVisualizerListener,
-                   OsmAndLocationProvider.OsmAndLocationListener {
+        implements MusicManager.MusicUIListener, MusicManager.MusicVisualizerListener {
 
     private MusicManager musicManager;
     private OsmandApplication app;
@@ -53,22 +52,10 @@ public class UnifiedPanelFragment extends Fragment
     private TextView notifMessage;
     private ImageButton btnNotifClose;
 
-    // Ust Panel Saat ve Hiz Gostergeleri
-    private TextView panelClock;
-    private TextView panelSpeed;
+    // Ust Panel Menu Butonu (Turkce karakter yok)
     private ImageButton panelMenuBtn;
 
-    private final Handler clockHandler = new Handler(Looper.getMainLooper());
-    private final Runnable clockRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (panelClock != null) {
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
-                panelClock.setText(sdf.format(new Date()));
-            }
-            clockHandler.postDelayed(this, 1000);
-        }
-    };
+
 
     private View musicArea;
     private ImageView musicMiniArt;
@@ -120,17 +107,7 @@ public class UnifiedPanelFragment extends Fragment
         btnNotifClose = root.findViewById(R.id.btn_notif_close);
 
         // Ust panel saat ve hiz gostergeleri
-        panelClock = root.findViewById(R.id.panel_clock);
-        panelSpeed = root.findViewById(R.id.panel_speed);
         panelMenuBtn = root.findViewById(R.id.panel_menu_btn);
-
-        // Ust panel baslik bari tiklama yutucu
-        View panelHeader = root.findViewById(R.id.panel_header);
-        if (panelHeader != null) {
-            panelHeader.setOnClickListener(v -> {
-                // Tiklamayi yut (Consume click to block propagation)
-            });
-        }
 
         // Muzik alani yapilari
         musicArea = root.findViewById(R.id.music_area);
@@ -253,16 +230,7 @@ public class UnifiedPanelFragment extends Fragment
             musicManager.addVisualizerListener(this);
         }
 
-        // Saat guncellemesini baslat
-        clockHandler.post(clockRunnable);
-
-        // Konum dinleyicisini kaydet
-        if (app != null && app.getLocationProvider() != null) {
-            app.getLocationProvider().addLocationListener(this);
-            updateLocation(app.getLocationProvider().getLastKnownLocation());
-        }
-
-        // BroadcastReceiver kaydi (Android 14+ icin RECEIVER_EXPORTED zorunlu)
+        // BroadcastReceiver kaydi (Android 14+ icin RECEIVER_EXPORTED zorunlu - Turkce karakter yok)
         if (getContext() != null) {
             IntentFilter filter = new IntentFilter();
             filter.addAction("net.osmand.carlauncher.SHOW_NOTIFICATION");
@@ -283,15 +251,7 @@ public class UnifiedPanelFragment extends Fragment
             musicManager.removeVisualizerListener(this);
         }
 
-        // Saat guncellemesini durdur
-        clockHandler.removeCallbacks(clockRunnable);
-
-        // Konum dinleyicisini kaldir
-        if (app != null && app.getLocationProvider() != null) {
-            app.getLocationProvider().removeLocationListener(this);
-        }
-
-        // BroadcastReceiver kaydini kaldir
+        // BroadcastReceiver kaydini kaldir (Turkce karakter yok)
         if (getContext() != null) {
             try {
                 getContext().unregisterReceiver(notificationReceiver);
@@ -353,26 +313,4 @@ public class UnifiedPanelFragment extends Fragment
         }
     }
 
-    // --- OsmAndLocationListener Geri Bildirimleri ---
-
-    @Override
-    public void updateLocation(Location location) {
-        if (location == null || panelSpeed == null || app == null) return;
-
-        float speed = 0;
-        if (location.hasSpeed()) {
-            speed = location.getSpeed();
-        }
-
-        final float finalSpeed = speed;
-        panelSpeed.post(() -> {
-            if (finalSpeed > 0.5f) { // speed > ~1.8 km/h ise goster
-                FormattedValue formatted = OsmAndFormatter.getFormattedSpeedValue(finalSpeed, app);
-                panelSpeed.setText(formatted.value);
-                panelSpeed.setVisibility(View.VISIBLE);
-            } else {
-                panelSpeed.setVisibility(View.GONE);
-            }
-        });
-    }
 }
