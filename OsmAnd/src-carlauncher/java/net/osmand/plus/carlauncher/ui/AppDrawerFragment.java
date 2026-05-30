@@ -69,19 +69,19 @@ public class AppDrawerFragment extends Fragment {
         }
         if (packageName.equals("internal://settings")) {
             try {
-                return context.getResources().getDrawable(android.R.drawable.ic_menu_preferences);
+                return context.getResources().getDrawable(net.osmand.plus.R.drawable.ic_action_settings);
             } catch (Exception e) {
                 // fallback
             }
         } else if (packageName.equals("internal://music")) {
             try {
-                return context.getResources().getDrawable(android.R.drawable.ic_media_play);
+                return context.getResources().getDrawable(net.osmand.plus.R.drawable.ic_music_playlist);
             } catch (Exception e) {
                 // fallback
             }
         } else if (packageName.equals("internal://antenna")) {
             try {
-                return context.getResources().getDrawable(android.R.drawable.ic_menu_compass);
+                return context.getResources().getDrawable(net.osmand.plus.R.drawable.ic_action_direction);
             } catch (Exception e) {
                 // fallback
             }

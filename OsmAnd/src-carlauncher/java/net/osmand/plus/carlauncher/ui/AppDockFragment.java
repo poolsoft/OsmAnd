@@ -934,11 +934,11 @@ public class AppDockFragment extends Fragment
                 android.widget.LinearLayout.LayoutParams lp = (android.widget.LinearLayout.LayoutParams) containerLp;
                 lp.width = 0;
                 lp.weight = 1.0f;
-                lp.height = iconSize + dpToPx(8);
+                lp.height = iconSize + dpToPx(12);
                 miniMusicContainer.setLayoutParams(lp);
             } else if (containerLp != null) {
                 containerLp.width = ViewGroup.LayoutParams.MATCH_PARENT;
-                containerLp.height = iconSize + dpToPx(8);
+                containerLp.height = iconSize + dpToPx(12);
                 miniMusicContainer.setLayoutParams(containerLp);
             }
             
@@ -967,8 +967,8 @@ public class AppDockFragment extends Fragment
                 miniBtnPlay.setBackgroundResource(outValue.resourceId);
                 
                 android.view.ViewGroup.LayoutParams lp = miniBtnPlay.getLayoutParams();
-                lp.width = (int) (iconSize * 0.6f);
-                lp.height = (int) (iconSize * 0.6f);
+                lp.width = (int) (iconSize * 0.75f);
+                lp.height = (int) (iconSize * 0.75f);
                 miniBtnPlay.setLayoutParams(lp);
                 miniBtnPlay.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
             }
@@ -979,9 +979,9 @@ public class AppDockFragment extends Fragment
                 miniBtnNext.setBackgroundResource(outValue.resourceId);
                 
                 android.widget.LinearLayout.LayoutParams lp = (android.widget.LinearLayout.LayoutParams) miniBtnNext.getLayoutParams();
-                lp.width = (int) (iconSize * 0.6f);
-                lp.height = (int) (iconSize * 0.6f);
-                lp.leftMargin = 0;
+                lp.width = (int) (iconSize * 0.75f);
+                lp.height = (int) (iconSize * 0.75f);
+                lp.leftMargin = dpToPx(16);
                 miniBtnNext.setLayoutParams(lp);
                 miniBtnNext.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
             }
