@@ -132,13 +132,19 @@ public class WidgetPickerDialog extends DialogFragment {
         titleView.setLayoutParams(titleLp);
         header.addView(titleView);
 
-        // Kapat Butonu (Neon Kirmizi X)
-        TextView closeBtn = new TextView(ctx);
-        closeBtn.setText("X");
-        closeBtn.setTextSize(18);
-        closeBtn.setTextColor(0xFFFF3333);
-        closeBtn.setTypeface(null, android.graphics.Typeface.BOLD);
-        closeBtn.setPadding(dpToPx(12), dpToPx(6), dpToPx(12), dpToPx(6));
+        // Kapat Butonu (Orijinal modern X simgesi)
+        ImageView closeBtn = new ImageView(ctx);
+        closeBtn.setImageResource(net.osmand.plus.R.drawable.ic_action_close);
+        closeBtn.setColorFilter(Color.WHITE);
+        
+        LinearLayout.LayoutParams closeLp = new LinearLayout.LayoutParams(dpToPx(24), dpToPx(24));
+        closeBtn.setLayoutParams(closeLp);
+        closeBtn.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
+        
+        TypedValue outValue = new TypedValue();
+        ctx.getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true);
+        closeBtn.setBackgroundResource(outValue.resourceId);
+        
         closeBtn.setOnClickListener(v -> dismiss());
         header.addView(closeBtn);
 
@@ -311,11 +317,11 @@ public class WidgetPickerDialog extends DialogFragment {
         card.addView(sizeLabel);
 
         // Ekle Butonu
-        Button btnAdd = new Button(ctx);
+        TextView btnAdd = new TextView(ctx);
         btnAdd.setText("Ekle");
         btnAdd.setTextColor(Color.WHITE);
         btnAdd.setTextSize(11);
-        btnAdd.setAllCaps(false);
+        btnAdd.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(28));
         btnAdd.setLayoutParams(btnLp);
 
@@ -473,11 +479,11 @@ public class WidgetPickerDialog extends DialogFragment {
         card.addView(sizeLabel);
 
         // Ekle Butonu
-        Button btnAdd = new Button(ctx);
+        TextView btnAdd = new TextView(ctx);
         btnAdd.setText("Ekle");
         btnAdd.setTextColor(Color.WHITE);
         btnAdd.setTextSize(11);
-        btnAdd.setAllCaps(false);
+        btnAdd.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(28));
         btnAdd.setLayoutParams(btnLp);
 
@@ -989,11 +995,11 @@ public class WidgetPickerDialog extends DialogFragment {
         card.addView(title);
 
         // Ekle Butonu
-        Button btnAdd = new Button(ctx);
+        TextView btnAdd = new TextView(ctx);
         btnAdd.setText("Ekle");
         btnAdd.setTextColor(Color.WHITE);
         btnAdd.setTextSize(11);
-        btnAdd.setAllCaps(false);
+        btnAdd.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(28));
         btnAdd.setLayoutParams(btnLp);
 
