@@ -230,6 +230,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
     private boolean isTransitioning = false;
     private static final String PREF_IS_PINNED = "widget_panel_pinned";
     
+    // Sag panel iceriginin recreate sonrasinda korunmasi icin statik degisken (Turkce karakter yok)
+    private static net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent lastPanelContent = null;
+    
     // Global package receiver for App Drawer cache dynamic sync (Turkce karakter yok)
     private BroadcastReceiver globalPackageReceiver;
 
@@ -736,7 +739,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	private void embedWidgetPanel() {
 		if (widgetPanel != null && panelContentManager != null) {
-			panelContentManager.setContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS);
+			net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent contentToRestore = 
+				(lastPanelContent != null) ? lastPanelContent : net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS;
+			panelContentManager.setContent(contentToRestore);
 		}
 	}
 
@@ -1020,6 +1025,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				}
 			}
 			panelContentManager.setContent(content);
+			// Son basarili panel icerigini statik olarak sakla (Turkce karakter yok)
+			lastPanelContent = content;
 		}
 	}
 
