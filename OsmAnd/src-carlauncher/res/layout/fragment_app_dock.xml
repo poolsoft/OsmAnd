@@ -27,21 +27,21 @@
         app:tint="@color/cl_primary"
         android:visibility="visible" />
 
-    <!-- 3. Shortcuts RecyclerView -->
+    <!-- 3. Shortcuts RecyclerView (wrap_content ve weight=0 olarak dinamiklestirildi - Turkce karakter yok) -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dock_recycler"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_weight="1"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:orientation="horizontal" />
 
-    <!-- 4. Mini Music Player -->
+    <!-- 4. Mini Music Player (Kalan boslugu dinamik kaplayacak sekilde weight=1 ve minWidth eklendi - Turkce karakter yok) -->
     <LinearLayout
         android:id="@+id/mini_music_container"
-        android:layout_width="160dp"
+        android:layout_width="0dp"
         android:layout_height="match_parent"
+        android:layout_weight="1"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         android:orientation="horizontal"
@@ -49,7 +49,8 @@
         android:background="@drawable/bg_drawer_rounded" 
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
-        android:layout_marginEnd="8dp">
+        android:layout_marginEnd="8dp"
+        android:minWidth="120dp">
 
         <ImageView
             android:id="@+id/mini_music_icon"

@@ -814,12 +814,12 @@ public class AppDockFragment extends Fragment
                 layoutButton.setLayoutParams(lp);
             }
             
-            // 5. RecyclerView Layout Adjustments
+            // 5. RecyclerView Layout Adjustments (Yatay modda wrap_content ve weight=0 yapildi - Turkce karakter yok)
             if (recyclerView != null) {
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) recyclerView.getLayoutParams();
-                lp.width = isVertical ? ViewGroup.LayoutParams.MATCH_PARENT : 0;
+                lp.width = isVertical ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT;
                 lp.height = isVertical ? 0 : ViewGroup.LayoutParams.MATCH_PARENT;
-                lp.weight = 1.0f;
+                lp.weight = isVertical ? 1.0f : 0.0f;
                 lp.setMargins(isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(4) : 0, isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(4) : 0);
                 recyclerView.setLayoutParams(lp);
             }
@@ -896,8 +896,14 @@ public class AppDockFragment extends Fragment
             }
             
             android.view.ViewGroup.LayoutParams containerLp = miniMusicContainer.getLayoutParams();
-            if (containerLp != null) {
-                containerLp.width = (int) (dpToPx(160) * (0.6f + scale * 0.4f));
+            if (containerLp instanceof android.widget.LinearLayout.LayoutParams) {
+                android.widget.LinearLayout.LayoutParams lp = (android.widget.LinearLayout.LayoutParams) containerLp;
+                lp.width = 0;
+                lp.weight = 1.0f;
+                lp.height = iconSize + dpToPx(8);
+                miniMusicContainer.setLayoutParams(lp);
+            } else if (containerLp != null) {
+                containerLp.width = ViewGroup.LayoutParams.MATCH_PARENT;
                 containerLp.height = iconSize + dpToPx(8);
                 miniMusicContainer.setLayoutParams(containerLp);
             }
