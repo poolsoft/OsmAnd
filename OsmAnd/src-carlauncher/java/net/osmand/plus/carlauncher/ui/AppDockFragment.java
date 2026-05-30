@@ -195,16 +195,22 @@ public class AppDockFragment extends Fragment
             miniBtnNext.setOnClickListener(v -> musicManager.skipToNext());
         }
 
-        if (miniMusicContainer != null) {
-            miniMusicContainer.setOnClickListener(v -> {
-                // Use both global and local broadcast for compatibility
-                Intent intent = new Intent("net.osmand.carlauncher.OPEN_MUSIC_DRAWER");
-                intent.setPackage(getContext().getPackageName());
-                getContext().sendBroadcast(intent);
+        View.OnClickListener musicDrawerOpener = v -> {
+            // Use both global and local broadcast for compatibility (Turkce karakter yok)
+            Intent intent = new Intent("net.osmand.carlauncher.OPEN_MUSIC_DRAWER");
+            intent.setPackage(getContext().getPackageName());
+            getContext().sendBroadcast(intent);
 
-                androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(getContext())
-                        .sendBroadcast(new Intent("net.osmand.carlauncher.OPEN_MUSIC_DRAWER"));
-            });
+            androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(getContext())
+                    .sendBroadcast(new Intent("net.osmand.carlauncher.OPEN_MUSIC_DRAWER"));
+        };
+
+        if (miniMusicTitle != null) {
+            miniMusicTitle.setOnClickListener(musicDrawerOpener);
+        }
+
+        if (miniMusicIcon != null) {
+            miniMusicIcon.setOnClickListener(musicDrawerOpener);
         }
 
         // Start Clock
@@ -364,26 +370,57 @@ public class AppDockFragment extends Fragment
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        if (musicManager != null)
+    public void onResume() {
+        super.onResume();
+        if (musicManager != null) {
             musicManager.addListener(this);
+        }
+        updateMiniMusicUI(); // Ilk yuklemede durum guncelle (Turkce karakter yok)
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
-        if (musicManager != null)
+    public void onPause() {
+        super.onPause();
+        if (musicManager != null) {
             musicManager.removeListener(this);
+        }
+    }
+
+    private void updateMiniMusicUI() {
+        if (musicManager == null) return;
+        
+        // Calan sarkiyi zorla oku ve set et (Turkce karakter yok)
+        boolean isExternal = musicManager.getActiveExternalController() != null;
+        if (isExternal && musicManager.getActiveExternalController().getMetadata() != null) {
+            android.media.MediaMetadata metadata = musicManager.getActiveExternalController().getMetadata();
+            String title = metadata.getString(android.media.MediaMetadata.METADATA_KEY_TITLE);
+            if (miniMusicTitle != null) {
+                miniMusicTitle.post(() -> miniMusicTitle.setText(title != null ? title : "Muzik"));
+            }
+        } else {
+            net.osmand.plus.carlauncher.music.MusicRepository.AudioTrack track = 
+                musicManager.getInternalPlayer().getCurrentTrack();
+            if (miniMusicTitle != null) {
+                miniMusicTitle.post(() -> miniMusicTitle.setText(track != null ? track.getTitle() : "Muzik Secin"));
+            }
+        }
+        
+        // Play/Pause buton ikonunu guncelle (Turkce karakter yok)
+        if (miniBtnPlay != null) {
+            boolean isPlaying = musicManager.getInternalPlayer().isPlaying() || 
+                (musicManager.getActiveExternalController() != null && 
+                 musicManager.getActiveExternalController().getPlaybackState() != null && 
+                 musicManager.getActiveExternalController().getPlaybackState().getState() == android.media.session.PlaybackState.STATE_PLAYING);
+            miniBtnPlay.post(() -> miniBtnPlay.setImageResource(
+                    isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play));
+        }
     }
 
     // --- MusicUIListener ---
 
     @Override
     public void onTrackChanged(String title, String artist, Bitmap albumArt, String packageName) {
-        if (miniMusicTitle != null) {
-            miniMusicTitle.post(() -> miniMusicTitle.setText(title != null ? title : "Muzik"));
-        }
+        updateMiniMusicUI(); // Sarki ismi ve play ikonunu guncelle (Turkce karakter yok)
         
         // Dynamic Color Logic
         int color = android.graphics.Color.WHITE;
@@ -420,10 +457,7 @@ public class AppDockFragment extends Fragment
 
     @Override
     public void onPlaybackStateChanged(boolean isPlaying) {
-        if (miniBtnPlay != null) {
-            miniBtnPlay.post(() -> miniBtnPlay.setImageResource(
-                    isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play));
-        }
+        updateMiniMusicUI(); // Oynatma durumunu guncelle (Turkce karakter yok)
     }
 
     @Override

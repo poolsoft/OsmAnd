@@ -74,10 +74,10 @@ public class AppShortcutWidget extends BaseWidget {
         iconLp.bottomMargin = dpToPx(4);
         iconView.setLayoutParams(iconLp);
 
-        try {
-            Drawable icon = ctx.getPackageManager().getApplicationIcon(packageName);
+        Drawable icon = net.osmand.plus.carlauncher.ui.AppDrawerFragment.getAppIcon(ctx, packageName);
+        if (icon != null) {
             iconView.setImageDrawable(icon);
-        } catch (Exception e) {
+        } else {
             iconView.setImageResource(android.R.drawable.sym_def_app_icon);
         }
         layout.addView(iconView);
@@ -107,6 +107,27 @@ public class AppShortcutWidget extends BaseWidget {
                 if (net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter.isEditMode) {
                     return;
                 }
+                
+                // Dahili uygulamalari ac (Turkce karakter yok)
+                if (packageName != null && packageName.startsWith("internal://")) {
+                    if (v.getContext() instanceof net.osmand.plus.activities.MapActivity) {
+                        net.osmand.plus.activities.MapActivity activity = 
+                            (net.osmand.plus.activities.MapActivity) v.getContext();
+                        switch (packageName) {
+                            case "internal://settings":
+                                activity.openCarLauncherSettings();
+                                break;
+                            case "internal://music":
+                                activity.openMusicPlayer();
+                                break;
+                            case "internal://antenna":
+                                activity.openAntennaAlignmentInPanel();
+                                break;
+                        }
+                    }
+                    return;
+                }
+
                 try {
                     Intent launchIntent = v.getContext().getPackageManager().getLaunchIntentForPackage(packageName);
                     if (launchIntent != null) {

@@ -542,12 +542,20 @@ public class WidgetManager {
                 } else if (id.startsWith("shortcut_")) {
                     try {
                         String packageName = id.substring("shortcut_".length());
-                        android.content.pm.PackageManager pm = context.getPackageManager();
                         String label = "App";
-                        try {
-                            android.content.pm.ApplicationInfo ai = pm.getApplicationInfo(packageName, 0);
-                            label = pm.getApplicationLabel(ai).toString();
-                        } catch (Exception ignored) {}
+                        if (packageName.equals("internal://settings")) {
+                            label = "Car Launcher Ayarlar";
+                        } else if (packageName.equals("internal://music")) {
+                            label = "Muzik Calici";
+                        } else if (packageName.equals("internal://antenna")) {
+                            label = "Anten Hizalama";
+                        } else {
+                            try {
+                                android.content.pm.PackageManager pm = context.getPackageManager();
+                                android.content.pm.ApplicationInfo ai = pm.getApplicationInfo(packageName, 0);
+                                label = pm.getApplicationLabel(ai).toString();
+                            } catch (Exception ignored) {}
+                        }
                         widget = new AppShortcutWidget(context, packageName, label);
                     } catch (Exception e) {
                         android.util.Log.e("WidgetManager", "AppShortcutWidget geri yuklenirken hata: " + e.getMessage());
