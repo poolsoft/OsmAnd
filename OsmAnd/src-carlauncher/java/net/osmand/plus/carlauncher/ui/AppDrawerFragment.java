@@ -46,6 +46,8 @@ public class AppDrawerFragment extends Fragment {
     private View loadingView;
     private static List<AppItem> cachedApps; // Static Cache to prevent reloading
     private BroadcastReceiver packageReceiver; // Paket degisikliklerini izlemek icin alici (Turkce karakter yok)
+    private final android.os.Handler searchHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private Runnable searchRunnable;
     
     // Asynchronous LruCache for holding app icons (Turkce karakter yok)
     private static android.util.LruCache<String, Drawable> iconCache;
@@ -132,13 +134,63 @@ public class AppDrawerFragment extends Fragment {
         }
     }
 
+    private final android.content.ComponentCallbacks2 componentCallbacks = new android.content.ComponentCallbacks2() {
+        @Override
+        public void onTrimMemory(int level) {
+            if (level >= TRIM_MEMORY_MODERATE) {
+                clearCache();
+            }
+        }
+
+        @Override
+        public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
+        }
+
+        @Override
+        public void onLowMemory() {
+            clearCache();
+        }
+    };
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        try {
+            context.registerComponentCallbacks(componentCallbacks);
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        try {
+            if (getContext() != null) {
+                getContext().unregisterComponentCallbacks(componentCallbacks);
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // Initialize Icon Cache if not exists (Turkce karakter yok)
+        // Initialize Icon Cache dynamically if not exists (Turkce karakter yok)
         if (iconCache == null) {
-            iconCache = new android.util.LruCache<>(150); // Max 150 icons
+            int cacheSize = 60; // Dusuk RAM durumlarinda guvenli varsayilan
+            try {
+                android.app.ActivityManager am = (android.app.ActivityManager) requireContext().getSystemService(Context.ACTIVITY_SERVICE);
+                if (am != null) {
+                    int memoryClass = am.getMemoryClass();
+                    cacheSize = Math.max(40, Math.min(150, memoryClass / 2));
+                }
+            } catch (Exception e) {
+                // fallback
+            }
+            iconCache = new android.util.LruCache<>(cacheSize);
         }
 
         // Paket degisikliklerini dinlemek icin alici (Turkce karakter yok)
@@ -164,12 +216,22 @@ public class AppDrawerFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if (searchRunnable != null) {
+            searchHandler.removeCallbacks(searchRunnable);
+        }
         if (packageReceiver != null && getContext() != null) {
             try {
                 getContext().unregisterReceiver(packageReceiver);
             } catch (Exception e) {
                 // ignore
             }
+        }
+        try {
+            if (getContext() != null) {
+                getContext().unregisterComponentCallbacks(componentCallbacks);
+            }
+        } catch (Exception e) {
+            // ignore
         }
     }
 
@@ -196,7 +258,7 @@ public class AppDrawerFragment extends Fragment {
 
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 4));
 
-        // Search Filter
+        // Search Filter (Debounced)
         searchInput.addTextChangedListener(new android.text.TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -204,8 +266,15 @@ public class AppDrawerFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (adapter != null)
-                    adapter.filter(s.toString());
+                if (searchRunnable != null) {
+                    searchHandler.removeCallbacks(searchRunnable);
+                }
+                searchRunnable = () -> {
+                    if (adapter != null) {
+                        adapter.filter(s.toString());
+                    }
+                };
+                searchHandler.postDelayed(searchRunnable, 200); // 200ms gecikme (Debounce)
             }
 
             @Override
