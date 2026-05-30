@@ -63,7 +63,7 @@ public class AppDrawerFragment extends Fragment {
     }
 
     // Kolay ve guvenli sekilde uygulama ikonunu yukleme yardimcisi (Turkce karakter yok)
-    private static Drawable getAppIcon(Context context, String packageName) {
+    public static Drawable getAppIcon(Context context, String packageName) {
         if (context == null || packageName == null) {
             return null;
         }
@@ -284,19 +284,19 @@ public class AppDrawerFragment extends Fragment {
 
             // Settings
             AppItem settings = new AppItem();
-            settings.label = "⚙️ Car Launcher Ayarlar";
+            settings.label = "Car Launcher Ayarlar";
             settings.packageName = "internal://settings";
             internal.add(settings);
 
             // Music Player
             AppItem music = new AppItem();
-            music.label = "🎵 Muzik Calici";
+            music.label = "Muzik Calici";
             music.packageName = "internal://music";
             internal.add(music);
 
             // Antenna Alignment
             AppItem antenna = new AppItem();
-            antenna.label = "📡 Anten Hizalama";
+            antenna.label = "Anten Hizalama";
             antenna.packageName = "internal://antenna";
             internal.add(antenna);
 

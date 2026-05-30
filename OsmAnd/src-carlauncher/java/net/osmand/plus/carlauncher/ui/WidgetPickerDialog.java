@@ -858,29 +858,10 @@ public class WidgetPickerDialog extends DialogFragment {
         // AppDrawer'daki cache'lenmis uygulamalari ve ikonlari kullan (Turkce karakter yok)
         List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem> cachedList = 
                 net.osmand.plus.carlauncher.ui.AppDrawerFragment.getCachedApps();
-        android.util.LruCache<String, Drawable> cacheIcons = 
-                net.osmand.plus.carlauncher.ui.AppDrawerFragment.getIconCache();
 
         if (cachedList != null && !cachedList.isEmpty()) {
             for (net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem item : cachedList) {
-                // Dahili uygulamalari widget kisayolu olarak ekleme (Muzik Calici, Ayarlar vb.)
-                if (item.packageName != null && item.packageName.startsWith("internal://")) {
-                    continue;
-                }
-                
-                Drawable icon = null;
-                if (cacheIcons != null) {
-                    icon = cacheIcons.get(item.packageName);
-                }
-                
-                if (icon == null) {
-                    try {
-                        icon = ctx.getPackageManager().getApplicationIcon(item.packageName);
-                    } catch (Exception e) {
-                        icon = ctx.getResources().getDrawable(android.R.drawable.sym_def_app_icon, null);
-                    }
-                }
-                
+                Drawable icon = net.osmand.plus.carlauncher.ui.AppDrawerFragment.getAppIcon(ctx, item.packageName);
                 container.addView(createShortcutCard(ctx, item.packageName, item.label, icon));
             }
         } else {
@@ -904,22 +885,42 @@ public class WidgetPickerDialog extends DialogFragment {
                         }
 
                         java.util.Collections.sort(list, (a, b) -> a.label.compareToIgnoreCase(b.label));
+
+                        // Dahili uygulamalari basina ekle (Turkce karakter yok)
+                        List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem> internalApps = getInternalApps();
+                        list.addAll(0, internalApps);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                     return list;
                 }
 
+                private List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem> getInternalApps() {
+                    List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem> internal = new ArrayList<>();
+                    
+                    net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem settings = new net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem();
+                    settings.label = "Car Launcher Ayarlar";
+                    settings.packageName = "internal://settings";
+                    internal.add(settings);
+
+                    net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem music = new net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem();
+                    music.label = "Muzik Calici";
+                    music.packageName = "internal://music";
+                    internal.add(music);
+
+                    net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem antenna = new net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem();
+                    antenna.label = "Anten Hizalama";
+                    antenna.packageName = "internal://antenna";
+                    internal.add(antenna);
+
+                    return internal;
+                }
+
                 @Override
                 protected void onPostExecute(List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem> result) {
                     if (result != null && !result.isEmpty() && container != null) {
                         for (net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem item : result) {
-                            Drawable icon = null;
-                            try {
-                                icon = ctx.getPackageManager().getApplicationIcon(item.packageName);
-                            } catch (Exception e) {
-                                icon = ctx.getResources().getDrawable(android.R.drawable.sym_def_app_icon, null);
-                            }
+                            Drawable icon = net.osmand.plus.carlauncher.ui.AppDrawerFragment.getAppIcon(ctx, item.packageName);
                             container.addView(createShortcutCard(ctx, item.packageName, item.label, icon));
                         }
                     }
