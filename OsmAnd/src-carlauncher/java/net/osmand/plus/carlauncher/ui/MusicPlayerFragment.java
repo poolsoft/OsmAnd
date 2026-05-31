@@ -275,17 +275,23 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         if (btnPrev != null)
             btnPrev.setOnClickListener(v -> musicManager.skipToPrevious());
 
-        // Shuffle
+        // Shuffle (Turkce karakter yok)
         if (btnShuffle != null)
             btnShuffle.setOnClickListener(v -> {
                 isShuffleOn = !isShuffleOn;
+                if (musicManager != null) {
+                    musicManager.setShuffleOn(isShuffleOn);
+                }
                 updateShuffleUI();
             });
 
-        // Repeat
+        // Repeat (Turkce karakter yok)
         if (btnRepeat != null)
             btnRepeat.setOnClickListener(v -> {
                 repeatMode = (repeatMode + 1) % 3;
+                if (musicManager != null) {
+                    musicManager.setRepeatMode(repeatMode);
+                }
                 updateRepeatUI();
             });
 
@@ -521,6 +527,14 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         // Shuffle ve repeat butonlarinin gorunurlugunu calma listesine gore guncelle (Turkce karakter yok)
         updateShuffleAndRepeatVisibility();
+
+        // Merkezi oynaticidan Shuffle ve Repeat durumunu esitle (Turkce karakter yok)
+        if (musicManager != null) {
+            isShuffleOn = musicManager.isShuffleOn();
+            repeatMode = musicManager.getRepeatMode();
+            updateShuffleUI();
+            updateRepeatUI();
+        }
     }
 
     private void updateDockButtonsUI() {
@@ -978,16 +992,12 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     @Override
     public void onStart() {
         super.onStart();
-        if (musicManager != null)
-            musicManager.addListener(this);
         startSeekbarUpdater();
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        if (musicManager != null)
-            musicManager.removeListener(this);
         stopSeekbarUpdater();
     }
 

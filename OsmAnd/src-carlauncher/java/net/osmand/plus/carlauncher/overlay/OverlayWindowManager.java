@@ -78,6 +78,7 @@ public class OverlayWindowManager {
 
         if (!isSpecialApp) {
             launchAppFreeform(packageName);
+            return;
         }
 
         // 3. Yuzen pencereyi olustur

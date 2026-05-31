@@ -504,25 +504,71 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
     // --- Logic ---
 
+    /**
+     * UTF-8 karakter bozulmalarini temizleyen yardimci metot.
+     */
+    private String sanitizeEncoding(String text) {
+        if (text == null) return null;
+        try {
+            return text
+                .replace("Ä\u00b0", "\u0130") // Buyuk I
+                .replace("Ä\u00b1", "\u0131") // Kucuk i
+                .replace("Å\u009f", "\u015f") // Kucuk s
+                .replace("Å\u009e", "\u015e") // Buyuk S
+                .replace("Ä\u009f", "\u011f") // Kucuk g
+                .replace("Ä\u009e", "\u011e") // Buyuk G
+                .replace("Ã\u00bc", "\u00fc") // Kucuk u
+                .replace("Ã\u009c", "\u00dc") // Buyuk U
+                .replace("Ã\u00b6", "\u00f6") // Kucuk o
+                .replace("Ã\u0096", "\u00d6") // Buyuk O
+                .replace("Ã\u00a7", "\u00e7") // Kucuk c
+                .replace("Ã\u0087", "\u00c7"); // Buyuk C
+        } catch (Exception e) {
+            return text;
+        }
+    }
+
+    public boolean isShuffleOn() {
+        return internalPlayer.isShuffleOn();
+    }
+
+    public void setShuffleOn(boolean shuffleOn) {
+        internalPlayer.setShuffleOn(shuffleOn);
+        notifyStateChanged();
+    }
+
+    public int getRepeatMode() {
+        return internalPlayer.getRepeatMode();
+    }
+
+    public void setRepeatMode(int repeatMode) {
+        internalPlayer.setRepeatMode(repeatMode);
+        notifyStateChanged();
+    }
+
     private boolean useExternal() {
-        // 1. Dahili oynatıcı aktifse, kesinlikle dahili kullan (Focus bizde)
-        if (internalPlayer.isPlaying()) {
+        // 1. Eger tercih edilen paket "usage.internal.player" ise, kesinlikle dahili kullan (Turkce karakter yok)
+        if ("usage.internal.player".equals(preferredPackage)) {
             return false;
         }
 
-        // 2. Harici bir kaynak varsa (Çalıyor VEYA Duraklatılmış), onu kullan.
-        // Böylece Spotify durduğunda hemen Dahili'ye düşmeyiz. Resume edebiliriz.
-        if (activeExternalController != null) {
-            return true;
-        }
-
-        // 3. Kimse yoksa (activeExternalController == null), 
-        // tercih edilen paket varsa belki bir gün lazım olur:
+        // 2. Tercih edilen paket harici bir uygulama ise, kesinlikle harici kullan (Turkce karakter yok)
         if (preferredPackage != null && !preferredPackage.equals("usage.internal.player")) {
             return true;
         }
 
-        // 4. Hiçbir şey yoksa Dahili varsayılan.
+        // 3. Eger tercih edilen paket null ise (Kullanici listeden sarkiya tiklayip baslatmissa):
+        // En son aktif olan kaynaga gore karar ver (Turkce karakter yok)
+        if (lastActiveSource == MusicSource.INTERNAL) {
+            return false;
+        }
+
+        // 4. Eger en son harici aktifse ve harici kontrolcumuz varsa harici kullan (Turkce karakter yok)
+        if (activeExternalController != null) {
+            return true;
+        }
+
+        // Varsayilan olarak dahili
         return false;
     }
 
@@ -631,12 +677,12 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             if (metadata != null) {
                 String title = metadata.getString(MediaMetadata.METADATA_KEY_TITLE);
                 String artist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST);
-                // Not: Bitmap almak main thread'i yavaşlatabilir, dikkat edilmeli.
+                // Not: Bitmap almak main thread'i yavaslatabilir, dikkat edilmeli. (Turkce karakter yok)
                 android.graphics.Bitmap art = metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
 
                 l.onTrackChanged(
-                        title != null ? title : "Bilinmeyen",
-                        artist != null ? artist : "",
+                        sanitizeEncoding(title != null ? title : "Bilinmeyen"),
+                        sanitizeEncoding(artist != null ? artist : ""),
                         art,
                         pkg);
                 l.onSourceChanged(false);
@@ -647,7 +693,11 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         } else {
             MusicRepository.AudioTrack track = internalPlayer.getCurrentTrack();
             if (track != null) {
-                l.onTrackChanged(track.getTitle(), track.getArtist(), null, context.getPackageName());
+                l.onTrackChanged(
+                        sanitizeEncoding(track.getTitle()),
+                        sanitizeEncoding(track.getArtist()),
+                        null,
+                        context.getPackageName());
                 l.onSourceChanged(true);
             } else {
                 l.onTrackChanged("Muzik Secin", "", null, context.getPackageName());

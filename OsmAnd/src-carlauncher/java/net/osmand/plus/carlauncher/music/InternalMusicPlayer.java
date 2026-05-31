@@ -34,9 +34,11 @@ public class InternalMusicPlayer {
     private List<MusicRepository.AudioTrack> playlist = new ArrayList<>();
     private int currentIndex = -1;
     private boolean isPrepared = false;
-    private boolean playOnFocusGain = false; // Focus geri geldiğinde çalmaya devam etsin mi?
-    private boolean autoPlayOnPrepared = true; // Hazır olunca otomatik oynat
+    private boolean playOnFocusGain = false; // Focus geri geldiginde calmaya devam etsin mi (Turkce karakter yok)
+    private boolean autoPlayOnPrepared = true; // Hazir olunca otomatik oynat
     private PlaybackListener listener;
+    private boolean isShuffleOn = false;
+    private int repeatMode = 0; // 0=off, 1=one, 2=all
 
     public InternalMusicPlayer(Context context) {
         this.context = context;
@@ -46,6 +48,22 @@ public class InternalMusicPlayer {
 
     public void setListener(PlaybackListener listener) {
         this.listener = listener;
+    }
+
+    public boolean isShuffleOn() {
+        return isShuffleOn;
+    }
+
+    public void setShuffleOn(boolean shuffleOn) {
+        this.isShuffleOn = shuffleOn;
+    }
+
+    public int getRepeatMode() {
+        return repeatMode;
+    }
+
+    public void setRepeatMode(int repeatMode) {
+        this.repeatMode = repeatMode;
     }
 
     // --- Audio Focus Listener (Navigasyon ve Aramalar için) ---
@@ -111,8 +129,8 @@ public class InternalMusicPlayer {
         mediaPlayer.setOnErrorListener((mp, what, extra) -> {
             Log.e(TAG, "MediaPlayer error: " + what + ", " + extra);
             isPrepared = false;
-            // Hata olursa bir sonraki şarkıya geçmeyi dene, yoksa durur.
-            playNext();
+            // Hata olursa bir sonraki sarkiya gec (zorla skip et) (Turkce karakter yok)
+            playNext(true);
             return true;
         });
     }
@@ -159,8 +177,8 @@ public class InternalMusicPlayer {
             saveState(); // Save new track index
         } catch (IOException e) {
             Log.e(TAG, "Error setting data source", e);
-            // Dosya bozuksa bir sonrakine geç
-            playNext();
+            // Dosya bozuksa bir sonrakine gec (zorla skip et) (Turkce karakter yok)
+            playNext(true);
         }
     }
 
@@ -209,30 +227,88 @@ public class InternalMusicPlayer {
     }
 
     public void playNext() {
+        playNext(false);
+    }
+
+    public void playNext(boolean forceSkip) {
         if (playlist.isEmpty())
             return;
-        int nextIndex = currentIndex + 1;
-        if (nextIndex >= playlist.size()) {
-            nextIndex = 0; // Loop list
+
+        if (!forceSkip && repeatMode == 1) { // Repeat One (Tek parca tekrar - Turkce karakter yok)
+            playTrack(currentIndex);
+            return;
         }
-        playTrack(nextIndex);
+
+        int nextIndex;
+        if (isShuffleOn) {
+            if (playlist.size() > 1) {
+                nextIndex = currentIndex;
+                while (nextIndex == currentIndex) {
+                    nextIndex = (int) (Math.random() * playlist.size());
+                }
+            } else {
+                nextIndex = 0;
+            }
+        } else {
+            nextIndex = currentIndex + 1;
+        }
+
+        if (nextIndex >= playlist.size()) {
+            if (repeatMode == 2) { // Repeat All (Tum liste tekrar - Turkce karakter yok)
+                nextIndex = 0;
+                playTrack(nextIndex);
+            } else {
+                // Repeat Off (Tekrar kapali - duraklat ve ilk sarkiya don - Turkce karakter yok)
+                pause();
+                currentIndex = 0;
+                playTrack(0, false);
+            }
+        } else {
+            playTrack(nextIndex);
+        }
     }
 
     public void playPrevious() {
         if (playlist.isEmpty())
             return;
 
-        // Eğer şarkı 3 saniyeden fazla çaldıysa başa sar
+        // Eger sarki 3 saniyeden fazla caldiysa basa sar (Turkce karakter yok)
         if (isPrepared && mediaPlayer.isPlaying() && mediaPlayer.getCurrentPosition() > 3000) {
             mediaPlayer.seekTo(0);
             return;
         }
 
-        int prevIndex = currentIndex - 1;
-        if (prevIndex < 0) {
-            prevIndex = playlist.size() - 1;
+        if (repeatMode == 1) { // Repeat One (Turkce karakter yok)
+            playTrack(currentIndex);
+            return;
         }
-        playTrack(prevIndex);
+
+        int prevIndex;
+        if (isShuffleOn) {
+            if (playlist.size() > 1) {
+                prevIndex = currentIndex;
+                while (prevIndex == currentIndex) {
+                    prevIndex = (int) (Math.random() * playlist.size());
+                }
+            } else {
+                prevIndex = 0;
+            }
+        } else {
+            prevIndex = currentIndex - 1;
+        }
+
+        if (prevIndex < 0) {
+            if (repeatMode == 2) { // Repeat All (Turkce karakter yok)
+                prevIndex = playlist.size() - 1;
+                playTrack(prevIndex);
+            } else {
+                // Repeat Off (Turkce karakter yok)
+                prevIndex = playlist.size() - 1;
+                playTrack(prevIndex);
+            }
+        } else {
+            playTrack(prevIndex);
+        }
     }
 
     public boolean isPlaying() {
