@@ -95,6 +95,17 @@ public class AntennaAlignmentFragment extends Fragment implements SensorEventLis
             });
         }
 
+        // Swap butonu: Kaynak ve hedef yerini degistir (Turkce karakter yok)
+        View btnSwap = view.findViewById(R.id.btn_swap);
+        if (btnSwap != null) {
+            btnSwap.setOnClickListener(v -> {
+                if (manager != null) {
+                    manager.swapPoints();
+                    updateUI();
+                }
+            });
+        }
+
         // Sensorleri hazirla (Turkce karakter yok)
         sensorManager = (SensorManager) requireContext().getSystemService(Context.SENSOR_SERVICE);
         rotationVectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);

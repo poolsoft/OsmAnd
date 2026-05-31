@@ -755,6 +755,8 @@ public class AppDockFragment extends Fragment
         root.post(() -> {
             if (getContext() == null) return;
             
+            boolean isScreenPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+            
             // 1. Update Recycler Orientation
             updateRecyclerViewOrientation(root);
             
@@ -848,12 +850,13 @@ public class AppDockFragment extends Fragment
                 layoutButton.setLayoutParams(lp);
             }
             
-            // 5. RecyclerView Layout Adjustments (Yatay modda wrap_content ve weight=0 yapildi - Turkce karakter yok)
+            // 5. RecyclerView Layout Adjustments (Yatay modda wrap_content ve weight=0, dikey portrait modda weight=1 ve width=0 yapildi - Turkce karakter yok)
             if (recyclerView != null) {
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) recyclerView.getLayoutParams();
-                lp.width = isVertical ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT;
+                boolean useWeight = isVertical || isScreenPortrait;
+                lp.width = useWeight ? (isVertical ? ViewGroup.LayoutParams.MATCH_PARENT : 0) : ViewGroup.LayoutParams.WRAP_CONTENT;
                 lp.height = isVertical ? 0 : ViewGroup.LayoutParams.MATCH_PARENT;
-                lp.weight = isVertical ? 1.0f : 0.0f;
+                lp.weight = useWeight ? 1.0f : 0.0f;
                 lp.setMargins(isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(4) : 0, isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(4) : 0);
                 recyclerView.setLayoutParams(lp);
             }
