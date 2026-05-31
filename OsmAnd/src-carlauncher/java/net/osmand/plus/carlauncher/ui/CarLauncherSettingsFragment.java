@@ -419,6 +419,18 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+
+        // Yuzen harita (PiP) ayari (Turkce karakter yok)
+        SwitchPreferenceCompat pipPref = findPreference(CarLauncherSettings.KEY_PIP_MODE);
+        if (pipPref != null) {
+            pipPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                boolean val = (Boolean) newValue;
+                if (settings != null) {
+                    settings.setPipModeEnabled(val);
+                }
+                return true;
+            });
+        }
     }
 
     private void applyStatusBarVisibility(boolean show) {

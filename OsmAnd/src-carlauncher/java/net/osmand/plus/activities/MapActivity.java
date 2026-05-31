@@ -2558,4 +2558,43 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	public void onInAppPurchaseItemPurchased(String sku) {
 		getMapLayers().getRouteLayer().resetColorAvailabilityCache();
 	}
+
+	@Override
+	protected void onUserLeaveHint() {
+		super.onUserLeaveHint();
+		// Ayarlarda PiP aktifse ve Android 8.0+ ise gir (Turkce karakter yok)
+		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(this);
+		if (carSettings.isPipModeEnabled() && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+			try {
+				android.app.PictureInPictureParams.Builder builder = new android.app.PictureInPictureParams.Builder();
+				android.util.Rational aspectRatio = new android.util.Rational(16, 9);
+				builder.setAspectRatio(aspectRatio);
+				enterPictureInPictureMode(builder.build());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Override
+	public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, Configuration newConfig) {
+		super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+
+		View appDock = findViewById(R.id.app_dock);
+		View widgetPanel = findViewById(R.id.widget_panel);
+		View widgetHandle = findViewById(R.id.widget_handle);
+		View mapHudContainer = findViewById(R.id.map_hud_container);
+
+		if (isInPictureInPictureMode) {
+			// PiP modunda sadece harita kalir, diger her sey gizlenir (Turkce karakter yok)
+			if (appDock != null) appDock.setVisibility(View.GONE);
+			if (widgetPanel != null) widgetPanel.setVisibility(View.GONE);
+			if (widgetHandle != null) widgetHandle.setVisibility(View.GONE);
+			if (mapHudContainer != null) mapHudContainer.setVisibility(View.GONE);
+		} else {
+			// PiP modundan cikildiginda elemanlari geri yukle (Turkce karakter yok)
+			if (appDock != null) appDock.setVisibility(View.VISIBLE);
+			applyWidgetPanelState();
+		}
+	}
 }

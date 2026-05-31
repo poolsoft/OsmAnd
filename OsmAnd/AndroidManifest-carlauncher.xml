@@ -25,7 +25,8 @@
             android:launchMode="singleTask"
             android:screenOrientation="sensor"
             android:windowSoftInputMode="adjustResize"
-            android:configChanges="keyboardHidden|uiMode"
+            android:configChanges="keyboardHidden|uiMode|screenSize|smallestScreenSize|screenLayout|orientation"
+            android:supportsPictureInPicture="true"
             android:exported="true"
             tools:node="replace">
             

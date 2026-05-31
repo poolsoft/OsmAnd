@@ -341,6 +341,16 @@ public class CarLauncherSettings {
         prefs.edit().putString(KEY_BACKGROUND_STYLE, style).apply();
     }
 
+    public static final String KEY_PIP_MODE = "car_launcher_pip_mode";
+
+    public boolean isPipModeEnabled() {
+        return prefs.getBoolean(KEY_PIP_MODE, true); // Varsayilan olarak aktif (true)
+    }
+
+    public void setPipModeEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_PIP_MODE, enabled).apply();
+    }
+
     public SharedPreferences getPrefs() {
         return prefs;
     }

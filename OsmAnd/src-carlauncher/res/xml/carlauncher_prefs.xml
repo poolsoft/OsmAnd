@@ -77,6 +77,13 @@
             android:defaultValue="modern"
             android:iconSpaceReserved="false" />
 
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="car_launcher_pip_mode"
+            android:title="Yüzen Harita (Picture-in-Picture)"
+            android:summary="Arka plana geçildiğinde haritayı yüzen küçük ekran olarak açık tutar"
+            android:defaultValue="true"
+            android:iconSpaceReserved="false" />
+
     </androidx.preference.PreferenceCategory>
 
 
