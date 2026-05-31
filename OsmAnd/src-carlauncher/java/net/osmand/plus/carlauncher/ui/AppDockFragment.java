@@ -790,6 +790,7 @@ public class AppDockFragment extends Fragment
                 lp.gravity = isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL;
                 lp.width = isVertical ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT;
                 lp.height = isVertical ? ViewGroup.LayoutParams.WRAP_CONTENT : ViewGroup.LayoutParams.MATCH_PARENT;
+                lp.weight = 0.0f; // Weight degeri her zaman sifirlanarak tasmalar onlenir
                 lp.setMargins(0, 0, 0, 0);
                 clockContainer.setPadding(isVertical ? 0 : dpToPx(12), isVertical ? dpToPx(2) : 0, isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(2) : 0);
                 clockContainer.setLayoutParams(lp);
@@ -887,7 +888,12 @@ public class AppDockFragment extends Fragment
             miniMusicContainer.setPadding(0, 0, 0, 0);
             
             android.view.ViewGroup.LayoutParams containerLp = miniMusicContainer.getLayoutParams();
-            if (containerLp != null) {
+            if (containerLp instanceof android.widget.LinearLayout.LayoutParams) {
+                android.widget.LinearLayout.LayoutParams lp = (android.widget.LinearLayout.LayoutParams) containerLp;
+                lp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                lp.weight = 0.0f; // Dikey portrait modda weight degeri sifirlanir, RecyclerView ile cakismasi onlenir
+                miniMusicContainer.setLayoutParams(lp);
+            } else if (containerLp != null) {
                 containerLp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
                 miniMusicContainer.setLayoutParams(containerLp);
             }
