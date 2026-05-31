@@ -274,7 +274,7 @@ public class WidgetPickerDialog extends DialogFragment {
         LinearLayout card = new LinearLayout(ctx);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER_HORIZONTAL);
-        card.setPadding(dpToPx(10), dpToPx(10), dpToPx(10), dpToPx(10));
+        card.setPadding(dpToPx(8), dpToPx(6), dpToPx(8), dpToPx(6));
         
         LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(dpToPx(120), ViewGroup.LayoutParams.WRAP_CONTENT);
         cardLp.rightMargin = dpToPx(12);
@@ -289,7 +289,7 @@ public class WidgetPickerDialog extends DialogFragment {
         // Canvas Tabanli Widget Onizleme (Preview)
         WidgetPreviewView preview = new WidgetPreviewView(ctx, info.type);
         LinearLayout.LayoutParams prevLp = new LinearLayout.LayoutParams(dpToPx(100), dpToPx(70));
-        prevLp.bottomMargin = dpToPx(8);
+        prevLp.bottomMargin = dpToPx(4);
         preview.setLayoutParams(prevLp);
         card.addView(preview);
 
@@ -313,7 +313,7 @@ public class WidgetPickerDialog extends DialogFragment {
         sizeLabel.setTextColor(0x88FFFFFF);
         sizeLabel.setTextSize(10);
         sizeLabel.setGravity(Gravity.CENTER);
-        sizeLabel.setPadding(0, 0, 0, dpToPx(6));
+        sizeLabel.setPadding(0, 0, 0, dpToPx(4));
         card.addView(sizeLabel);
 
         // Ekle Butonu
@@ -322,6 +322,7 @@ public class WidgetPickerDialog extends DialogFragment {
         btnAdd.setTextColor(Color.WHITE);
         btnAdd.setTextSize(11);
         btnAdd.setGravity(Gravity.CENTER);
+        btnAdd.setPadding(0, 0, 0, 0);
         LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(28));
         btnAdd.setLayoutParams(btnLp);
 
@@ -430,7 +431,7 @@ public class WidgetPickerDialog extends DialogFragment {
         LinearLayout card = new LinearLayout(ctx);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER_HORIZONTAL);
-        card.setPadding(dpToPx(10), dpToPx(10), dpToPx(10), dpToPx(10));
+        card.setPadding(dpToPx(8), dpToPx(6), dpToPx(8), dpToPx(6));
 
         LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(dpToPx(120), ViewGroup.LayoutParams.WRAP_CONTENT);
         cardLp.rightMargin = dpToPx(12);
@@ -448,7 +449,7 @@ public class WidgetPickerDialog extends DialogFragment {
             preview.setAppIcon(appIcon);
         }
         LinearLayout.LayoutParams prevLp = new LinearLayout.LayoutParams(dpToPx(100), dpToPx(70));
-        prevLp.bottomMargin = dpToPx(8);
+        prevLp.bottomMargin = dpToPx(4);
         preview.setLayoutParams(prevLp);
         card.addView(preview);
 
@@ -475,7 +476,7 @@ public class WidgetPickerDialog extends DialogFragment {
         sizeLabel.setTextColor(0x88FFFFFF);
         sizeLabel.setTextSize(10);
         sizeLabel.setGravity(Gravity.CENTER);
-        sizeLabel.setPadding(0, 0, 0, dpToPx(6));
+        sizeLabel.setPadding(0, 0, 0, dpToPx(4));
         card.addView(sizeLabel);
 
         // Ekle Butonu
@@ -484,6 +485,7 @@ public class WidgetPickerDialog extends DialogFragment {
         btnAdd.setTextColor(Color.WHITE);
         btnAdd.setTextSize(11);
         btnAdd.setGravity(Gravity.CENTER);
+        btnAdd.setPadding(0, 0, 0, 0);
         LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(28));
         btnAdd.setLayoutParams(btnLp);
 
@@ -962,7 +964,7 @@ public class WidgetPickerDialog extends DialogFragment {
         LinearLayout card = new LinearLayout(ctx);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER_HORIZONTAL);
-        card.setPadding(dpToPx(10), dpToPx(10), dpToPx(10), dpToPx(10));
+        card.setPadding(dpToPx(8), dpToPx(6), dpToPx(8), dpToPx(6));
 
         LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(dpToPx(120), ViewGroup.LayoutParams.WRAP_CONTENT);
         cardLp.rightMargin = dpToPx(12);
@@ -977,7 +979,7 @@ public class WidgetPickerDialog extends DialogFragment {
         // Ikon (ImageView)
         android.widget.ImageView iconView = new android.widget.ImageView(ctx);
         LinearLayout.LayoutParams iconLp = new LinearLayout.LayoutParams(dpToPx(48), dpToPx(48));
-        iconLp.bottomMargin = dpToPx(8);
+        iconLp.bottomMargin = dpToPx(4);
         iconView.setLayoutParams(iconLp);
         iconView.setImageDrawable(icon);
         card.addView(iconView);
@@ -991,7 +993,7 @@ public class WidgetPickerDialog extends DialogFragment {
         title.setSingleLine(true);
         title.setEllipsize(android.text.TextUtils.TruncateAt.END);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
-        title.setPadding(0, 0, 0, dpToPx(16));
+        title.setPadding(0, 0, 0, dpToPx(6));
         card.addView(title);
 
         // Ekle Butonu
@@ -1000,6 +1002,7 @@ public class WidgetPickerDialog extends DialogFragment {
         btnAdd.setTextColor(Color.WHITE);
         btnAdd.setTextSize(11);
         btnAdd.setGravity(Gravity.CENTER);
+        btnAdd.setPadding(0, 0, 0, 0);
         LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(28));
         btnAdd.setLayoutParams(btnLp);
 
