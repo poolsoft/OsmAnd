@@ -83,7 +83,7 @@ public class AppDrawerFragment extends Fragment {
             }
         } else if (packageName.equals("internal://antenna")) {
             try {
-                return context.getResources().getDrawable(net.osmand.plus.R.drawable.ic_action_direction);
+                return context.getResources().getDrawable(net.osmand.plus.R.drawable.ic_action_compass);
             } catch (Exception e) {
                 // fallback
             }

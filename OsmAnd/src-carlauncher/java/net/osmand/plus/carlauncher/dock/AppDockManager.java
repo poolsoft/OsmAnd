@@ -90,7 +90,7 @@ public class AppDockManager {
                             icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
                         } else if (packageName.equals("internal://antenna")) {
                             appName = "Anten";
-                            icon = context.getResources().getDrawable(android.R.drawable.ic_menu_compass, null);
+                            icon = context.getResources().getDrawable(net.osmand.plus.R.drawable.ic_action_compass, null);
                         } else {
                             appName = "Bilinmeyen";
                             icon = context.getResources().getDrawable(android.R.drawable.sym_def_app_icon, null);
