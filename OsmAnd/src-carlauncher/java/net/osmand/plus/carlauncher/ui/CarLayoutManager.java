@@ -211,21 +211,7 @@ public class CarLayoutManager {
                 cs.connect(bottomViewId, ConstraintSet.TOP, topViewId, ConstraintSet.BOTTOM, gapSize);
                 cs.connect(bottomViewId, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
 
-                // Eski kisitlarin cakismasini engellemek icin dikey mod baglantilarindan once temizlik yapilir (Turkce karakter yok)
-                cs.clear(R.id.widget_handle, ConstraintSet.START);
-                cs.clear(R.id.widget_handle, ConstraintSet.END);
-                cs.clear(R.id.widget_handle, ConstraintSet.TOP);
-                cs.clear(R.id.widget_handle, ConstraintSet.BOTTOM);
-
-                cs.connect(R.id.widget_handle, ConstraintSet.TOP, topViewId, ConstraintSet.BOTTOM);
-                cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, bottomViewId, ConstraintSet.TOP);
-                cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
-                cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
-                
-                // XML'de tanimli olan 48dp boyutlarinin korunmasi saglanir, 0'a cokme engellenir (Turkce karakter yok)
-                int handleSize = (int) (48 * density);
-                cs.constrainWidth(R.id.widget_handle, handleSize);
-                cs.constrainHeight(R.id.widget_handle, handleSize);
+                // Dikey yerlesimde widget_handle konumu applyWidgetHandleTranslation icinde milimetrik translation ile yonetilir (Turkce karakter yok)
 
                 // Yukseklikleri sinirla
                 cs.constrainHeight(topViewId, 0); // LARGE gorunum kalan alani doldurur
@@ -291,21 +277,7 @@ public class CarLayoutManager {
                 cs.connect(rightViewId, ConstraintSet.START, leftViewId, ConstraintSet.END, gapSize);
                 cs.connect(rightViewId, ConstraintSet.END, rightBorder, rightSide);
 
-                // Eski kisitlarin cakismasini engellemek icin yatay mod baglantilarindan once temizlik yapilir (Turkce karakter yok)
-                cs.clear(R.id.widget_handle, ConstraintSet.START);
-                cs.clear(R.id.widget_handle, ConstraintSet.END);
-                cs.clear(R.id.widget_handle, ConstraintSet.TOP);
-                cs.clear(R.id.widget_handle, ConstraintSet.BOTTOM);
-
-                cs.connect(R.id.widget_handle, ConstraintSet.START, leftViewId, ConstraintSet.END);
-                cs.connect(R.id.widget_handle, ConstraintSet.END, rightViewId, ConstraintSet.START);
-                cs.connect(R.id.widget_handle, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
-                cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, bottomBorder, bottomSide);
-                
-                // XML'de tanimli olan 48dp boyutlarinin korunmasi saglanir, 0'a cokme engellenir (Turkce karakter yok)
-                int handleSize = (int) (48 * density);
-                cs.constrainWidth(R.id.widget_handle, handleSize);
-                cs.constrainHeight(R.id.widget_handle, handleSize);
+                // Yatay yerlesimde widget_handle konumu applyWidgetHandleTranslation icinde milimetrik translation ile yonetilir (Turkce karakter yok)
 
                 // Genislikleri yerlesime gore ayarla
                 if (leftViewIsSmall) {
@@ -389,9 +361,12 @@ public class CarLayoutManager {
     private void applyWidgetHandleTranslation(CarLauncherSettings settings, boolean isOpen) {
         if (widgetHandle == null) return;
         
-        // Pozisyon sifirlamalari (Turkce karakter yok)
-        widgetHandle.setTranslationX(0);
-        widgetHandle.setTranslationY(0);
+        if (!isOpen || activity.isDesktopMode()) {
+            widgetHandle.setVisibility(View.GONE);
+            return;
+        }
+
+        widgetHandle.setVisibility(View.VISIBLE);
         
         // Orijinal yuvarlak siyah-transparan arka plani ve grabber padding degerini koruyoruz (Turkce karakter yok)
         widgetHandle.setBackgroundResource(R.drawable.bg_drawer_handle);
@@ -411,6 +386,78 @@ public class CarLayoutManager {
         } else {
             widgetHandle.setRotation(0f);
         }
+
+        // --- MATEMATIKSEL MILIMETRIK TRANSLATION HESAPLAMALARI (Turkce karakter yok) ---
+        int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
+        int screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
+        
+        String dockPos = settings.getDockPosition();
+        if (isPortrait) dockPos = "bottom";
+        
+        int dockSizePercent = settings.getDockSize();
+        float dockScale = 0.3f + (dockSizePercent / 100.0f) * 1.4f;
+        int dockSize = (int) (activity.getResources().getDimension(R.dimen.dock_height) * dockScale);
+        int sidebarWidth = (int) (64 * density * dockScale);
+        
+        int minAllowedSize = (int) (50 * density);
+        if (dockSize < minAllowedSize) dockSize = minAllowedSize;
+        if (sidebarWidth < minAllowedSize) sidebarWidth = minAllowedSize;
+        
+        float handleSizePx = 48 * density;
+        float gapSize = 8 * density;
+        
+        float tx = 0;
+        float ty = 0;
+        
+        if (isPortrait || "bottom".equals(settings.getWidgetPanelPosition())) {
+            // Dikey Mod veya Alt Panel Modu (Dikey Hizalama)
+            float portraitPanelHeight = isPortrait ? settings.getWidgetPanelHeightPortrait() : 0.30f;
+            
+            // Muzik player ve harita yukseklikleri hesabi
+            int availableHeight = screenHeight - ("bottom".equals(dockPos) ? dockSize : 0);
+            int smallHeight = (int) (screenHeight * portraitPanelHeight);
+            
+            // Ust panelin yuksekligi
+            float topHeight = isContentFullScreen ? (availableHeight - smallHeight - gapSize) : smallHeight;
+            if (!isPortrait && "bottom".equals(settings.getWidgetPanelPosition()) && !isContentFullScreen) {
+                // Eger yatayda alt widget modundaysak ve swap durumuna gore topView belirlenir
+                topHeight = availableHeight - smallHeight - gapSize;
+            }
+            
+            ty = topHeight + (gapSize / 2f) - (handleSizePx / 2f);
+            
+            // Yatayda tam ortalama
+            int startX = "left".equals(dockPos) ? sidebarWidth : 0;
+            int endX = "right".equals(dockPos) ? screenWidth - sidebarWidth : screenWidth;
+            tx = startX + ((endX - startX) / 2f) - (handleSizePx / 2f);
+            
+        } else {
+            // Yatay Mod (Sol veya Sag Panel Modu)
+            float panelPercent = settings.getWidgetPanelWidthPercent();
+            int smallWidth = (int) (screenWidth * panelPercent);
+            
+            boolean leftViewIsSmall = "left".equals(settings.getWidgetPanelPosition());
+            int leftWidth;
+            
+            int activeAreaWidth = screenWidth - ("left".equals(dockPos) || "right".equals(dockPos) ? sidebarWidth : 0);
+            if (leftViewIsSmall) {
+                leftWidth = isContentFullScreen ? (activeAreaWidth - smallWidth - (int)gapSize) : smallWidth;
+            } else {
+                leftWidth = isContentFullScreen ? smallWidth : (activeAreaWidth - smallWidth - (int)gapSize);
+            }
+            
+            int leftPanelLeftX = "left".equals(dockPos) ? sidebarWidth : 0;
+            float leftPanelRightX = leftPanelLeftX + leftWidth;
+            
+            tx = leftPanelRightX + (gapSize / 2f) - (handleSizePx / 2f);
+            
+            // Dikeyde tam ortalama (Dock boyutu dusulerek)
+            int availableHeight = screenHeight - ("bottom".equals(dockPos) ? dockSize : 0);
+            ty = (availableHeight / 2f) - (handleSizePx / 2f);
+        }
+        
+        widgetHandle.setTranslationX(tx);
+        widgetHandle.setTranslationY(ty);
     }
 
     private void refreshDockFragment(boolean isVertical) {
