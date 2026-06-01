@@ -355,6 +355,9 @@ public class CarLayoutManager {
         rootLayout.post(new Runnable() {
             @Override
             public void run() {
+                if (widgetHandle != null) {
+                    widgetHandle.bringToFront(); // Z-INDEX GARANTISI - EN USTE GETIR (Turkce karakter yok)
+                }
                 rootLayout.requestLayout();
                 rootLayout.invalidate();
             }
@@ -368,8 +371,8 @@ public class CarLayoutManager {
         if (widgetPanel != null) widgetPanel.setElevation(isPortrait ? 2f : 15f);
         if (appDrawerContainer != null) appDrawerContainer.setElevation(50f);
         if (widgetHandle != null) {
-            widgetHandle.setElevation(25f);
-            widgetHandle.setZ(25f);
+            widgetHandle.setElevation(100f);
+            widgetHandle.setZ(100f);
         }
     }
 
@@ -408,10 +411,10 @@ public class CarLayoutManager {
             widgetHandle.setLayoutParams(lp);
         }
         
-        // Sifirlamalar ve arka plani temizleme (Turkce karakter yok)
+        // Sifirlamalar ve arka plani GECICI OLARAK KIRMIZI yapiyoruz - Teshis Amacli (Turkce karakter yok)
         widgetHandle.setTranslationX(0);
         widgetHandle.setTranslationY(0);
-        widgetHandle.setBackground(null);
+        widgetHandle.setBackgroundColor(0xFFFF0000); // Parlak Kirmizi Blok (Turkce karakter yok)
         widgetHandle.setPadding(0, 0, 0, 0);
         
         // Premium grab indicator olarak ikon ve renk set edilir
