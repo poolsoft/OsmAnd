@@ -368,11 +368,10 @@ public class CarLayoutManager {
 
         widgetHandle.setVisibility(View.VISIBLE);
         
-        // Orijinal yuvarlak siyah-transparan arka plani ve grabber padding degerini koruyoruz (Turkce karakter yok)
-        widgetHandle.setBackgroundResource(R.drawable.bg_drawer_handle);
+        // Arka plani tamamen kaldirarak sadece dikey 3 noktayi gosteriyoruz (Turkce karakter yok)
+        widgetHandle.setBackground(null);
+        widgetHandle.setPadding(0, 0, 0, 0);
         float density = activity.getResources().getDisplayMetrics().density;
-        int paddingPx = (int) (12 * density); // Grabber grab alani icin premium 12dp ic bosluk
-        widgetHandle.setPadding(paddingPx, paddingPx, paddingPx, paddingPx);
         
         // Premium grab indicator olarak ikon ve renk set edilir
         widgetHandle.setImageResource(R.drawable.ic_more_vert);
