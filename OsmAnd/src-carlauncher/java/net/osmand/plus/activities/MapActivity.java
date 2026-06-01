@@ -522,6 +522,16 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		appDock = findViewById(R.id.app_dock);
 		appDrawerContainer = findViewById(R.id.app_drawer_container);
 		btnFullscreenExit = findViewById(R.id.btn_fullscreen_exit);
+
+		// Panellerin yuvarlak koselerini zorla aktif et (Turkce karakter yok)
+		if (widgetPanel != null) {
+			widgetPanel.setBackgroundResource(R.drawable.bg_panel_rounded);
+			widgetPanel.setClipToOutline(true);
+		}
+		if (mapContainer != null) {
+			mapContainer.setBackgroundResource(R.drawable.bg_card_rounded_dark);
+			mapContainer.setClipToOutline(true);
+		}
 		
 		// Initialize Layout Manager & Panel Content Manager
 		carLayoutManager = new net.osmand.plus.carlauncher.ui.CarLayoutManager(this);
@@ -536,7 +546,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		});
 		
 		if (widgetHandle != null) {
-		    widgetHandle.setVisibility(View.GONE);
 		    widgetHandle.bringToFront(); // Force Top Z-Order
 		    widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_more_vert);
 		    widgetHandle.setColorFilter(0xCCFFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);

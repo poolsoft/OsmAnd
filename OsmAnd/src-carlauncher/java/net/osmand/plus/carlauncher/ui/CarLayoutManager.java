@@ -375,11 +375,15 @@ public class CarLayoutManager {
     private void applyWidgetHandleTranslation(CarLauncherSettings settings, boolean isOpen) {
         if (widgetHandle == null) return;
         
-        // Sifirlamalar ve transparan arka plan
+        // Pozisyon sifirlamalari (Turkce karakter yok)
         widgetHandle.setTranslationX(0);
         widgetHandle.setTranslationY(0);
-        widgetHandle.setBackground(null);
-        widgetHandle.setPadding(0, 0, 0, 0);
+        
+        // Orijinal yuvarlak siyah-transparan arka plani ve grabber padding degerini koruyoruz (Turkce karakter yok)
+        widgetHandle.setBackgroundResource(R.drawable.bg_drawer_handle);
+        float density = activity.getResources().getDisplayMetrics().density;
+        int paddingPx = (int) (12 * density); // Grabber grab alani icin premium 12dp ic bosluk
+        widgetHandle.setPadding(paddingPx, paddingPx, paddingPx, paddingPx);
         
         // Premium grab indicator olarak ikon ve renk set edilir
         widgetHandle.setImageResource(R.drawable.ic_more_vert);
