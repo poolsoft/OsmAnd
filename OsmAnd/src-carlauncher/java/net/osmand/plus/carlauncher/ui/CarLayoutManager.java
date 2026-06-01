@@ -217,9 +217,7 @@ public class CarLayoutManager {
                 cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
                 cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
                 
-                int handleSize = (int) (40 * density);
-                cs.constrainWidth(R.id.widget_handle, handleSize);
-                cs.constrainHeight(R.id.widget_handle, handleSize);
+                // XML'de tanimli olan 48dp boyutlarinin korunmasi saglanir, 0'a cokme engellenir (Turkce karakter yok)
 
                 // Yukseklikleri sinirla
                 cs.constrainHeight(topViewId, 0); // LARGE gorunum kalan alani doldurur
@@ -291,9 +289,7 @@ public class CarLayoutManager {
                 cs.connect(R.id.widget_handle, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
                 cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, bottomBorder, bottomSide);
                 
-                int handleSize = (int) (40 * density);
-                cs.constrainWidth(R.id.widget_handle, handleSize);
-                cs.constrainHeight(R.id.widget_handle, handleSize);
+                // XML'de tanimli olan 48dp boyutlarinin korunmasi saglanir, 0'a cokme engellenir (Turkce karakter yok)
 
                 // Genislikleri yerlesime gore ayarla
                 if (leftViewIsSmall) {
@@ -362,8 +358,10 @@ public class CarLayoutManager {
     private void updateWidgetHandleConstraints(ConstraintSet cs, CarLauncherSettings settings, boolean isOpen) {
         if (widgetHandle != null) {
             if (!isOpen || activity.isDesktopMode()) {
+                widgetHandle.setVisibility(View.GONE);
                 cs.setVisibility(R.id.widget_handle, View.GONE);
             } else {
+                widgetHandle.setVisibility(View.VISIBLE);
                 cs.setVisibility(R.id.widget_handle, View.VISIBLE);
             }
         }

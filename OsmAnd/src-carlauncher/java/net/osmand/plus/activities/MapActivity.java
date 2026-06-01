@@ -549,6 +549,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		    widgetHandle.bringToFront(); // Force Top Z-Order
 		    widgetHandle.setImageResource(net.osmand.plus.R.drawable.ic_more_vert);
 		    widgetHandle.setColorFilter(0xCCFFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
+		    widgetHandle.setVisibility(View.VISIBLE); // Baslangicta dogrudan aktif et (Turkce karakter yok)
 		    
 		    widgetHandle.setOnTouchListener(new View.OnTouchListener() {
 		        private float initialTouchX;
