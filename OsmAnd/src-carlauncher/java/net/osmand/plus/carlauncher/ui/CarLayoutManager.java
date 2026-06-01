@@ -211,13 +211,21 @@ public class CarLayoutManager {
                 cs.connect(bottomViewId, ConstraintSet.TOP, topViewId, ConstraintSet.BOTTOM, gapSize);
                 cs.connect(bottomViewId, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
 
-                // Tutamac (widget_handle) dikey boslugun tam ortasina dairesel olarak hizalanir
+                // Eski kisitlarin cakismasini engellemek icin dikey mod baglantilarindan once temizlik yapilir (Turkce karakter yok)
+                cs.clear(R.id.widget_handle, ConstraintSet.START);
+                cs.clear(R.id.widget_handle, ConstraintSet.END);
+                cs.clear(R.id.widget_handle, ConstraintSet.TOP);
+                cs.clear(R.id.widget_handle, ConstraintSet.BOTTOM);
+
                 cs.connect(R.id.widget_handle, ConstraintSet.TOP, topViewId, ConstraintSet.BOTTOM);
                 cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, bottomViewId, ConstraintSet.TOP);
                 cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
                 cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
                 
                 // XML'de tanimli olan 48dp boyutlarinin korunmasi saglanir, 0'a cokme engellenir (Turkce karakter yok)
+                int handleSize = (int) (48 * density);
+                cs.constrainWidth(R.id.widget_handle, handleSize);
+                cs.constrainHeight(R.id.widget_handle, handleSize);
 
                 // Yukseklikleri sinirla
                 cs.constrainHeight(topViewId, 0); // LARGE gorunum kalan alani doldurur
@@ -283,13 +291,21 @@ public class CarLayoutManager {
                 cs.connect(rightViewId, ConstraintSet.START, leftViewId, ConstraintSet.END, gapSize);
                 cs.connect(rightViewId, ConstraintSet.END, rightBorder, rightSide);
 
-                // Tutamac (widget_handle) yatay boslugun tam ortasina dairesel olarak hizalanir
+                // Eski kisitlarin cakismasini engellemek icin yatay mod baglantilarindan once temizlik yapilir (Turkce karakter yok)
+                cs.clear(R.id.widget_handle, ConstraintSet.START);
+                cs.clear(R.id.widget_handle, ConstraintSet.END);
+                cs.clear(R.id.widget_handle, ConstraintSet.TOP);
+                cs.clear(R.id.widget_handle, ConstraintSet.BOTTOM);
+
                 cs.connect(R.id.widget_handle, ConstraintSet.START, leftViewId, ConstraintSet.END);
                 cs.connect(R.id.widget_handle, ConstraintSet.END, rightViewId, ConstraintSet.START);
                 cs.connect(R.id.widget_handle, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
                 cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, bottomBorder, bottomSide);
                 
                 // XML'de tanimli olan 48dp boyutlarinin korunmasi saglanir, 0'a cokme engellenir (Turkce karakter yok)
+                int handleSize = (int) (48 * density);
+                cs.constrainWidth(R.id.widget_handle, handleSize);
+                cs.constrainHeight(R.id.widget_handle, handleSize);
 
                 // Genislikleri yerlesime gore ayarla
                 if (leftViewIsSmall) {
