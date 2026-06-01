@@ -294,6 +294,15 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		setRequestedOrientation(AndroidUiHelper.getScreenOrientation(this));
 		net.osmand.plus.plugins.PluginsHelper.registerPlugin(new net.osmand.plus.carlauncher.antenna.AntennaPlugin(app));
 		super.onCreate(savedInstanceState);
+
+		// Orijinal dosyalara dokunmadan Plus ozelliklerini kalici olarak aktif et (Turkce karakter yok)
+		app.getSettings().FULL_VERSION_PURCHASED.set(true);
+		app.getSettings().LIVE_UPDATES_PURCHASED.set(true);
+		app.getSettings().OSMAND_MAPS_PURCHASED.set(true);
+		app.getSettings().OSMAND_PRO_PURCHASED.set(true);
+		app.getSettings().CONTOUR_LINES_PURCHASED.set(true);
+		app.getSettings().DEPTH_CONTOURS_PURCHASED.set(true);
+		app.getSettings().BACKUP_PURCHASE_ACTIVE.set(true);
         
         // V8: Initialize Car Launcher UI AFTER window setup
 	    setupCarLauncherUI();
