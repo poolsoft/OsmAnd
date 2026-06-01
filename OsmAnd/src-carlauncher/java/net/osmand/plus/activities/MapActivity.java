@@ -2547,6 +2547,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		app.getLocaleHelper().setLanguage(this);
 		app.runInUIThread(fragmentsHelper::updateFragments);
 		app.getNotificationHelper().refreshNotifications();
+
+		// Orientation degistiginde ana ekran yerlesimini (ConstraintLayout) guncelle (Turkce karakter yok)
+		if (carLayoutManager != null) {
+			carLayoutManager.applyLayout(isWidgetPanelOpen, layoutMode);
+		}
 	}
 
 	@Override

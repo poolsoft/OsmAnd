@@ -146,37 +146,10 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         setupRecyclerView();
         updateModeUI();
 
-        // Handle Orientation
+        // Handle Orientation (Turkce karakter yok)
         boolean isPortrait = getResources()
                 .getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-        
-        View mainContent = root.findViewById(net.osmand.plus.R.id.main_content_container);
-        if (mainContent instanceof LinearLayout) {
-            ((LinearLayout) mainContent).setOrientation(isPortrait ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
-
-            if (playerPanel != null && trackListPanel != null) {
-                LinearLayout.LayoutParams p1 = (LinearLayout.LayoutParams) playerPanel.getLayoutParams();
-                LinearLayout.LayoutParams p2 = (LinearLayout.LayoutParams) trackListPanel.getLayoutParams();
-
-                if (isPortrait) {
-                    p1.width = LinearLayout.LayoutParams.MATCH_PARENT;
-                    p1.height = 0;
-                    p1.weight = 5;
-                    p2.width = LinearLayout.LayoutParams.MATCH_PARENT;
-                    p2.height = 0;
-                    p2.weight = 5;
-                } else {
-                    p1.width = 0;
-                    p1.height = LinearLayout.LayoutParams.MATCH_PARENT;
-                    p1.weight = 4;
-                    p2.width = 0;
-                    p2.height = LinearLayout.LayoutParams.MATCH_PARENT;
-                    p2.weight = 6;
-                }
-                playerPanel.setLayoutParams(p1);
-                trackListPanel.setLayoutParams(p2);
-            }
-        }
+        applyOrientationLayout(root, isPortrait);
 
         // Set Icons
         if (btnPlay != null) btnPlay.setImageResource(net.osmand.plus.R.drawable.ic_music_play);
@@ -1599,6 +1572,44 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 }
             }
             return false;
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        boolean isPortrait = newConfig.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        applyOrientationLayout(getView(), isPortrait);
+    }
+
+    private void applyOrientationLayout(View root, boolean isPortrait) {
+        if (root == null) return;
+        View mainContent = root.findViewById(net.osmand.plus.R.id.main_content_container);
+        if (mainContent instanceof LinearLayout) {
+            ((LinearLayout) mainContent).setOrientation(isPortrait ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+
+            if (playerPanel != null && trackListPanel != null) {
+                LinearLayout.LayoutParams p1 = (LinearLayout.LayoutParams) playerPanel.getLayoutParams();
+                LinearLayout.LayoutParams p2 = (LinearLayout.LayoutParams) trackListPanel.getLayoutParams();
+
+                if (isPortrait) {
+                    p1.width = LinearLayout.LayoutParams.MATCH_PARENT;
+                    p1.height = 0;
+                    p1.weight = 5;
+                    p2.width = LinearLayout.LayoutParams.MATCH_PARENT;
+                    p2.height = 0;
+                    p2.weight = 5;
+                } else {
+                    p1.width = 0;
+                    p1.height = LinearLayout.LayoutParams.MATCH_PARENT;
+                    p1.weight = 4;
+                    p2.width = 0;
+                    p2.height = LinearLayout.LayoutParams.MATCH_PARENT;
+                    p2.weight = 6;
+                }
+                playerPanel.setLayoutParams(p1);
+                trackListPanel.setLayoutParams(p2);
+            }
         }
     }
 }

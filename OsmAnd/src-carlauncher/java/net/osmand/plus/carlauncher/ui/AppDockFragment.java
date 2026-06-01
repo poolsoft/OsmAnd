@@ -1098,4 +1098,22 @@ public class AppDockFragment extends Fragment
             if (recyclerView != null) recyclerView.setVisibility(View.GONE);
         }
     }
+
+    @Override
+    public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (getContext() == null || getView() == null) return;
+
+        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+        String dockPos = settings.getDockPosition();
+        boolean isPortrait = newConfig.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        this.isVerticalMode = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
+
+        if (adapter != null) {
+            adapter.setVerticalMode(isVerticalMode);
+            adapter.notifyDataSetChanged();
+        }
+
+        applyOrientationState(getView(), isVerticalMode);
+    }
 }
