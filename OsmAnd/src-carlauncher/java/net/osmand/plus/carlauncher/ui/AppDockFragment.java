@@ -389,9 +389,9 @@ public class AppDockFragment extends Fragment
     private void updateMiniMusicUI() {
         if (musicManager == null) return;
         
-        // Calan sarkiyi zorla oku ve set et (Turkce karakter yok)
-        boolean isExternal = musicManager.getActiveExternalController() != null;
-        if (isExternal && musicManager.getActiveExternalController().getMetadata() != null) {
+        // Calan sarkiyi merkezi kaynaga gore oku ve set et (Turkce karakter yok)
+        boolean isExternal = musicManager.useExternal();
+        if (isExternal && musicManager.getActiveExternalController() != null && musicManager.getActiveExternalController().getMetadata() != null) {
             android.media.MediaMetadata metadata = musicManager.getActiveExternalController().getMetadata();
             String title = metadata.getString(android.media.MediaMetadata.METADATA_KEY_TITLE);
             if (miniMusicTitle != null) {
@@ -407,12 +407,17 @@ public class AppDockFragment extends Fragment
         
         // Play/Pause buton ikonunu guncelle (Turkce karakter yok)
         if (miniBtnPlay != null) {
-            boolean isPlaying = musicManager.getInternalPlayer().isPlaying() || 
-                (musicManager.getActiveExternalController() != null && 
-                 musicManager.getActiveExternalController().getPlaybackState() != null && 
-                 musicManager.getActiveExternalController().getPlaybackState().getState() == android.media.session.PlaybackState.STATE_PLAYING);
+            boolean isPlaying = false;
+            if (isExternal) {
+                isPlaying = musicManager.getActiveExternalController() != null && 
+                    musicManager.getActiveExternalController().getPlaybackState() != null && 
+                    musicManager.getActiveExternalController().getPlaybackState().getState() == android.media.session.PlaybackState.STATE_PLAYING;
+            } else {
+                isPlaying = musicManager.getInternalPlayer().isPlaying();
+            }
+            final boolean finalIsPlaying = isPlaying;
             miniBtnPlay.post(() -> miniBtnPlay.setImageResource(
-                    isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play));
+                    finalIsPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play));
         }
     }
 

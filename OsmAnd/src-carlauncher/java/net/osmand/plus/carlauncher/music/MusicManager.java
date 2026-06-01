@@ -546,7 +546,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         notifyStateChanged();
     }
 
-    private boolean useExternal() {
+    public boolean useExternal() {
         // 1. Eger tercih edilen paket "usage.internal.player" ise, kesinlikle dahili kullan (Turkce karakter yok)
         if ("usage.internal.player".equals(preferredPackage)) {
             return false;
