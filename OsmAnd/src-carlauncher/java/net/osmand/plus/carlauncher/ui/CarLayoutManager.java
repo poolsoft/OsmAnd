@@ -211,11 +211,18 @@ public class CarLayoutManager {
                 cs.connect(bottomViewId, ConstraintSet.TOP, topViewId, ConstraintSet.BOTTOM, gapSize);
                 cs.connect(bottomViewId, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
 
-                // Tutamac (widget_handle) dikey boslugun tam ortasina dairesel olarak hizalanir (Turkce karakter yok)
-                cs.connect(R.id.widget_handle, ConstraintSet.TOP, topViewId, ConstraintSet.BOTTOM);
-                cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, bottomViewId, ConstraintSet.TOP);
+                // Tutamac (widget_handle) panel sinirina kenetlenir (Turkce karakter yok)
                 cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
                 cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+                if (isSwapped) {
+                    // Panel ustte ise, handle panelin alt kenarina kenetlenir (Turkce karakter yok)
+                    cs.connect(R.id.widget_handle, ConstraintSet.TOP, R.id.widget_panel, ConstraintSet.BOTTOM);
+                    cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, R.id.widget_panel, ConstraintSet.BOTTOM);
+                } else {
+                    // Panel altta ise, handle panelin ust kenarina kenetlenir (Turkce karakter yok)
+                    cs.connect(R.id.widget_handle, ConstraintSet.TOP, R.id.widget_panel, ConstraintSet.TOP);
+                    cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, R.id.widget_panel, ConstraintSet.TOP);
+                }
                 
                 int handleSize = (int) (48 * density);
                 cs.constrainWidth(R.id.widget_handle, handleSize);
@@ -285,11 +292,18 @@ public class CarLayoutManager {
                 cs.connect(rightViewId, ConstraintSet.START, leftViewId, ConstraintSet.END, gapSize);
                 cs.connect(rightViewId, ConstraintSet.END, rightBorder, rightSide);
 
-                // Tutamac (widget_handle) yatay boslugun tam ortasina dairesel olarak hizalanir (Turkce karakter yok)
-                cs.connect(R.id.widget_handle, ConstraintSet.START, leftViewId, ConstraintSet.END);
-                cs.connect(R.id.widget_handle, ConstraintSet.END, rightViewId, ConstraintSet.START);
+                // Tutamac (widget_handle) panel sinirina kenetlenir (Turkce karakter yok)
                 cs.connect(R.id.widget_handle, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
                 cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, bottomBorder, bottomSide);
+                if ("left".equals(widgetPos)) {
+                    // Panel solda ise, handle panelin bitis (sag) kenarina kenetlenir (Turkce karakter yok)
+                    cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.END);
+                    cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.END);
+                } else {
+                    // Panel sagda ise, handle panelin baslangic (sol) kenarina kenetlenir (Turkce karakter yok)
+                    cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.START);
+                    cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.START);
+                }
                 
                 int handleSize = (int) (48 * density);
                 cs.constrainWidth(R.id.widget_handle, handleSize);
@@ -383,6 +397,16 @@ public class CarLayoutManager {
         }
 
         widgetHandle.setVisibility(View.VISIBLE);
+        
+        // Boyutlari Java uzerinden de garanti altina al (Turkce karakter yok)
+        float density = activity.getResources().getDisplayMetrics().density;
+        int handleSize = (int) (48 * density);
+        android.view.ViewGroup.LayoutParams lp = widgetHandle.getLayoutParams();
+        if (lp != null) {
+            lp.width = handleSize;
+            lp.height = handleSize;
+            widgetHandle.setLayoutParams(lp);
+        }
         
         // Sifirlamalar ve arka plani temizleme (Turkce karakter yok)
         widgetHandle.setTranslationX(0);
