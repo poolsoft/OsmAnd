@@ -336,6 +336,15 @@ public class CarLayoutManager {
         // 11. Refresh Dock orientation
         boolean isVertical = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
         refreshDockFragment(isVertical);
+
+        // Kisitlar uygulandiktan sonra ekranin aninda yeniden cizilmesi icin zorla (Turkce karakter yok)
+        rootLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                rootLayout.requestLayout();
+                rootLayout.invalidate();
+            }
+        });
     }
 
     private void updateElevations(boolean isPortrait) {
