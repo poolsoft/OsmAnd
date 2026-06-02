@@ -682,9 +682,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			if (screenHeight <= 0) return;
 			
 			float rawPercent = (screenHeight - rawY) / (float) screenHeight;
-			// %25 ile %40 arasinda sinirla, %5'lik adimlarla yuvarla
-			float percent = Math.round(rawPercent * 20f) / 20f;
-			percent = Math.max(0.25f, Math.min(0.40f, percent));
+			// %25 ile %50 arasinda sinirla, pürüzsüz kaydir (Turkce karakter yok)
+			float percent = Math.max(0.25f, Math.min(0.50f, rawPercent));
 			
 			carSettings.setWidgetPanelHeightPortrait(percent);
 		} else {
@@ -701,9 +700,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				rawPercent = (screenWidth - rawX) / (float) screenWidth;
 			}
 			
-			// %25 ile %40 arasinda sinirla, %5'lik adimlarla yuvarla
-			float percent = Math.round(rawPercent * 20f) / 20f;
-			percent = Math.max(0.25f, Math.min(0.40f, percent));
+			// %25 ile %50 arasinda sinirla, pürüzsüz kaydir (Turkce karakter yok)
+			float percent = Math.max(0.25f, Math.min(0.50f, rawPercent));
 			
 			carSettings.setWidgetPanelWidthPercent(percent);
 		}

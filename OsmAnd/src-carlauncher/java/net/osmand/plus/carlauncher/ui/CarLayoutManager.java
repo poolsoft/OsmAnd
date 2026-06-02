@@ -47,6 +47,12 @@ public class CarLayoutManager {
     public void applyLayout(boolean isWidgetPanelOpen, int layoutMode) {
         if (rootLayout == null || widgetPanel == null || appDock == null) return;
 
+        // PiP modunda normal cizim yapilmasini engelle, sadece PiP yerlesimini koru (Turkce karakter yok)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N && activity.isInPictureInPictureMode()) {
+            applyPipLayout(true);
+            return;
+        }
+
         CarLauncherSettings carSettings = new CarLauncherSettings(activity);
         String dockPos = carSettings.getDockPosition(); 
         String widgetPos = carSettings.getWidgetPanelPosition();
