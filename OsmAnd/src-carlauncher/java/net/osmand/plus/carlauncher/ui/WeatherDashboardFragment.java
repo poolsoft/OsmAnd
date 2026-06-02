@@ -58,7 +58,10 @@ public class WeatherDashboardFragment extends Fragment implements WeatherManager
         ImageButton btnClose = view.findViewById(R.id.btn_close);
         if (btnClose != null) {
             btnClose.setOnClickListener(v -> {
-                if (getParentFragmentManager() != null) {
+                if (getActivity() instanceof net.osmand.plus.carlauncher.CarLauncherInterface) {
+                    ((net.osmand.plus.carlauncher.CarLauncherInterface) getActivity())
+                        .setPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS);
+                } else if (getParentFragmentManager() != null) {
                     getParentFragmentManager().beginTransaction().remove(this).commitAllowingStateLoss();
                 }
             });

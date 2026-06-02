@@ -50,8 +50,8 @@ public class PanelContentManager {
      * APP_DRAWER/MUSIC icin fullscreen durumu otomatik senkronize edilir.
      */
     public void setContent(PanelContent content) {
-        // Her zaman en guncel fullscreen durumunu set et
-        boolean needsFullScreen = (content == PanelContent.APP_DRAWER || content == PanelContent.MUSIC || content == PanelContent.SETTINGS || content == PanelContent.DESKTOP);
+        // Her zaman en guncel fullscreen durumunu set et (Turkce karakter yok)
+        boolean needsFullScreen = (content != PanelContent.WIDGETS && content != PanelContent.ANTENNA);
         if (fullScreenListener != null) {
             fullScreenListener.onFullScreenStateChanged(needsFullScreen);
         }
