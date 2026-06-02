@@ -169,8 +169,8 @@ public class UnifiedPanelFragment extends Fragment
         
         android.widget.PopupMenu popup = new android.widget.PopupMenu(getContext(), anchor);
         
-        popup.getMenu().add(0, 1, 0, "Gorunumu Degistir (Buyuk/Kucuk Panel)");
-        popup.getMenu().add(0, 2, 1, "Masaustu Modu (Desktop)");
+        popup.getMenu().add(0, 1, 0, "Harita Modu");
+        popup.getMenu().add(0, 2, 1, "Masaustu Modu");
         popup.getMenu().add(0, 3, 2, "Ayarlar");
         
         popup.setOnMenuItemClickListener(item -> {
