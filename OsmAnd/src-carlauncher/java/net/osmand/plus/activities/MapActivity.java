@@ -519,11 +519,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		mapContainer = findViewById(R.id.map_container);
 		widgetPanel = findViewById(R.id.widget_panel);
 		widgetHandle = findViewById(R.id.widget_handle);
-		if (widgetHandle == null) {
-		    writeToWidgetLog("MapActivity setupCarLauncherUI: widgetHandle is NULL! XML configuration failed.");
-		} else {
-		    writeToWidgetLog("MapActivity setupCarLauncherUI: widgetHandle FOUND successfully.");
-		}
 		appDock = findViewById(R.id.app_dock);
 		appDrawerContainer = findViewById(R.id.app_drawer_container);
 		btnFullscreenExit = findViewById(R.id.btn_fullscreen_exit);
@@ -1909,10 +1904,21 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		super.onPause();
 		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).setAppInForeground(false);
 		settings.LAST_MAP_ACTIVITY_PAUSED_TIME.set(System.currentTimeMillis());
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInMultiWindowMode()) {
-			pendingPause = true;
+		
+		boolean isInPip = false;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+			isInPip = isInPictureInPictureMode();
+		}
+
+		if (isInPip) {
+			// PiP modundayken haritanin guncellenmeye devam etmesi icin onPauseActivity'yi cagirmiyoruz (Turkce karakter yok)
+			pendingPause = false;
 		} else {
-			onPauseActivity();
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && isInMultiWindowMode()) {
+				pendingPause = true;
+			} else {
+				onPauseActivity();
+			}
 		}
 		extendedMapActivity.onPause(this);
 	}
@@ -2591,9 +2597,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	protected void onUserLeaveHint() {
 		super.onUserLeaveHint();
-		// Ayarlarda PiP aktifse ve Android 8.0+ ise gir (Turkce karakter yok)
+		// Ayarlarda PiP aktifse, navigasyon aciksa ve Android 8.0+ ise gir (Turkce karakter yok)
 		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(this);
-		if (carSettings.isPipModeEnabled() && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+		net.osmand.plus.routing.RoutingHelper routingHelper = app.getRoutingHelper();
+		boolean isNavigating = routingHelper != null && routingHelper.isFollowingMode() && routingHelper.isRouteCalculated();
+
+		if (isNavigating && carSettings.isPipModeEnabled() && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
 			try {
 				android.app.PictureInPictureParams.Builder builder = new android.app.PictureInPictureParams.Builder();
 				android.util.Rational aspectRatio = new android.util.Rational(16, 9);
@@ -2602,6 +2611,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+		} else {
+			// Navigasyon yoksa yuzen buton gosterimini tetikle (Turkce karakter yok)
+			net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).updateButtonState();
 		}
 	}
 
@@ -2614,34 +2626,33 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		View widgetHandle = findViewById(R.id.widget_handle);
 		View mapHudContainer = findViewById(R.id.map_hud_container);
 
+		// Yuzen butona PiP durumunu bildir (Turkce karakter yok)
+		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).setInPipMode(isInPictureInPictureMode);
+
 		if (isInPictureInPictureMode) {
 			// PiP modunda sadece harita kalir, diger her sey gizlenir (Turkce karakter yok)
 			if (appDock != null) appDock.setVisibility(View.GONE);
 			if (widgetPanel != null) widgetPanel.setVisibility(View.GONE);
 			if (widgetHandle != null) widgetHandle.setVisibility(View.GONE);
 			if (mapHudContainer != null) mapHudContainer.setVisibility(View.GONE);
+
+			// CarLayoutManager'a PiP yerlesimini uygula (Turkce karakter yok)
+			if (carLayoutManager != null) {
+				carLayoutManager.applyPipLayout(true);
+			}
+			// Haritanin aninda PiP boyutlarina gore render edilmesini sagla (Turkce karakter yok)
+			if (getMapView() != null) {
+				getMapView().refreshMap(true);
+			}
 		} else {
 			// PiP modundan cikildiginda elemanlari geri yukle (Turkce karakter yok)
 			if (appDock != null) appDock.setVisibility(View.VISIBLE);
+			if (carLayoutManager != null) {
+				carLayoutManager.applyPipLayout(false);
+			}
 			applyWidgetPanelState();
 		}
 	}
 
-	private void writeToWidgetLog(String msg) {
-		try {
-			java.io.File logDir = getExternalFilesDir(null);
-			if (logDir != null) {
-				java.io.File logFile = new java.io.File(logDir, "carlauncher_widget_debug.log");
-				java.io.FileWriter fw = new java.io.FileWriter(logFile, true);
-				java.io.PrintWriter pw = new java.io.PrintWriter(fw);
-				pw.println("--- " + new java.util.Date().toString() + " ---");
-				pw.println(msg);
-				pw.println();
-				pw.close();
-				fw.close();
-			}
-		} catch (Exception ex) {
-			// Ignore
-		}
-	}
+
 }

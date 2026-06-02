@@ -52,6 +52,7 @@ public class CarFloatingButtonManager {
     private WindowManager.LayoutParams menuParams;
 
     private boolean isFullScreenMap = false;
+    private boolean isInPipMode = false;
 
     private final android.content.BroadcastReceiver assistantReceiver = new android.content.BroadcastReceiver() {
         @Override
@@ -99,6 +100,12 @@ public class CarFloatingButtonManager {
 
     public void setAppInForeground(boolean foreground) {
         this.isAppInForeground = foreground;
+        updateButtonState();
+    }
+
+    public void setInPipMode(boolean pip) {
+        this.isInPipMode = pip;
+        updateButtonState();
     }
 
     public void setFullScreenMap(boolean fullScreen) {
@@ -110,8 +117,8 @@ public class CarFloatingButtonManager {
         CarLauncherSettings settings = new CarLauncherSettings(context);
         boolean enabled = settings.isFloatingButtonEnabled();
 
-        if (enabled) {
-            // Akıllı Görünürlük Kontrolü ( Landscape + Foreground + Split panelde GIZLE )
+        if (enabled && !isInPipMode) {
+            // Akıllı Görünürlük Kontrolü ( Landscape + Foreground + Split panelde GIZLE ) (Turkce karakter yok)
             boolean isLandscape = context.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
             if (isAppInForeground && isLandscape && !isFullScreenMap) {
                 hideButton();

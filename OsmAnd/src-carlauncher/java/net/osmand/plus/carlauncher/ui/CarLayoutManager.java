@@ -337,19 +337,6 @@ public class CarLayoutManager {
         boolean isVertical = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
         refreshDockFragment(isVertical);
 
-        if (widgetHandle != null) {
-            rootLayout.post(new Runnable() {
-                @Override
-                public void run() {
-                    writeToWidgetLog("CarLayoutManager POST: widgetHandle is visible? " + widgetHandle.getVisibility() + 
-                    " | width: " + widgetHandle.getWidth() + " | height: " + widgetHandle.getHeight() + 
-                    " | x: " + widgetHandle.getX() + " | y: " + widgetHandle.getY() + 
-                    " | z: " + widgetHandle.getZ() + " | parent: " + widgetHandle.getParent());
-                }
-            });
-        } else {
-            writeToWidgetLog("CarLayoutManager POST: widgetHandle is NULL!");
-        }
     }
 
     private void updateElevations(boolean isPortrait) {
@@ -407,22 +394,37 @@ public class CarLayoutManager {
         }
     }
 
-    private void writeToWidgetLog(String msg) {
-        try {
-            if (activity == null) return;
-            java.io.File logDir = activity.getExternalFilesDir(null);
-            if (logDir != null) {
-                java.io.File logFile = new java.io.File(logDir, "carlauncher_widget_debug.log");
-                java.io.FileWriter fw = new java.io.FileWriter(logFile, true);
-                java.io.PrintWriter pw = new java.io.PrintWriter(fw);
-                pw.println("--- " + new java.util.Date().toString() + " ---");
-                pw.println(msg);
-                pw.println();
-                pw.close();
-                fw.close();
-            }
-        } catch (Exception ex) {
-            // Ignore
+    public void applyPipLayout(boolean isInPip) {
+        if (rootLayout == null || mapContainer == null) return;
+
+        ConstraintSet cs = new ConstraintSet();
+        cs.clone(rootLayout);
+
+        if (isInPip) {
+            // PiP modunda diger her seyi gizle (Turkce karakter yok)
+            cs.setVisibility(R.id.app_dock, View.GONE);
+            cs.setVisibility(R.id.widget_panel, View.GONE);
+            cs.setVisibility(R.id.widget_handle, View.GONE);
+            cs.setVisibility(R.id.app_drawer_container, View.GONE);
+
+            // Haritayi tam ekran yap (Turkce karakter yok)
+            cs.clear(R.id.map_container, ConstraintSet.TOP);
+            cs.clear(R.id.map_container, ConstraintSet.BOTTOM);
+            cs.clear(R.id.map_container, ConstraintSet.START);
+            cs.clear(R.id.map_container, ConstraintSet.END);
+
+            cs.connect(R.id.map_container, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+            cs.connect(R.id.map_container, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+            cs.connect(R.id.map_container, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
+            cs.connect(R.id.map_container, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+            cs.constrainWidth(R.id.map_container, 0);
+            cs.constrainHeight(R.id.map_container, 0);
+        } else {
+            // PiP modundan cikildiginda normal layout'a donmek icin applyLayout cagriliyor (Turkce karakter yok)
+            cs.setVisibility(R.id.app_dock, View.VISIBLE);
+            cs.setVisibility(R.id.widget_panel, View.VISIBLE);
         }
+
+        cs.applyTo(rootLayout);
     }
 }
