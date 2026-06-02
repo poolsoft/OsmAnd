@@ -6,7 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000"
-    android:fitsSystemWindows="false">
+    android:fitsSystemWindows="false"
+    android:clipChildren="false">
 
     <!-- MAP CONTAINER (Weight 3 - %75 height) -->
     <net.osmand.plus.carlauncher.ui.ExactFrameLayout
@@ -36,6 +37,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintVertical_weight="1" />
+
+    <!-- WIDGET HANDLE (Constraint'ler Java tarafindan yonetilir) -->
+    <ImageButton
+        android:id="@+id/widget_handle"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_chevron_left"
+        android:background="@drawable/bg_drawer_handle"
+        android:scaleType="fitCenter"
+        android:padding="16dp"
+        android:elevation="25dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- APP DOCK -->
     <FrameLayout
