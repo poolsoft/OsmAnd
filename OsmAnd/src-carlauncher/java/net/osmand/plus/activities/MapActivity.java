@@ -520,9 +520,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		widgetPanel = findViewById(R.id.widget_panel);
 		widgetHandle = findViewById(R.id.widget_handle);
 		if (widgetHandle == null) {
-		    LOG.error("WIDGET_DEBUG - MapActivity setupCarLauncherUI: widgetHandle is NULL! XML configuration failed.");
+		    writeToWidgetLog("MapActivity setupCarLauncherUI: widgetHandle is NULL! XML configuration failed.");
 		} else {
-		    LOG.error("WIDGET_DEBUG - MapActivity setupCarLauncherUI: widgetHandle FOUND successfully.");
+		    writeToWidgetLog("MapActivity setupCarLauncherUI: widgetHandle FOUND successfully.");
 		}
 		appDock = findViewById(R.id.app_dock);
 		appDrawerContainer = findViewById(R.id.app_drawer_container);
@@ -2624,6 +2624,24 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			// PiP modundan cikildiginda elemanlari geri yukle (Turkce karakter yok)
 			if (appDock != null) appDock.setVisibility(View.VISIBLE);
 			applyWidgetPanelState();
+		}
+	}
+
+	private void writeToWidgetLog(String msg) {
+		try {
+			java.io.File logDir = getExternalFilesDir(null);
+			if (logDir != null) {
+				java.io.File logFile = new java.io.File(logDir, "carlauncher_widget_debug.log");
+				java.io.FileWriter fw = new java.io.FileWriter(logFile, true);
+				java.io.PrintWriter pw = new java.io.PrintWriter(fw);
+				pw.println("--- " + new java.util.Date().toString() + " ---");
+				pw.println(msg);
+				pw.println();
+				pw.close();
+				fw.close();
+			}
+		} catch (Exception ex) {
+			// Ignore
 		}
 	}
 }

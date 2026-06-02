@@ -341,14 +341,14 @@ public class CarLayoutManager {
             rootLayout.post(new Runnable() {
                 @Override
                 public void run() {
-                    net.osmand.PlatformUtil.getLog(CarLayoutManager.class).error("WIDGET_DEBUG - CarLayoutManager POST: widgetHandle is visible? " + widgetHandle.getVisibility() + 
+                    writeToWidgetLog("CarLayoutManager POST: widgetHandle is visible? " + widgetHandle.getVisibility() + 
                     " | width: " + widgetHandle.getWidth() + " | height: " + widgetHandle.getHeight() + 
                     " | x: " + widgetHandle.getX() + " | y: " + widgetHandle.getY() + 
                     " | z: " + widgetHandle.getZ() + " | parent: " + widgetHandle.getParent());
                 }
             });
         } else {
-            net.osmand.PlatformUtil.getLog(CarLayoutManager.class).error("WIDGET_DEBUG - CarLayoutManager POST: widgetHandle is NULL!");
+            writeToWidgetLog("CarLayoutManager POST: widgetHandle is NULL!");
         }
     }
 
@@ -404,6 +404,25 @@ public class CarLayoutManager {
         AppDockFragment dock = activity.getAppDockFragment();
         if (dock != null) {
             dock.setOrientation(isVertical);
+        }
+    }
+
+    private void writeToWidgetLog(String msg) {
+        try {
+            if (activity == null) return;
+            java.io.File logDir = activity.getExternalFilesDir(null);
+            if (logDir != null) {
+                java.io.File logFile = new java.io.File(logDir, "carlauncher_widget_debug.log");
+                java.io.FileWriter fw = new java.io.FileWriter(logFile, true);
+                java.io.PrintWriter pw = new java.io.PrintWriter(fw);
+                pw.println("--- " + new java.util.Date().toString() + " ---");
+                pw.println(msg);
+                pw.println();
+                pw.close();
+                fw.close();
+            }
+        } catch (Exception ex) {
+            // Ignore
         }
     }
 }
