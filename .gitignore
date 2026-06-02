@@ -22,6 +22,7 @@ OsmAndCore_*.aar
 **/.classpath
 out/
 .kotlin/
+*.log
 
 # Huawei
 agconnect-services.json
@@ -60,3 +61,4 @@ OsmAnd-shared/src/jvmMain/resources/
 .log/
 **/.log/
 replay_pid38744.log
+replay_pid25780.log
