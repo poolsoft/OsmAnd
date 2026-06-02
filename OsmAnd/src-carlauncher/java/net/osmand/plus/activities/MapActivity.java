@@ -519,6 +519,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		mapContainer = findViewById(R.id.map_container);
 		widgetPanel = findViewById(R.id.widget_panel);
 		widgetHandle = findViewById(R.id.widget_handle);
+		if (widgetHandle == null) {
+		    android.util.Log.e("WIDGET_DEBUG", "MapActivity setupCarLauncherUI: widgetHandle is NULL! XML configuration failed.");
+		} else {
+		    android.util.Log.e("WIDGET_DEBUG", "MapActivity setupCarLauncherUI: widgetHandle FOUND successfully.");
+		}
 		appDock = findViewById(R.id.app_dock);
 		appDrawerContainer = findViewById(R.id.app_drawer_container);
 		btnFullscreenExit = findViewById(R.id.btn_fullscreen_exit);

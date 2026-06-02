@@ -336,6 +336,20 @@ public class CarLayoutManager {
         // 11. Refresh Dock orientation
         boolean isVertical = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
         refreshDockFragment(isVertical);
+
+        if (widgetHandle != null) {
+            rootLayout.post(new Runnable() {
+                @Override
+                public void run() {
+                    android.util.Log.e("WIDGET_DEBUG", "CarLayoutManager POST: widgetHandle is visible? " + widgetHandle.getVisibility() + 
+                    " | width: " + widgetHandle.getWidth() + " | height: " + widgetHandle.getHeight() + 
+                    " | x: " + widgetHandle.getX() + " | y: " + widgetHandle.getY() + 
+                    " | z: " + widgetHandle.getZ() + " | parent: " + widgetHandle.getParent());
+                }
+            });
+        } else {
+            android.util.Log.e("WIDGET_DEBUG", "CarLayoutManager POST: widgetHandle is NULL!");
+        }
     }
 
     private void updateElevations(boolean isPortrait) {
