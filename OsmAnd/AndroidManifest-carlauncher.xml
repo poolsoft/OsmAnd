@@ -13,7 +13,7 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 
     <application
-        android:icon="@mipmap/icon_launcher"
+        android:icon="@mipmap/ic_launcher"
         tools:replace="android:icon">
         
         <!-- Car Launcher Activity - Ana launcher ekrani -->
