@@ -55,8 +55,8 @@ public class CarLayoutManager {
         ConstraintSet cs = new ConstraintSet();
         cs.clone(rootLayout);
 
-        // 1. Reset all regions (widget_handle da dahil olmak uzere tum alanlari temizle - Turkce karakter yok)
-        int[] ids = {R.id.app_dock, R.id.widget_panel, R.id.map_container, R.id.app_drawer_container, R.id.widget_handle};
+        // 1. Reset all regions (widget_handle'i resetleme - elle yonetilir)
+        int[] ids = {R.id.app_dock, R.id.widget_panel, R.id.map_container, R.id.app_drawer_container};
         for (int id : ids) {
             cs.clear(id, ConstraintSet.TOP);
             cs.clear(id, ConstraintSet.BOTTOM);
@@ -204,27 +204,20 @@ public class CarLayoutManager {
                 cs.connect(bottomViewId, ConstraintSet.END, rightBorder, rightSide);
                 cs.constrainWidth(bottomViewId, 0);
 
-                // Dikey zincirleme (Vertical chains) - Araya 8dp bosluk eklenir
+                // Dikey zincirleme (Vertical chains) - Araya 16dp bosluk eklenir
                 cs.connect(topViewId, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
                 cs.connect(topViewId, ConstraintSet.BOTTOM, bottomViewId, ConstraintSet.TOP, gapSize);
 
                 cs.connect(bottomViewId, ConstraintSet.TOP, topViewId, ConstraintSet.BOTTOM, gapSize);
                 cs.connect(bottomViewId, ConstraintSet.BOTTOM, "bottom".equals(dockPos) ? R.id.app_dock : ConstraintSet.PARENT_ID, "bottom".equals(dockPos) ? ConstraintSet.TOP : ConstraintSet.BOTTOM);
 
-                // Tutamac (widget_handle) panel sinirina kenetlenir (Turkce karakter yok)
+                // Tutamac (widget_handle) dikey boslugun tam ortasina dairesel olarak hizalanir
+                cs.connect(R.id.widget_handle, ConstraintSet.TOP, topViewId, ConstraintSet.BOTTOM);
+                cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, bottomViewId, ConstraintSet.TOP);
                 cs.connect(R.id.widget_handle, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
                 cs.connect(R.id.widget_handle, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
-                if (isSwapped) {
-                    // Panel ustte ise, handle panelin alt kenarina kenetlenir (Turkce karakter yok)
-                    cs.connect(R.id.widget_handle, ConstraintSet.TOP, R.id.widget_panel, ConstraintSet.BOTTOM);
-                    cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, R.id.widget_panel, ConstraintSet.BOTTOM);
-                } else {
-                    // Panel altta ise, handle panelin ust kenarina kenetlenir (Turkce karakter yok)
-                    cs.connect(R.id.widget_handle, ConstraintSet.TOP, R.id.widget_panel, ConstraintSet.TOP);
-                    cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, R.id.widget_panel, ConstraintSet.TOP);
-                }
                 
-                int handleSize = (int) (48 * density);
+                int handleSize = (int) (40 * density);
                 cs.constrainWidth(R.id.widget_handle, handleSize);
                 cs.constrainHeight(R.id.widget_handle, handleSize);
 
@@ -285,27 +278,20 @@ public class CarLayoutManager {
                 cs.connect(rightViewId, ConstraintSet.BOTTOM, bottomBorder, bottomSide);
                 cs.constrainHeight(rightViewId, 0);
 
-                // Yatay zincirleme (Horizontal chains) - Araya 8dp bosluk eklenir
+                // Yatay zincirleme (Horizontal chains) - Araya 16dp bosluk eklenir
                 cs.connect(leftViewId, ConstraintSet.START, leftBorder, leftSide);
                 cs.connect(leftViewId, ConstraintSet.END, rightViewId, ConstraintSet.START, gapSize);
 
                 cs.connect(rightViewId, ConstraintSet.START, leftViewId, ConstraintSet.END, gapSize);
                 cs.connect(rightViewId, ConstraintSet.END, rightBorder, rightSide);
 
-                // Tutamac (widget_handle) panel sinirina kenetlenir (Turkce karakter yok)
+                // Tutamac (widget_handle) yatay boslugun tam ortasina dairesel olarak hizalanir
+                cs.connect(R.id.widget_handle, ConstraintSet.START, leftViewId, ConstraintSet.END);
+                cs.connect(R.id.widget_handle, ConstraintSet.END, rightViewId, ConstraintSet.START);
                 cs.connect(R.id.widget_handle, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
                 cs.connect(R.id.widget_handle, ConstraintSet.BOTTOM, bottomBorder, bottomSide);
-                if ("left".equals(widgetPos)) {
-                    // Panel solda ise, handle panelin bitis (sag) kenarina kenetlenir (Turkce karakter yok)
-                    cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.END);
-                    cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.END);
-                } else {
-                    // Panel sagda ise, handle panelin baslangic (sol) kenarina kenetlenir (Turkce karakter yok)
-                    cs.connect(R.id.widget_handle, ConstraintSet.START, R.id.widget_panel, ConstraintSet.START);
-                    cs.connect(R.id.widget_handle, ConstraintSet.END, R.id.widget_panel, ConstraintSet.START);
-                }
                 
-                int handleSize = (int) (48 * density);
+                int handleSize = (int) (40 * density);
                 cs.constrainWidth(R.id.widget_handle, handleSize);
                 cs.constrainHeight(R.id.widget_handle, handleSize);
 
@@ -350,18 +336,6 @@ public class CarLayoutManager {
         // 11. Refresh Dock orientation
         boolean isVertical = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
         refreshDockFragment(isVertical);
-
-        // Kisitlar uygulandiktan sonra ekranin aninda yeniden cizilmesi icin zorla (Turkce karakter yok)
-        rootLayout.post(new Runnable() {
-            @Override
-            public void run() {
-                if (widgetHandle != null) {
-                    widgetHandle.bringToFront(); // Z-INDEX GARANTISI - EN USTE GETIR (Turkce karakter yok)
-                }
-                rootLayout.requestLayout();
-                rootLayout.invalidate();
-            }
-        });
     }
 
     private void updateElevations(boolean isPortrait) {
@@ -371,18 +345,16 @@ public class CarLayoutManager {
         if (widgetPanel != null) widgetPanel.setElevation(isPortrait ? 2f : 15f);
         if (appDrawerContainer != null) appDrawerContainer.setElevation(50f);
         if (widgetHandle != null) {
-            widgetHandle.setElevation(100f);
-            widgetHandle.setZ(100f);
+            widgetHandle.setElevation(25f);
+            widgetHandle.setZ(25f);
         }
     }
 
     private void updateWidgetHandleConstraints(ConstraintSet cs, CarLauncherSettings settings, boolean isOpen) {
         if (widgetHandle != null) {
             if (!isOpen || activity.isDesktopMode()) {
-                widgetHandle.setVisibility(View.GONE);
                 cs.setVisibility(R.id.widget_handle, View.GONE);
             } else {
-                widgetHandle.setVisibility(View.VISIBLE);
                 cs.setVisibility(R.id.widget_handle, View.VISIBLE);
             }
         }
@@ -394,27 +366,10 @@ public class CarLayoutManager {
     private void applyWidgetHandleTranslation(CarLauncherSettings settings, boolean isOpen) {
         if (widgetHandle == null) return;
         
-        if (!isOpen || activity.isDesktopMode()) {
-            widgetHandle.setVisibility(View.GONE);
-            return;
-        }
-
-        widgetHandle.setVisibility(View.VISIBLE);
-        
-        // Boyutlari Java uzerinden de garanti altina al (Turkce karakter yok)
-        float density = activity.getResources().getDisplayMetrics().density;
-        int handleSize = (int) (48 * density);
-        android.view.ViewGroup.LayoutParams lp = widgetHandle.getLayoutParams();
-        if (lp != null) {
-            lp.width = handleSize;
-            lp.height = handleSize;
-            widgetHandle.setLayoutParams(lp);
-        }
-        
-        // Sifirlamalar ve arka plani GECICI OLARAK KIRMIZI yapiyoruz - Teshis Amacli (Turkce karakter yok)
+        // Sifirlamalar ve transparan arka plan
         widgetHandle.setTranslationX(0);
         widgetHandle.setTranslationY(0);
-        widgetHandle.setBackgroundColor(0xFFFF0000); // Parlak Kirmizi Blok (Turkce karakter yok)
+        widgetHandle.setBackground(null);
         widgetHandle.setPadding(0, 0, 0, 0);
         
         // Premium grab indicator olarak ikon ve renk set edilir
