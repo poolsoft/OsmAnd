@@ -341,14 +341,14 @@ public class CarLayoutManager {
             rootLayout.post(new Runnable() {
                 @Override
                 public void run() {
-                    android.util.Log.e("WIDGET_DEBUG", "CarLayoutManager POST: widgetHandle is visible? " + widgetHandle.getVisibility() + 
+                    net.osmand.PlatformUtil.getLog(CarLayoutManager.class).error("WIDGET_DEBUG - CarLayoutManager POST: widgetHandle is visible? " + widgetHandle.getVisibility() + 
                     " | width: " + widgetHandle.getWidth() + " | height: " + widgetHandle.getHeight() + 
                     " | x: " + widgetHandle.getX() + " | y: " + widgetHandle.getY() + 
                     " | z: " + widgetHandle.getZ() + " | parent: " + widgetHandle.getParent());
                 }
             });
         } else {
-            android.util.Log.e("WIDGET_DEBUG", "CarLayoutManager POST: widgetHandle is NULL!");
+            net.osmand.PlatformUtil.getLog(CarLayoutManager.class).error("WIDGET_DEBUG - CarLayoutManager POST: widgetHandle is NULL!");
         }
     }
 
