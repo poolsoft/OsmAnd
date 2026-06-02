@@ -434,14 +434,8 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     }
 
     private void applyStatusBarVisibility(boolean show) {
-        if (getActivity() == null)
-            return;
-
-        Window window = getActivity().getWindow();
-        if (show) {
-            window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        } else {
-            window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+            ((net.osmand.plus.activities.MapActivity) getActivity()).applyStatusBarVisibility();
         }
     }
 

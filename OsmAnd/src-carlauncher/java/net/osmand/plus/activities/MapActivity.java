@@ -312,8 +312,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(
 				this);
 		if (carSettings.isLauncherEnabled()) {
-			getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-			androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+			applyStatusBarVisibility();
 		}
 
 		lockHelper = app.getLockHelper();
@@ -1119,6 +1118,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 
 	public void enterToFullScreen() {
+		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(this);
+		if (carSettings.isLauncherEnabled() && carSettings.isStatusBarVisible()) {
+			// Status bar gorunur olmali, enterToFullScreen'in status bar'i gizlemesini engelle (Turkce karakter yok)
+			return;
+		}
 		if (!PluginsHelper.isDevelopment() || settings.TRANSPARENT_STATUS_BAR.get()) {
 			AndroidUtils.enterToFullScreen(this, getLayout());
 		}
@@ -2652,5 +2656,16 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 	}
 
-
+	public void applyStatusBarVisibility() {
+		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(this);
+		boolean show = carSettings.isStatusBarVisible();
+		Window window = getWindow();
+		if (show) {
+			window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true);
+		} else {
+			window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false);
+		}
+	}
 }
