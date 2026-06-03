@@ -1842,6 +1842,16 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			unregisterReceiver(globalPackageReceiver);
 		}
 		
+		// Unregister musicDrawerReceiver (Turkce karakter yok)
+		if (musicDrawerReceiver != null) {
+			try {
+				androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this).unregisterReceiver(musicDrawerReceiver);
+				unregisterReceiver(musicDrawerReceiver);
+			} catch (Exception e) {
+				// ignore
+			}
+		}
+		
 		// Unregister Antenna Panel Close Receiver (Turkce karakter yok)
 		if (antennaPanelReceiver != null) {
 			androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this)
@@ -2682,54 +2692,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			// Status bar gizli ise padding'i sifirla (Turkce karakter yok)
 			if (mapHudLayout != null) {
 				mapHudLayout.setPadding(mapHudLayout.getPaddingLeft(), 0, mapHudLayout.getPaddingRight(), mapHudLayout.getPaddingBottom());
-			}
-		}
-	}
-
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		mIsDestroyed = true;
-
-		// Local ve global alicilarin temizlenmesi (Turkce karakter yok)
-		if (musicDrawerReceiver != null) {
-			try {
-				androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this).unregisterReceiver(musicDrawerReceiver);
-				unregisterReceiver(musicDrawerReceiver);
-			} catch (Exception e) {
-				// ignore
-			}
-		}
-
-		if (antennaPanelReceiver != null) {
-			try {
-				androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this).unregisterReceiver(antennaPanelReceiver);
-			} catch (Exception e) {
-				// ignore
-			}
-		}
-
-		if (globalPackageReceiver != null) {
-			try {
-				unregisterReceiver(globalPackageReceiver);
-			} catch (Exception e) {
-				// ignore
-			}
-		}
-
-		if (carFloatingButtonReceiver != null) {
-			try {
-				unregisterReceiver(carFloatingButtonReceiver);
-			} catch (Exception e) {
-				// ignore
-			}
-		}
-
-		if (screenOffReceiver != null) {
-			try {
-				unregisterReceiver(screenOffReceiver);
-			} catch (Exception e) {
-				// ignore
 			}
 		}
 	}
