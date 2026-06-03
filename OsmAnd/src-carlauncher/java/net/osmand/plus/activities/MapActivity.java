@@ -2672,24 +2672,18 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		Window window = getWindow();
 		View mapHudLayout = findViewById(R.id.map_hud_container);
 
-		int statusBarHeight = 0;
-		int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-		if (resourceId > 0) {
-			statusBarHeight = getResources().getDimensionPixelSize(resourceId);
-		}
-
-		// Her zaman edge-to-edge tutarak teyplerdeki kayma/kesilme sorunlarini onluyoruz (Turkce karakter yok)
-		androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false);
-
 		if (show) {
+			// Status bar acik ise pencereyi fitsSystemWindows=true yaparak status bar altina guvenli yerlestir (Turkce karakter yok)
+			androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true);
 			window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-			// Status bar gorunur ise harita kontrollerini status bar yuksekligi kadar asagi it (Turkce karakter yok)
+			// Sistem fitsSystemWindows ile boslugu ayarladigi icin padding'i sifirliyoruz (Turkce karakter yok)
 			if (mapHudLayout != null) {
-				mapHudLayout.setPadding(mapHudLayout.getPaddingLeft(), statusBarHeight, mapHudLayout.getPaddingRight(), mapHudLayout.getPaddingBottom());
+				mapHudLayout.setPadding(mapHudLayout.getPaddingLeft(), 0, mapHudLayout.getPaddingRight(), mapHudLayout.getPaddingBottom());
 			}
 		} else {
+			// Status bar kapali ise edge-to-edge ve full screen yaparak haritayi en uste sifirla (Turkce karakter yok)
+			androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false);
 			window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-			// Status bar gizli ise padding'i sifirla (Turkce karakter yok)
 			if (mapHudLayout != null) {
 				mapHudLayout.setPadding(mapHudLayout.getPaddingLeft(), 0, mapHudLayout.getPaddingRight(), mapHudLayout.getPaddingBottom());
 			}
