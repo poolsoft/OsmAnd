@@ -85,6 +85,7 @@ public abstract class BaseWidget {
         if (rootView != null) {
             rootView = null;
         }
+        this.context = null; // Activity sizintisini onlemek icin context referansini sifirliyoruz (Turkce karakter yok)
     }
 
     // Getters & Setters

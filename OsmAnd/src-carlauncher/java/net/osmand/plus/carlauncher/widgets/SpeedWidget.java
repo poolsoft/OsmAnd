@@ -324,4 +324,16 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
         super.onStop();
         if (app != null) app.getLocationProvider().removeLocationListener(this);
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        rootFrame = null;
+        digitalView = null;
+        analogView = null;
+        speedText = null;
+        unitText = null;
+        limitText = null;
+        limitContainer = null;
+    }
 }

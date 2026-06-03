@@ -36,7 +36,7 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
     public static boolean isEditMode = false;
     private EditModeListener editModeListener;
     private static OnWorkspaceLongClickListener workspaceLongClickListener;
-    private static WorkspacePageAdapter activeAdapterInstance;
+    private static java.lang.ref.WeakReference<WorkspacePageAdapter> activeAdapterInstanceRef;
 
     public static void setWorkspaceLongClickListener(OnWorkspaceLongClickListener listener) {
         workspaceLongClickListener = listener;
@@ -44,13 +44,14 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
 
     public static void exitEditMode() {
         isEditMode = false;
-        if (activeAdapterInstance != null) {
-            if (activeAdapterInstance.editModeListener != null) {
-                activeAdapterInstance.editModeListener.onEditModeChanged(false);
+        WorkspacePageAdapter activeAdapter = activeAdapterInstanceRef != null ? activeAdapterInstanceRef.get() : null;
+        if (activeAdapter != null) {
+            if (activeAdapter.editModeListener != null) {
+                activeAdapter.editModeListener.onEditModeChanged(false);
             }
-            activeAdapterInstance.notifyDataSetChanged();
-            if (activeAdapterInstance.onWidgetsChangedListener != null) {
-                activeAdapterInstance.onWidgetsChangedListener.run();
+            activeAdapter.notifyDataSetChanged();
+            if (activeAdapter.onWidgetsChangedListener != null) {
+                activeAdapter.onWidgetsChangedListener.run();
             }
         }
     }
@@ -144,7 +145,7 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
         this.fragmentManager = fragmentManager;
         this.widgetsList = widgets;
         this.onWidgetsChangedListener = onWidgetsChangedListener;
-        activeAdapterInstance = this;
+        activeAdapterInstanceRef = new java.lang.ref.WeakReference<>(this);
     }
 
     public void setEditModeListener(EditModeListener listener) {

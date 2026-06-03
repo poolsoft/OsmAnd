@@ -2685,4 +2685,52 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			}
 		}
 	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		mIsDestroyed = true;
+
+		// Local ve global alicilarin temizlenmesi (Turkce karakter yok)
+		if (musicDrawerReceiver != null) {
+			try {
+				androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this).unregisterReceiver(musicDrawerReceiver);
+				unregisterReceiver(musicDrawerReceiver);
+			} catch (Exception e) {
+				// ignore
+			}
+		}
+
+		if (antennaPanelReceiver != null) {
+			try {
+				androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this).unregisterReceiver(antennaPanelReceiver);
+			} catch (Exception e) {
+				// ignore
+			}
+		}
+
+		if (globalPackageReceiver != null) {
+			try {
+				unregisterReceiver(globalPackageReceiver);
+			} catch (Exception e) {
+				// ignore
+			}
+		}
+
+		if (carFloatingButtonReceiver != null) {
+			try {
+				unregisterReceiver(carFloatingButtonReceiver);
+			} catch (Exception e) {
+				// ignore
+			}
+		}
+
+		if (screenOffReceiver != null) {
+			try {
+				unregisterReceiver(screenOffReceiver);
+			} catch (Exception e) {
+				// ignore
+			}
+		}
+	}
 }

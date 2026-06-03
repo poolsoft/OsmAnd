@@ -34,6 +34,9 @@ public class WeatherManager {
     private static WeatherManager instance;
     private final Context context;
     private final SharedPreferences prefs;
+    private final java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private boolean isFetching = false;
 
     // Cache Keys
     private static final String PREF_NAME = "weather_cache";
@@ -132,15 +135,16 @@ public class WeatherManager {
      * URL Guncellendi: Saatlik veriler, Ruzgar, Yagis, Gorunurluk, Hissedilen.
      */
     public void fetchWeather(double lat, double lon) {
+        if (isFetching) {
+            Log.d(TAG, "Hava durumu verisi zaten cekiliyor.");
+            return;
+        }
         if (!isNetworkAvailable()) {
             Log.d(TAG, "Internet yok, veri cekilemedi.");
             return;
         }
+        isFetching = true;
 
-        // Params:
-        // current: temperature_2m, relative_humidity_2m, apparent_temperature, precipitation, weather_code, wind_speed_10m, wind_direction_10m
-        // hourly: temperature_2m, weather_code, precipitation_probability, visibility
-        // daily: weather_code, temperature_2m_max, temperature_2m_min, precipitation_probability_max
         String url = String.format(Locale.US, 
             "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f" +
             "&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m" +
@@ -149,7 +153,21 @@ public class WeatherManager {
             "&timezone=auto", 
             lat, lon);
 
-        new FetchTask().execute(url, String.valueOf(lat), String.valueOf(lon));
+        executor.execute(() -> {
+            String json = doFetch(url);
+            mainHandler.post(() -> {
+                isFetching = false;
+                if (json != null) {
+                    saveCache(json, lat, lon);
+                    WeatherData data = parseWeather(json, System.currentTimeMillis());
+                    notifyListeners(data);
+                } else {
+                    for (WeatherListener l : listeners) {
+                        l.onWeatherError("Hava durumu verisi alinamadi");
+                    }
+                }
+            });
+        });
     }
 
     public WeatherData getCachedWeather() {
@@ -266,7 +284,7 @@ public class WeatherManager {
     }
 
     private void notifyListeners(WeatherData data) {
-        new Handler(Looper.getMainLooper()).post(() -> {
+        mainHandler.post(() -> {
             for (WeatherListener l : listeners) {
                 l.onWeatherUpdated(data);
             }
@@ -282,47 +300,29 @@ public class WeatherManager {
         return Double.longBitsToDouble(prefs.getLong(key, Double.doubleToRawLongBits(defaultValue)));
     }
 
-    // --- AsyncTask ---
+    // --- doFetch ---
 
-    private class FetchTask extends AsyncTask<String, Void, String> {
-        double lat, lon;
+    private String doFetch(String urlStr) {
+        try {
+            URL url = new URL(urlStr);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(10000);
 
-        @Override
-        protected String doInBackground(String... params) {
-            String urlStr = params[0];
-            lat = Double.parseDouble(params[1]);
-            lon = Double.parseDouble(params[2]);
-
-            try {
-                URL url = new URL(urlStr);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-                conn.setConnectTimeout(10000);
-                conn.setReadTimeout(10000);
-
-                if (conn.getResponseCode() == 200) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    StringBuilder sb = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        sb.append(line);
-                    }
-                    return sb.toString();
+            if (conn.getResponseCode() == 200) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
                 }
-            } catch (Exception e) {
-                Log.e(TAG, "Fetch Error", e);
+                return sb.toString();
             }
-            return null;
+        } catch (Exception e) {
+            Log.e(TAG, "Fetch Error", e);
         }
-
-        @Override
-        protected void onPostExecute(String json) {
-            if (json != null) {
-                saveCache(json, lat, lon);
-                WeatherData data = parseWeather(json, System.currentTimeMillis());
-                notifyListeners(data);
-            }
-        }
+        return null;
     }
 
     // --- Data Model ---

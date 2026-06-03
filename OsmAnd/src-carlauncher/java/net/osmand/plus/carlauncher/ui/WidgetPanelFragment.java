@@ -537,6 +537,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
     @Override
     public void onPause() {
         super.onPause();
+        WorkspacePageAdapter.setWorkspaceLongClickListener(null);
         if (getContext() != null) {
             PreferenceManager.getDefaultSharedPreferences(getContext())
                     .unregisterOnSharedPreferenceChangeListener(this);

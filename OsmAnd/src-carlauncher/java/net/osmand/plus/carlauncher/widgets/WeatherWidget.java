@@ -31,6 +31,7 @@ public class WeatherWidget extends BaseWidget implements WeatherManager.WeatherL
     private ProgressBar progressBar;
     
     private final WeatherManager weatherManager;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public WeatherWidget(@NonNull Context context, OsmandApplication app) {
         super(context, "weather", "Hava Durumu");
@@ -121,15 +122,25 @@ public class WeatherWidget extends BaseWidget implements WeatherManager.WeatherL
 
     @Override
     public void onWeatherUpdated(WeatherManager.WeatherData data) {
-         new Handler(Looper.getMainLooper()).post(() -> updateUI(data));
+         mainHandler.post(() -> updateUI(data));
     }
 
     @Override
     public void onWeatherError(String error) {
-        new Handler(Looper.getMainLooper()).post(() -> {
+        mainHandler.post(() -> {
             if (tvDesc != null) tvDesc.setText(error);
             if (progressBar != null) progressBar.setVisibility(View.GONE);
         });
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        tvLocation = null;
+        tvTemp = null;
+        tvDesc = null;
+        ivIcon = null;
+        progressBar = null;
     }
 
     @Override
