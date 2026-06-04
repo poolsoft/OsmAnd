@@ -323,7 +323,7 @@ public class AppInitializer implements IProgress {
 		app.waypointHelper = startupInit(new WaypointHelper(app), WaypointHelper.class);
 		app.aidlApi = startupInit(new OsmandAidlApi(app), OsmandAidlApi.class);
 
-		app.regions = startupInit(new OsmandRegions(), OsmandRegions.class);
+		app.regions = startupInit(new OsmandRegions(false), OsmandRegions.class);
 		updateRegionVars();
 
 		app.poiFilters = startupInit(new PoiFiltersHelper(app), PoiFiltersHelper.class);

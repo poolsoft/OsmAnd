@@ -863,7 +863,7 @@ public class OsmandApplication extends MultiDexApplication {
 	}
 
 	public void startApplication() {
-		feedbackHelper.setExceptionHandler();
+		getFeedbackHelper().setExceptionHandler();
 		if (!NetworkUtils.hasProxy() && settings.isProxyEnabled()) {
 			try {
 				NetworkUtils.setProxy(settings.PROXY_HOST.get(), settings.PROXY_PORT.get());
@@ -1193,7 +1193,7 @@ public class OsmandApplication extends MultiDexApplication {
 
 	public void logEvent(@NonNull String event) {
 		try {
-			analyticsHelper.addEvent(event, AnalyticsHelper.EVENT_TYPE_APP_USAGE);
+			getAnalyticsHelper().addEvent(event, AnalyticsHelper.EVENT_TYPE_APP_USAGE);
 		} catch (Exception e) {
 			LOG.error(e);
 		}
@@ -1201,7 +1201,7 @@ public class OsmandApplication extends MultiDexApplication {
 
 	public void logRoutingEvent(@NonNull String event) {
 		try {
-			analyticsHelper.addEvent(event, AnalyticsHelper.EVENT_TYPE_ROUTING);
+			getAnalyticsHelper().addEvent(event, AnalyticsHelper.EVENT_TYPE_ROUTING);
 		} catch (Exception e) {
 			LOG.error(e);
 		}
@@ -1209,7 +1209,7 @@ public class OsmandApplication extends MultiDexApplication {
 
 	public void logMapDownloadEvent(@NonNull String event, @NonNull IndexItem item) {
 		try {
-			analyticsHelper.addEvent("map_download_" + event + ": " + item.getFileName(), AnalyticsHelper.EVENT_TYPE_MAP_DOWNLOAD);
+			getAnalyticsHelper().addEvent("map_download_" + event + ": " + item.getFileName(), AnalyticsHelper.EVENT_TYPE_MAP_DOWNLOAD);
 		} catch (Exception e) {
 			LOG.error(e);
 		}
@@ -1217,7 +1217,7 @@ public class OsmandApplication extends MultiDexApplication {
 
 	public void logMapDownloadEvent(@NonNull String event, @NonNull IndexItem item, long time) {
 		try {
-			analyticsHelper.addEvent("map_download_" + event + ": " + item.getFileName() + " in " + time + " msec", AnalyticsHelper.EVENT_TYPE_MAP_DOWNLOAD);
+			getAnalyticsHelper().addEvent("map_download_" + event + ": " + item.getFileName() + " in " + time + " msec", AnalyticsHelper.EVENT_TYPE_MAP_DOWNLOAD);
 		} catch (Exception e) {
 			LOG.error(e);
 		}
