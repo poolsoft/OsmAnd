@@ -39,14 +39,14 @@ public class WidgetManager {
 
     private static WidgetManager instance;
     
-    private boolean hasAutoLaunched = false;
+    private static boolean hasAutoLaunched = false;
 
     public boolean isHasAutoLaunched() {
         return hasAutoLaunched;
     }
 
     public void setHasAutoLaunched(boolean hasAutoLaunched) {
-        this.hasAutoLaunched = hasAutoLaunched;
+        WidgetManager.hasAutoLaunched = hasAutoLaunched;
     }
 
     public static synchronized WidgetManager getInstance(Context context) {

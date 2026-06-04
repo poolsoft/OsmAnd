@@ -26,6 +26,21 @@ public class AutoLaunchManager {
     }
 
     public void execute() {
+        boolean hasAnyAppToLaunch = false;
+        for (int i = 1; i <= 3; i++) {
+            if (settings.isAutoLaunchEnabled(i)) {
+                String pkg = settings.getAutoLaunchPackage(i);
+                if (pkg != null && !pkg.isEmpty()) {
+                    hasAnyAppToLaunch = true;
+                    break;
+                }
+            }
+        }
+
+        if (!hasAnyAppToLaunch) {
+            return; // Baslatilacak uygulama yoksa sureci hic baslatma (Turkce karakter yok)
+        }
+
         // Sirali baslatma zinciri
         runSlot(1, () -> 
             runSlot(2, () -> 
