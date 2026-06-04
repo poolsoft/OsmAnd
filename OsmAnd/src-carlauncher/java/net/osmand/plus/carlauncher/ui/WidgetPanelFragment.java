@@ -178,13 +178,8 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         popup.getMenu().add(0, 4, 2, "Mevcut Duzeni Kaydet");
         popup.getMenu().add(0, 6, 3, "Masaustunu Duzenle (Edit Mode)");
 
-        // Premium Arka Plan Secenekleri
-        android.view.Menu bgMenu = popup.getMenu().addSubMenu(0, 7, 4, "Arka Plan Temasi");
-        bgMenu.add(0, 71, 0, "Modern Gradient");
-        bgMenu.add(0, 72, 1, "Carbon Black");
-        bgMenu.add(0, 73, 2, "Deep Space");
-        
-        popup.getMenu().add(0, 8, 5, "Arka Plan Resmi Sec");
+        // Premium Arka Plan Secenekleri (Yeni WallpaperChooserDialog ile birlestirildi)
+        popup.getMenu().add(0, 7, 4, "Duvar Kagidi Degistir");
         
         popup.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
@@ -207,24 +202,8 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                     }
                 }
                 return true;
-            } else if (id == 71) {
-                settings.setBackgroundStyle("modern");
-                return true;
-            } else if (id == 72) {
-                settings.setBackgroundStyle("carbon");
-                return true;
-            } else if (id == 73) {
-                settings.setBackgroundStyle("space");
-                return true;
-            } else if (id == 8) {
-                try {
-                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                    intent.addCategory(Intent.CATEGORY_OPENABLE);
-                    intent.setType("image/*");
-                    startActivityForResult(intent, RC_SELECT_WALLPAPER);
-                } catch (Exception e) {
-                    android.widget.Toast.makeText(getContext(), "Dosya secici acilamadi", android.widget.Toast.LENGTH_SHORT).show();
-                }
+            } else if (id == 7) {
+                showWallpaperChooserDialog();
                 return true;
             } else if (id == 4) {
                 if (widgetManager != null) {
@@ -648,6 +627,17 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                     android.util.Log.e("WidgetPanelFragment", "Wallpaper yuklenemedi", e);
                 }
             }
+        } else if ("system".equals(style)) {
+            try {
+                android.app.WallpaperManager wm = android.app.WallpaperManager.getInstance(getContext());
+                android.graphics.drawable.Drawable drawable = wm.getDrawable();
+                if (drawable != null) {
+                    parallaxBg.setImageDrawable(drawable);
+                    return;
+                }
+            } catch (Exception e) {
+                android.util.Log.e("WidgetPanelFragment", "Sistem duvar kagidi yuklenemedi", e);
+            }
         }
         
         int resId = net.osmand.plus.R.drawable.bg_panel_modern;
@@ -657,6 +647,52 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             resId = net.osmand.plus.R.drawable.bg_panel_space;
         }
         parallaxBg.setImageResource(resId);
+    }
+
+    private void showWallpaperChooserDialog() {
+        WallpaperChooserDialog dialog = new WallpaperChooserDialog();
+        dialog.setOnWallpaperSelectedListener(new WallpaperChooserDialog.OnWallpaperSelectedListener() {
+            @Override
+            public void onWallpaperSelected(String style) {
+                CarLauncherSettings settings = new CarLauncherSettings(getContext());
+                settings.setBackgroundStyle(style);
+                updateBackgroundStyle();
+            }
+
+            @Override
+            public void onPickCustomWallpaper() {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("image/*");
+                    startActivityForResult(intent, RC_SELECT_WALLPAPER);
+                } catch (Exception e) {
+                    android.widget.Toast.makeText(getContext(), "Dosya secici acilamadi", android.widget.Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onSetSystemWallpaper() {
+                CarLauncherSettings settings = new CarLauncherSettings(getContext());
+                settings.setBackgroundStyle("system");
+                updateBackgroundStyle();
+            }
+
+            @Override
+            public void onOpenSystemWallpaperChooser() {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_SET_WALLPAPER);
+                    startActivity(Intent.createChooser(intent, "Duvar Kagidi Secin"));
+                    
+                    // Geri donuldugunde otomatik sistemi yuklesin
+                    CarLauncherSettings settings = new CarLauncherSettings(getContext());
+                    settings.setBackgroundStyle("system");
+                } catch (Exception e) {
+                    android.widget.Toast.makeText(getContext(), "Sistem duvar kagidi secicisi acilamadi", android.widget.Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        dialog.show(getChildFragmentManager(), "WallpaperChooserDialog");
     }
 
     @Override
