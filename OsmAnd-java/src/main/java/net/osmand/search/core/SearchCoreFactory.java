@@ -471,6 +471,14 @@ public class SearchCoreFactory {
 			}
 		}
 		
+		boolean hasNonNumericLeftUnknownSearchWord(SearchResult res) {
+			for (String leftUnknownSearchWord : res.filterUnknownSearchWord(null)) {
+				if (!CommonWords.isNumber2Letters(leftUnknownSearchWord)) {
+					return true;
+				}
+			}
+			return false;
+		}
 
 		private void searchByName(final SearchPhrase phrase, final SearchResultMatcher resultMatcher)
 				throws IOException {
@@ -674,7 +682,7 @@ public class SearchCoreFactory {
 								boolean match = matchAddressName(phrase, res, cityResult, true);
 								if (match) {
 									newParentSearchResult = cityResult;
-								} else {
+								} else if(hasNonNumericLeftUnknownSearchWord(res)) { // speed up
 									QuadRect bbox = SearchPhrase.calculateBbox(1000, res.location);
 									List<City>  cacheResArray = townCitiesCache.queryBoundaries(bbox);
 									for (City boundary : cacheResArray) {
@@ -1949,7 +1957,7 @@ public class SearchCoreFactory {
 		private LatLon olcPhraseLocation;
 		private ParsedOpenLocationCode cachedParsedCode;
 //		private final List<String> citySubTypes = Arrays.asList("city", "town", "village");
-		private final DecimalFormat latLonFormatter = new DecimalFormat("#.0####", new DecimalFormatSymbols(Locale.US));
+		private final DecimalFormat latLonFormatter = new DecimalFormat("0.0####", new DecimalFormatSymbols(Locale.US));
 		
 		private SearchAmenityByNameAPI amenitiesApi;
 		private final BooleanSupplier internetConnectionAvailable;

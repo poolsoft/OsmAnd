@@ -81,6 +81,7 @@ public class WptPtMenuBuilder extends MenuBuilder {
 	protected void buildTopInternal(View view) {
 		super.buildTopInternal(view);
 		buildWaypointsView(view);
+		buildMediaLinksRow(view, wpt.getLinks(), wpt);
 	}
 
 	@Override
@@ -100,7 +101,7 @@ public class WptPtMenuBuilder extends MenuBuilder {
 		ReadPointDescriptionFragment.showInstance(mapActivity, description);
 	}
 
-	protected Map<String, String> getAdditionalCardParams() {
+	protected Map<String, String> getAdditionalImageParams() {
 		return AmenityExtensionsHelper.getImagesParams(amenityExtensions);
 	}
 

@@ -24,13 +24,14 @@ import com.google.android.material.shape.CornerFamily
 import com.google.android.material.shape.MaterialShapeDrawable
 import com.google.android.material.shape.ShapeAppearanceModel
 import com.google.android.material.tabs.TabLayout
+import net.osmand.PlatformUtil
 import net.osmand.plus.R
 import net.osmand.plus.base.BaseMaterialFragment
 import net.osmand.plus.chooseplan.ChoosePlanFragment
 import net.osmand.plus.chooseplan.OsmAndFeature
 import net.osmand.plus.download.DownloadIndexesThread.DownloadEvents
 import net.osmand.plus.download.DownloadValidationManager
-import net.osmand.plus.mapcontextmenu.gallery.GalleryController
+import net.osmand.plus.gallery.controller.GalleryController
 import net.osmand.plus.plugins.PluginsHelper
 import net.osmand.plus.plugins.astronomy.AstroArticle
 import net.osmand.plus.plugins.astronomy.AstronomyPlugin
@@ -122,6 +123,7 @@ class AstroContextMenuFragment : BaseMaterialFragment(), DownloadEvents {
 	private var programmaticSectionScrollToken = 0
 
 	companion object {
+		private val LOG = PlatformUtil.getLog(AstroContextMenuFragment::class.java)
 		val TAG: String = AstroContextMenuFragment::class.java.simpleName
 		private const val ARG_SKY_OBJECT_ID = "skyObjectId"
 		private const val TAB_OVERVIEW = 0
@@ -160,7 +162,6 @@ class AstroContextMenuFragment : BaseMaterialFragment(), DownloadEvents {
 			galleryLoader = AstroGalleryLoader(
 				app = app,
 				galleryController = controller,
-				mapActivityProvider = { mapActivity },
 				onStateChanged = ::onGalleryStateChanged
 			)
 		}
@@ -232,7 +233,7 @@ class AstroContextMenuFragment : BaseMaterialFragment(), DownloadEvents {
 		updateVisibilityCard(obj)
 		updateScheduleCard(obj)
 		ensureKnowledgeCardPrerequisites()
-		if (uiState.galleryState == AstroGalleryCardState.Loading) {
+		if (uiState.galleryState == AstroGalleryState.Loading) {
 			galleryLoader?.startLoading(obj.wid)
 		}
 		submitCards()
@@ -1244,28 +1245,28 @@ class AstroContextMenuFragment : BaseMaterialFragment(), DownloadEvents {
 
 	private fun onGalleryToggle(wid: String) {
 		when (uiState.galleryState) {
-			AstroGalleryCardState.Collapsed -> {
+			AstroGalleryState.Collapsed -> {
 				loadGallery(wid)
 			}
 
-			is AstroGalleryCardState.Ready -> {
-				uiState = uiState.copy(galleryState = AstroGalleryCardState.Collapsed)
+			is AstroGalleryState.Ready -> {
+				uiState = uiState.copy(galleryState = AstroGalleryState.Collapsed)
 				submitCards()
 			}
 
-			AstroGalleryCardState.Loading -> Unit
+			AstroGalleryState.Loading -> Unit
 		}
 	}
 
 	private fun loadGallery(wid: String) {
-		uiState = uiState.copy(galleryState = AstroGalleryCardState.Loading)
+		uiState = uiState.copy(galleryState = AstroGalleryState.Loading)
 		submitCards()
 		galleryLoader?.startLoading(wid) ?: run {
-			onGalleryStateChanged(wid, AstroGalleryCardState.Ready(emptyList()))
+			onGalleryStateChanged(wid, AstroGalleryState.Ready(emptyList()))
 		}
 	}
 
-	private fun onGalleryStateChanged(wid: String, state: AstroGalleryCardState) {
+	private fun onGalleryStateChanged(wid: String, state: AstroGalleryState) {
 		if (skyObject?.wid != wid || uiState.galleryState == state) {
 			return
 		}
@@ -1303,7 +1304,8 @@ class AstroContextMenuFragment : BaseMaterialFragment(), DownloadEvents {
 		val intent = Intent(Intent.ACTION_VIEW, uri)
 		try {
 			startActivity(intent)
-		} catch (_: Exception) {
+		} catch (e: Exception) {
+			LOG.error("Error opening astronomy URI: $uri", e)
 		}
 	}
 
