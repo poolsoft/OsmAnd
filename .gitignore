@@ -23,6 +23,7 @@ OsmAndCore_*.aar
 out/
 .kotlin/
 *.log
+*.apk
 
 # Huawei
 agconnect-services.json
@@ -62,3 +63,4 @@ OsmAnd-shared/src/jvmMain/resources/
 **/.log/
 replay_pid38744.log
 replay_pid25780.log
+.doc/xyauto/Yerelradyo.apk
