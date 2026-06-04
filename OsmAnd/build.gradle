@@ -109,14 +109,7 @@ android {
 			manifest.srcFile "AndroidManifest-huawei.xml"
 		}
 		carlauncher {
-			java.srcDirs = [
-				"src-carlauncher/java",
-				//"src-google",
-				"src-osmand"
-			]
-			// 'src' is inherited from 'main' source set (in build-common.gradle)
-			// We will filter out the conflicting MapActivity using applicationVariants block below.
-
+			java.srcDirs = ["src-carlauncher/java","src-osmand"]
 			res.srcDirs = ["src-carlauncher/res"]
 			assets.srcDirs = ["src-carlauncher/assets"]
 			manifest.srcFile "AndroidManifest-carlauncher.xml"
