@@ -104,6 +104,13 @@ public class AppPickerDialog {
             internalPlayer.packageName = "usage.internal.player";
             internalPlayer.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
             apps.add(internalPlayer);
+
+            // XYAuto Yerel Muzik her durumda picker listesine sabit olarak eklenir (Turkce karakter yok)
+            AppInfo xyPlayer = new AppInfo();
+            xyPlayer.name = "XYAuto Yerel Muzik";
+            xyPlayer.packageName = "com.acloud.stub.localmusic";
+            xyPlayer.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
+            apps.add(xyPlayer);
         }
 
         if (cachedList != null && !cachedList.isEmpty()) {

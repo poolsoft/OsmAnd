@@ -462,6 +462,24 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+
+        // Muzikleri Yeniden Tara (Turkce karakter yok)
+        Preference scanMusicPref = findPreference("car_launcher_scan_music");
+        if (scanMusicPref != null) {
+            scanMusicPref.setOnPreferenceClickListener(preference -> {
+                if (getContext() != null) {
+                    Toast.makeText(getContext(), "Muzik taramasi baslatildi...", Toast.LENGTH_SHORT).show();
+                    MusicManager.getInstance(getContext()).getRepository().scanMusic((tracks, folders) -> {
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                Toast.makeText(getContext(), "Tarama tamamlandi. Bulunan sarki: " + tracks.size(), Toast.LENGTH_LONG).show();
+                            });
+                        }
+                    });
+                }
+                return true;
+            });
+        }
     }
 
     private void updateMusicAppSummary(Preference pref) {

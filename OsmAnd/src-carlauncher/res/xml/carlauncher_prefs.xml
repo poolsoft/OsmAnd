@@ -115,6 +115,12 @@
             android:summary="Sistem ses ayarlarını aç"
             android:iconSpaceReserved="false" />
 
+        <androidx.preference.Preference
+            android:key="car_launcher_scan_music"
+            android:title="Muzikleri Yeniden Tara"
+            android:summary="Dahili depolama ve USB bellekleri tara"
+            android:iconSpaceReserved="false" />
+
     </androidx.preference.PreferenceCategory>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->

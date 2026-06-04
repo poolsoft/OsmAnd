@@ -158,7 +158,118 @@ public class MusicRepository {
             Log.e(TAG, "Error scanning audio", e);
         }
 
+        // MediaStore taramasindan sonra dogrudan harici USB disk yollarini da tara (Turkce karakter yok)
+        try {
+            List<AudioTrack> directTracks = scanDeviceForAudioDirectly();
+            for (AudioTrack dt : directTracks) {
+                boolean exists = false;
+                for (AudioTrack t : tracks) {
+                    if (dt.getPath() != null && dt.getPath().equals(t.getPath())) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    tracks.add(dt);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Direct storage scan error: " + e.getMessage());
+        }
+
         return tracks;
+    }
+
+    private List<AudioTrack> scanDeviceForAudioDirectly() {
+        List<AudioTrack> tracks = new ArrayList<>();
+        File storageDir = new File("/storage");
+        if (storageDir.exists() && storageDir.isDirectory()) {
+            File[] volumes = storageDir.listFiles();
+            if (volumes != null) {
+                for (File vol : volumes) {
+                    if (vol.isDirectory()) {
+                        String name = vol.getName();
+                        // Dahili hafizayi ve gizli klasorleri atla (Turkce karakter yok)
+                        if (!name.equals("emulated") && !name.equals("self") && !name.startsWith(".")) {
+                            Log.d(TAG, "Taranan harici USB birimi: " + vol.getAbsolutePath());
+                            scanDirectoryDirectly(vol, tracks);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Alps teyp yedek USB mount yollarini da tarayalim (Turkce karakter yok)
+        String[] fallbackPaths = {"/storage/udisk", "/storage/udisk2", "/storage/usb_storage", "/mnt/media_rw", "/mnt/usb", "/mnt/usb_storage"};
+        for (String path : fallbackPaths) {
+            File fallbackDir = new File(path);
+            if (fallbackDir.exists() && fallbackDir.isDirectory()) {
+                scanDirectoryDirectly(fallbackDir, tracks);
+            }
+        }
+
+        return tracks;
+    }
+
+    private void scanDirectoryDirectly(File dir, List<AudioTrack> tracks) {
+        if (dir == null || !dir.exists() || !dir.isDirectory()) return;
+
+        File[] files = dir.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                String name = file.getName().toLowerCase(java.util.Locale.ROOT);
+                if (name.equals("android") || name.equals("lost.dir") || name.startsWith(".")) {
+                    continue;
+                }
+                scanDirectoryDirectly(file, tracks);
+            } else {
+                String path = file.getAbsolutePath();
+                String lowerPath = path.toLowerCase(java.util.Locale.ROOT);
+
+                if (lowerPath.endsWith(".mp3") || 
+                        lowerPath.endsWith(".flac") || 
+                        lowerPath.endsWith(".wav") || 
+                        lowerPath.endsWith(".m4a") || 
+                        lowerPath.endsWith(".wma") || 
+                        lowerPath.endsWith(".aac") || 
+                        lowerPath.endsWith(".ogg")) {
+
+                    // Durationsuz taramada bildirim seslerini elemek icin boyut filtresi (>500KB) (Turkce karakter yok)
+                    if (file.length() < 500 * 1024) {
+                        continue;
+                    }
+
+                    long id = path.hashCode();
+                    String title = file.getName();
+                    int dotIndex = title.lastIndexOf('.');
+                    if (dotIndex > 0) {
+                        title = title.substring(0, dotIndex);
+                    }
+
+                    String artist = "Bilinmeyen";
+                    String album = "USB Muzik";
+                    long duration = 180000; // Varsayilan 3 dk
+
+                    Uri contentUri = Uri.fromFile(file);
+                    Uri albumArtUri = Uri.EMPTY;
+
+                    boolean exists = false;
+                    for (AudioTrack t : tracks) {
+                        if (path.equals(t.getPath())) {
+                            exists = true;
+                            break;
+                        }
+                    }
+
+                    if (!exists) {
+                        AudioTrack track = new AudioTrack(id, title, artist, album, duration, path, contentUri, albumArtUri);
+                        tracks.add(track);
+                    }
+                }
+            }
+        }
     }
 
     private List<AudioFolder> organizeIntoFolders(List<AudioTrack> tracks) {
