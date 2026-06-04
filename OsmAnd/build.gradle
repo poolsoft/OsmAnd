@@ -170,7 +170,7 @@ android {
 		carlauncher {
 			dimension "version"
 			applicationId "net.osmand.carlauncher"
-			resValue "string", "app_name", "OsmAnd CarLauncher"
+			resValue "string", "app_name", "OsmAnd Auto"
 			resValue "string", "app_edition", System.getenv("APP_EDITION") ? System.getenv("APP_EDITION") : ""
 			
 			if (project.hasProperty('versionCode')) {
