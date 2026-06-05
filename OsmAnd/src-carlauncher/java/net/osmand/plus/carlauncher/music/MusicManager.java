@@ -182,7 +182,11 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         filter.addAction("update.widget.musicinit");
         filter.addAction("update.widget.cdinit");
         filter.addAction("update.widget.albumpic");
-        context.registerReceiver(xyAutoReceiver, filter);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(xyAutoReceiver, filter, Context.RECEIVER_EXPORTED);
+        } else {
+            context.registerReceiver(xyAutoReceiver, filter);
+        }
 
         // Baslangicta muzikleri tara
         repository.scanMusic((tracks, folders) -> {
