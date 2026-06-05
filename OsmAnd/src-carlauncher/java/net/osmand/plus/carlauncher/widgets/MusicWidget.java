@@ -136,6 +136,10 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         String target = musicManager.getPreferredPackage();
         if (target == null) target = packageName;
         if (target == null) return;
+        // Dahili oynatici icin uygulamanin kendi ikonunu goster
+        if ("usage.internal.player".equals(target)) {
+            target = context.getPackageName();
+        }
         try {
             appIconView.setImageDrawable(context.getPackageManager().getApplicationIcon(target));
         } catch (Exception e) {

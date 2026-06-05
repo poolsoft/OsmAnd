@@ -9,8 +9,12 @@ import android.media.MediaMetadata;
 import android.media.session.MediaController;
 import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
+import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -41,6 +45,114 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     private boolean isInternalPlaying = false;
     private String preferredPackage;
 
+    // XYAuto yerel muzik oynatici durum degiskenleri
+    private String xyTrackTitle = null;
+    private String xyTrackArtist = null;
+    private String xyTrackAlbumArtPath = null;
+    private boolean xyIsPlaying = false;
+    private int xyDuration = 0;
+    private int xyPosition = 0;
+
+    // XYAuto yerel muzik yayinlarini dinleyen alici
+    private final BroadcastReceiver xyAutoReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action == null) return;
+            Log.d(TAG, "XYAuto yayini alindi: " + action);
+            
+            boolean changed = false;
+            
+            if ("update.widget.playbtnstate".equals(action)) {
+                boolean oldPlaying = xyIsPlaying;
+                xyIsPlaying = intent.getBooleanExtra("PlayState", false);
+                if (xyIsPlaying != oldPlaying) {
+                    changed = true;
+                    if (xyIsPlaying) {
+                        lastActiveSource = MusicSource.EXTERNAL;
+                        if (internalPlayer.isPlaying()) {
+                            internalPlayer.pause();
+                        }
+                        if (!"com.acloud.stub.localmusic".equals(preferredPackage)) {
+                            setPreferredPackage("com.acloud.stub.localmusic");
+                        }
+                    }
+                }
+            } else if ("update.widget.songname".equals(action)) {
+                String fullSongName = intent.getStringExtra("curplaysong");
+                String oldTitle = xyTrackTitle;
+                String oldArtist = xyTrackArtist;
+                
+                if (fullSongName != null) {
+                    if (fullSongName.contains(" - ")) {
+                        String[] parts = fullSongName.split(" - ", 2);
+                        xyTrackTitle = parts[0].trim();
+                        xyTrackArtist = parts[1].trim();
+                    } else if (fullSongName.contains("-")) {
+                        String[] parts = fullSongName.split("-", 2);
+                        xyTrackTitle = parts[0].trim();
+                        xyTrackArtist = parts[1].trim();
+                    } else {
+                        xyTrackTitle = fullSongName;
+                        xyTrackArtist = "";
+                    }
+                } else {
+                    xyTrackTitle = null;
+                    xyTrackArtist = null;
+                }
+                
+                if (intent.hasExtra("artistPicPath")) {
+                    xyTrackAlbumArtPath = intent.getStringExtra("artistPicPath");
+                    if (TextUtils.isEmpty(xyTrackArtist) && !TextUtils.isEmpty(xyTrackAlbumArtPath)) {
+                        try {
+                            java.io.File file = new java.io.File(xyTrackAlbumArtPath);
+                            String name = file.getName();
+                            int dot = name.lastIndexOf('.');
+                            if (dot > 0) {
+                                xyTrackArtist = name.substring(0, dot);
+                            }
+                        } catch (Exception e) {
+                            // Hata durumunda yoksay
+                        }
+                    }
+                }
+                
+                boolean playState = intent.getBooleanExtra("PlayState", false);
+                if (playState) {
+                    xyIsPlaying = true;
+                    lastActiveSource = MusicSource.EXTERNAL;
+                    if (internalPlayer.isPlaying()) {
+                        internalPlayer.pause();
+                    }
+                    if (!"com.acloud.stub.localmusic".equals(preferredPackage)) {
+                        setPreferredPackage("com.acloud.stub.localmusic");
+                    }
+                }
+                
+                if (!TextUtils.equals(oldTitle, xyTrackTitle) || !TextUtils.equals(oldArtist, xyTrackArtist)) {
+                    changed = true;
+                }
+            } else if ("update.widget.update_proBar".equals(action)) {
+                xyDuration = intent.getIntExtra("proBarmax", 0);
+                xyPosition = intent.getIntExtra("proBarvalue", 0);
+                
+                String song = intent.getStringExtra("curplaysong");
+                if (song != null && !TextUtils.equals(xyTrackTitle, song)) {
+                    xyTrackTitle = song;
+                    changed = true;
+                }
+                if (intent.hasExtra("artistPicPath")) {
+                    xyTrackAlbumArtPath = intent.getStringExtra("artistPicPath");
+                }
+            }
+            
+            if (changed) {
+                notifyTrackChanged();
+            }
+            notifyStateChanged();
+        }
+    };
+
     // UI Listeners
     private final List<MusicUIListener> listeners = new CopyOnWriteArrayList<>();
 
@@ -59,6 +171,18 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         this.internalPlayer.setListener(this);
 
         setupMediaSessionManager();
+
+        // XYAuto yerel muzik broadcast yayinlarini dinle
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("update.widget.playbtnstate");
+        filter.addAction("update.widget.update_proBar");
+        filter.addAction("update.widget.songname");
+        filter.addAction("update.widget.btnfun");
+        filter.addAction("update.widget.dataError");
+        filter.addAction("update.widget.musicinit");
+        filter.addAction("update.widget.cdinit");
+        filter.addAction("update.widget.albumpic");
+        context.registerReceiver(xyAutoReceiver, filter);
 
         // Baslangicta muzikleri tara
         repository.scanMusic((tracks, folders) -> {
@@ -258,6 +382,17 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 if (internalPlayer.isPlaying()) {
                     internalPlayer.pause();
                 }
+                if (activeExternalController != null) {
+                    String pkg = activeExternalController.getPackageName();
+                    if (pkg != null && !pkg.equals(preferredPackage)) {
+                        preferredPackage = pkg;
+                        if ("com.acloud.stub.localmusic".equals(pkg)) {
+                            bindXyPlayService();
+                        } else {
+                            unbindXyPlayService();
+                        }
+                    }
+                }
             }
             notifyStateChanged();
             updateVisualizerState();
@@ -309,10 +444,32 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         try {
             Intent intent = new Intent("com.acloud.stub.service.aidl.IPlayService");
             intent.setClassName("com.acloud.stub.localmusic", "com.acloud.stub.service.XYPlayerService");
+            intent.setAction("init_widget");
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                context.startForegroundService(intent);
+            } else {
+                context.startService(intent);
+            }
             context.bindService(intent, xyServiceConnection, Context.BIND_AUTO_CREATE);
             Log.d(TAG, "XYPlayService baglaniyor...");
         } catch (Exception e) {
             Log.e(TAG, "XYPlayService baglanirken hata: " + e.getMessage());
+        }
+    }
+
+    private void sendXyMusicServiceCommand(String action) {
+        try {
+            Intent intent = new Intent();
+            intent.setClassName("com.acloud.stub.localmusic", "com.acloud.stub.service.XYPlayerService");
+            intent.setAction(action);
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                context.startForegroundService(intent);
+            } else {
+                context.startService(intent);
+            }
+            Log.d(TAG, "XYPlayerService komutu gonderildi: " + action);
+        } catch (Exception e) {
+            Log.e(TAG, "XYPlayerService komutu gonderilirken hata: " + action, e);
         }
     }
 
@@ -380,20 +537,25 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
         // XYAuto yerel muzik entegrasyonu
         if ("com.acloud.stub.localmusic".equals(preferredPackage)) {
+            boolean done = false;
             if (xyPlayService != null && xyServiceBound) {
                 try {
                     int state = xyPlayService.getState();
-                    if (state == 3 || isPlaying()) { // 3 = playing
+                    if (state == 3 || xyIsPlaying) { // 3 = playing
                         xyPlayService.pause();
                     } else {
                         xyPlayService.start();
                     }
-                    sendXyMusicBroadcast("xy.android.playpause");
-                    lastActiveSource = MusicSource.EXTERNAL;
-                    notifyStateChanged();
-                    return;
+                    done = true;
                 } catch (Exception e) {
                     Log.e(TAG, "XYPlayService togglePlayPause hatasi: " + e.getMessage());
+                }
+            }
+            if (!done) {
+                if (xyIsPlaying) {
+                    sendXyMusicServiceCommand("xy.cdwidget.pause");
+                } else {
+                    sendXyMusicServiceCommand("xy.cdwidget.play");
                 }
             }
             sendXyMusicBroadcast("xy.android.playpause");
@@ -454,6 +616,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             return;
         }
         if ("com.acloud.stub.localmusic".equals(preferredPackage)) {
+            sendXyMusicServiceCommand("xy.cdwidget.next");
             sendXyMusicBroadcast("xy.android.nextmedia");
             return;
         }
@@ -474,6 +637,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             return;
         }
         if ("com.acloud.stub.localmusic".equals(preferredPackage)) {
+            sendXyMusicServiceCommand("xy.cdwidget.prev");
             sendXyMusicBroadcast("xy.android.previousmedia");
             return;
         }
@@ -589,6 +753,8 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         isInternalPlaying = isPlaying;
         if (isPlaying) {
              lastActiveSource = MusicSource.INTERNAL; // Mark Internal as source
+             preferredPackage = "usage.internal.player";
+             unbindXyPlayService();
         }
         
         if (!useExternal()) {
@@ -670,25 +836,43 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     }
 
     private void notifyTrackChangedForListener(MusicUIListener l) {
-        if (useExternal() && activeExternalController != null) {
-            MediaMetadata metadata = activeExternalController.getMetadata();
-            String pkg = activeExternalController.getPackageName();
-
-            if (metadata != null) {
-                String title = metadata.getString(MediaMetadata.METADATA_KEY_TITLE);
-                String artist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST);
-                // Not: Bitmap almak main thread'i yavaslatabilir, dikkat edilmeli. (Turkce karakter yok)
-                android.graphics.Bitmap art = metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
-
+        if (useExternal()) {
+            if ("com.acloud.stub.localmusic".equals(preferredPackage)) {
+                android.graphics.Bitmap art = null;
+                if (xyTrackAlbumArtPath != null && !xyTrackAlbumArtPath.isEmpty()) {
+                    try {
+                        art = BitmapFactory.decodeFile(xyTrackAlbumArtPath);
+                    } catch (Exception e) {
+                        Log.e(TAG, "XYAuto cover art decode hatasi", e);
+                    }
+                }
                 l.onTrackChanged(
-                        sanitizeEncoding(title != null ? title : "Bilinmeyen"),
-                        sanitizeEncoding(artist != null ? artist : ""),
+                        sanitizeEncoding(xyTrackTitle != null ? xyTrackTitle : "Bilinmeyen"),
+                        sanitizeEncoding(xyTrackArtist != null ? xyTrackArtist : ""),
                         art,
-                        pkg);
+                        preferredPackage);
                 l.onSourceChanged(false);
+            } else if (activeExternalController != null) {
+                MediaMetadata metadata = activeExternalController.getMetadata();
+                String pkg = activeExternalController.getPackageName();
+
+                if (metadata != null) {
+                    String title = metadata.getString(MediaMetadata.METADATA_KEY_TITLE);
+                    String artist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST);
+                    android.graphics.Bitmap art = metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
+
+                    l.onTrackChanged(
+                            sanitizeEncoding(title != null ? title : "Bilinmeyen"),
+                            sanitizeEncoding(artist != null ? artist : ""),
+                            art,
+                            pkg);
+                    l.onSourceChanged(false);
+                } else {
+                    l.onTrackChanged(null, null, null, pkg);
+                }
             } else {
-                // Metadata yok ama controller var
-                l.onTrackChanged(null, null, null, pkg);
+                l.onTrackChanged(null, null, null, preferredPackage);
+                l.onSourceChanged(false);
             }
         } else {
             MusicRepository.AudioTrack track = internalPlayer.getCurrentTrack();
@@ -707,10 +891,16 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     }
 
     private void notifyStateChangedForListener(MusicUIListener l) {
-        if (useExternal() && activeExternalController != null) {
-            PlaybackState state = activeExternalController.getPlaybackState();
-            boolean playing = state != null && state.getState() == PlaybackState.STATE_PLAYING;
-            l.onPlaybackStateChanged(playing);
+        if (useExternal()) {
+            if ("com.acloud.stub.localmusic".equals(preferredPackage)) {
+                l.onPlaybackStateChanged(xyIsPlaying);
+            } else if (activeExternalController != null) {
+                PlaybackState state = activeExternalController.getPlaybackState();
+                boolean playing = state != null && state.getState() == PlaybackState.STATE_PLAYING;
+                l.onPlaybackStateChanged(playing);
+            } else {
+                l.onPlaybackStateChanged(false);
+            }
         } else {
             // Internal Player State
             l.onPlaybackStateChanged(internalPlayer.isPlaying());
@@ -799,9 +989,15 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     }
 
     private boolean isPlaying() {
-        return internalPlayer.isPlaying() || (activeExternalController != null && 
-               activeExternalController.getPlaybackState() != null && 
-               activeExternalController.getPlaybackState().getState() == PlaybackState.STATE_PLAYING);
+        if (useExternal()) {
+            if ("com.acloud.stub.localmusic".equals(preferredPackage)) {
+                return xyIsPlaying;
+            }
+            return activeExternalController != null && 
+                   activeExternalController.getPlaybackState() != null && 
+                   activeExternalController.getPlaybackState().getState() == PlaybackState.STATE_PLAYING;
+        }
+        return internalPlayer.isPlaying();
     }
 
     // Update Visualizer State based on Playback
