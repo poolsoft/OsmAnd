@@ -368,7 +368,8 @@
             android:layout_weight="6"
             android:orientation="vertical"
             android:background="@android:color/transparent"
-            android:padding="8dp">
+            android:padding="8dp"
+            android:visibility="gone">
 
             <!-- Hybrid Tabs -->
             <LinearLayout
