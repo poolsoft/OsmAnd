@@ -308,7 +308,13 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
 
     private void applyWidgetsToView(final int forcePageIndex) {
         if (viewPager != null) {
-            final int currentItem = forcePageIndex >= 0 ? forcePageIndex : viewPager.getCurrentItem();
+            int savedPage = 0;
+            if (getContext() != null) {
+                savedPage = PreferenceManager.getDefaultSharedPreferences(getContext())
+                        .getInt("widget_panel_last_page", 0);
+            }
+            final int defaultPage = savedPage;
+            final int currentItem = forcePageIndex >= 0 ? forcePageIndex : defaultPage;
             java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> visibleWidgets = widgetManager.getVisibleWidgets();
             for (net.osmand.plus.carlauncher.widgets.BaseWidget w : visibleWidgets) {
                 if (getActivity() != null) w.setContext(getActivity());
@@ -323,11 +329,6 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                     @Override
                     public void run() {
                         int targetPage = currentItem;
-                        java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> list = widgetManager.getVisibleWidgets();
-                        if (!list.isEmpty()) {
-                            net.osmand.plus.carlauncher.widgets.BaseWidget lastAdded = list.get(list.size() - 1);
-                            targetPage = lastAdded.getPageIndex();
-                        }
                         int count = adapter.getItemCount();
                         targetPage = Math.max(0, Math.min(count - 1, targetPage));
                         viewPager.setCurrentItem(targetPage, false);
@@ -369,12 +370,6 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                     @Override
                     public void run() {
                         int targetPage = currentItem;
-                        java.util.List<net.osmand.plus.carlauncher.widgets.BaseWidget> list = widgetManager.getVisibleWidgets();
-                        if (!list.isEmpty()) {
-                            // Adapter render olduktan sonra eger yer yoktuysa widget baska sayfaya tasinmis olabilir
-                            net.osmand.plus.carlauncher.widgets.BaseWidget lastAdded = list.get(list.size() - 1);
-                            targetPage = lastAdded.getPageIndex();
-                        }
                         int count = adapter.getItemCount();
                         targetPage = Math.max(0, Math.min(count - 1, targetPage));
                         viewPager.setCurrentItem(targetPage, false);
@@ -454,6 +449,10 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 updatePageIndicatorSelection(position);
+                if (getContext() != null) {
+                    PreferenceManager.getDefaultSharedPreferences(getContext())
+                            .edit().putInt("widget_panel_last_page", position).apply();
+                }
             }
         });
     }
