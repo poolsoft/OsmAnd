@@ -37,6 +37,7 @@ public abstract class OsmandNotification {
 	protected int color;
 	protected int icon;
 	protected boolean top;
+	private long lastNotificationUpdateTime = 0;
 
 	private final String groupName;
 
@@ -168,6 +169,16 @@ public abstract class OsmandNotification {
 	@SuppressLint("MissingPermission")
 	public boolean refreshNotification() {
 		if (isEnabled()) {
+			// Android'in bildirim kisitlamasina (throttling) takilmamak icin DOWNLOAD tipi 
+			// bildirim guncellemelerini en fazla 500 ms'de bir gonderilecek sekilde sinirlayalim.
+			if (getType() == NotificationType.DOWNLOAD) {
+				long now = System.currentTimeMillis();
+				if (now - lastNotificationUpdateTime < 500) {
+					return false;
+				}
+				lastNotificationUpdateTime = now;
+			}
+
 			Builder notificationBuilder = buildNotification(null, false);
 			if (notificationBuilder != null) {
 				Notification notification = getNotification(notificationBuilder, true);
