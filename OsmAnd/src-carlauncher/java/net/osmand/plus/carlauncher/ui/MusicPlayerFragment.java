@@ -1265,6 +1265,20 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         if (getContext() == null) return;
         AppPickerDialog dialog = new AppPickerDialog(getContext(), true, (packageName, appName, icon) -> {
             musicManager.forceSetActiveController(packageName);
+            
+            // Secilen harici uygulamayi arka planda veya on planda baslat
+            if (packageName != null && !"usage.internal.player".equals(packageName)) {
+                try {
+                    android.content.Intent launchIntent = getContext().getPackageManager().getLaunchIntentForPackage(packageName);
+                    if (launchIntent != null) {
+                        launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                        getContext().startActivity(launchIntent);
+                    }
+                } catch (Exception e) {
+                    android.util.Log.e("MusicPlayerFragment", "Uygulama baslatilamadi: " + packageName, e);
+                }
+            }
+            
             updateAppIcon();
         });
         dialog.show();

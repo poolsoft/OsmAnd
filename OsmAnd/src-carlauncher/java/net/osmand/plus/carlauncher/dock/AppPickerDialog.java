@@ -132,6 +132,13 @@ public class AppPickerDialog {
             hcnRadio.packageName = "com.hcn.autoradio";
             hcnRadio.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
             apps.add(hcnRadio);
+
+            // ZLink picker listesine sabit olarak eklenir
+            AppInfo zlinkApp = new AppInfo();
+            zlinkApp.name = "ZLink";
+            zlinkApp.packageName = "com.zmarties.zlink";
+            zlinkApp.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
+            apps.add(zlinkApp);
         }
 
         if (cachedList != null && !cachedList.isEmpty()) {
@@ -146,6 +153,10 @@ public class AppPickerDialog {
                 musicPackages.add("com.acloud.stub.extradio");
                 musicPackages.add("com.hcn.AutoMediaPlayer");
                 musicPackages.add("com.hcn.autoradio");
+                musicPackages.add("com.zmarties.zlink");
+                musicPackages.add("com.zmarties.zlink2");
+                musicPackages.add("com.xyauto.zlink");
+                musicPackages.add("com.zrun.zlink");
                 musicPackages.add("com.xyauto.music");
                 musicPackages.add("com.android.music");
                 musicPackages.add("com.txznet.music");
@@ -212,6 +223,10 @@ public class AppPickerDialog {
             musicPackages.add("com.acloud.stub.extradio");
             musicPackages.add("com.hcn.AutoMediaPlayer");
             musicPackages.add("com.hcn.autoradio");
+            musicPackages.add("com.zmarties.zlink");
+            musicPackages.add("com.zmarties.zlink2");
+            musicPackages.add("com.xyauto.zlink");
+            musicPackages.add("com.zrun.zlink");
             musicPackages.add("com.xyauto.music");
             musicPackages.add("com.android.music");
             musicPackages.add("com.txznet.music");

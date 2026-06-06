@@ -364,6 +364,33 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             }
         }
 
+        // Harici bir uygulama secilmisse ve aktif session'i olmasa bile dahili oynaticiyi oynatma
+        if (preferredPackage != null && !"usage.internal.player".equals(preferredPackage)) {
+            boolean hasPreferredController = false;
+            if (activeExternalController != null && preferredPackage.equals(activeExternalController.getPackageName())) {
+                hasPreferredController = true;
+            }
+
+            if (hasPreferredController) {
+                BaseMediaAdapter activeAdapter = getActiveAdapter();
+                if (activeAdapter != null && !(activeAdapter instanceof InternalPlayerAdapter)) {
+                    if (activeAdapter.isPlaying()) {
+                        activeAdapter.pause();
+                    } else {
+                        activeAdapter.play();
+                    }
+                    notifyStateChanged();
+                    return;
+                }
+            }
+            
+            // Session yoksa veya eslesmiyorsa, genel medya tusu gondererek hariciyi tetikle
+            sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
+            lastActiveSource = MusicSource.EXTERNAL;
+            notifyStateChanged();
+            return;
+        }
+
         BaseMediaAdapter activeAdapter = getActiveAdapter();
         if (activeAdapter != null) {
             if (activeAdapter.isPlaying()) {
@@ -384,6 +411,22 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     }
 
     public void skipToNext() {
+        if (preferredPackage != null && !"usage.internal.player".equals(preferredPackage)) {
+            boolean hasPreferredController = false;
+            if (activeExternalController != null && preferredPackage.equals(activeExternalController.getPackageName())) {
+                hasPreferredController = true;
+            }
+            if (hasPreferredController) {
+                BaseMediaAdapter activeAdapter = getActiveAdapter();
+                if (activeAdapter != null && !(activeAdapter instanceof InternalPlayerAdapter)) {
+                    activeAdapter.next();
+                    return;
+                }
+            }
+            sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_NEXT);
+            return;
+        }
+
         BaseMediaAdapter activeAdapter = getActiveAdapter();
         if (activeAdapter != null) {
             activeAdapter.next();
@@ -393,6 +436,22 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     }
 
     public void skipToPrevious() {
+        if (preferredPackage != null && !"usage.internal.player".equals(preferredPackage)) {
+            boolean hasPreferredController = false;
+            if (activeExternalController != null && preferredPackage.equals(activeExternalController.getPackageName())) {
+                hasPreferredController = true;
+            }
+            if (hasPreferredController) {
+                BaseMediaAdapter activeAdapter = getActiveAdapter();
+                if (activeAdapter != null && !(activeAdapter instanceof InternalPlayerAdapter)) {
+                    activeAdapter.prev();
+                    return;
+                }
+            }
+            sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS);
+            return;
+        }
+
         BaseMediaAdapter activeAdapter = getActiveAdapter();
         if (activeAdapter != null) {
             activeAdapter.prev();
