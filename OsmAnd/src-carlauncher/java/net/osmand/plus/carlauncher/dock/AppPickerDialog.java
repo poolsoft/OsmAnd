@@ -105,12 +105,33 @@ public class AppPickerDialog {
             internalPlayer.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
             apps.add(internalPlayer);
 
-            // XYAuto Yerel Muzik her durumda picker listesine sabit olarak eklenir (Turkce karakter yok)
+            // XYAuto Yerel Muzik her durumda picker listesine sabit olarak eklenir
             AppInfo xyPlayer = new AppInfo();
             xyPlayer.name = "XYAuto Yerel Muzik";
             xyPlayer.packageName = "com.acloud.stub.localmusic";
             xyPlayer.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
             apps.add(xyPlayer);
+
+            // XYAuto Yerel Radyo picker listesine sabit olarak eklenir
+            AppInfo xyRadio = new AppInfo();
+            xyRadio.name = "XYAuto Yerel Radyo";
+            xyRadio.packageName = "com.acloud.stub.extradio";
+            xyRadio.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
+            apps.add(xyRadio);
+
+            // HCN Yerel Muzik picker listesine sabit olarak eklenir
+            AppInfo hcnPlayer = new AppInfo();
+            hcnPlayer.name = "HCN Yerel Muzik";
+            hcnPlayer.packageName = "com.hcn.AutoMediaPlayer";
+            hcnPlayer.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
+            apps.add(hcnPlayer);
+
+            // HCN Yerel Radyo picker listesine sabit olarak eklenir
+            AppInfo hcnRadio = new AppInfo();
+            hcnRadio.name = "HCN Yerel Radyo";
+            hcnRadio.packageName = "com.hcn.autoradio";
+            hcnRadio.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
+            apps.add(hcnRadio);
         }
 
         if (cachedList != null && !cachedList.isEmpty()) {
@@ -122,6 +143,9 @@ public class AppPickerDialog {
                 for (ResolveInfo info : musicServices) musicPackages.add(info.serviceInfo.packageName);
                 
                 musicPackages.add("com.acloud.stub.localmusic");
+                musicPackages.add("com.acloud.stub.extradio");
+                musicPackages.add("com.hcn.AutoMediaPlayer");
+                musicPackages.add("com.hcn.autoradio");
                 musicPackages.add("com.xyauto.music");
                 musicPackages.add("com.android.music");
                 musicPackages.add("com.txznet.music");
@@ -185,6 +209,9 @@ public class AppPickerDialog {
             for (ResolveInfo info : musicServices) musicPackages.add(info.serviceInfo.packageName);
             
             musicPackages.add("com.acloud.stub.localmusic");
+            musicPackages.add("com.acloud.stub.extradio");
+            musicPackages.add("com.hcn.AutoMediaPlayer");
+            musicPackages.add("com.hcn.autoradio");
             musicPackages.add("com.xyauto.music");
             musicPackages.add("com.android.music");
             musicPackages.add("com.txznet.music");
