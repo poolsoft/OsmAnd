@@ -66,6 +66,8 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         adapters.add(new AndroidMediaSessionAdapter(this));
         adapters.add(new XyAutoMusicAdapter(this.context, this));
         adapters.add(new XyAutoRadioAdapter(this.context, this));
+        adapters.add(new HcnMusicAdapter(this.context, this));
+        adapters.add(new HcnRadioAdapter(this.context, this));
 
         // Baslangicta muzikleri tara
         repository.scanMusic((tracks, folders) -> {
