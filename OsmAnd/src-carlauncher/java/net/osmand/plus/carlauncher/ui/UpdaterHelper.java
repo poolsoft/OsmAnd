@@ -118,8 +118,8 @@ public class UpdaterHelper {
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
         request.setTitle("Car Launcher Guncelleme v" + versionName);
         request.setDescription("Yeni surum indiriliyor...");
-        // Bildirimin indirme esnasinda periyodik gurultu yapmasini onlemek icin sadece tamamlandiginda bildirim gosteriyoruz
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_ONLY_COMPLETION);
+        // Indirme esnasinda ilerleme durumunu (progress bar) bildirim panelinde gostermek icin VISIBILITY_VISIBLE kullaniyoruz
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
         request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
         
         request.setAllowedOverMetered(true);
