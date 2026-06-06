@@ -1282,6 +1282,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		super.onNewIntent(intent);
 		setIntent(intent);
 
+		// Home intent'i geldiyse, gereksiz launch/content parsing islemlerini atlayarak
+		// activity'nin yenilenmesini (yeniden basliyor gibi davranmasini) engelleyelim.
+		if (intent != null && Intent.ACTION_MAIN.equals(intent.getAction()) && intent.hasCategory(Intent.CATEGORY_HOME)) {
+			return;
+		}
+
 		importHelper.setUiActivity(this);
 		if (!intentHelper.parseLaunchIntents()) {
 			intentHelper.parseContentIntent();
