@@ -77,6 +77,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     // New Tab Views
     private TextView tabAllTracks, tabRecent, tabPlaylistLabel, appName;
     private View tabPlaylistsContainer;
+    private ImageButton tabBtnSearch;
+    private TextView tabFavorites;
 
     // State
     private boolean isExternalMode = true; // Default: external app control
@@ -137,6 +139,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         tabPlaylistsContainer = root.findViewById(net.osmand.plus.R.id.tab_playlists_container);
         tabPlaylistLabel = root.findViewById(net.osmand.plus.R.id.tab_playlist_label);
         appName = root.findViewById(net.osmand.plus.R.id.app_name);
+        tabBtnSearch = root.findViewById(net.osmand.plus.R.id.tab_btn_search);
+        tabFavorites = root.findViewById(net.osmand.plus.R.id.tab_favorites);
 
         // Marquee
         if (nowPlayingTitle != null)
@@ -364,16 +368,46 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 loadRecentlyPlayed();
             });
 
+        if (tabFavorites != null)
+            tabFavorites.setOnClickListener(v -> {
+                selectTab(2);
+                loadFavorites();
+            });
+
         if (tabPlaylistsContainer != null)
             tabPlaylistsContainer.setOnClickListener(v -> {
-                selectTab(2);
+                selectTab(3);
                 if (playlistSpinner != null)
                     playlistSpinner.performClick();
             });
+
+        if (tabBtnSearch != null) {
+            tabBtnSearch.setOnClickListener(v -> {
+                if (searchInput != null) {
+                    if (searchInput.getVisibility() == View.VISIBLE) {
+                        searchInput.setVisibility(View.GONE);
+                        tabBtnSearch.setColorFilter(0xFF888888);
+                    } else {
+                        searchInput.setVisibility(View.VISIBLE);
+                        tabBtnSearch.setColorFilter(0xFF00FFFF);
+                        searchInput.requestFocus();
+                        try {
+                            android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) 
+                                getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                            if (imm != null) {
+                                imm.showSoftInput(searchInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                            }
+                        } catch (Exception e) {
+                            // ignore
+                        }
+                    }
+                }
+            });
+        }
     }
 
     private void selectTab(int index) {
-        // 0: All, 1: Recent, 2: Playlist
+        // 0: All, 1: Recent, 2: Favorites, 3: Playlist (Listeler)
         int selectedColor = 0xFFFFFFFF;
         int unselectedColor = 0xFF888888;
 
@@ -385,15 +419,16 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             tabRecent.setTextColor(index == 1 ? selectedColor : unselectedColor);
             tabRecent.setBackgroundResource(index == 1 ? net.osmand.plus.R.drawable.bg_tab_active : 0);
         }
+        if (tabFavorites != null) {
+            tabFavorites.setTextColor(index == 2 ? selectedColor : unselectedColor);
+            tabFavorites.setBackgroundResource(index == 2 ? net.osmand.plus.R.drawable.bg_tab_active : 0);
+        }
         if (tabPlaylistsContainer != null) {
-            tabPlaylistsContainer.setBackgroundResource(index == 2 ? net.osmand.plus.R.drawable.bg_tab_active : 0);
+            tabPlaylistsContainer.setBackgroundResource(index == 3 ? net.osmand.plus.R.drawable.bg_tab_active : 0);
         }
         if (tabPlaylistLabel != null) {
-            tabPlaylistLabel.setTextColor(index == 2 ? selectedColor : unselectedColor);
+            tabPlaylistLabel.setTextColor(index == 3 ? selectedColor : unselectedColor);
         }
-
-        // Ensure Spinner is visible/hidden if needed, but it is inside Tab 3 container
-        // so it's always there.
     }
 
     private void setupRecyclerView() {
@@ -426,7 +461,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 if (position == 0)
                     return;
 
-                selectTab(2);
+                selectTab(3);
 
                 if (position == 1) {
                     // Favorites
@@ -868,6 +903,21 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         showTracks(recentTracks);
     }
 
+    private void loadFavorites() {
+        if (playlistManager == null) return;
+        List<String> favPaths = playlistManager.getFavorites();
+        List<MusicRepository.AudioTrack> favTracks = new ArrayList<>();
+        for (String path : favPaths) {
+            for (MusicRepository.AudioTrack t : allTracks) {
+                if (t.getPath().equals(path)) {
+                    favTracks.add(t);
+                    break;
+                }
+            }
+        }
+        showTracks(favTracks);
+    }
+
     private List<MusicRepository.AudioTrack> getPlaylistTracks(PlaylistManager.Playlist playlist) {
         List<MusicRepository.AudioTrack> result = new ArrayList<>();
         for (String path : playlist.tracks) {
@@ -1172,6 +1222,18 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             holder.title.setText(track.getTitle());
             holder.artist.setText(track.getArtist());
 
+            if (holder.trackArt != null) {
+                if (track.getAlbumArtUri() != null) {
+                    com.squareup.picasso.Picasso.get()
+                            .load(track.getAlbumArtUri())
+                            .placeholder(net.osmand.plus.R.drawable.bg_default_music_art)
+                            .error(net.osmand.plus.R.drawable.bg_default_music_art)
+                            .into(holder.trackArt);
+                } else {
+                    holder.trackArt.setImageResource(net.osmand.plus.R.drawable.bg_default_music_art);
+                }
+            }
+
             // Calan sarkinin arka planini vurgula
             boolean isCurrent = track.getPath().equals(currentTrackPath);
             if (holder.icon != null) {
@@ -1236,12 +1298,14 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             ImageButton btnAdd = null;
             ImageButton btnFavorite;
             ImageView icon = null;
+            ImageView trackArt;
 
             public Holder(@NonNull View itemView) {
                 super(itemView);
                 title = itemView.findViewById(net.osmand.plus.R.id.music_title);
                 artist = itemView.findViewById(net.osmand.plus.R.id.music_artist);
                 btnFavorite = itemView.findViewById(net.osmand.plus.R.id.btn_favorite);
+                trackArt = itemView.findViewById(net.osmand.plus.R.id.track_art);
             }
         }
     }
@@ -1343,23 +1407,90 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     }
 
     private void applyThemeColor(int color) {
-        // Butonlarin tint renklerini guncelle (Turkce karakter yok)
+        int alphaColor = (color & 0x00FFFFFF) | 0x33000000;
+
+        // 1. Play Butonu (bg_circle_cyan)
         if (btnPlay != null) {
             android.graphics.drawable.Drawable bg = btnPlay.getBackground();
-            if (bg != null) {
+            if (bg instanceof android.graphics.drawable.LayerDrawable) {
+                android.graphics.drawable.LayerDrawable ld = (android.graphics.drawable.LayerDrawable) bg;
+                android.graphics.drawable.Drawable mainPart = ld.findDrawableByLayerId(net.osmand.plus.R.id.play_button_main);
+                android.graphics.drawable.Drawable glowPart = ld.findDrawableByLayerId(net.osmand.plus.R.id.play_button_glow);
+                if (mainPart != null) {
+                    mainPart.setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+                }
+                if (glowPart != null) {
+                    glowPart.setColorFilter(alphaColor, android.graphics.PorterDuff.Mode.SRC_IN);
+                }
+            } else if (bg != null) {
                 bg.setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
             }
-            btnPlay.setColorFilter(0xFFFFFFFF); // Simge her zaman net sekilde beyaz kalacak (Turkce karakter yok)
+            btnPlay.setColorFilter(0xFFFFFFFF);
         }
-        if (btnNext != null) btnNext.setColorFilter(color);
-        if (btnPrev != null) btnPrev.setColorFilter(color);
-        
-        // Seekbar progress tint ve thumb tint rengini guncelle
+
+        // 2. Next ve Prev Butonlari (bg_circle_translucent_white)
+        android.view.View[] controlButtons = {btnNext, btnPrev};
+        for (android.view.View btn : controlButtons) {
+            if (btn instanceof ImageButton) {
+                ImageButton ib = (ImageButton) btn;
+                ib.setColorFilter(color);
+                android.graphics.drawable.Drawable bg = ib.getBackground();
+                if (bg instanceof android.graphics.drawable.LayerDrawable) {
+                    android.graphics.drawable.LayerDrawable ld = (android.graphics.drawable.LayerDrawable) bg;
+                    android.graphics.drawable.Drawable mainPart = ld.findDrawableByLayerId(net.osmand.plus.R.id.control_button_main);
+                    android.graphics.drawable.Drawable glowPart = ld.findDrawableByLayerId(net.osmand.plus.R.id.control_button_glow);
+                    if (mainPart != null) {
+                        mainPart.setColorFilter(0x66FFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
+                    }
+                    if (glowPart != null) {
+                        glowPart.setColorFilter(alphaColor, android.graphics.PorterDuff.Mode.SRC_IN);
+                    }
+                } else if (bg != null) {
+                    bg.setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+                }
+            }
+        }
+
+        // 3. SeekBar (seekbar_progress_glow ve seekbar_thumb_glow)
         if (seekbar != null) {
-            seekbar.getProgressDrawable().setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+            android.graphics.drawable.Drawable progressDrawable = seekbar.getProgressDrawable();
+            if (progressDrawable instanceof android.graphics.drawable.LayerDrawable) {
+                android.graphics.drawable.LayerDrawable ld = (android.graphics.drawable.LayerDrawable) progressDrawable;
+                android.graphics.drawable.Drawable progressClip = ld.findDrawableByLayerId(android.R.id.progress);
+                if (progressClip instanceof android.graphics.drawable.ClipDrawable) {
+                    android.graphics.drawable.Drawable clipChild = ((android.graphics.drawable.ClipDrawable) progressClip).getDrawable();
+                    if (clipChild instanceof android.graphics.drawable.LayerDrawable) {
+                        android.graphics.drawable.LayerDrawable cld = (android.graphics.drawable.LayerDrawable) clipChild;
+                        android.graphics.drawable.Drawable mainProg = cld.findDrawableByLayerId(net.osmand.plus.R.id.seekbar_main_progress);
+                        android.graphics.drawable.Drawable glowProg = cld.findDrawableByLayerId(net.osmand.plus.R.id.seekbar_glow_progress);
+                        if (mainProg != null) {
+                            mainProg.setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+                        }
+                        if (glowProg != null) {
+                            glowProg.setColorFilter(alphaColor, android.graphics.PorterDuff.Mode.SRC_IN);
+                        }
+                    }
+                } else if (progressClip != null) {
+                    progressClip.setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+                }
+            } else if (progressDrawable != null) {
+                progressDrawable.setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+            }
+
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                if (seekbar.getThumb() != null) {
-                    seekbar.getThumb().setTint(color);
+                android.graphics.drawable.Drawable thumb = seekbar.getThumb();
+                if (thumb instanceof android.graphics.drawable.LayerDrawable) {
+                    android.graphics.drawable.LayerDrawable ld = (android.graphics.drawable.LayerDrawable) thumb;
+                    android.graphics.drawable.Drawable mainThumb = ld.findDrawableByLayerId(net.osmand.plus.R.id.seekbar_thumb_main_layer);
+                    android.graphics.drawable.Drawable glowThumb = ld.findDrawableByLayerId(net.osmand.plus.R.id.seekbar_thumb_glow_layer);
+                    if (mainThumb != null) {
+                        mainThumb.setColorFilter(0xFFFFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
+                    }
+                    if (glowThumb != null) {
+                        glowThumb.setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+                    }
+                } else if (thumb != null) {
+                    thumb.setTint(color);
                 }
             }
         }

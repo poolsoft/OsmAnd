@@ -247,8 +247,8 @@
                         android:layout_height="wrap_content"
                         android:max="100"
                         android:progress="0"
-                        android:progressTint="#00FFFF"
-                        android:thumbTint="#00FFFF"
+                        android:progressDrawable="@drawable/seekbar_progress_glow"
+                        android:thumb="@drawable/seekbar_thumb_glow"
                         android:paddingStart="12dp"
                         android:paddingEnd="12dp"/>
                 </LinearLayout>
@@ -378,8 +378,22 @@
                 android:orientation="horizontal"
                 android:background="@drawable/bg_card_rounded_black"
                 android:gravity="center_vertical"
-                android:paddingHorizontal="8dp"
+                android:paddingHorizontal="4dp"
                 android:layout_marginBottom="8dp">
+
+                <!-- Arama Butonu (Tab siralamasinin en basinda) -->
+                <ImageButton
+                    android:id="@+id/tab_btn_search"
+                    android:layout_width="40dp"
+                    android:layout_height="match_parent"
+                    android:src="@android:drawable/ic_menu_search"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:tint="#888888"
+                    android:padding="12dp"
+                    android:scaleType="centerInside"
+                    android:contentDescription="Ara" />
+
+                <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
 
                 <TextView
                     android:id="@+id/tab_all_tracks"
@@ -387,13 +401,13 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
-                    android:text="Tum Sarkilar"
+                    android:text="Tum Parcalar"
                     android:textColor="#FFFFFF"
-                    android:textSize="14sp"
+                    android:textSize="12sp"
                     android:textStyle="bold"
                     android:background="?android:attr/selectableItemBackground"/>
                 
-                <View android:layout_width="1dp" android:layout_height="24dp" android:background="#444444"/>
+                <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
 
                 <TextView
                     android:id="@+id/tab_recent"
@@ -401,24 +415,39 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
-                    android:text="Son Calinan"
+                    android:text="Son Calinanlar"
                     android:textColor="#888888"
-                    android:textSize="14sp"
+                    android:textSize="12sp"
                     android:textStyle="bold"
                     android:background="?android:attr/selectableItemBackground"/>
 
-                <View android:layout_width="1dp" android:layout_height="24dp" android:background="#444444"/>
+                <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
+
+                <!-- Favoriler Tabi -->
+                <TextView
+                    android:id="@+id/tab_favorites"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="Favoriler"
+                    android:textColor="#888888"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:background="?android:attr/selectableItemBackground"/>
+
+                <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
 
                 <!-- Playlist Tab with Spinner -->
                 <LinearLayout
                     android:id="@+id/tab_playlists_container"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="1.5"
+                    android:layout_weight="1.2"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:background="?android:attr/selectableItemBackground"
-                    android:paddingStart="8dp">
+                    android:paddingStart="4dp">
                     
                     <TextView
                         android:id="@+id/tab_playlist_label"
@@ -426,7 +455,7 @@
                         android:layout_height="wrap_content"
                         android:text="Listeler: "
                         android:textColor="#888888"
-                        android:textSize="14sp"
+                        android:textSize="12sp"
                         android:textStyle="bold"/>
 
                     <Spinner
