@@ -129,9 +129,23 @@ public class VoiceCommandService extends Service implements RecognitionListener 
     }
 
     private void checkAndPrepareModel() {
-        File modelDir = new File(getExternalFilesDir(null), "vosk-model-tr");
+        File parentDir = getExternalFilesDir(null);
+        File modelDir = new File(parentDir, "vosk-model-tr");
+        File backupModelDir = new File(parentDir, "vosk-model-small-tr-0.3");
+        
         if (modelDir.exists() && isModelDirectoryValid(modelDir)) {
             loadModel(modelDir.getAbsolutePath());
+        } else if (backupModelDir.exists() && isModelDirectoryValid(backupModelDir)) {
+            android.util.Log.w("VoiceCommandService", "Yedek model klasoru bulundu, oradan yukleniyor");
+            if (modelDir.exists()) {
+                deleteRecursive(modelDir);
+            }
+            backupModelDir.renameTo(modelDir);
+            if (modelDir.exists() && isModelDirectoryValid(modelDir)) {
+                loadModel(modelDir.getAbsolutePath());
+            } else {
+                loadModel(backupModelDir.getAbsolutePath());
+            }
         } else {
             downloadAndExtractModel(modelDir);
         }
@@ -228,7 +242,11 @@ public class VoiceCommandService extends Service implements RecognitionListener 
 
                 File extractedDir = new File(targetDir.getParentFile(), "vosk-model-small-tr-0.3");
                 if (extractedDir.exists()) {
-                    extractedDir.renameTo(targetDir);
+                    if (targetDir.exists()) {
+                        deleteRecursive(targetDir);
+                    }
+                    boolean success = extractedDir.renameTo(targetDir);
+                    android.util.Log.d("VoiceCommandService", "Model klasoru yeniden adlandirildi: " + success);
                 }
 
                 if (tempZip.exists()) {
@@ -561,6 +579,18 @@ public class VoiceCommandService extends Service implements RecognitionListener 
             tts.shutdown();
             tts = null;
         }
+    }
+
+    private void deleteRecursive(File fileOrDirectory) {
+        if (fileOrDirectory.isDirectory()) {
+            File[] children = fileOrDirectory.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    deleteRecursive(child);
+                }
+            }
+        }
+        fileOrDirectory.delete();
     }
 
     @Nullable
