@@ -189,11 +189,32 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         }
     }
 
+    public void requestSmartFocus(String activePackageName) {
+        if (activePackageName == null) return;
+
+        // 1. Dahili oynatici odagi kaybettiyse duraklat
+        if (!"usage.internal.player".equals(activePackageName)) {
+            if (internalPlayer != null && internalPlayer.isPlaying()) {
+                internalPlayer.pause();
+            }
+        }
+
+        // 2. Diger tum adaptorleri duraklat
+        for (BaseMediaAdapter adapter : adapters) {
+            if (adapter != null && !activePackageName.equals(adapter.getPackageName())) {
+                if (adapter.isPlaying()) {
+                    adapter.pause();
+                }
+            }
+        }
+    }
+
     public void onExternalPlayerStarted(String packageName) {
         lastActiveSource = MusicSource.EXTERNAL;
-        if (internalPlayer != null && internalPlayer.isPlaying()) {
-            internalPlayer.pause();
-        }
+        
+        // Akilli odaklanma tetikle
+        requestSmartFocus(packageName);
+
         if (packageName != null && !packageName.equals(preferredPackage)) {
             setPreferredPackage(packageName);
         } else {
@@ -299,11 +320,13 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             boolean isExternalPlaying = state != null && state.getState() == PlaybackState.STATE_PLAYING;
             if (isExternalPlaying) {
                 lastActiveSource = MusicSource.EXTERNAL;
-                if (internalPlayer.isPlaying()) {
-                    internalPlayer.pause();
-                }
+                
                 if (activeExternalController != null) {
                     String pkg = activeExternalController.getPackageName();
+                    
+                    // Akilli odaklanma tetikle
+                    requestSmartFocus(pkg);
+                    
                     if (pkg != null && !pkg.equals(preferredPackage)) {
                         preferredPackage = pkg;
                         for (BaseMediaAdapter adapter : adapters) {
@@ -315,6 +338,10 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                                 }
                             }
                         }
+                    }
+                } else {
+                    if (internalPlayer.isPlaying()) {
+                        internalPlayer.pause();
                     }
                 }
             }
@@ -518,6 +545,9 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         if (isPlaying) {
              lastActiveSource = MusicSource.INTERNAL;
              preferredPackage = "usage.internal.player";
+             
+             // Akilli odaklanma tetikle
+             requestSmartFocus("usage.internal.player");
              
              for (BaseMediaAdapter adapter : adapters) {
                  if (adapter instanceof XyAutoMusicAdapter) {
