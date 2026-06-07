@@ -119,7 +119,7 @@ public class UpdaterHelper {
         request.setTitle("Car Launcher Guncelleme v" + versionName);
         request.setDescription("Yeni surum indiriliyor...");
         // Indirme esnasinda ilerleme durumunu (progress bar) bildirim panelinde gostermek icin VISIBILITY_VISIBLE kullaniyoruz
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
         request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
         
         request.setAllowedOverMetered(true);
@@ -130,15 +130,35 @@ public class UpdaterHelper {
             long downloadId = manager.enqueue(request);
             
             BroadcastReceiver receiver = new BroadcastReceiver() {
+                // @Override
+                // public void onReceive(Context c, Intent intent) {
+                //     new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                //         installApk(c, manager, downloadId, versionName);
+                //     }, 1000);
+                //     try {
+                //         context.getApplicationContext().unregisterReceiver(this);
+                //     } catch (Exception e) {
+                //         // ignore
+                //     }
+                // }
+
                 @Override
                 public void onReceive(Context c, Intent intent) {
+
+                    long completedId =
+                        intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+
+                    if (completedId != downloadId) {
+                        return;
+                    }
+
                     new Handler(Looper.getMainLooper()).postDelayed(() -> {
                         installApk(c, manager, downloadId, versionName);
                     }, 1000);
+
                     try {
                         context.getApplicationContext().unregisterReceiver(this);
-                    } catch (Exception e) {
-                        // ignore
+                    } catch (Exception ignored) {
                     }
                 }
             };
