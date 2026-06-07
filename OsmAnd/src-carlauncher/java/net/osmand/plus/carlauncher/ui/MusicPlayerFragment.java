@@ -74,6 +74,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private ImageButton btnShuffle, btnPrev, btnPlay, btnNext, btnRepeat;
     private Spinner playlistSpinner;
     private EditText searchInput;
+    private View searchBarContainer;
+    private View searchClearBtn;
 
     // New Tab Views
     private TextView tabAllTracks, tabRecent, tabPlaylistLabel, appName;
@@ -134,6 +136,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         btnRepeat = root.findViewById(net.osmand.plus.R.id.btn_repeat);
         playlistSpinner = root.findViewById(net.osmand.plus.R.id.playlist_spinner);
         searchInput = root.findViewById(net.osmand.plus.R.id.search_input);
+        searchBarContainer = root.findViewById(net.osmand.plus.R.id.search_bar_container);
+        searchClearBtn = root.findViewById(net.osmand.plus.R.id.search_clear_btn);
         recyclerView = root.findViewById(net.osmand.plus.R.id.music_recycler);
 
         tabAllTracks = root.findViewById(net.osmand.plus.R.id.tab_all_tracks);
@@ -147,6 +151,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         // Marquee
         if (nowPlayingTitle != null)
             nowPlayingTitle.setSelected(true);
+        if (nowPlayingArtist != null)
+            nowPlayingArtist.setSelected(true);
 
         setupListeners();
         setupRecyclerView();
@@ -352,12 +358,23 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
                     filterTracks(s.toString());
+                    if (searchClearBtn != null) {
+                        searchClearBtn.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
+                    }
                 }
 
                 @Override
                 public void afterTextChanged(Editable s) {
                 }
 
+            });
+        }
+
+        if (searchClearBtn != null) {
+            searchClearBtn.setOnClickListener(v -> {
+                if (searchInput != null) {
+                    searchInput.setText("");
+                }
             });
         }
 
@@ -392,22 +409,27 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         if (tabBtnSearch != null) {
             tabBtnSearch.setOnClickListener(v -> {
-                if (searchInput != null) {
-                    if (searchInput.getVisibility() == View.VISIBLE) {
-                        searchInput.setVisibility(View.GONE);
+                if (searchBarContainer != null) {
+                    if (searchBarContainer.getVisibility() == View.VISIBLE) {
+                        searchBarContainer.setVisibility(View.GONE);
                         tabBtnSearch.setColorFilter(0xFF888888);
+                        if (searchInput != null) {
+                            searchInput.setText(""); // Kapatinca aramayi temizle
+                        }
                     } else {
-                        searchInput.setVisibility(View.VISIBLE);
+                        searchBarContainer.setVisibility(View.VISIBLE);
                         tabBtnSearch.setColorFilter(0xFF00FFFF);
-                        searchInput.requestFocus();
-                        try {
-                            android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) 
-                                getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                            if (imm != null) {
-                                imm.showSoftInput(searchInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                        if (searchInput != null) {
+                            searchInput.requestFocus();
+                            try {
+                                android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) 
+                                    getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                                if (imm != null) {
+                                    imm.showSoftInput(searchInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                                }
+                            } catch (Exception e) {
+                                // ignore
                             }
-                        } catch (Exception e) {
-                            // ignore
                         }
                     }
                 }
