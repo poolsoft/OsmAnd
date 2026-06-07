@@ -11,6 +11,8 @@
     <!-- ListView/StackView iceren koleksiyon widget'lari (BatteryGuru, Google Keep vb.) icin zorunludur -->
     <uses-permission android:name="android.permission.BIND_REMOTEVIEWS" tools:ignore="ProtectedPermissions"/>
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
 
     <application
         android:icon="@mipmap/ic_launcher"
@@ -104,6 +106,11 @@
                 android:resource="@xml/paths"
                 tools:replace="android:resource"/>
         </provider>
+
+        <!-- Offline Sesli Komut Servisi -->
+        <service android:name="net.osmand.plus.carlauncher.voice.VoiceCommandService"
+                 android:foregroundServiceType="microphone"
+                 android:exported="false" />
     </application>
 </manifest> 
 

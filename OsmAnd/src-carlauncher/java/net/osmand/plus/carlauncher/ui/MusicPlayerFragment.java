@@ -62,6 +62,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private View playerPanel;
     private View musicSideDock;
     private ImageButton btnDockPlaylist;
+    private ImageButton btnDockVoice;
     private ImageView appIcon;
     private View appSelectorLaunch;
     private ImageButton btnPlaylist, btnClose, btnEqualizer;
@@ -113,6 +114,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         playerPanel = root.findViewById(net.osmand.plus.R.id.player_panel);
         musicSideDock = root.findViewById(net.osmand.plus.R.id.music_side_dock);
         btnDockPlaylist = root.findViewById(net.osmand.plus.R.id.btn_dock_playlist);
+        btnDockVoice = root.findViewById(net.osmand.plus.R.id.btn_dock_voice);
         appIcon = root.findViewById(net.osmand.plus.R.id.app_icon);
         appSelectorLaunch = root.findViewById(net.osmand.plus.R.id.app_selector_launch);
         // btnPlaylist = root.findViewById(net.osmand.plus.R.id.btn_playlist);
@@ -185,6 +187,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             playerInfoContainer.setOnTouchListener(touchListener);
         }
 
+        updateVoiceButtonUI();
+
         return root;
     }
 
@@ -206,6 +210,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             musicManager.addVisualizerListener(this); // Centralized Visualizer
             // Update UI state
             updateModeUI(); 
+            updateVoiceButtonUI();
         }
     }
 
@@ -228,6 +233,10 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 updateDockButtonsUI();
                 updateShuffleAndRepeatVisibility();
             });
+        }
+
+        if (btnDockVoice != null) {
+            btnDockVoice.setOnClickListener(v -> checkVoicePermissionAndToggle());
         }
 
         // Close
@@ -583,6 +592,12 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 loadAllTracks();
             } else {
                 Toast.makeText(getContext(), "Muzik taramak icin izin gerekli!", Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == 200) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                toggleVoiceControlService();
+            } else {
+                Toast.makeText(getContext(), "Sesli kontrol icin mikrofon izni gereklidir", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -994,6 +1009,44 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             ((MapActivity) getActivity()).closeAppDrawer();
         } else if (getParentFragmentManager() != null) {
             getParentFragmentManager().beginTransaction().remove(this).commit();
+        }
+    }
+
+    private void checkVoicePermissionAndToggle() {
+        if (getContext() == null) return;
+        if (getContext().checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.RECORD_AUDIO}, 200);
+        } else {
+            toggleVoiceControlService();
+        }
+    }
+
+    private void toggleVoiceControlService() {
+        if (getContext() == null) return;
+        Intent intent = new Intent(getContext(), net.osmand.plus.carlauncher.voice.VoiceCommandService.class);
+        if (net.osmand.plus.carlauncher.voice.VoiceCommandService.isServiceRunning) {
+            getContext().stopService(intent);
+            Toast.makeText(getContext(), "Sesli kontrol kapatildi", Toast.LENGTH_SHORT).show();
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                getContext().startForegroundService(intent);
+            } else {
+                getContext().startService(intent);
+            }
+            Toast.makeText(getContext(), "Sesli kontrol baslatildi", Toast.LENGTH_SHORT).show();
+        }
+        new Handler(Looper.getMainLooper()).postDelayed(this::updateVoiceButtonUI, 300);
+    }
+
+    private void updateVoiceButtonUI() {
+        if (btnDockVoice == null) return;
+        boolean isRunning = net.osmand.plus.carlauncher.voice.VoiceCommandService.isServiceRunning;
+        if (isRunning) {
+            btnDockVoice.setColorFilter(0xFF00FFFF);
+            btnDockVoice.setBackgroundResource(net.osmand.plus.R.drawable.bg_circle_translucent_white);
+        } else {
+            btnDockVoice.setColorFilter(0xFFFFFFFF);
+            btnDockVoice.setBackgroundResource(0);
         }
     }
 

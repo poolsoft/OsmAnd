@@ -105,6 +105,19 @@
                         android:scaleType="centerInside"
                         android:padding="10dp" />
 
+                    <!-- Sesli Kontrol Butonu -->
+                    <ImageButton
+                        android:id="@+id/btn_dock_voice"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:src="@android:drawable/ic_btn_speak_now"
+                        android:tint="#FFFFFF"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Sesli Kontrol"
+                        android:scaleType="centerInside"
+                        android:padding="10dp"
+                        android:layout_marginTop="16dp" />
+
                 </LinearLayout>
 
                 <!-- Visualizer (Placed at the top of the ConstraintLayout, occupying the empty space where cover art was) -->
