@@ -7,17 +7,23 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ComponentName;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.speech.tts.TextToSpeech;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import net.osmand.plus.OsmandApplication;
+import net.osmand.plus.myplaces.favorites.FavouritesHelper;
 import net.osmand.plus.carlauncher.music.MusicManager;
 
 import org.json.JSONObject;
@@ -53,6 +59,7 @@ public class VoiceCommandService extends Service implements RecognitionListener 
     private Model model;
     private Recognizer wakeWordRecognizer;
     private Recognizer commandRecognizer;
+    private TextToSpeech tts;
     
     private boolean isListeningForCommand = false;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -67,6 +74,13 @@ public class VoiceCommandService extends Service implements RecognitionListener 
         isServiceRunning = true;
         musicManager = MusicManager.getInstance(getApplicationContext());
         createNotificationChannel();
+        
+        // TextToSpeech motorunu baslat (Turkce karakter yok)
+        tts = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                tts.setLanguage(new Locale("tr", "TR"));
+            }
+        });
     }
 
     @Override
@@ -344,40 +358,83 @@ public class VoiceCommandService extends Service implements RecognitionListener 
     private void executeVoiceCommand(String text) {
         handler.post(() -> {
             if (text.contains("muzik") && (text.contains("cal") || text.contains("oynat") || text.contains("baslat"))) {
-                Toast.makeText(VoiceCommandService.this, "Muzik oynatiliyor", Toast.LENGTH_SHORT).show();
+                speak("Muzik oynatiliyor");
                 if (musicManager != null) {
                     musicManager.togglePlayPause();
                 }
             } else if (text.contains("muzik") && (text.contains("durdur") || text.contains("duraklat") || text.contains("kes"))) {
-                Toast.makeText(VoiceCommandService.this, "Muzik durduruldu", Toast.LENGTH_SHORT).show();
+                speak("Muzik durduruldu");
                 if (musicManager != null) {
                     musicManager.togglePlayPause();
                 }
             } else if (text.contains("sonraki") || text.contains("atla")) {
-                Toast.makeText(VoiceCommandService.this, "Sonraki sarki", Toast.LENGTH_SHORT).show();
+                speak("Sonraki sarki");
                 if (musicManager != null) {
                     musicManager.skipToNext();
                 }
             } else if (text.contains("onceki") || text.contains("geri")) {
-                Toast.makeText(VoiceCommandService.this, "Onceki sarki", Toast.LENGTH_SHORT).show();
+                speak("Onceki sarki");
                 if (musicManager != null) {
                     musicManager.skipToPrevious();
+                }
+            } else if (text.contains("sesi") && (text.contains("kapa") || text.contains("kapat") || text.contains("sustur") || text.contains("sessize"))) {
+                try {
+                    AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                    if (audioManager != null) {
+                        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, AudioManager.FLAG_SHOW_UI);
+                        speak("Ses kapatildi");
+                    }
+                } catch (Exception e) {}
+            } else if (text.contains("sesi") && (text.contains("yuzde") || text.contains("yüzde"))) {
+                int pct = parsePercentage(text);
+                if (pct >= 0 && pct <= 100) {
+                    try {
+                        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                        if (audioManager != null) {
+                            int maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                            int targetVol = (pct * maxVol) / 100;
+                            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVol, AudioManager.FLAG_SHOW_UI);
+                            speak("Ses yuzde " + pct + " yapildi.");
+                        }
+                    } catch (Exception e) {
+                        speak("Ses ayarlanamadi.");
+                    }
+                } else {
+                    speak("Gecersiz ses yuzdesi.");
                 }
             } else if (text.contains("sesi") && (text.contains("ac") || text.contains("yukselt") || text.contains("artir"))) {
                 adjustVolume(true);
             } else if (text.contains("sesi") && (text.contains("kis") || text.contains("azalt") || text.contains("dusur"))) {
                 adjustVolume(false);
-            } else if (text.contains("harita") || text.contains("navigasyon") || text.contains("yol")) {
-                Toast.makeText(VoiceCommandService.this, "Harita aciliyor", Toast.LENGTH_SHORT).show();
+            } else if (text.contains("ekran") && (text.contains("kapat") || text.contains("kapa"))) {
+                speak("Ekran kapatiliyor.");
                 try {
-                    Intent mapIntent = new Intent(VoiceCommandService.this, net.osmand.plus.activities.MapActivity.class);
-                    mapIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(mapIntent);
+                    Intent screenIntent = new Intent("xy.android.setScreenState");
+                    screenIntent.putExtra("screenstate", 2);
+                    sendBroadcast(screenIntent);
                 } catch (Exception e) {
-                    // ignore
+                    android.util.Log.e("VoiceCommandService", "Ekran kapatma hatasi", e);
                 }
+            } else if (text.contains("saat") && (text.contains("kac") || text.contains("soyle"))) {
+                try {
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm", new java.util.Locale("tr", "TR"));
+                    String timeStr = sdf.format(new java.util.Date());
+                    speak("Saat su an " + timeStr);
+                } catch (Exception e) {}
+            } else if (text.contains("tarih") && (text.contains("nedir") || text.contains("soyle") || text.contains("gunlerden"))) {
+                try {
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd MMMM yyyy", new java.util.Locale("tr", "TR"));
+                    String dateStr = sdf.format(new java.util.Date());
+                    speak("Bugun " + dateStr);
+                } catch (Exception e) {}
+            } else if (text.contains("eve") && (text.contains("gotur") || text.contains("git"))) {
+                startNavigationTo("home");
+            } else if (text.contains("ise") && (text.contains("gotur") || text.contains("git"))) {
+                startNavigationTo("work");
+            } else if (text.contains("harita") || text.contains("navigasyon") || text.contains("yol")) {
+                openExternalMap();
             } else {
-                Toast.makeText(VoiceCommandService.this, "Anlasilamayan komut: " + text, Toast.LENGTH_SHORT).show();
+                speak("Anlasilamayan komut: " + text);
             }
         });
     }
@@ -388,10 +445,100 @@ public class VoiceCommandService extends Service implements RecognitionListener 
             if (audioManager != null) {
                 int direction = increase ? AudioManager.ADJUST_RAISE : AudioManager.ADJUST_LOWER;
                 audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, direction, AudioManager.FLAG_SHOW_UI);
-                Toast.makeText(this, increase ? "Ses yukseltildi" : "Ses azaltildi", Toast.LENGTH_SHORT).show();
+                speak(increase ? "Ses yukseltildi" : "Ses azaltildi");
             }
         } catch (Exception e) {
             // ignore
+        }
+    }
+
+    private void speak(String text) {
+        if (tts != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "VoiceAssistant");
+            } else {
+                tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+            }
+        }
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show();
+    }
+
+    private int parsePercentage(String text) {
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\d+").matcher(text);
+        if (matcher.find()) {
+            try {
+                return Integer.parseInt(matcher.group());
+            } catch (Exception e) {}
+        }
+        if (text.contains("yuz") || text.contains("yüz")) return 100;
+        if (text.contains("doksan")) return 90;
+        if (text.contains("seksen")) return 80;
+        if (text.contains("yetmis") || text.contains("yetmiş")) return 70;
+        if (text.contains("altmis") || text.contains("altmış")) return 60;
+        if (text.contains("elli")) return 50;
+        if (text.contains("kirk") || text.contains("kırk")) return 40;
+        if (text.contains("otuz")) return 30;
+        if (text.contains("yirmi")) return 20;
+        if (text.contains("on")) return 10;
+        if (text.contains("sifir") || text.contains("sıfır")) return 0;
+        return -1;
+    }
+
+    private void startNavigationTo(String type) {
+        try {
+            OsmandApplication app = (OsmandApplication) getApplication();
+            FavouritesHelper favoritesHelper = app.getFavoritesHelper();
+            boolean hasPoint = false;
+            
+            if ("home".equals(type)) {
+                hasPoint = favoritesHelper.getSpecialPoint(net.osmand.data.SpecialPointType.HOME) != null;
+            } else if ("work".equals(type)) {
+                hasPoint = favoritesHelper.getSpecialPoint(net.osmand.data.SpecialPointType.WORK) != null;
+            }
+
+            if (!hasPoint) {
+                speak(("home".equals(type) ? "Ev" : "Is") + " adresi OsmAnd icinde tanimli degil.");
+                return;
+            }
+
+            String shortcutId = "home".equals(type) ? "navigate_to_home" : "navigate_to_work";
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("osmand.shortcuts://shortcut?id=" + shortcutId));
+            intent.setComponent(new ComponentName(this, net.osmand.plus.activities.MapActivity.class));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            speak(("home".equals(type) ? "Eve" : "Ise") + " navigasyon baslatiliyor.");
+        } catch (Exception e) {
+            android.util.Log.e("VoiceCommandService", "Navigasyon baslatilamadi", e);
+            speak("Navigasyon baslatilamadi.");
+        }
+    }
+
+    private void openExternalMap() {
+        PackageManager pm = getPackageManager();
+        Intent intent = null;
+        
+        try {
+            intent = pm.getLaunchIntentForPackage("com.google.android.apps.maps");
+        } catch (Exception e) {}
+        
+        if (intent == null) {
+            try {
+                intent = pm.getLaunchIntentForPackage("ru.yandex.yandexnavi");
+            } catch (Exception e) {}
+        }
+        
+        if (intent == null) {
+            try {
+                intent = new Intent(this, net.osmand.plus.activities.MapActivity.class);
+            } catch (Exception e) {}
+        }
+        
+        if (intent != null) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            speak("Harita aciliyor.");
+        } else {
+            speak("Harita uygulamasi bulunamadi.");
         }
     }
 
@@ -408,6 +555,11 @@ public class VoiceCommandService extends Service implements RecognitionListener 
         if (model != null) {
             model.close();
             model = null;
+        }
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+            tts = null;
         }
     }
 
