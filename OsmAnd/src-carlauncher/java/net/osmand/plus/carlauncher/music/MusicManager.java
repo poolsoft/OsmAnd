@@ -391,6 +391,30 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             }
         }
 
+        // Yerel teyp adaptoru kontrolu
+        BaseMediaAdapter localAdapter = null;
+        if (preferredPackage != null && !"usage.internal.player".equals(preferredPackage)) {
+            for (BaseMediaAdapter adapter : adapters) {
+                if (preferredPackage.equals(adapter.getPackageName()) 
+                    && !(adapter instanceof AndroidMediaSessionAdapter)
+                    && !(adapter instanceof InternalPlayerAdapter)) {
+                    localAdapter = adapter;
+                    break;
+                }
+            }
+        }
+
+        // Eger yerel teyp adaptoru ise dogrudan play/pause cagir
+        if (localAdapter != null) {
+            if (localAdapter.isPlaying()) {
+                localAdapter.pause();
+            } else {
+                localAdapter.play();
+            }
+            notifyStateChanged();
+            return;
+        }
+
         // Harici bir uygulama secilmisse ve aktif session'i olmasa bile dahili oynaticiyi oynatma
         if (preferredPackage != null && !"usage.internal.player".equals(preferredPackage)) {
             boolean hasPreferredController = false;
@@ -439,6 +463,21 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
     public void skipToNext() {
         if (preferredPackage != null && !"usage.internal.player".equals(preferredPackage)) {
+            // Yerel teyp adaptoru kontrolu
+            BaseMediaAdapter localAdapter = null;
+            for (BaseMediaAdapter adapter : adapters) {
+                if (preferredPackage.equals(adapter.getPackageName()) 
+                    && !(adapter instanceof AndroidMediaSessionAdapter)
+                    && !(adapter instanceof InternalPlayerAdapter)) {
+                    localAdapter = adapter;
+                    break;
+                }
+            }
+            if (localAdapter != null) {
+                localAdapter.next();
+                return;
+            }
+
             boolean hasPreferredController = false;
             if (activeExternalController != null && preferredPackage.equals(activeExternalController.getPackageName())) {
                 hasPreferredController = true;
@@ -464,6 +503,21 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
     public void skipToPrevious() {
         if (preferredPackage != null && !"usage.internal.player".equals(preferredPackage)) {
+            // Yerel teyp adaptoru kontrolu
+            BaseMediaAdapter localAdapter = null;
+            for (BaseMediaAdapter adapter : adapters) {
+                if (preferredPackage.equals(adapter.getPackageName()) 
+                    && !(adapter instanceof AndroidMediaSessionAdapter)
+                    && !(adapter instanceof InternalPlayerAdapter)) {
+                    localAdapter = adapter;
+                    break;
+                }
+            }
+            if (localAdapter != null) {
+                localAdapter.prev();
+                return;
+            }
+
             boolean hasPreferredController = false;
             if (activeExternalController != null && preferredPackage.equals(activeExternalController.getPackageName())) {
                 hasPreferredController = true;
