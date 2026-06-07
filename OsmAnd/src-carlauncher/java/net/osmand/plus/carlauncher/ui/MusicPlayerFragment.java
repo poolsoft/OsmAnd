@@ -1028,7 +1028,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             getContext().stopService(intent);
             Toast.makeText(getContext(), "Sesli kontrol kapatildi", Toast.LENGTH_SHORT).show();
         } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                 getContext().startForegroundService(intent);
             } else {
                 getContext().startService(intent);
