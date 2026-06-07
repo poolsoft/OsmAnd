@@ -1156,8 +1156,18 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         getActivity().runOnUiThread(() -> {
             if (nowPlayingTitle != null)
                 nowPlayingTitle.setText(title != null ? title : "Muzik Secin");
-            if (nowPlayingArtist != null)
-                nowPlayingArtist.setText(artist != null ? artist : "");
+            if (nowPlayingArtist != null) {
+                String artistText = artist;
+                if (artistText != null) {
+                    String clean = artistText.trim().toLowerCase(java.util.Locale.ROOT);
+                    if (clean.equals("unknown") || clean.equals("<unknown>") || clean.equals("bilinmeyen") || clean.isEmpty()) {
+                        artistText = "";
+                    }
+                } else {
+                    artistText = "";
+                }
+                nowPlayingArtist.setText(artistText);
+            }
 
             if (nowPlayingArt != null) {
                 if (albumArt != null) {

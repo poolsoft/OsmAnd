@@ -131,7 +131,9 @@
                     app:layout_constraintStart_toEndOf="@id/music_side_dock"
                     app:layout_constraintEnd_toEndOf="parent"
                     android:layout_marginTop="20dp"
-                    android:layout_marginBottom="8dp" />
+                    android:layout_marginBottom="8dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp" />
 
                 <!-- Floating Cover Art Card Container (Hidden, kept for compatibility) -->
                 <androidx.cardview.widget.CardView

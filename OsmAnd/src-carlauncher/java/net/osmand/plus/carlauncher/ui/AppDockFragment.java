@@ -221,7 +221,7 @@ public class AppDockFragment extends Fragment
         btnDesktopMode = root.findViewById(net.osmand.plus.R.id.btn_desktop_mode);
         if (btnDesktopMode != null) {
             // Yuze buton ile ayni simgeyi ve renk filtresini ata (Turkce karakter yok)
-            btnDesktopMode.setImageResource(net.osmand.plus.R.drawable.dashboard_grid);
+            btnDesktopMode.setImageResource(net.osmand.plus.R.drawable.ic_desktop_mode);
             btnDesktopMode.setColorFilter(0xFFFFFFFF);
             
             // Premium yuvarlak mavi kenarlikli arka plan
