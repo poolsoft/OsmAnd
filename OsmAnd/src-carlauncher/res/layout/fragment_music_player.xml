@@ -221,7 +221,8 @@
                     app:layout_constraintTop_toBottomOf="@id/player_info_container"
                     app:layout_constraintBottom_toTopOf="@id/playback_controls_layout"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent">
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_marginStart="60dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -269,7 +270,7 @@
                 <!-- Controls (Yatay LinearLayout ile Eşit Genişlik ve Tam Yayılım) -->
                 <LinearLayout
                     android:id="@+id/playback_controls_layout"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
@@ -280,6 +281,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/player_progress_container"
+                    android:layout_marginStart="60dp"
                     android:layout_marginBottom="12dp">
 
                     <FrameLayout
