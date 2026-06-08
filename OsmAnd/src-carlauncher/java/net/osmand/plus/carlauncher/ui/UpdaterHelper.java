@@ -1,13 +1,9 @@
 package net.osmand.plus.carlauncher.ui;
 
 import android.app.AlertDialog;
-import android.app.DownloadManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -28,6 +24,7 @@ import java.util.concurrent.Executors;
 
 /**
  * Car Launcher guncelleme ve APK indirme/yukleme yardimci sinifi.
+ * DownloadManager yerine dogrudan HttpURLConnection ile bagimsiz indirme yapilir.
  * Kod icerisinde kesinlikle Turkce karakter kullanilmamistir.
  */
 public class UpdaterHelper {
@@ -48,6 +45,34 @@ public class UpdaterHelper {
                 URL url = new URL(VERSION_JSON_URL);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
+                conn.setConnectTimeout(15000);
+                conn.setReadTimeout(15000);
+                conn.setInstanceFollowRedirects(true);
+                
+                int status = conn.getResponseCode();
+                int redirectCount = 0;
+                while ((status == HttpURLConnection.HTTP_MOVED_TEMP || 
+                        status == HttpURLConnection.HTTP_MOVED_PERM || 
+                        status == HttpURLConnection.HTTP_SEE_OTHER ||
+                        status == 307 || status == 308) && redirectCount < 5) {
+                    String newUrl = conn.getHeaderField("Location");
+                    if (newUrl == null) break;
+                    if (newUrl.startsWith("/")) {
+                        newUrl = url.getProtocol() + "://" + url.getHost() + newUrl;
+                    }
+                    url = new URL(newUrl);
+                    conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setConnectTimeout(15000);
+                    conn.setReadTimeout(15000);
+                    conn.setInstanceFollowRedirects(true);
+                    status = conn.getResponseCode();
+                    redirectCount++;
+                }
+
+                if (status != HttpURLConnection.HTTP_OK) {
+                    throw new Exception("HTTP Hata Kodu: " + status);
+                }
                 
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 StringBuilder response = new StringBuilder();
@@ -102,7 +127,7 @@ public class UpdaterHelper {
 
         String fileName = "CarLauncher_v" + versionName + ".apk";
 
-        // Indirme baslamadan once eski indirilmis APK varsa siliyoruz (Cakismlari onlemek icin)
+        // Indirme baslamadan once eski indirilmis APK varsa siliyoruz
         try {
             File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
             File oldApk = new File(downloadsDir, fileName);
@@ -115,68 +140,80 @@ public class UpdaterHelper {
 
         Toast.makeText(context, "Indirme baslatildi. Tamamlandiginda kurulum ekrani acilacaktir. Lutfen bekleyin...", Toast.LENGTH_LONG).show();
 
-        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-        request.setTitle("Car Launcher Guncelleme v" + versionName);
-        request.setDescription("Yeni surum indiriliyor...");
-        // Indirme esnasinda ilerleme durumunu (progress bar) bildirim panelinde gostermek icin VISIBILITY_VISIBLE kullaniyoruz
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
-        
-        request.setAllowedOverMetered(true);
-        request.setAllowedOverRoaming(true);
+        Executors.newSingleThreadExecutor().execute(() -> {
+            File tempApk = null;
+            try {
+                URL downloadUrl = new URL(url);
+                HttpURLConnection conn = (HttpURLConnection) downloadUrl.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setConnectTimeout(15000);
+                conn.setReadTimeout(15000);
+                conn.setInstanceFollowRedirects(true);
 
-        DownloadManager manager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-        if (manager != null) {
-            long downloadId = manager.enqueue(request);
-            
-            BroadcastReceiver receiver = new BroadcastReceiver() {
-                // @Override
-                // public void onReceive(Context c, Intent intent) {
-                //     new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                //         installApk(c, manager, downloadId, versionName);
-                //     }, 1000);
-                //     try {
-                //         context.getApplicationContext().unregisterReceiver(this);
-                //     } catch (Exception e) {
-                //         // ignore
-                //     }
-                // }
-
-                @Override
-                public void onReceive(Context c, Intent intent) {
-
-                    long completedId =
-                        intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
-
-                    if (completedId != downloadId) {
-                        return;
+                int status = conn.getResponseCode();
+                int redirectCount = 0;
+                while ((status == HttpURLConnection.HTTP_MOVED_TEMP || 
+                        status == HttpURLConnection.HTTP_MOVED_PERM || 
+                        status == HttpURLConnection.HTTP_SEE_OTHER ||
+                        status == 307 || status == 308) && redirectCount < 5) {
+                    String newUrl = conn.getHeaderField("Location");
+                    if (newUrl == null) break;
+                    if (newUrl.startsWith("/")) {
+                        newUrl = downloadUrl.getProtocol() + "://" + downloadUrl.getHost() + newUrl;
                     }
-
-                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                        installApk(c, manager, downloadId, versionName);
-                    }, 1000);
-
-                    try {
-                        context.getApplicationContext().unregisterReceiver(this);
-                    } catch (Exception ignored) {
-                    }
+                    downloadUrl = new URL(newUrl);
+                    conn = (HttpURLConnection) downloadUrl.openConnection();
+                    conn.setConnectTimeout(15000);
+                    conn.setReadTimeout(15000);
+                    conn.setInstanceFollowRedirects(true);
+                    status = conn.getResponseCode();
+                    redirectCount++;
                 }
-            };
 
-            IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                context.getApplicationContext().registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
-            } else {
-                context.getApplicationContext().registerReceiver(receiver, filter);
+                if (status != HttpURLConnection.HTTP_OK) {
+                    throw new Exception("HTTP Hata Kodu: " + status);
+                }
+
+                File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                if (!downloadsDir.exists()) {
+                    downloadsDir.mkdirs();
+                }
+                tempApk = new File(downloadsDir, fileName);
+
+                java.io.InputStream input = new java.io.BufferedInputStream(conn.getInputStream(), 8192);
+                java.io.FileOutputStream output = new java.io.FileOutputStream(tempApk);
+
+                byte[] data = new byte[4096];
+                int count;
+                while ((count = input.read(data)) != -1) {
+                    output.write(data, 0, count);
+                }
+
+                output.flush();
+                output.close();
+                input.close();
+
+                final File finalApk = tempApk;
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    isDownloading = false;
+                    Toast.makeText(context, "Indirme tamamlandi. Kuruluma geciliyor...", Toast.LENGTH_SHORT).show();
+                    installApkDirectly(context, finalApk);
+                });
+
+            } catch (Exception e) {
+                if (tempApk != null && tempApk.exists()) {
+                    tempApk.delete();
+                }
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    isDownloading = false;
+                    Toast.makeText(context, "Indirme basarisiz oldu: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+                android.util.Log.e("Updater", "Download error", e);
             }
-        } else {
-            isDownloading = false; // Manager null ise durumu sifirla
-        }
+        });
     }
 
-    private static void installApk(Context context, DownloadManager manager, long downloadId, String versionName) {
-        isDownloading = false; // Indirme islemi tamamlandigi icin durumu sifirliyoruz (Turkce karakter yok)
-        
+    private static void installApkDirectly(Context context, File apkFile) {
         // Android 8.0+ icin Bilinmeyen Kaynaklar yukleme izni kontrolu
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (!context.getPackageManager().canRequestPackageInstalls()) {
@@ -193,74 +230,35 @@ public class UpdaterHelper {
             }
         }
 
-        DownloadManager.Query query = new DownloadManager.Query();
-        query.setFilterById(downloadId);
-        Cursor cursor = manager.query(query);
-        if (cursor.moveToFirst()) {
-            int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
-            if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                // 1. Yol: DownloadManager'in kendi guvenli content URI'sini kullanmayi deniyoruz (En garanti ve modern yol)
-                Uri downloadUri = null;
+        if (apkFile != null && apkFile.exists()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                Uri contentUri = null;
                 try {
-                    downloadUri = manager.getUriForDownloadedFile(downloadId);
+                    contentUri = FileProvider.getUriForFile(context, 
+                        context.getPackageName() + ".fileprovider", 
+                        apkFile);
                 } catch (Exception e) {
-                    android.util.Log.e("Updater", "DownloadManager URI alinirken hata olustu", e);
+                    android.util.Log.e("Updater", "FileProvider URI olusturulurken hata", e);
                 }
 
-                if (downloadUri != null) {
-                    try {
-                        Intent intent = new Intent(Intent.ACTION_VIEW);
-                        intent.setDataAndType(downloadUri, "application/vnd.android.package-archive");
-                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        context.startActivity(intent);
-                        cursor.close();
-                        return; // Basarili sekilde baslatildi
-                    } catch (Exception e) {
-                        android.util.Log.e("Updater", "DownloadManager URI ile kurulum baslatilamadi, FileProvider denenecek", e);
-                    }
-                }
-
-                // 2. Yol (Fallback): Eger ilk yol basarisiz olursa statik dosya referansi ve FileProvider kullaniyoruz
-                String fileName = "CarLauncher_v" + versionName + ".apk";
-                File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                File apkFile = new File(downloadsDir, fileName);
-
-                if (apkFile.exists()) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        Uri contentUri = null;
-                        try {
-                            contentUri = FileProvider.getUriForFile(context, 
-                                context.getPackageName() + ".fileprovider", 
-                                apkFile);
-                        } catch (Exception e) {
-                            android.util.Log.e("Updater", "FileProvider URI olusturulurken hata", e);
-                        }
-
-                        if (contentUri != null) {
-                            Intent intent = new Intent(Intent.ACTION_VIEW);
-                            intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
-                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            context.startActivity(intent);
-                        } else {
-                            Toast.makeText(context, "Guncelleme dosyasi URI'si olusturulamadi", Toast.LENGTH_LONG).show();
-                        }
-                    } else {
-                        Uri apkUri = Uri.fromFile(apkFile);
-                        Intent intent = new Intent(Intent.ACTION_VIEW);
-                        intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        context.startActivity(intent);
-                    }
+                if (contentUri != null) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
                 } else {
-                    Toast.makeText(context, "Indirilen APK dosyasi bulunamadi", Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, "Guncelleme dosyasi URI'si olusturulamadi", Toast.LENGTH_LONG).show();
                 }
-            } else if (status == DownloadManager.STATUS_FAILED) {
-                int reason = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_REASON));
-                Toast.makeText(context, "Indirme basarisiz oldu (Hata kodu: " + reason + ")", Toast.LENGTH_LONG).show();
+            } else {
+                Uri apkUri = Uri.fromFile(apkFile);
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
             }
+        } else {
+            Toast.makeText(context, "Indirilen APK dosyasi bulunamadi", Toast.LENGTH_LONG).show();
         }
-        cursor.close();
     }
 }

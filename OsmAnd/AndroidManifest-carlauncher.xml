@@ -17,7 +17,8 @@
     
     <application
         android:icon="@mipmap/ic_launcher"
-        tools:replace="android:icon">
+        android:usesCleartextTraffic="true"
+        tools:replace="android:icon,android:usesCleartextTraffic">
         
         <!-- Car Launcher Activity - Ana launcher ekrani -->
         <!-- tools:node="replace" ile ana manifest'teki MapActivity'yi tamamen override ediyoruz -->
