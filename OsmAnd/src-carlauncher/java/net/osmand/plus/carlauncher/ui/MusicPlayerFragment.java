@@ -1311,11 +1311,11 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 if (track.getAlbumArtUri() != null) {
                     com.squareup.picasso.Picasso.get()
                             .load(track.getAlbumArtUri())
-                            .placeholder(net.osmand.plus.R.drawable.bg_default_music_art)
-                            .error(net.osmand.plus.R.drawable.bg_default_music_art)
+                            .placeholder(net.osmand.plus.R.drawable.bg_playlist_default_art)
+                            .error(net.osmand.plus.R.drawable.bg_playlist_default_art)
                             .into(holder.trackArt);
                 } else {
-                    holder.trackArt.setImageResource(net.osmand.plus.R.drawable.bg_default_music_art);
+                    holder.trackArt.setImageResource(net.osmand.plus.R.drawable.bg_playlist_default_art);
                 }
             }
 
