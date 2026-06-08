@@ -1,6 +1,7 @@
 package net.osmand.plus.carlauncher.ui;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -25,6 +26,7 @@ import java.util.concurrent.Executors;
 /**
  * Car Launcher guncelleme ve APK indirme/yukleme yardimci sinifi.
  * DownloadManager yerine dogrudan HttpURLConnection ile bagimsiz indirme yapilir.
+ * Ekranda anlik ilerleme yuzdesi gosteren ProgressDialog entegre edilmistir.
  * Kod icerisinde kesinlikle Turkce karakter kullanilmamistir.
  */
 public class UpdaterHelper {
@@ -138,7 +140,15 @@ public class UpdaterHelper {
             android.util.Log.e("Updater", "Eski APK silinirken hata olustu", e);
         }
 
-        Toast.makeText(context, "Indirme baslatildi. Tamamlandiginda kurulum ekrani acilacaktir. Lutfen bekleyin...", Toast.LENGTH_LONG).show();
+        // Ana thread'de ProgressDialog baslatiyoruz (Turkce karakter yok)
+        ProgressDialog progressDialog = new ProgressDialog(context);
+        progressDialog.setTitle("Car Launcher Guncelleniyor");
+        progressDialog.setMessage("Yeni surum indiriliyor, lutfen bekleyin...");
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressDialog.setCancelable(false);
+        progressDialog.setMax(100);
+        progressDialog.setProgress(0);
+        progressDialog.show();
 
         Executors.newSingleThreadExecutor().execute(() -> {
             File tempApk = null;
@@ -162,7 +172,10 @@ public class UpdaterHelper {
                         newUrl = downloadUrl.getProtocol() + "://" + downloadUrl.getHost() + newUrl;
                     }
                     downloadUrl = new URL(newUrl);
-                    conn = (HttpURLConnection) downloadUrl.openConnection();
+                    conn = (downloadUrl.getProtocol().equalsIgnoreCase("https")) ?
+                        (HttpURLConnection) downloadUrl.openConnection() :
+                        (HttpURLConnection) downloadUrl.openConnection();
+                    conn.setRequestMethod("GET");
                     conn.setConnectTimeout(15000);
                     conn.setReadTimeout(15000);
                     conn.setInstanceFollowRedirects(true);
@@ -173,6 +186,8 @@ public class UpdaterHelper {
                 if (status != HttpURLConnection.HTTP_OK) {
                     throw new Exception("HTTP Hata Kodu: " + status);
                 }
+
+                int fileLength = conn.getContentLength();
 
                 File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
                 if (!downloadsDir.exists()) {
@@ -185,8 +200,25 @@ public class UpdaterHelper {
 
                 byte[] data = new byte[4096];
                 int count;
+                long total = 0;
+                long lastUpdateTime = 0;
+                
                 while ((count = input.read(data)) != -1) {
+                    total += count;
                     output.write(data, 0, count);
+                    
+                    if (fileLength > 0) {
+                        final int progress = (int) (total * 100 / fileLength);
+                        long now = System.currentTimeMillis();
+                        if (now - lastUpdateTime > 500) { // Arayuzu yormamak icin 500ms'de bir guncelleme
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                                if (progressDialog.isShowing()) {
+                                    progressDialog.setProgress(progress);
+                                }
+                            });
+                            lastUpdateTime = now;
+                        }
+                    }
                 }
 
                 output.flush();
@@ -196,6 +228,9 @@ public class UpdaterHelper {
                 final File finalApk = tempApk;
                 new Handler(Looper.getMainLooper()).post(() -> {
                     isDownloading = false;
+                    if (progressDialog.isShowing()) {
+                        progressDialog.dismiss();
+                    }
                     Toast.makeText(context, "Indirme tamamlandi. Kuruluma geciliyor...", Toast.LENGTH_SHORT).show();
                     installApkDirectly(context, finalApk);
                 });
@@ -206,6 +241,9 @@ public class UpdaterHelper {
                 }
                 new Handler(Looper.getMainLooper()).post(() -> {
                     isDownloading = false;
+                    if (progressDialog.isShowing()) {
+                        progressDialog.dismiss();
+                    }
                     Toast.makeText(context, "Indirme basarisiz oldu: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
                 android.util.Log.e("Updater", "Download error", e);
