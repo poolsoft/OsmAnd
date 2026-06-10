@@ -453,9 +453,26 @@ public class WidgetPickerDialog extends DialogFragment {
         preview.setLayoutParams(prevLp);
         card.addView(preview);
 
-        // Widget Boyut Hesaplamalari (1x1, 2x1 vb.)
-        int spanX = Math.max(1, Math.min(net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.COL_COUNT, Math.round(provider.minWidth / 70f)));
-        int spanY = Math.max(1, Math.min(net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.ROW_COUNT, Math.round(provider.minHeight / 70f)));
+        // Widget Boyut Hesaplamalari
+        android.util.DisplayMetrics dm = ctx.getResources().getDisplayMetrics();
+        float density = dm.density;
+        int screenWidthPx = dm.widthPixels;
+        int screenHeightPx = dm.heightPixels;
+        int paddingSidePx = Math.round(12 * density);
+        int paddingTopBottomPx = Math.round(8 * density);
+        int taskbarPx = Math.round(56 * density);
+        int usableWidthPx = screenWidthPx - (2 * paddingSidePx);
+        int usableHeightPx = screenHeightPx - (2 * paddingTopBottomPx) - taskbarPx;
+        
+        int cellSize = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.getCellSize(ctx, usableWidthPx, usableHeightPx);
+        int colCount = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.getColCount(ctx, usableWidthPx, cellSize);
+        int rowCount = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.getRowCount(ctx, usableHeightPx, cellSize);
+
+        int minWidthPx = Math.round(provider.minWidth * density);
+        int minHeightPx = Math.round(provider.minHeight * density);
+
+        int spanX = Math.max(1, Math.min(colCount, Math.round((float) minWidthPx / cellSize)));
+        int spanY = Math.max(1, Math.min(rowCount, Math.round((float) minHeightPx / cellSize)));
 
         String label = provider.loadLabel(pm);
         if (label == null || label.trim().isEmpty()) {
@@ -592,17 +609,18 @@ public class WidgetPickerDialog extends DialogFragment {
                 int usableHeightPx = screenHeightPx - (2 * paddingTopBottomPx) - taskbarPx;
                 
                 // Tek hucre boyutu piksel
-                int cellWidthPx = usableWidthPx / net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.COL_COUNT;
-                int cellHeightPx = usableHeightPx / net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.ROW_COUNT;
+                int cellSize = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.getCellSize(getContext(), usableWidthPx, usableHeightPx);
+                int colCount = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.getColCount(getContext(), usableWidthPx, cellSize);
+                int rowCount = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.getRowCount(getContext(), usableHeightPx, cellSize);
                 
-                // Widget boyut hesabi (varsayilan span 2x2 olarak provider.minWidth'e gore)
-                int spanX = Math.max(1, Math.min(net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.COL_COUNT, 
-                        Math.round(provider.minWidth / (70f * density) * 2)));
-                int spanY = Math.max(1, Math.min(net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.ROW_COUNT, 
-                        Math.round(provider.minHeight / (70f * density) * 2)));
+                int minWidthPx = Math.round(provider.minWidth * density);
+                int minHeightPx = Math.round(provider.minHeight * density);
+
+                int spanX = Math.max(1, Math.min(colCount, Math.round((float) minWidthPx / cellSize)));
+                int spanY = Math.max(1, Math.min(rowCount, Math.round((float) minHeightPx / cellSize)));
                 
-                int widthDp = Math.max(40, Math.round((cellWidthPx * spanX) / density));
-                int heightDp = Math.max(40, Math.round((cellHeightPx * spanY) / density));
+                int widthDp = Math.max(40, Math.round((cellSize * spanX) / density));
+                int heightDp = Math.max(40, Math.round((cellSize * spanY) / density));
                 
                 options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, widthDp);
                 options.putInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, heightDp);
@@ -730,11 +748,29 @@ public class WidgetPickerDialog extends DialogFragment {
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(ctx);
             AppWidgetProviderInfo info = appWidgetManager.getAppWidgetInfo(appWidgetId);
             if (info != null) {
-                int spanX = Math.max(1, Math.min(net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.COL_COUNT, Math.round(info.minWidth / 70f)));
-                int spanY = Math.max(1, Math.min(net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.ROW_COUNT, Math.round(info.minHeight / 70f)));
-                if (spanX <= 2 && spanY == 1) {
+                android.util.DisplayMetrics dm = ctx.getResources().getDisplayMetrics();
+                float density = dm.density;
+                int screenWidthPx = dm.widthPixels;
+                int screenHeightPx = dm.heightPixels;
+                int paddingSidePx = Math.round(12 * density);
+                int paddingTopBottomPx = Math.round(8 * density);
+                int taskbarPx = Math.round(56 * density);
+                int usableWidthPx = screenWidthPx - (2 * paddingSidePx);
+                int usableHeightPx = screenHeightPx - (2 * paddingTopBottomPx) - taskbarPx;
+                
+                int cellSize = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.getCellSize(ctx, usableWidthPx, usableHeightPx);
+                int colCount = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.getColCount(ctx, usableWidthPx, cellSize);
+                int rowCount = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.getRowCount(ctx, usableHeightPx, cellSize);
+                
+                int minWidthPx = Math.round(info.minWidth * density);
+                int minHeightPx = Math.round(info.minHeight * density);
+                
+                int spanX = Math.max(1, Math.min(colCount, Math.round((float) minWidthPx / cellSize)));
+                int spanY = Math.max(1, Math.min(rowCount, Math.round((float) minHeightPx / cellSize)));
+                
+                if (spanX <= 3 && spanY <= 3) {
                     widget.setSize(BaseWidget.WidgetSize.SMALL);
-                } else if (spanX <= 4 && spanY == 1) {
+                } else if (spanX <= 6 && spanY <= 3) {
                     widget.setSize(BaseWidget.WidgetSize.MEDIUM);
                 } else {
                     widget.setSize(BaseWidget.WidgetSize.LARGE);

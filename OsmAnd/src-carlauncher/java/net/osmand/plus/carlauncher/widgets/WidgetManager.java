@@ -114,8 +114,9 @@ public class WidgetManager {
     }
 
     private Point findEmptySpace(boolean[][] occupied, int spanX, int spanY) {
-        int maxCol = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.COL_COUNT;
-        int maxRow = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.ROW_COUNT;
+        if (occupied == null || occupied.length == 0 || occupied[0].length == 0) return null;
+        int maxCol = occupied.length;
+        int maxRow = occupied[0].length;
         for (int y = 0; y <= maxRow - spanY; y++) {
             for (int x = 0; x <= maxCol - spanX; x++) {
                 boolean fits = true;
@@ -162,8 +163,22 @@ public class WidgetManager {
         }
         
         // Aktif sayfada yer var mi kontrol et
-        int maxCol = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.COL_COUNT;
-        int maxRow = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.ROW_COUNT;
+        android.util.DisplayMetrics dm = context.getResources().getDisplayMetrics();
+        float density = dm.density;
+        int screenWidthPx = dm.widthPixels;
+        int screenHeightPx = dm.heightPixels;
+        
+        int paddingSidePx = Math.round(12 * density);
+        int paddingTopBottomPx = Math.round(8 * density);
+        int taskbarPx = Math.round(56 * density);
+        
+        int usableWidthPx = screenWidthPx - (2 * paddingSidePx);
+        int usableHeightPx = screenHeightPx - (2 * paddingTopBottomPx) - taskbarPx;
+        
+        int cellSize = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.getCellSize(context, usableWidthPx, usableHeightPx);
+        int maxCol = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.getColCount(context, usableWidthPx, cellSize);
+        int maxRow = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.getRowCount(context, usableHeightPx, cellSize);
+
         if (targetPage < pageCount) {
             boolean[][] occupied = new boolean[maxCol][maxRow];
             for (BaseWidget w : allWidgets) {
@@ -489,6 +504,20 @@ public class WidgetManager {
         String suffix = getOrientationSuffix();
         String configKey = KEY_WIDGET_CONFIG + suffix;
         
+        android.util.DisplayMetrics dm = context.getResources().getDisplayMetrics();
+        float density = dm.density;
+        int screenWidthPx = dm.widthPixels;
+        int screenHeightPx = dm.heightPixels;
+        int paddingSidePx = Math.round(12 * density);
+        int paddingTopBottomPx = Math.round(8 * density);
+        int taskbarPx = Math.round(56 * density);
+        int usableWidthPx = screenWidthPx - (2 * paddingSidePx);
+        int usableHeightPx = screenHeightPx - (2 * paddingTopBottomPx) - taskbarPx;
+        
+        int cellSize = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.getCellSize(context, usableWidthPx, usableHeightPx);
+        int targetColCount = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.getColCount(context, usableWidthPx, cellSize);
+        int targetRowCount = net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout.getRowCount(context, usableHeightPx, cellSize);
+
         // Eger bu yon icin daha once hic kayit yapilmadiysa, diger yonu kopyalayarak basla
         if (!prefs.contains(configKey)) {
             String fallbackSuffix = suffix.equals("_portrait") ? "_landscape" : "_portrait";
@@ -504,10 +533,28 @@ public class WidgetManager {
                         editor.putBoolean("visible_" + id + suffix, prefs.getBoolean("visible_" + id + fallbackSuffix, true));
                         editor.putInt("size_" + id + suffix, prefs.getInt("size_" + id + fallbackSuffix, BaseWidget.WidgetSize.SMALL.ordinal()));
                         editor.putInt("page_" + id + suffix, prefs.getInt("page_" + id + fallbackSuffix, 0));
-                        editor.putInt("cellx_" + id + suffix, prefs.getInt("cellx_" + id + fallbackSuffix, -1));
-                        editor.putInt("celly_" + id + suffix, prefs.getInt("celly_" + id + fallbackSuffix, -1));
-                        editor.putInt("spanx_" + id + suffix, prefs.getInt("spanx_" + id + fallbackSuffix, 1));
-                        editor.putInt("spany_" + id + suffix, prefs.getInt("spany_" + id + fallbackSuffix, 1));
+                        
+                        int savedSpanX = prefs.getInt("spanx_" + id + fallbackSuffix, 1);
+                        int savedSpanY = prefs.getInt("spany_" + id + fallbackSuffix, 1);
+                        int savedCellX = prefs.getInt("cellx_" + id + fallbackSuffix, -1);
+                        int savedCellY = prefs.getInt("celly_" + id + fallbackSuffix, -1);
+                        
+                        int spanX = Math.max(1, Math.min(targetColCount, savedSpanX));
+                        int spanY = Math.max(1, Math.min(targetRowCount, savedSpanY));
+                        
+                        int cellX = savedCellX;
+                        int cellY = savedCellY;
+                        if (cellX != -1) {
+                            cellX = Math.max(0, Math.min(targetColCount - spanX, cellX));
+                        }
+                        if (cellY != -1) {
+                            cellY = Math.max(0, Math.min(targetRowCount - spanY, cellY));
+                        }
+                        
+                        editor.putInt("spanx_" + id + suffix, spanX);
+                        editor.putInt("spany_" + id + suffix, spanY);
+                        editor.putInt("cellx_" + id + suffix, cellX);
+                        editor.putInt("celly_" + id + suffix, cellY);
                     }
                 }
                 editor.apply();
@@ -598,6 +645,15 @@ public class WidgetManager {
                 int spanx = prefs.getInt("spanx_" + id + suffix, widget.getSpanX());
                 int spany = prefs.getInt("spany_" + id + suffix, widget.getSpanY());
                 
+                spanx = Math.max(1, Math.min(targetColCount, spanx));
+                spany = Math.max(1, Math.min(targetRowCount, spany));
+                if (cellx != -1) {
+                    cellx = Math.max(0, Math.min(targetColCount - spanx, cellx));
+                }
+                if (celly != -1) {
+                    celly = Math.max(0, Math.min(targetRowCount - spany, celly));
+                }
+
                 widget.setPageIndex(page);
                 widget.setCellX(cellx);
                 widget.setCellY(celly);

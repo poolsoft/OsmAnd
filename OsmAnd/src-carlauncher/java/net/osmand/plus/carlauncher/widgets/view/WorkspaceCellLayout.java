@@ -24,6 +24,21 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
     public static final int COL_COUNT = 8;
     public static final int ROW_COUNT = 4;
 
+    public static int getCellSize(Context context, int usableWidth, int usableHeight) {
+        if (context == null) return 80;
+        return Math.min(usableWidth, usableHeight) / 12;
+    }
+
+    public static int getColCount(Context context, int usableWidth, int cellSize) {
+        if (cellSize <= 0) return 12;
+        return usableWidth / cellSize;
+    }
+
+    public static int getRowCount(Context context, int usableHeight, int cellSize) {
+        if (cellSize <= 0) return 12;
+        return usableHeight / cellSize;
+    }
+
     private int marginPx = 0;
     
     // Drag & Drop Cizim Degiskenleri
@@ -108,8 +123,7 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
         int usableWidth = widthSize - paddingLeft - paddingRight;
         int usableHeight = heightSize - paddingTop - paddingBottom;
 
-        int cellWidth = usableWidth / COL_COUNT;
-        int cellHeight = usableHeight / ROW_COUNT;
+        int cellSize = getCellSize(getContext(), usableWidth, usableHeight);
 
         int count = getChildCount();
         for (int i = 0; i < count; i++) {
@@ -117,8 +131,8 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
             if (child.getVisibility() != GONE) {
                 LayoutParams lp = (LayoutParams) child.getLayoutParams();
                 
-                int childWidth = cellWidth * lp.spanX - (2 * marginPx);
-                int childHeight = cellHeight * lp.spanY - (2 * marginPx);
+                int childWidth = cellSize * lp.spanX - (2 * marginPx);
+                int childHeight = cellSize * lp.spanY - (2 * marginPx);
 
                 if (childWidth < 0) childWidth = 0;
                 if (childHeight < 0) childHeight = 0;
@@ -141,8 +155,15 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
         int usableWidth = (r - l) - paddingLeft - getPaddingRight();
         int usableHeight = (b - t) - paddingTop - getPaddingBottom();
 
-        int cellWidth = usableWidth / COL_COUNT;
-        int cellHeight = usableHeight / ROW_COUNT;
+        int cellSize = getCellSize(getContext(), usableWidth, usableHeight);
+        int colCount = getColCount(getContext(), usableWidth, cellSize);
+        int rowCount = getRowCount(getContext(), usableHeight, cellSize);
+
+        int extraWidth = (usableWidth - (colCount * cellSize)) / 2;
+        int extraHeight = (usableHeight - (rowCount * cellSize)) / 2;
+
+        int startLeft = paddingLeft + extraWidth;
+        int startTop = paddingTop + extraHeight;
 
         int count = getChildCount();
         for (int i = 0; i < count; i++) {
@@ -150,10 +171,10 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
             if (child.getVisibility() != GONE) {
                 LayoutParams lp = (LayoutParams) child.getLayoutParams();
 
-                int left = paddingLeft + (lp.cellX * cellWidth) + marginPx;
-                int top = paddingTop + (lp.cellY * cellHeight) + marginPx;
-                int right = left + (lp.spanX * cellWidth) - (2 * marginPx);
-                int bottom = top + (lp.spanY * cellHeight) - (2 * marginPx);
+                int left = startLeft + (lp.cellX * cellSize) + marginPx;
+                int top = startTop + (lp.cellY * cellSize) + marginPx;
+                int right = left + (lp.spanX * cellSize) - (2 * marginPx);
+                int bottom = top + (lp.spanY * cellSize) - (2 * marginPx);
 
                 child.layout(left, top, right, bottom);
             }
@@ -164,31 +185,40 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        int usableWidth = getWidth() - getPaddingLeft() - getPaddingRight();
-        int usableHeight = getHeight() - getPaddingTop() - getPaddingBottom();
+        int paddingLeft = getPaddingLeft();
+        int paddingTop = getPaddingTop();
+        int usableWidth = getWidth() - paddingLeft - getPaddingRight();
+        int usableHeight = getHeight() - paddingTop - getPaddingBottom();
 
-        int cellWidth = usableWidth / COL_COUNT;
-        int cellHeight = usableHeight / ROW_COUNT;
+        int cellSize = getCellSize(getContext(), usableWidth, usableHeight);
+        int colCount = getColCount(getContext(), usableWidth, cellSize);
+        int rowCount = getRowCount(getContext(), usableHeight, cellSize);
+
+        int extraWidth = (usableWidth - (colCount * cellSize)) / 2;
+        int extraHeight = (usableHeight - (rowCount * cellSize)) / 2;
+
+        int startLeft = paddingLeft + extraWidth;
+        int startTop = paddingTop + extraHeight;
 
         // 1. Duzenleme / Surukleme / Edit Modu sirasinda Izgara Kilavuz cizgilerini ciz
         if (isDragging || net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter.isEditMode) {
             // Dikey Cizgiler
-            for (int i = 1; i < COL_COUNT; i++) {
-                float x = getPaddingLeft() + (i * cellWidth);
-                canvas.drawLine(x, getPaddingTop(), x, getHeight() - getPaddingBottom(), gridLinePaint);
+            for (int i = 1; i < colCount; i++) {
+                float x = startLeft + (i * cellSize);
+                canvas.drawLine(x, startTop, x, startTop + (rowCount * cellSize), gridLinePaint);
             }
             // Yatay Cizgiler
-            for (int i = 1; i < ROW_COUNT; i++) {
-                float y = getPaddingTop() + (i * cellHeight);
-                canvas.drawLine(getPaddingLeft(), y, getWidth() - getPaddingRight(), y, gridLinePaint);
+            for (int i = 1; i < rowCount; i++) {
+                float y = startTop + (i * cellSize);
+                canvas.drawLine(startLeft, y, startLeft + (colCount * cellSize), y, gridLinePaint);
             }
 
             // 2. Suruklenen alanin altindaki Hedef Alan Maskesini Ciz
             if (targetCellX >= 0 && targetCellY >= 0) {
-                float left = getPaddingLeft() + (targetCellX * cellWidth) + marginPx;
-                float top = getPaddingTop() + (targetCellY * cellHeight) + marginPx;
-                float right = left + (targetSpanX * cellWidth) - (2 * marginPx);
-                float bottom = top + (targetSpanY * cellHeight) - (2 * marginPx);
+                float left = startLeft + (targetCellX * cellSize) + marginPx;
+                float top = startTop + (targetCellY * cellSize) + marginPx;
+                float right = left + (targetSpanX * cellSize) - (2 * marginPx);
+                float bottom = top + (targetSpanY * cellSize) - (2 * marginPx);
 
                 maskRect.set(left, top, right, bottom);
 
@@ -226,10 +256,22 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
                 return true;
 
             case DragEvent.ACTION_DRAG_LOCATION:
-                int cellWidth = getWidth() / COL_COUNT;
-                int cellHeight = getHeight() / ROW_COUNT;
+                int pLeft = getPaddingLeft();
+                int pTop = getPaddingTop();
+                int uWidth = getWidth() - pLeft - getPaddingRight();
+                int uHeight = getHeight() - pTop - getPaddingBottom();
 
-                if (cellWidth > 0 && cellHeight > 0) {
+                int cSize = getCellSize(getContext(), uWidth, uHeight);
+                int cCount = getColCount(getContext(), uWidth, cSize);
+                int rCount = getRowCount(getContext(), uHeight, cSize);
+
+                int exWidth = (uWidth - (cCount * cSize)) / 2;
+                int exHeight = (uHeight - (rCount * cSize)) / 2;
+
+                int sLeft = pLeft + exWidth;
+                int sTop = pTop + exHeight;
+
+                if (cSize > 0) {
                     // Sayfalar arasi otomatik gecis (Auto-Scroll)
                     androidx.viewpager2.widget.ViewPager2 vp = findViewPager();
                     if (vp != null) {
@@ -285,12 +327,12 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
                     }
 
                     // Surukleme shadow'unu ortalayarak hedef hucreyi hesapla
-                    int cx = (int) ((event.getX() - (cellWidth * targetSpanX / 2f)) / cellWidth + 0.5f);
-                    int cy = (int) ((event.getY() - (cellHeight * targetSpanY / 2f)) / cellHeight + 0.5f);
+                    int cx = (int) ((event.getX() - sLeft - (cSize * targetSpanX / 2f)) / cSize + 0.5f);
+                    int cy = (int) ((event.getY() - sTop - (cSize * targetSpanY / 2f)) / cSize + 0.5f);
 
                     // Sinirlandirma (Clamping)
-                    cx = Math.max(0, Math.min(COL_COUNT - targetSpanX, cx));
-                    cy = Math.max(0, Math.min(ROW_COUNT - targetSpanY, cy));
+                    cx = Math.max(0, Math.min(cCount - targetSpanX, cx));
+                    cy = Math.max(0, Math.min(rCount - targetSpanY, cy));
 
                     if (cx != targetCellX || cy != targetCellY) {
                         targetCellX = cx;
@@ -376,19 +418,28 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
     }
 
     private boolean canWidgetFitAt(BaseWidget targetWidget, int pageIndex, int cellX, int cellY, int spanX, int spanY) {
-        if (cellX < 0 || cellX + spanX > COL_COUNT || cellY < 0 || cellY + spanY > ROW_COUNT) {
+        int paddingLeft = getPaddingLeft();
+        int paddingTop = getPaddingTop();
+        int usableWidth = getWidth() - paddingLeft - getPaddingRight();
+        int usableHeight = getHeight() - paddingTop - getPaddingBottom();
+
+        int cellSize = getCellSize(getContext(), usableWidth, usableHeight);
+        int colCount = getColCount(getContext(), usableWidth, cellSize);
+        int rowCount = getRowCount(getContext(), usableHeight, cellSize);
+
+        if (cellX < 0 || cellX + spanX > colCount || cellY < 0 || cellY + spanY > rowCount) {
             return false;
         }
 
         java.util.List<BaseWidget> list = WidgetManager.getInstance(getContext()).getAllWidgets();
-        boolean[][] occupied = new boolean[COL_COUNT][ROW_COUNT];
+        boolean[][] occupied = new boolean[colCount][rowCount];
         for (BaseWidget w : list) {
             if (w != targetWidget && w.isVisible() && w.getPageIndex() == pageIndex) {
                 int cx = w.getCellX();
                 int cy = w.getCellY();
                 int sx = w.getSpanX();
                 int sy = w.getSpanY();
-                if (cx >= 0 && cx + sx <= COL_COUNT && cy >= 0 && cy + sy <= ROW_COUNT) {
+                if (cx >= 0 && cx + sx <= colCount && cy >= 0 && cy + sy <= rowCount) {
                     for (int x = cx; x < cx + sx; x++) {
                         for (int y = cy; y < cy + sy; y++) {
                             occupied[x][y] = true;

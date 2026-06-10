@@ -219,8 +219,24 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                 }
             }
 
+            android.util.DisplayMetrics dm = context.getResources().getDisplayMetrics();
+            float density = dm.density;
+            int screenWidthPx = dm.widthPixels;
+            int screenHeightPx = dm.heightPixels;
+            
+            int paddingSidePx = Math.round(12 * density);
+            int paddingTopBottomPx = Math.round(8 * density);
+            int taskbarPx = Math.round(56 * density);
+            
+            int usableWidthPx = screenWidthPx - (2 * paddingSidePx);
+            int usableHeightPx = screenHeightPx - (2 * paddingTopBottomPx) - taskbarPx;
+            
+            int cellSize = WorkspaceCellLayout.getCellSize(context, usableWidthPx, usableHeightPx);
+            int colCount = WorkspaceCellLayout.getColCount(context, usableWidthPx, cellSize);
+            int rowCount = WorkspaceCellLayout.getRowCount(context, usableHeightPx, cellSize);
+
             // Izgara doluluk matrisi
-            boolean[][] occupied = new boolean[WorkspaceCellLayout.COL_COUNT][WorkspaceCellLayout.ROW_COUNT];
+            boolean[][] occupied = new boolean[colCount][rowCount];
 
             // Once koordinati belli olan widget'lari yerlestirelim ve matrisi isaretleyelim
             for (BaseWidget widget : pageWidgets) {
@@ -229,7 +245,7 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                 int sx = widget.getSpanX();
                 int sy = widget.getSpanY();
 
-                if (cx >= 0 && cx + sx <= WorkspaceCellLayout.COL_COUNT && cy >= 0 && cy + sy <= WorkspaceCellLayout.ROW_COUNT) {
+                if (cx >= 0 && cx + sx <= colCount && cy >= 0 && cy + sy <= rowCount) {
                     for (int x = cx; x < cx + sx; x++) {
                         for (int y = cy; y < cy + sy; y++) {
                             occupied[x][y] = true;
@@ -352,8 +368,11 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
         }
 
         private Point findEmptySpace(boolean[][] occupied, int spanX, int spanY) {
-            for (int y = 0; y <= WorkspaceCellLayout.ROW_COUNT - spanY; y++) {
-                for (int x = 0; x <= WorkspaceCellLayout.COL_COUNT - spanX; x++) {
+            if (occupied == null || occupied.length == 0 || occupied[0].length == 0) return null;
+            int maxCol = occupied.length;
+            int maxRow = occupied[0].length;
+            for (int y = 0; y <= maxRow - spanY; y++) {
+                for (int x = 0; x <= maxCol - spanX; x++) {
                     boolean fits = true;
                     for (int sy = 0; sy < spanY; sy++) {
                         for (int sx = 0; sx < spanX; sx++) {
@@ -380,9 +399,9 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                 popup.getMenu().add(0, 1, 0, "Widget Ayarlari");
             }
             
-            popup.getMenu().add(0, 2, 1, "Boyut: 1x1 (Kucuk)");
-            popup.getMenu().add(0, 3, 2, "Boyut: 2x1 (Orta)");
-            popup.getMenu().add(0, 4, 3, "Boyut: 2x2 (Buyuk)");
+            popup.getMenu().add(0, 2, 1, "Boyut: Small (3x3)");
+            popup.getMenu().add(0, 3, 2, "Boyut: Medium (6x3)");
+            popup.getMenu().add(0, 4, 3, "Boyut: Large (6x6)");
             
             // Sayfa tasima secenekleri
             if (widget.getPageIndex() > 0) {
@@ -427,19 +446,33 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
         }
 
         private boolean canWidgetFitAt(BaseWidget targetWidget, int pageIndex, int cellX, int cellY, int spanX, int spanY) {
-            if (cellX < 0 || cellX + spanX > WorkspaceCellLayout.COL_COUNT || cellY < 0 || cellY + spanY > WorkspaceCellLayout.ROW_COUNT) {
+            android.util.DisplayMetrics dm = context.getResources().getDisplayMetrics();
+            float density = dm.density;
+            int screenWidthPx = dm.widthPixels;
+            int screenHeightPx = dm.heightPixels;
+            int paddingSidePx = Math.round(12 * density);
+            int paddingTopBottomPx = Math.round(8 * density);
+            int taskbarPx = Math.round(56 * density);
+            int usableWidthPx = screenWidthPx - (2 * paddingSidePx);
+            int usableHeightPx = screenHeightPx - (2 * paddingTopBottomPx) - taskbarPx;
+            
+            int cellSize = WorkspaceCellLayout.getCellSize(context, usableWidthPx, usableHeightPx);
+            int colCount = WorkspaceCellLayout.getColCount(context, usableWidthPx, cellSize);
+            int rowCount = WorkspaceCellLayout.getRowCount(context, usableHeightPx, cellSize);
+
+            if (cellX < 0 || cellX + spanX > colCount || cellY < 0 || cellY + spanY > rowCount) {
                 return false;
             }
 
             // Hedef sayfa doluluk matrisini olustur (TargetWidget haric)
-            boolean[][] occupied = new boolean[WorkspaceCellLayout.COL_COUNT][WorkspaceCellLayout.ROW_COUNT];
+            boolean[][] occupied = new boolean[colCount][rowCount];
             for (BaseWidget w : widgetsList) {
                 if (w != targetWidget && w.isVisible() && w.getPageIndex() == pageIndex) {
                     int cx = w.getCellX();
                     int cy = w.getCellY();
                     int sx = w.getSpanX();
                     int sy = w.getSpanY();
-                    if (cx >= 0 && cx + sx <= WorkspaceCellLayout.COL_COUNT && cy >= 0 && cy + sy <= WorkspaceCellLayout.ROW_COUNT) {
+                    if (cx >= 0 && cx + sx <= colCount && cy >= 0 && cy + sy <= rowCount) {
                         for (int x = cx; x < cx + sx; x++) {
                             for (int y = cy; y < cy + sy; y++) {
                                 occupied[x][y] = true;
@@ -461,14 +494,28 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
         }
 
         private Point findNewPositionForWidget(BaseWidget targetWidget, int pageIndex, int spanX, int spanY) {
-            boolean[][] occupied = new boolean[WorkspaceCellLayout.COL_COUNT][WorkspaceCellLayout.ROW_COUNT];
+            android.util.DisplayMetrics dm = context.getResources().getDisplayMetrics();
+            float density = dm.density;
+            int screenWidthPx = dm.widthPixels;
+            int screenHeightPx = dm.heightPixels;
+            int paddingSidePx = Math.round(12 * density);
+            int paddingTopBottomPx = Math.round(8 * density);
+            int taskbarPx = Math.round(56 * density);
+            int usableWidthPx = screenWidthPx - (2 * paddingSidePx);
+            int usableHeightPx = screenHeightPx - (2 * paddingTopBottomPx) - taskbarPx;
+            
+            int cellSize = WorkspaceCellLayout.getCellSize(context, usableWidthPx, usableHeightPx);
+            int colCount = WorkspaceCellLayout.getColCount(context, usableWidthPx, cellSize);
+            int rowCount = WorkspaceCellLayout.getRowCount(context, usableHeightPx, cellSize);
+
+            boolean[][] occupied = new boolean[colCount][rowCount];
             for (BaseWidget w : widgetsList) {
                 if (w != targetWidget && w.isVisible() && w.getPageIndex() == pageIndex) {
                     int cx = w.getCellX();
                     int cy = w.getCellY();
                     int sx = w.getSpanX();
                     int sy = w.getSpanY();
-                    if (cx >= 0 && cx + sx <= WorkspaceCellLayout.COL_COUNT && cy >= 0 && cy + sy <= WorkspaceCellLayout.ROW_COUNT) {
+                    if (cx >= 0 && cx + sx <= colCount && cy >= 0 && cy + sy <= rowCount) {
                         for (int x = cx; x < cx + sx; x++) {
                             for (int y = cy; y < cy + sy; y++) {
                                 occupied[x][y] = true;
@@ -481,14 +528,14 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
         }
 
         private void changeWidgetSize(BaseWidget widget, BaseWidget.WidgetSize newSize) {
-            int targetSpanX = 1;
-            int targetSpanY = 1;
+            int targetSpanX = 3;
+            int targetSpanY = 3;
             if (newSize == BaseWidget.WidgetSize.MEDIUM) {
-                targetSpanX = 2;
-                targetSpanY = 1;
+                targetSpanX = 6;
+                targetSpanY = 3;
             } else if (newSize == BaseWidget.WidgetSize.LARGE) {
-                targetSpanX = 2;
-                targetSpanY = 2;
+                targetSpanX = 6;
+                targetSpanY = 6;
             }
 
             // Cakisma kontrolü: Bu sayfadaki diger widget'lar ile cakismadan bu boyuta gecip gecemeyecegini kontrol et

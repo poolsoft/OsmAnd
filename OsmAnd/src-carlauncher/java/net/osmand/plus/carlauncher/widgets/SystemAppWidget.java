@@ -151,8 +151,9 @@ public class SystemAppWidget extends BaseWidget {
             usableHeightPx -= taskbarPx;
 
             // Tek hucre boyutunu piksel cinsinden hesapla
-            int cellWidthPx = usableWidthPx / WorkspaceCellLayout.COL_COUNT;
-            int cellHeightPx = usableHeightPx / WorkspaceCellLayout.ROW_COUNT;
+            int cellSize = WorkspaceCellLayout.getCellSize(ctx, usableWidthPx, usableHeightPx);
+            int cellWidthPx = cellSize;
+            int cellHeightPx = cellSize;
 
             // Widget'in kapladigi toplam alani piksel cinsinden hesapla
             int spanX = getSpanX();
