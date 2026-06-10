@@ -149,8 +149,119 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                 loadModel(backupModelDir.getAbsolutePath());
             }
         } else {
-            downloadAndExtractModel(modelDir);
+            // Internete cikmadan once USB ve harici depolamada zip dosyasini ara (Turkce karakter yok)
+            File usbZip = findModelZipInUsb();
+            if (usbZip != null && usbZip.exists()) {
+                android.util.Log.i("VoiceCommandService", "USB veya depolamada ses modeli bulundu: " + usbZip.getAbsolutePath());
+                importModelFromUsbFile(usbZip, modelDir);
+            } else {
+                downloadAndExtractModel(modelDir);
+            }
         }
+    }
+
+    private File findModelZipInUsb() {
+        File storageDir = new File("/storage");
+        if (storageDir.exists() && storageDir.isDirectory()) {
+            File[] volumes = storageDir.listFiles();
+            if (volumes != null) {
+                for (File vol : volumes) {
+                    if (vol.isDirectory()) {
+                        String name = vol.getName();
+                        // Dahili hafizayi ve sistem dizinlerini atla (Turkce karakter yok)
+                        if (!name.equals("emulated") && !name.equals("self") && !name.startsWith(".")) {
+                            File zipFile = searchZipInDir(vol);
+                            if (zipFile != null) return zipFile;
+                        }
+                    }
+                }
+            }
+        }
+
+        String[] fallbackPaths = {"/storage/udisk", "/storage/udisk2", "/storage/usb_storage", "/mnt/media_rw", "/mnt/usb", "/mnt/usb_storage"};
+        for (String path : fallbackPaths) {
+            File fallbackDir = new File(path);
+            if (fallbackDir.exists() && fallbackDir.isDirectory()) {
+                File zipFile = searchZipInDir(fallbackDir);
+                if (zipFile != null) return zipFile;
+            }
+        }
+        return null;
+    }
+
+    private File searchZipInDir(File dir) {
+        // Performans ve derinlik sinirlamasi ile USB klasorlerinde ara (Turkce karakter yok)
+        return searchZipInDirRecursive(dir, 0);
+    }
+
+    private File searchZipInDirRecursive(File dir, int depth) {
+        if (depth > 2) return null; // En fazla 2 alt klasore in
+        try {
+            File[] files = dir.listFiles();
+            if (files == null) return null;
+            for (File f : files) {
+                if (f.isDirectory()) {
+                    String name = f.getName().toLowerCase(java.util.Locale.ROOT);
+                    if (name.startsWith(".") || name.equals("android") || name.equals("lost.dir")) continue;
+                    File res = searchZipInDirRecursive(f, depth + 1);
+                    if (res != null) return res;
+                } else {
+                    String name = f.getName().toLowerCase(java.util.Locale.ROOT);
+                    if (name.equals("vosk-model-small-tr-0.3.zip") || name.equals("vosk-model-tr.zip") || name.equals("vosk-model.zip")) {
+                        return f;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // ignore permission errors
+        }
+        return null;
+    }
+
+    private void importModelFromUsbFile(File usbZip, File targetDir) {
+        updateNotification("Model USB'den kuruluyor...");
+        Executors.newSingleThreadExecutor().execute(() -> {
+            File tempZip = new File(getExternalFilesDir(null), "vosk-model-tr-temp.zip");
+            try (FileInputStream fis = new FileInputStream(usbZip);
+                 FileOutputStream fos = new FileOutputStream(tempZip)) {
+                
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = fis.read(buffer)) != -1) {
+                    fos.write(buffer, 0, read);
+                }
+                fos.flush();
+
+                if (targetDir.exists()) {
+                    deleteRecursive(targetDir);
+                }
+                targetDir.mkdirs();
+
+                unzip(tempZip, targetDir.getParentFile());
+
+                File extractedDir = new File(targetDir.getParentFile(), "vosk-model-small-tr-0.3");
+                if (extractedDir.exists()) {
+                    extractedDir.renameTo(targetDir);
+                }
+
+                if (tempZip.exists()) {
+                    tempZip.delete();
+                }
+
+                handler.post(() -> {
+                    Toast.makeText(VoiceCommandService.this, "Model USB'den başarıyla kuruldu!", Toast.LENGTH_SHORT).show();
+                    loadModel(targetDir.getAbsolutePath());
+                });
+
+            } catch (Exception e) {
+                android.util.Log.e("VoiceCommandService", "USB model yukleme hatasi", e);
+                if (tempZip.exists()) tempZip.delete();
+                handler.post(() -> {
+                    // USB basarisiz olursa internetten indirmeyi dene (Turkce karakter yok)
+                    downloadAndExtractModel(targetDir);
+                });
+            }
+        });
     }
 
     private boolean isModelDirectoryValid(File dir) {

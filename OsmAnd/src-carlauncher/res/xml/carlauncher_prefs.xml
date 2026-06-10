@@ -275,6 +275,12 @@
             android:iconSpaceReserved="false" />
 
         <androidx.preference.Preference
+            android:key="car_launcher_import_voice_model"
+            android:title="Ses Modelini USB/Dosyadan Yukle"
+            android:summary="İnternet yoksa USB'den indirdiğiniz zip modelini yükleyin"
+            android:iconSpaceReserved="false" />
+
+        <androidx.preference.Preference
             android:key="car_launcher_github"
             android:title="GitHub"
             android:summary="Kaynak kodunu görüntüle"

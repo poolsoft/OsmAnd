@@ -672,6 +672,8 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         }
     }
 
+    private static final int RC_IMPORT_VOICE_MODEL = 103;
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -684,6 +686,8 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 getPreferenceScreen().removeAll();
                 onCreatePreferences(null, getPreferenceScreen().getKey());
                 Toast.makeText(getContext(), "Ayarlar yenilendi", Toast.LENGTH_SHORT).show();
+            } else if (requestCode == RC_IMPORT_VOICE_MODEL) {
+                importVoiceModelFromUri(uri);
             }
         }
     }
@@ -702,6 +706,21 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             } catch (Exception e) {
                 versionPref.setSummary("1.0.0");
             }
+        }
+
+        Preference importModelPref = findPreference("car_launcher_import_voice_model");
+        if (importModelPref != null) {
+            importModelPref.setOnPreferenceClickListener(preference -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("application/zip");
+                    startActivityForResult(intent, RC_IMPORT_VOICE_MODEL);
+                } catch (Exception e) {
+                    Toast.makeText(getContext(), "Dosya seçici açılamadı", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            });
         }
 
         Preference githubPref = findPreference("car_launcher_github");
@@ -727,5 +746,116 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+    }
+
+    private void importVoiceModelFromUri(Uri uri) {
+        if (getContext() == null) return;
+        Toast.makeText(getContext(), "Model dosyası kopyalanıyor, lütfen bekleyin...", Toast.LENGTH_SHORT).show();
+        
+        java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
+            File targetDir = new File(getContext().getExternalFilesDir(null), "vosk-model-tr");
+            File tempZip = new File(getContext().getExternalFilesDir(null), "vosk-model-tr-temp.zip");
+            
+            try (android.os.ParcelFileDescriptor pfd = getContext().getContentResolver().openFileDescriptor(uri, "r");
+                 java.io.FileInputStream fis = new java.io.FileInputStream(pfd.getFileDescriptor());
+                 java.io.FileOutputStream fos = new java.io.FileOutputStream(tempZip)) {
+                
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = fis.read(buffer)) != -1) {
+                    fos.write(buffer, 0, read);
+                }
+                fos.flush();
+                
+                // Zipten cikar (Turkce karakter yok)
+                if (targetDir.exists()) {
+                    deleteRecursive(targetDir);
+                }
+                targetDir.mkdirs();
+                
+                unzip(tempZip, targetDir.getParentFile());
+                
+                // Vosk zipten cikinca genelde vosk-model-small-tr-0.3 klasorunu olusturur, onu kontrol et (Turkce karakter yok)
+                File extractedDir = new File(targetDir.getParentFile(), "vosk-model-small-tr-0.3");
+                if (extractedDir.exists()) {
+                    extractedDir.renameTo(targetDir);
+                }
+                
+                if (tempZip.exists()) {
+                    tempZip.delete();
+                }
+                
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        Toast.makeText(getContext(), "Ses modeli başarıyla kuruldu! Servis yeniden başlatılıyor...", Toast.LENGTH_LONG).show();
+                        restartVoiceService();
+                    });
+                }
+                
+            } catch (Exception e) {
+                android.util.Log.e("CarLauncherSettings", "Model kopyalama/unzip hatası", e);
+                if (tempZip.exists()) tempZip.delete();
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        Toast.makeText(getContext(), "Ses modeli yüklenemedi!", Toast.LENGTH_LONG).show();
+                    });
+                }
+            }
+        });
+    }
+
+    private void restartVoiceService() {
+        if (getContext() == null) return;
+        Intent intent = new Intent(getContext(), net.osmand.plus.carlauncher.voice.VoiceCommandService.class);
+        if (net.osmand.plus.carlauncher.voice.VoiceCommandService.isServiceRunning) {
+            getContext().stopService(intent);
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            getContext().startForegroundService(intent);
+        } else {
+            getContext().startService(intent);
+        }
+    }
+
+    private void unzip(File zipFile, File targetDirectory) throws java.io.IOException {
+        java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(
+            new java.io.BufferedInputStream(new java.io.FileInputStream(zipFile)));
+        try {
+            java.util.zip.ZipEntry ze;
+            int count;
+            byte[] buffer = new byte[8192];
+            while ((ze = zis.getNextEntry()) != null) {
+                File file = new File(targetDirectory, ze.getName());
+                File dir = ze.isDirectory() ? file : file.getParentFile();
+                if (!dir.isDirectory() && !dir.mkdirs()) {
+                    throw new java.io.IOException("Klasor olusturulamadi: " + dir.getAbsolutePath());
+                }
+                if (ze.isDirectory()) {
+                    continue;
+                }
+                java.io.FileOutputStream fout = new java.io.FileOutputStream(file);
+                try {
+                    while ((count = zis.read(buffer)) != -1) {
+                        fout.write(buffer, 0, count);
+                    }
+                } finally {
+                    fout.close();
+                }
+            }
+        } finally {
+            zis.close();
+        }
+    }
+
+    private void deleteRecursive(File fileOrDirectory) {
+        if (fileOrDirectory.isDirectory()) {
+            File[] children = fileOrDirectory.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    deleteRecursive(child);
+                }
+            }
+        }
+        fileOrDirectory.delete();
     }
 }
