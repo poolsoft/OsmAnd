@@ -431,6 +431,22 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+
+        // Widget Paneli Konumu (Turkce karakter yok)
+        androidx.preference.ListPreference panelPositionPref = findPreference(CarLauncherSettings.KEY_WIDGET_PANEL_POSITION);
+        if (panelPositionPref != null) {
+            panelPositionPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                String val = (String) newValue;
+                if (settings != null) {
+                    settings.setWidgetPanelPosition(val);
+                }
+                if (getActivity() != null) {
+                    Intent intent = new Intent("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
+                    getActivity().sendBroadcast(intent);
+                }
+                return true;
+            });
+        }
     }
 
     private void applyStatusBarVisibility(boolean show) {

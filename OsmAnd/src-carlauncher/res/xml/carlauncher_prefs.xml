@@ -84,6 +84,15 @@
             android:defaultValue="true"
             android:iconSpaceReserved="false" />
 
+        <androidx.preference.ListPreference
+            android:key="widget_panel_position"
+            android:title="Widget Paneli Konumu"
+            android:summary="%s"
+            android:entries="@array/widget_panel_position_entries"
+            android:entryValues="@array/widget_panel_position_values"
+            android:defaultValue="right"
+            android:iconSpaceReserved="false" />
+
     </androidx.preference.PreferenceCategory>
 
 

@@ -455,6 +455,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 					openCarLauncherSettings();
 				} else if ("net.osmand.carlauncher.NIGHT_DIM_CHANGED".equals(action)) {
 					applyNightDimMode();
+				} else if ("net.osmand.carlauncher.WIDGET_MODE_CHANGED".equals(action)) {
+					applyWidgetPanelState();
 				}
 			}
 		};
@@ -463,6 +465,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		floatFilter.addAction("net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE");
 		floatFilter.addAction("net.osmand.carlauncher.ACTION_OPEN_SETTINGS");
 		floatFilter.addAction("net.osmand.carlauncher.NIGHT_DIM_CHANGED");
+		floatFilter.addAction("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 			registerReceiver(carFloatingButtonReceiver, floatFilter, Context.RECEIVER_NOT_EXPORTED);
 		} else {
