@@ -120,7 +120,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         appIcon = root.findViewById(net.osmand.plus.R.id.app_icon);
         appSelectorLaunch = root.findViewById(net.osmand.plus.R.id.app_selector_launch);
         // btnPlaylist = root.findViewById(net.osmand.plus.R.id.btn_playlist);
-        // btnEqualizer = root.findViewById(net.osmand.plus.R.id.btn_equalizer);
+        btnEqualizer = root.findViewById(net.osmand.plus.R.id.btn_dock_equalizer);
         btnClose = root.findViewById(net.osmand.plus.R.id.btn_close);
         nowPlayingArt = root.findViewById(net.osmand.plus.R.id.now_playing_art);
         nowPlayingArtBlur = root.findViewById(net.osmand.plus.R.id.now_playing_art_blur);
@@ -1184,7 +1184,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         final int finalColor = color;
         if (visualizerView != null) {
-            final int visualizerColor = (albumArt != null) ? finalColor : 0;
+            net.osmand.plus.carlauncher.CarLauncherSettings clSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+            // Ambians gorsellestirici ayarina gore dinamik renk veya varsayilan (0) secimi (Turkce karakter yok)
+            final int visualizerColor = (albumArt != null && clSettings.isAmbianceVisualizerEnabled()) ? finalColor : 0;
             visualizerView.post(() -> visualizerView.setDominantColor(visualizerColor));
         }
         

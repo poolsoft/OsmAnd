@@ -118,6 +118,19 @@
                         android:padding="10dp"
                         android:layout_marginTop="16dp" />
 
+                    <!-- Equalizer Butonu -->
+                    <ImageButton
+                        android:id="@+id/btn_dock_equalizer"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:src="@drawable/ic_music_equalizer"
+                        android:tint="#FFFFFF"
+                        android:background="?android:attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Equalizer"
+                        android:scaleType="centerInside"
+                        android:padding="10dp"
+                        android:layout_marginTop="16dp" />
+
                 </LinearLayout>
 
                 <!-- Visualizer (Placed at the top of the ConstraintLayout, occupying the empty space where cover art was) -->
@@ -125,7 +138,7 @@
                     android:id="@+id/player_visualizer"
                     android:layout_width="0dp"
                     android:layout_height="100dp"
-                    android:alpha="0.6"
+                    android:alpha="1.0"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toTopOf="@id/player_info_container"
                     app:layout_constraintStart_toEndOf="@id/music_side_dock"

@@ -41,6 +41,7 @@ public class CarLauncherSettings {
 
     // Music Keys
     public static final String KEY_MUSIC_APP = "car_launcher_music_app";
+    public static final String KEY_AMBIANCE_VISUALIZER = "car_launcher_ambiance_visualizer";
 
     // Dock Keys
     public static final String KEY_MAX_SHORTCUTS = "car_launcher_max_shortcuts";
@@ -197,6 +198,14 @@ public class CarLauncherSettings {
     
     public void setAutoPlayMusicEnabled(boolean enabled) {
         prefs.edit().putBoolean(KEY_AUTO_PLAY_MUSIC, enabled).apply();
+    }
+
+    public boolean isAmbianceVisualizerEnabled() {
+        return prefs.getBoolean(KEY_AMBIANCE_VISUALIZER, true);
+    }
+
+    public void setAmbianceVisualizerEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_AMBIANCE_VISUALIZER, enabled).apply();
     }
     
     // --- Weather Settings ---

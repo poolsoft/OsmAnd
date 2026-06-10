@@ -236,7 +236,9 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                 }
 
                 if (visualizerView != null) {
-                    if (albumArt != null) {
+                    net.osmand.plus.carlauncher.CarLauncherSettings clSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+                    // Ambians gorsellestirici ayari kontrolu (Turkce karakter yok)
+                    if (albumArt != null && clSettings.isAmbianceVisualizerEnabled()) {
                         int color = getDominantColor(albumArt);
                         visualizerView.setDominantColor(color);
                     } else {

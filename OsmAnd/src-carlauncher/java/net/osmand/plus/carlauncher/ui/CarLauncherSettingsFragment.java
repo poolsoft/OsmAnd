@@ -480,6 +480,18 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+
+        // Ambians gorsellestirici ayari (Turkce karakter yok)
+        SwitchPreferenceCompat ambianceVisualizerPref = findPreference(CarLauncherSettings.KEY_AMBIANCE_VISUALIZER);
+        if (ambianceVisualizerPref != null) {
+            ambianceVisualizerPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                boolean val = (Boolean) newValue;
+                if (settings != null) {
+                    settings.setAmbianceVisualizerEnabled(val);
+                }
+                return true;
+            });
+        }
     }
 
     private void updateMusicAppSummary(Preference pref) {
