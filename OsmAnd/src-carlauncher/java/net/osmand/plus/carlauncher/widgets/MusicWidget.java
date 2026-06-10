@@ -234,8 +234,30 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                         albumArtView.setImageResource(net.osmand.plus.R.drawable.ic_default_album_art);
                     }
                 }
+
+                if (visualizerView != null) {
+                    if (albumArt != null) {
+                        int color = getDominantColor(albumArt);
+                        visualizerView.setDominantColor(color);
+                    } else {
+                        visualizerView.setDominantColor(0);
+                    }
+                }
+
                 updateAppIcon(packageName);
             });
+        }
+    }
+
+    private int getDominantColor(Bitmap bitmap) {
+        if (bitmap == null) return 0xFF00FFFF;
+        try {
+            Bitmap small = Bitmap.createScaledBitmap(bitmap, 1, 1, true);
+            int color = small.getPixel(0, 0);
+            small.recycle();
+            return color;
+        } catch (Exception e) {
+            return 0xFF00FFFF;
         }
     }
 

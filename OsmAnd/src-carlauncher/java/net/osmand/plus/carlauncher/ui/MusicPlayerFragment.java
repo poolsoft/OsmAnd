@@ -192,6 +192,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         if (playerInfoContainer != null) {
             playerInfoContainer.setOnTouchListener(touchListener);
         }
+        if (playerPanel != null) {
+            playerPanel.setOnTouchListener(touchListener);
+        }
 
         updateVoiceButtonUI();
 
@@ -1173,6 +1176,24 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
     @Override
     public void onTrackChanged(String title, String artist, Bitmap albumArt, String packageName) {
+        updateMiniMusicUI(); // Sarki ismi ve play ikonunu guncelle (Turkce karakter yok)
+        
+        // Dynamic Color Logic
+        int color = android.graphics.Color.WHITE;
+        if (albumArt != null) {
+            color = getDominantColor(albumArt);
+        }
+
+        final int finalColor = color;
+        if (miniMusicIcon != null) miniMusicIcon.post(() -> miniMusicIcon.setColorFilter(finalColor));
+        if (miniBtnPlay != null) miniBtnPlay.post(() -> miniBtnPlay.setColorFilter(finalColor));
+        if (miniBtnNext != null) miniBtnNext.post(() -> miniBtnNext.setColorFilter(finalColor));
+
+        if (visualizerView != null) {
+            final int visualizerColor = (albumArt != null) ? finalColor : 0;
+            visualizerView.post(() -> visualizerView.setDominantColor(visualizerColor));
+        }
+        
         if (getActivity() == null)
             return;
         getActivity().runOnUiThread(() -> {

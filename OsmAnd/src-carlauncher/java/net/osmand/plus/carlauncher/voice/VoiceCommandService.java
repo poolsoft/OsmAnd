@@ -21,6 +21,8 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import android.provider.Settings;
+import android.net.Uri;
 
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.myplaces.favorites.FavouritesHelper;
@@ -451,6 +453,8 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                 startNavigationTo("work");
             } else if (text.contains("harita") || text.contains("navigasyon") || text.contains("yol")) {
                 openExternalMap();
+            } else if (text.contains("parlaklik") || text.contains("parlaklık") || text.contains("karart") || (text.contains("ekran") && (text.contains("kis") || text.contains("kıs") || text.contains("azalt") || text.contains("dusur")))) {
+                adjustBrightness(text);
             } else {
                 speak("Anlasilamayan komut: " + text);
             }
@@ -557,6 +561,67 @@ public class VoiceCommandService extends Service implements RecognitionListener 
             speak("Harita aciliyor.");
         } else {
             speak("Harita uygulamasi bulunamadi.");
+        }
+    }
+
+    private void adjustBrightness(String text) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.System.canWrite(this)) {
+            speak("Parlaklik ayari icin sistem ayarlarini degistirme izni gerekiyor. Lutfen izin verin.");
+            try {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
+                intent.setData(Uri.parse("package:" + getPackageName()));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            } catch (Exception e) {
+                android.util.Log.e("VoiceCommandService", "Izin ekrani acilamadi", e);
+            }
+            return;
+        }
+
+        try {
+            int currentBrightness = Settings.System.getInt(
+                    getContentResolver(),
+                    Settings.System.SCREEN_BRIGHTNESS
+            );
+
+            if (text.contains("art") || text.contains("yüksel") || text.contains("yuksel") || text.contains("artır") || text.contains("arttır")) {
+                int target = Math.min(255, currentBrightness + 51); // Increase by 20%
+                Settings.System.putInt(
+                        getContentResolver(),
+                        Settings.System.SCREEN_BRIGHTNESS,
+                        target
+                );
+                int pct = (target * 100) / 255;
+                speak("Parlaklik yuzde " + pct + " yapildi.");
+            } else if (text.contains("azal") || text.contains("kıs") || text.contains("kis") || text.contains("düşür") || text.contains("dusur") || text.contains("karart")) {
+                int target = Math.max(10, currentBrightness - 51); // Decrease by 20%
+                Settings.System.putInt(
+                        getContentResolver(),
+                        Settings.System.SCREEN_BRIGHTNESS,
+                        target
+                );
+                int pct = (target * 100) / 255;
+                speak("Parlaklik yuzde " + pct + " yapildi.");
+            } else if (text.contains("yuzde") || text.contains("yüzde")) {
+                int pct = parsePercentage(text);
+                if (pct >= 0 && pct <= 100) {
+                    int target = (pct * 255) / 100;
+                    if (target < 10) target = 10; // Avoid complete blackout
+                    Settings.System.putInt(
+                            getContentResolver(),
+                            Settings.System.SCREEN_BRIGHTNESS,
+                            target
+                    );
+                    speak("Parlaklik yuzde " + pct + " yapildi.");
+                } else {
+                    speak("Gecersiz parlaklik yuzdesi.");
+                }
+            } else {
+                speak("Parlaklik komutu anlasilamadi.");
+            }
+        } catch (Exception e) {
+            android.util.Log.e("VoiceCommandService", "Parlaklik ayarlanamadi", e);
+            speak("Parlaklik ayarlanamadi.");
         }
     }
 

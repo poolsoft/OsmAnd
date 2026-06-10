@@ -18,6 +18,29 @@ public class MusicVisualizerView extends View {
     public static final int TYPE_GLOW_PEAK = 1;
     public static final int TYPE_NEON_MODERN = 2;
     private int visualizerType = TYPE_NEON_MODERN;
+    private int dominantColor = 0;
+
+    public void setDominantColor(int color) {
+        this.dominantColor = color;
+        this.mFirst = true; // Force shader recreation
+        postInvalidate();
+    }
+
+    private int getDarkerColor(int color, float factor) {
+        int a = Color.alpha(color);
+        int r = Math.round(Color.red(color) * factor);
+        int g = Math.round(Color.green(color) * factor);
+        int b = Math.round(Color.blue(color) * factor);
+        return Color.argb(a, Math.min(r, 255), Math.min(g, 255), Math.min(b, 255));
+    }
+
+    private int getLighterColor(int color, float factor) {
+        int a = Color.alpha(color);
+        int r = Math.min(255, Math.round(Color.red(color) + (255 - Color.red(color)) * factor));
+        int g = Math.min(255, Math.round(Color.green(color) + (255 - Color.green(color)) * factor));
+        int b = Math.min(255, Math.round(Color.blue(color) + (255 - Color.blue(color)) * factor));
+        return Color.argb(a, r, g, b);
+    }
 
     private byte[] mBytes;
     private float[] mPoints;
@@ -115,16 +138,27 @@ public class MusicVisualizerView extends View {
 
         mRect.set(0, 0, getWidth(), getHeight());
 
+        mPeakPaint.setColor(dominantColor != 0 ? getLighterColor(dominantColor, 0.5f) : Color.WHITE);
+
         // Tipine gore gradient olusturuluyor
         if (mFirst) {
-            if (visualizerType == TYPE_NEON_MODERN) {
+            int heightVal = getHeight() > 0 ? getHeight() : 100;
+            if (dominantColor != 0) {
+                int startColor = getDarkerColor(dominantColor, 0.4f);
+                int endColor = dominantColor;
+                int[] colors = {startColor, endColor};
+                LinearGradient shader = new LinearGradient(
+                        0, heightVal, 0, 0, 
+                        colors, null, Shader.TileMode.CLAMP);
+                mForePaint.setShader(shader);
+            } else if (visualizerType == TYPE_NEON_MODERN) {
                 // Neon Modern icin Cyan -> Mavi gecisi
                 int[] colors = {
                     Color.parseColor("#0044FF"), // Alt kisim: Koyu Mavi
                     Color.parseColor("#00FFFF")  // Ust kisim: Parlak Cyan
                 };
                 LinearGradient shader = new LinearGradient(
-                        0, getHeight(), 0, 0, 
+                        0, heightVal, 0, 0, 
                         colors, null, Shader.TileMode.CLAMP);
                 mForePaint.setShader(shader);
             } else {
@@ -138,7 +172,7 @@ public class MusicVisualizerView extends View {
                     Color.parseColor("#FF00FF")  // Mor
                 };
                 LinearGradient shader = new LinearGradient(
-                        0, getHeight(), 0, 0, 
+                        0, heightVal, 0, 0, 
                         colors, null, Shader.TileMode.CLAMP);
                 mForePaint.setShader(shader);
             }
