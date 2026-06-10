@@ -933,28 +933,12 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private void openEqualizer() {
         if (getContext() == null)
             return;
-        // XYAuto donanim ekolayziri kontrolu (sys.xy.tumu.app) - Turkce karakter yok
+        // Evrensel EQ Kontrolu (Turkce karakter yok)
         try {
-            android.content.pm.PackageManager pm = getContext().getPackageManager();
-            android.content.Intent xyIntent = pm.getLaunchIntentForPackage("sys.xy.tumu.app");
-            if (xyIntent != null) {
-                xyIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(xyIntent);
-                return;
-            }
+            net.osmand.plus.carlauncher.hardware.CarHardwareManager.getInstance(getContext())
+                .openEqualizer(getContext());
         } catch (Exception e) {
-            // Hatayi yoksayip varsayilan EQ panelini dene (Turkce karakter yok)
-        }
-
-        try {
-            android.content.Intent intent = new android.content.Intent(
-                    android.media.audiofx.AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL);
-            intent.putExtra(android.media.audiofx.AudioEffect.EXTRA_CONTENT_TYPE,
-                    android.media.audiofx.AudioEffect.CONTENT_TYPE_MUSIC);
-            intent.putExtra(android.media.audiofx.AudioEffect.EXTRA_AUDIO_SESSION, 0);
-            startActivity(intent);
-        } catch (Exception e) {
-            Toast.makeText(getContext(), "Equalizer bulunamadi", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Equalizer acilamadi", Toast.LENGTH_SHORT).show();
         }
     }
 

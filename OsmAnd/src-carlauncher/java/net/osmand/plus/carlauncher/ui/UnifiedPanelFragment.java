@@ -172,6 +172,8 @@ public class UnifiedPanelFragment extends Fragment
         popup.getMenu().add(0, 1, 0, "Harita Modu");
         popup.getMenu().add(0, 2, 1, "Masaustu Modu");
         popup.getMenu().add(0, 3, 2, "Ayarlar");
+        popup.getMenu().add(0, 4, 3, "Ekranı Kapat");
+        popup.getMenu().add(0, 5, 4, "Hafızayı Temizle (RAM)");
         
         popup.setOnMenuItemClickListener(item -> {
             if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
@@ -185,6 +187,14 @@ public class UnifiedPanelFragment extends Fragment
                         return true;
                     case 3:
                         activity.openCarLauncherSettings();
+                        return true;
+                    case 4:
+                        net.osmand.plus.carlauncher.hardware.CarHardwareManager.getInstance(getContext())
+                            .turnOffScreen();
+                        return true;
+                    case 5:
+                        net.osmand.plus.carlauncher.hardware.CarHardwareManager.getInstance(getContext())
+                            .cleanRam();
                         return true;
                 }
             }
