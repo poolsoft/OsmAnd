@@ -290,9 +290,26 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 updateRepeatUI();
             });
 
-        // App Selector Launch (Icon + Name) - Tiklayinca picker acilacak (Turkce karakter yok)
+        // App Selector Launch (Icon + Name) - Tiklamada ac, uzun basmada picker ac (Turkce karakter yok)
         if (appSelectorLaunch != null) {
-            appSelectorLaunch.setOnClickListener(v -> showAppPicker());
+            appSelectorLaunch.setOnClickListener(v -> {
+                String preferredPkg = musicManager.getPreferredPackage();
+                if (preferredPkg != null && !"usage.internal.player".equals(preferredPkg)) {
+                    try {
+                        android.content.Intent launchIntent = getContext().getPackageManager().getLaunchIntentForPackage(preferredPkg);
+                        if (launchIntent != null) {
+                            launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                            getContext().startActivity(launchIntent);
+                        }
+                    } catch (Exception e) {
+                        android.util.Log.e("MusicPlayerFragment", "Uygulama on plana getirilemedi: " + preferredPkg, e);
+                    }
+                }
+            });
+            appSelectorLaunch.setOnLongClickListener(v -> {
+                showAppPicker();
+                return true;
+            });
         }
 
 
@@ -916,6 +933,19 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private void openEqualizer() {
         if (getContext() == null)
             return;
+        // XYAuto donanim ekolayziri kontrolu (sys.xy.tumu.app) - Turkce karakter yok
+        try {
+            android.content.pm.PackageManager pm = getContext().getPackageManager();
+            android.content.Intent xyIntent = pm.getLaunchIntentForPackage("sys.xy.tumu.app");
+            if (xyIntent != null) {
+                xyIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(xyIntent);
+                return;
+            }
+        } catch (Exception e) {
+            // Hatayi yoksayip varsayilan EQ panelini dene (Turkce karakter yok)
+        }
+
         try {
             android.content.Intent intent = new android.content.Intent(
                     android.media.audiofx.AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL);
@@ -1419,16 +1449,17 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         AppPickerDialog dialog = new AppPickerDialog(getContext(), true, (packageName, appName, icon) -> {
             musicManager.forceSetActiveController(packageName);
             
-            // Secilen harici uygulamayi arka planda veya on planda baslat
+            // Secilen harici uygulamayi split windowda baslat (Turkce karakter yok)
             if (packageName != null && !"usage.internal.player".equals(packageName)) {
                 try {
                     android.content.Intent launchIntent = getContext().getPackageManager().getLaunchIntentForPackage(packageName);
                     if (launchIntent != null) {
-                        launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-                        getContext().startActivity(launchIntent);
+                        launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT | android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                        android.app.ActivityOptions options = android.app.ActivityOptions.makeBasic();
+                        getContext().startActivity(launchIntent, options.toBundle());
                     }
                 } catch (Exception e) {
-                    android.util.Log.e("MusicPlayerFragment", "Uygulama baslatilamadi: " + packageName, e);
+                    android.util.Log.e("MusicPlayerFragment", "Uygulama split modda baslatilamadi: " + packageName, e);
                 }
             }
             
