@@ -21,7 +21,19 @@ public class MusicVisualizerView extends View {
     private int dominantColor = 0;
 
     public void setDominantColor(int color) {
-        this.dominantColor = color;
+        if (color != 0) {
+            float[] hsv = new float[3];
+            Color.colorToHSV(color, hsv);
+            // Eger renk cok donukse doygunlugu (Saturation) yukseltiyoruz (Turkce karakter yok)
+            if (hsv[1] > 0.05f) {
+                hsv[1] = Math.max(hsv[1], 0.85f);
+            }
+            // Parlakligi (Value) her zaman en yuksek seviyede tutuyoruz ki parlasin (Turkce karakter yok)
+            hsv[2] = Math.max(hsv[2], 0.90f);
+            this.dominantColor = Color.HSVToColor(hsv);
+        } else {
+            this.dominantColor = 0;
+        }
         this.mFirst = true; // Force shader recreation
         postInvalidate();
     }
@@ -101,6 +113,9 @@ public class MusicVisualizerView extends View {
                 invalidate();
             }
         });
+
+        // Golge ve parilti efektlerinin cizilmesi icin yazilimsal katman destegi (Turkce karakter yok)
+        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
     }
 
     public void updateVisualizer(byte[] fft) {
@@ -144,37 +159,41 @@ public class MusicVisualizerView extends View {
         if (mFirst) {
             int heightVal = getHeight() > 0 ? getHeight() : 100;
             if (dominantColor != 0) {
-                int startColor = getDarkerColor(dominantColor, 0.4f);
+                // Alt taraf yari saydam, ust taraf ise canli neon renk (Turkce karakter yok)
+                int startColor = Color.argb(38, Color.red(dominantColor), Color.green(dominantColor), Color.blue(dominantColor));
                 int endColor = dominantColor;
                 int[] colors = {startColor, endColor};
                 LinearGradient shader = new LinearGradient(
                         0, heightVal, 0, 0, 
                         colors, null, Shader.TileMode.CLAMP);
                 mForePaint.setShader(shader);
+                mForePaint.setShadowLayer(15f, 0f, 0f, dominantColor);
             } else if (visualizerType == TYPE_NEON_MODERN) {
-                // Neon Modern icin Cyan -> Mavi gecisi
+                // Neon Modern icin Cyan -> Mavi gecisi (Turkce karakter yok)
                 int[] colors = {
-                    Color.parseColor("#0044FF"), // Alt kisim: Koyu Mavi
-                    Color.parseColor("#00FFFF")  // Ust kisim: Parlak Cyan
+                    Color.parseColor("#0044FF"), // Alt kisim: Koyu Mavi (Turkce karakter yok)
+                    Color.parseColor("#00FFFF")  // Ust kisim: Parlak Cyan (Turkce karakter yok)
                 };
                 LinearGradient shader = new LinearGradient(
                         0, heightVal, 0, 0, 
                         colors, null, Shader.TileMode.CLAMP);
                 mForePaint.setShader(shader);
+                mForePaint.setShadowLayer(15f, 0f, 0f, Color.parseColor("#00FFFF"));
             } else {
-                // Klasik ve Glow Peak icin cok renkli gradient
+                // Klasik ve Glow Peak icin cok renkli gradient (Turkce karakter yok)
                 int[] colors = {
-                    Color.parseColor("#FF0000"), // Kirmizi
-                    Color.parseColor("#FFFF00"), // Sari
-                    Color.parseColor("#00FF00"), // Yesil
+                    Color.parseColor("#FF0000"), // Kirmizi (Turkce karakter yok)
+                    Color.parseColor("#FFFF00"), // Sari (Turkce karakter yok)
+                    Color.parseColor("#00FF00"), // Yesil (Turkce karakter yok)
                     Color.parseColor("#00FFFF"), // Turkuaz
-                    Color.parseColor("#0000FF"), // Mavi
+                    Color.parseColor("#0000FF"), // Mavi (Turkce karakter yok)
                     Color.parseColor("#FF00FF")  // Mor
                 };
                 LinearGradient shader = new LinearGradient(
                         0, heightVal, 0, 0, 
                         colors, null, Shader.TileMode.CLAMP);
                 mForePaint.setShader(shader);
+                mForePaint.clearShadowLayer();
             }
             mFirst = false;
         }
