@@ -22,11 +22,11 @@
         <item>right</item>
     </string-array>
 
-    <!-- Widget Paneli Konumu -->
+    <!-- Büyük Panel Konumu -->
     <string-array name="widget_panel_position_entries">
-        <item>Sağ (Varsayılan)</item>
+        <item>Sol (Varsayılan)</item>
         <item>Alt</item>
-        <item>Sol</item>
+        <item>Sağ</item>
     </string-array>
     <string-array name="widget_panel_position_values">
         <item>right</item>
@@ -72,13 +72,13 @@
         <item>space</item>
     </string-array>
 
-    <!-- Panel Genişleme Davranışı -->
+    <!-- Büyük Panel Açılış Stratejisi -->
     <string-array name="expansion_behavior_entries">
-        <item>Sabit Kal (Sadece Genişlik Değişir)</item>
-        <item>Yer Değiştir (Büyüyen Sola/Sağa Geçer)</item>
+        <item>Büyük Panelde Aç (İçerik Değiştir)</item>
+        <item>Olduğu Yerde Genişlet (Boyut Değiştir)</item>
     </string-array>
     <string-array name="expansion_behavior_values">
-        <item>fixed</item>
         <item>swap</item>
+        <item>fixed</item>
     </string-array>
 </resources>

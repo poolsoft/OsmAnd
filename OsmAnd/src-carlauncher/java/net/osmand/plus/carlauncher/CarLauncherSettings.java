@@ -287,7 +287,7 @@ public class CarLauncherSettings {
     }
 
     public String getExpansionBehavior() {
-        return prefs.getString(KEY_EXPANSION_BEHAVIOR, "fixed");
+        return prefs.getString(KEY_EXPANSION_BEHAVIOR, "swap");
     }
 
     public void setExpansionBehavior(String behavior) {

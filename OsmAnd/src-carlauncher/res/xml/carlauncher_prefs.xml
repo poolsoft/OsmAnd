@@ -86,7 +86,7 @@
 
         <androidx.preference.ListPreference
             android:key="widget_panel_position"
-            android:title="Widget Paneli Konumu"
+            android:title="Büyük Panel Konumu"
             android:summary="%s"
             android:entries="@array/widget_panel_position_entries"
             android:entryValues="@array/widget_panel_position_values"
@@ -95,11 +95,11 @@
 
         <androidx.preference.ListPreference
             android:key="car_launcher_expansion_behavior"
-            android:title="Panel Genişleme Davranışı"
+            android:title="Büyük Panel Açılış Stratejisi"
             android:summary="%s"
             android:entries="@array/expansion_behavior_entries"
             android:entryValues="@array/expansion_behavior_values"
-            android:defaultValue="fixed"
+            android:defaultValue="swap"
             android:iconSpaceReserved="false" />
 
     </androidx.preference.PreferenceCategory>
