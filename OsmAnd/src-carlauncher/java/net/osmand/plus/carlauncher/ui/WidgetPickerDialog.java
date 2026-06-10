@@ -471,8 +471,8 @@ public class WidgetPickerDialog extends DialogFragment {
         int minWidthPx = Math.round(provider.minWidth * density);
         int minHeightPx = Math.round(provider.minHeight * density);
 
-        int spanX = Math.max(1, Math.min(colCount, Math.round((float) minWidthPx / cellSize)));
-        int spanY = Math.max(1, Math.min(rowCount, Math.round((float) minHeightPx / cellSize)));
+        int spanX = Math.max(3, Math.min(colCount, Math.round((float) minWidthPx / cellSize)));
+        int spanY = Math.max(3, Math.min(rowCount, Math.round((float) minHeightPx / cellSize)));
 
         String label = provider.loadLabel(pm);
         if (label == null || label.trim().isEmpty()) {
@@ -616,8 +616,8 @@ public class WidgetPickerDialog extends DialogFragment {
                 int minWidthPx = Math.round(provider.minWidth * density);
                 int minHeightPx = Math.round(provider.minHeight * density);
 
-                int spanX = Math.max(1, Math.min(colCount, Math.round((float) minWidthPx / cellSize)));
-                int spanY = Math.max(1, Math.min(rowCount, Math.round((float) minHeightPx / cellSize)));
+                int spanX = Math.max(3, Math.min(colCount, Math.round((float) minWidthPx / cellSize)));
+                int spanY = Math.max(3, Math.min(rowCount, Math.round((float) minHeightPx / cellSize)));
                 
                 int widthDp = Math.max(40, Math.round((cellSize * spanX) / density));
                 int heightDp = Math.max(40, Math.round((cellSize * spanY) / density));
@@ -765,8 +765,8 @@ public class WidgetPickerDialog extends DialogFragment {
                 int minWidthPx = Math.round(info.minWidth * density);
                 int minHeightPx = Math.round(info.minHeight * density);
                 
-                int spanX = Math.max(1, Math.min(colCount, Math.round((float) minWidthPx / cellSize)));
-                int spanY = Math.max(1, Math.min(rowCount, Math.round((float) minHeightPx / cellSize)));
+                int spanX = Math.max(3, Math.min(colCount, Math.round((float) minWidthPx / cellSize)));
+                int spanY = Math.max(3, Math.min(rowCount, Math.round((float) minHeightPx / cellSize)));
                 
                 if (spanX <= 3 && spanY <= 3) {
                     widget.setSize(BaseWidget.WidgetSize.SMALL);

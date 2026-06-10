@@ -539,8 +539,8 @@ public class WidgetManager {
                         int savedCellX = prefs.getInt("cellx_" + id + fallbackSuffix, -1);
                         int savedCellY = prefs.getInt("celly_" + id + fallbackSuffix, -1);
                         
-                        int spanX = Math.max(1, Math.min(targetColCount, savedSpanX));
-                        int spanY = Math.max(1, Math.min(targetRowCount, savedSpanY));
+                        int spanX = Math.max(3, Math.min(targetColCount, savedSpanX));
+                        int spanY = Math.max(3, Math.min(targetRowCount, savedSpanY));
                         
                         int cellX = savedCellX;
                         int cellY = savedCellY;
@@ -645,8 +645,8 @@ public class WidgetManager {
                 int spanx = prefs.getInt("spanx_" + id + suffix, widget.getSpanX());
                 int spany = prefs.getInt("spany_" + id + suffix, widget.getSpanY());
                 
-                spanx = Math.max(1, Math.min(targetColCount, spanx));
-                spany = Math.max(1, Math.min(targetRowCount, spany));
+                spanx = Math.max(3, Math.min(targetColCount, spanx));
+                spany = Math.max(3, Math.min(targetRowCount, spany));
                 if (cellx != -1) {
                     cellx = Math.max(0, Math.min(targetColCount - spanx, cellx));
                 }

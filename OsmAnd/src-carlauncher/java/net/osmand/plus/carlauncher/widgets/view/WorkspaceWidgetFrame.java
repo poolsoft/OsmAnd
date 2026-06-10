@@ -123,8 +123,8 @@ public class WorkspaceWidgetFrame extends FrameLayout {
                             int gridDeltaX = Math.round(deltaX / cellSize);
                             int gridDeltaY = Math.round(deltaY / cellSize);
 
-                            int newSpanX = Math.max(1, Math.min(colCount - widget.getCellX(), initialSpanX + gridDeltaX));
-                            int newSpanY = Math.max(1, Math.min(rowCount - widget.getCellY(), initialSpanY + gridDeltaY));
+                            int newSpanX = Math.max(3, Math.min(colCount - widget.getCellX(), initialSpanX + gridDeltaX));
+                            int newSpanY = Math.max(3, Math.min(rowCount - widget.getCellY(), initialSpanY + gridDeltaY));
 
                             if (newSpanX != widget.getSpanX() || newSpanY != widget.getSpanY()) {
                                 if (canWidgetFitAt(widget.getPageIndex(), widget.getCellX(), widget.getCellY(), newSpanX, newSpanY)) {
