@@ -29,6 +29,7 @@ import net.osmand.plus.carlauncher.dock.AppDockManager;
 import net.osmand.plus.carlauncher.dock.AppPickerDialog;
 import net.osmand.plus.carlauncher.music.MusicManager;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
