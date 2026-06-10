@@ -71,4 +71,14 @@
         <item>carbon</item>
         <item>space</item>
     </string-array>
+
+    <!-- Panel Genişleme Davranışı -->
+    <string-array name="expansion_behavior_entries">
+        <item>Sabit Kal (Sadece Genişlik Değişir)</item>
+        <item>Yer Değiştir (Büyüyen Sola/Sağa Geçer)</item>
+    </string-array>
+    <string-array name="expansion_behavior_values">
+        <item>fixed</item>
+        <item>swap</item>
+    </string-array>
 </resources>

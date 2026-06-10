@@ -447,6 +447,22 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+
+        // Panel Genisleme Davranisi (Turkce karakter yok)
+        androidx.preference.ListPreference expansionBehaviorPref = findPreference("car_launcher_expansion_behavior");
+        if (expansionBehaviorPref != null) {
+            expansionBehaviorPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                String val = (String) newValue;
+                if (settings != null) {
+                    settings.setExpansionBehavior(val);
+                }
+                if (getActivity() != null) {
+                    Intent intent = new Intent("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
+                    getActivity().sendBroadcast(intent);
+                }
+                return true;
+            });
+        }
     }
 
     private void applyStatusBarVisibility(boolean show) {

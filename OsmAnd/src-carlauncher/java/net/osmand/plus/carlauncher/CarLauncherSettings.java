@@ -52,6 +52,7 @@ public class CarLauncherSettings {
     // Widget Panel Keys
     public static final String KEY_WIDGET_PANEL_POSITION = "widget_panel_position"; // "right", "bottom", "left"
     public static final String KEY_WIDGET_CARD_STYLE = "widget_card_style"; // "modern", "classic", "minimal"
+    public static final String KEY_EXPANSION_BEHAVIOR = "car_launcher_expansion_behavior";
 
     private final SharedPreferences prefs;
 
@@ -283,6 +284,14 @@ public class CarLauncherSettings {
 
     public void setWidgetPanelPosition(String pos) {
         prefs.edit().putString(KEY_WIDGET_PANEL_POSITION, pos).apply();
+    }
+
+    public String getExpansionBehavior() {
+        return prefs.getString(KEY_EXPANSION_BEHAVIOR, "fixed");
+    }
+
+    public void setExpansionBehavior(String behavior) {
+        prefs.edit().putString(KEY_EXPANSION_BEHAVIOR, behavior).apply();
     }
 
     public String getWidgetCardStyle() {

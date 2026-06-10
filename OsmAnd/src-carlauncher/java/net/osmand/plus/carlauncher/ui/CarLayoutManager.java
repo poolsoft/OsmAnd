@@ -241,30 +241,41 @@ public class CarLayoutManager {
                 int leftSide = "left".equals(dockPos) ? ConstraintSet.END : ConstraintSet.START;
                 int rightSide = "right".equals(dockPos) ? ConstraintSet.START : ConstraintSet.END;
 
+                boolean isFixed = "fixed".equals(carSettings.getExpansionBehavior());
                 int leftViewId;
                 int rightViewId;
                 boolean leftViewIsSmall = "left".equals(widgetPos);
 
-                if (leftViewIsSmall) {
-                    if (isSwapped) {
-                        // SMALL solda (harita), LARGE sagda (widget)
-                        leftViewId = R.id.map_container;
-                        rightViewId = R.id.widget_panel;
-                    } else {
-                        // SMALL solda (widget), LARGE sagda (harita)
+                if (isFixed) {
+                    if (leftViewIsSmall) {
                         leftViewId = R.id.widget_panel;
                         rightViewId = R.id.map_container;
+                    } else {
+                        leftViewId = R.id.map_container;
+                        rightViewId = R.id.widget_panel;
                     }
                 } else {
-                    // Sagdaki panel SMALL
-                    if (isSwapped) {
-                        // LARGE solda (widget), SMALL sagda (harita)
-                        leftViewId = R.id.widget_panel;
-                        rightViewId = R.id.map_container;
+                    if (leftViewIsSmall) {
+                        if (isSwapped) {
+                            // SMALL solda (harita), LARGE sagda (widget)
+                            leftViewId = R.id.map_container;
+                            rightViewId = R.id.widget_panel;
+                        } else {
+                            // SMALL solda (widget), LARGE sagda (harita)
+                            leftViewId = R.id.widget_panel;
+                            rightViewId = R.id.map_container;
+                        }
                     } else {
-                        // LARGE solda (harita), SMALL sagda (widget)
-                        leftViewId = R.id.map_container;
-                        rightViewId = R.id.widget_panel;
+                        // Sagdaki panel SMALL
+                        if (isSwapped) {
+                            // LARGE solda (widget), SMALL sagda (harita)
+                            leftViewId = R.id.widget_panel;
+                            rightViewId = R.id.map_container;
+                        } else {
+                            // LARGE solda (harita), SMALL sagda (widget)
+                            leftViewId = R.id.map_container;
+                            rightViewId = R.id.widget_panel;
+                        }
                     }
                 }
 
@@ -302,12 +313,32 @@ public class CarLayoutManager {
                 cs.constrainHeight(R.id.widget_handle, handleSize);
 
                 // Genislikleri yerlesime gore ayarla
-                if (leftViewIsSmall) {
-                    cs.constrainWidth(leftViewId, smallWidth);
-                    cs.constrainWidth(rightViewId, 0);
+                if (isFixed) {
+                    if (leftViewIsSmall) {
+                        if (isSwapped) {
+                            cs.constrainWidth(R.id.widget_panel, 0);
+                            cs.constrainWidth(R.id.map_container, smallWidth);
+                        } else {
+                            cs.constrainWidth(R.id.widget_panel, smallWidth);
+                            cs.constrainWidth(R.id.map_container, 0);
+                        }
+                    } else {
+                        if (isSwapped) {
+                            cs.constrainWidth(R.id.map_container, smallWidth);
+                            cs.constrainWidth(R.id.widget_panel, 0);
+                        } else {
+                            cs.constrainWidth(R.id.map_container, 0);
+                            cs.constrainWidth(R.id.widget_panel, smallWidth);
+                        }
+                    }
                 } else {
-                    cs.constrainWidth(leftViewId, 0);
-                    cs.constrainWidth(rightViewId, smallWidth);
+                    if (leftViewIsSmall) {
+                        cs.constrainWidth(leftViewId, smallWidth);
+                        cs.constrainWidth(rightViewId, 0);
+                    } else {
+                        cs.constrainWidth(leftViewId, 0);
+                        cs.constrainWidth(rightViewId, smallWidth);
+                    }
                 }
             }
         }
