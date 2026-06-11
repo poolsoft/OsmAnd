@@ -220,7 +220,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	private android.widget.ImageButton widgetHandle; 
 	private View appDock;
 	private View appDrawerContainer;
-	private View btnFullscreenExit;
 	private net.osmand.plus.carlauncher.ui.CarLayoutManager carLayoutManager;
 	private net.osmand.plus.carlauncher.ui.PanelContentManager panelContentManager;
 	private View mainLayoutRoot; // main.xml root reference
@@ -523,7 +522,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		widgetHandle = findViewById(R.id.widget_handle);
 		appDock = findViewById(R.id.app_dock);
 		appDrawerContainer = findViewById(R.id.app_drawer_container);
-		btnFullscreenExit = findViewById(R.id.btn_fullscreen_exit);
 
 		// Panellerin yuvarlak koselerini zorla aktif et (Turkce karakter yok)
 		if (widgetPanel != null) {
@@ -589,65 +587,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		
 		applyWidgetPanelState();
 
-		if (btnFullscreenExit != null) {
-            // Drag & Click Logic (Ephemeral Position)
-            btnFullscreenExit.setOnTouchListener(new View.OnTouchListener() {
-                float dX, dY;
-                float startX, startY;
-                boolean isDragging = false;
-                final int CLICK_DRAG_TOLERANCE = 20;
 
-                @Override
-                public boolean onTouch(View view, MotionEvent event) {
-                    switch (event.getAction()) {
-                        case MotionEvent.ACTION_DOWN:
-                            dX = view.getX() - event.getRawX();
-                            dY = view.getY() - event.getRawY();
-                            startX = event.getRawX();
-                            startY = event.getRawY();
-                            isDragging = false;
-                            return true;
-
-                        case MotionEvent.ACTION_MOVE:
-                            if (!isDragging && (Math.abs(event.getRawX() - startX) > CLICK_DRAG_TOLERANCE || Math.abs(event.getRawY() - startY) > CLICK_DRAG_TOLERANCE)) {
-                                isDragging = true;
-                            }
-                            if (isDragging) {
-                                float newX = event.getRawX() + dX;
-                                float newY = event.getRawY() + dY;
-
-                                // Boundary Checks
-                                View parent = (View) view.getParent();
-                                if (parent != null) {
-                                    newX = Math.max(0, Math.min(parent.getWidth() - view.getWidth(), newX));
-                                    newY = Math.max(0, Math.min(parent.getHeight() - view.getHeight(), newY));
-                                }
-
-                                view.animate()
-                                        .x(newX)
-                                        .y(newY)
-                                        .setDuration(0)
-                                        .start();
-                            }
-                            return true;
-
-                        case MotionEvent.ACTION_UP:
-                            if (!isDragging) {
-                                view.performClick();
-                            }
-                            // No saving of position
-                            return true;
-                    }
-                    return false;
-                }
-            });
-
-			btnFullscreenExit.setOnClickListener(v -> {
-				// Exit Full Screen -> Reset to Normal (Mode 0) or Toggle
-				layoutMode = 2; // Force current state to 2 so toggle goes to 0
-				onLayoutModeToggle();
-			});
-		}
 
 		// 3. Orijinal main.xml layout'unu inflate et ve referansını sakla
 		mainLayoutRoot = getLayoutInflater().inflate(R.layout.main, mapContainer, false);
@@ -887,17 +827,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		switch (layoutMode) {
 			case 0: // Normal
 				if (appDock != null) appDock.setVisibility(View.VISIBLE);
-				if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.GONE);
 				break;
 			case 1: // No Widgets
 				if (appDock != null) appDock.setVisibility(View.VISIBLE);
-				if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.GONE);
 				break;
 			case 2: // Full Screen
 				if (appDock != null) appDock.setVisibility(View.VISIBLE);
-				if (btnFullscreenExit != null) {
-                    btnFullscreenExit.setVisibility(View.GONE);
-                }
 				break;
 		}
 
