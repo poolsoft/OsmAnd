@@ -190,9 +190,12 @@
             android:orientation="horizontal"
             android:gravity="center"
             android:layout_marginTop="16dp"
+            android:layout_marginBottom="24dp"
             app:layout_constraintTop_toBottomOf="@id/music_visualizer"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintVertical_bias="1.0">
 
             <ImageButton
                 android:id="@+id/music_btn_prev"
@@ -200,16 +203,20 @@
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_media_previous"
+                android:padding="8dp"
+                android:scaleType="fitCenter"
                 app:tint="#FFFFFF" />
 
             <ImageButton
                 android:id="@+id/music_btn_play"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
                 android:layout_marginHorizontal="20dp"
                 android:background="@drawable/bg_circle_button"
                 android:backgroundTint="@color/cl_primary"
                 android:src="@android:drawable/ic_media_play"
+                android:padding="12dp"
+                android:scaleType="fitCenter"
                 app:tint="#FFFFFF" />
 
             <ImageButton
@@ -218,6 +225,8 @@
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_media_next"
+                android:padding="8dp"
+                android:scaleType="fitCenter"
                 app:tint="#FFFFFF" />
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
