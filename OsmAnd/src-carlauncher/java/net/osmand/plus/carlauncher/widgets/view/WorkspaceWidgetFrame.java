@@ -263,11 +263,11 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         // Ust Sag Kose Kontrol Paneli (Ayarlar ve Silme Yan Yana)
         LinearLayout topControls = new LinearLayout(context);
         topControls.setOrientation(LinearLayout.HORIZONTAL);
-        LayoutParams topParams = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        topParams.gravity = Gravity.TOP | Gravity.RIGHT;
-        topParams.topMargin = dpToPx(4);
-        topParams.rightMargin = dpToPx(4);
-        topControls.setLayoutParams(topParams);
+        LayoutParams topControlsParams = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        topControlsParams.gravity = Gravity.TOP | Gravity.RIGHT;
+        topControlsParams.topMargin = dpToPx(4);
+        topControlsParams.rightMargin = dpToPx(4);
+        topControls.setLayoutParams(topControlsParams);
 
         int btnSize = dpToPx(28); // Zarif ve ergonomik boyut (28dp)
 
@@ -505,6 +505,11 @@ public class WorkspaceWidgetFrame extends FrameLayout {
     }
 
     private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
+
+    private int dpToPx(float dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
     }
