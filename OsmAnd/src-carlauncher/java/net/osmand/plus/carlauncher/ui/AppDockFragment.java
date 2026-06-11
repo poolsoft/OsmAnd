@@ -180,6 +180,14 @@ public class AppDockFragment extends Fragment
             layoutId = net.osmand.plus.R.layout.fragment_app_dock_horizontal;
         }
         View root = inflater.inflate(layoutId, container, false);
+        root.post(() -> {
+            ViewGroup.LayoutParams lp = root.getLayoutParams();
+            if (lp != null) {
+                lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                root.setLayoutParams(lp);
+            }
+        });
 
         // Find Views
         appListButton = root.findViewById(net.osmand.plus.R.id.btn_app_list);
@@ -857,10 +865,11 @@ public class AppDockFragment extends Fragment
                 clockView.setText(sdf.format(new java.util.Date()));
             }
 
-            int iconSize = getScaledIconSize();
-            updateIconSize(btnDesktopMode, iconSize);
-            updateIconSize(appListButton, iconSize);
-            updateIconSize(btnAssistant, iconSize);
+            net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+            float scale = 0.3f + (settings.getDockSize() / 100.0f) * 1.4f;
+            updateIconSize(btnDesktopMode, scale);
+            updateIconSize(appListButton, scale);
+            updateIconSize(btnAssistant, scale);
             
             if (layoutButton != null) {
                 layoutButton.setVisibility(View.GONE);
@@ -868,14 +877,10 @@ public class AppDockFragment extends Fragment
         });
     }
 
-    private void updateIconSize(View v, int size) {
+    private void updateIconSize(View v, float scale) {
         if (v == null) return;
-        android.view.ViewGroup.LayoutParams lp = v.getLayoutParams();
-        if (lp != null) {
-            lp.width = size;
-            lp.height = size;
-            v.setLayoutParams(lp);
-        }
+        v.setScaleX(scale);
+        v.setScaleY(scale);
     }
 
     private void updateRecyclerViewOrientation(View root) {
