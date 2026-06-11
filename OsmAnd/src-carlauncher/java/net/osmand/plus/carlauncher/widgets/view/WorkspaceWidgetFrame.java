@@ -42,7 +42,10 @@ public class WorkspaceWidgetFrame extends FrameLayout {
 
     private FrameLayout overlayContainer;
     private DragHandleView dragHandle;
-    private ResizeHandleView resizeHandle;
+    private WhiteDotHandleView leftHandle;
+    private WhiteDotHandleView rightHandle;
+    private WhiteDotHandleView topHandle;
+    private WhiteDotHandleView bottomHandle;
     private DeleteButtonView deleteBtn;
     private ConfigButtonView configBtn;
     private DoneButtonView doneBtn;
@@ -69,12 +72,11 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         setClipChildren(false);
         setClipToPadding(false);
 
-        // Kenar cizimi icin Paint nesnesi (Neon Mavi Kesikli)
+        // Kenar cizimi icin Paint nesnesi (Duz Ince Beyaz)
         borderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         borderPaint.setStyle(Paint.Style.STROKE);
-        borderPaint.setStrokeWidth(dpToPx(2));
-        borderPaint.setColor(0xFF00E5FF); // Neon Turkuaz/Mavi
-        borderPaint.setPathEffect(new DashPathEffect(new float[]{dpToPx(6), dpToPx(4)}, 0));
+        borderPaint.setStrokeWidth(dpToPx(1.5f));
+        borderPaint.setColor(Color.WHITE); // Duz Beyaz
 
         borderRect = new RectF();
 
@@ -86,77 +88,177 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         overlayContainer.setClickable(true); // Dokunmalari asil widget'a gecirmeyip yutar
         overlayContainer.setFocusable(true);
 
-        // 2. Resize Handle (Boyutlandirma Tutamaci - Sag Alt Kose)
-        resizeHandle = new ResizeHandleView(context);
-        int resizeSize = dpToPx(28); // Zarif ve ergonomik boyut (28dp)
-        LayoutParams resizeParams = new LayoutParams(resizeSize, resizeSize);
-        resizeParams.gravity = Gravity.BOTTOM | Gravity.RIGHT;
-        resizeHandle.setLayoutParams(resizeParams);
-        resizeHandle.setOnTouchListener(new OnTouchListener() {
-            private float initialX, initialY;
-            private int initialSpanX, initialSpanY;
+        int handleSize = dpToPx(32); // 32dp dokunma alani
+
+        // Sol Tutamac
+        leftHandle = new WhiteDotHandleView(context);
+        LayoutParams leftParams = new LayoutParams(handleSize, handleSize);
+        leftParams.gravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
+        leftParams.leftMargin = -dpToPx(16); // Tam sınır çizgisine ortala
+        leftHandle.setLayoutParams(leftParams);
+        leftHandle.setOnTouchListener(new OnTouchListener() {
+            private float initialX;
+            private int initialCellX;
+            private int initialSpanX;
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         initialX = event.getRawX();
-                        initialY = event.getRawY();
+                        initialCellX = widget.getCellX();
                         initialSpanX = widget.getSpanX();
-                        initialSpanY = widget.getSpanY();
                         getParent().requestDisallowInterceptTouchEvent(true);
                         return true;
                     case MotionEvent.ACTION_MOVE:
                         float deltaX = event.getRawX() - initialX;
-                        float deltaY = event.getRawY() - initialY;
-
-                        int paddingLeft = parentLayout.getPaddingLeft();
-                        int paddingTop = parentLayout.getPaddingTop();
-                        int usableWidth = parentLayout.getWidth() - paddingLeft - parentLayout.getPaddingRight();
-                        int usableHeight = parentLayout.getHeight() - paddingTop - parentLayout.getPaddingBottom();
-
-                        int cellSize = WorkspaceCellLayout.getCellSize(getContext(), usableWidth, usableHeight);
-                        int colCount = WorkspaceCellLayout.getColCount(getContext(), usableWidth, cellSize);
-                        int rowCount = WorkspaceCellLayout.getRowCount(getContext(), usableHeight, cellSize);
-
+                        int cellSize = getCellSize();
                         if (cellSize > 0) {
                             int gridDeltaX = Math.round(deltaX / cellSize);
-                            int gridDeltaY = Math.round(deltaY / cellSize);
-
-                            int newSpanX = Math.max(3, Math.min(colCount - widget.getCellX(), initialSpanX + gridDeltaX));
-                            int newSpanY = Math.max(3, Math.min(rowCount - widget.getCellY(), initialSpanY + gridDeltaY));
-
-                            if (newSpanX != widget.getSpanX() || newSpanY != widget.getSpanY()) {
-                                if (canWidgetFitAt(widget.getPageIndex(), widget.getCellX(), widget.getCellY(), newSpanX, newSpanY)) {
-                                    widget.setSpanX(newSpanX);
-                                    widget.setSpanY(newSpanY);
-
-                                    // WorkspaceCellLayout LayoutParams guncelle
-                                    WorkspaceCellLayout.LayoutParams lp = (WorkspaceCellLayout.LayoutParams) getLayoutParams();
-                                    lp.spanX = newSpanX;
-                                    lp.spanY = newSpanY;
-                                    setLayoutParams(lp);
-                                    parentLayout.requestLayout();
-                                }
+                            int maxPossibleCellX = initialCellX + initialSpanX - 3;
+                            int newCellX = Math.max(0, Math.min(maxPossibleCellX, initialCellX + gridDeltaX));
+                            int newSpanX = initialCellX + initialSpanX - newCellX;
+                            if (newCellX != widget.getCellX() || newSpanX != widget.getSpanX()) {
+                                updateWidgetSize(newSpanX, widget.getSpanY(), newCellX, widget.getCellY());
                             }
                         }
                         return true;
                     case MotionEvent.ACTION_UP:
-                        WidgetManager.getInstance(getContext()).saveWidgetConfig();
-                        if (onWidgetsChanged != null) {
-                            onWidgetsChanged.run();
-                        }
+                        onResizeCompleted();
                         return true;
                 }
                 return false;
             }
         });
-        
-        // 1x1 Uygulama kisayollari icin boyutlandirma butonunu gizle (kalabaligi onler)
+        overlayContainer.addView(leftHandle);
+
+        // Sag Tutamac
+        rightHandle = new WhiteDotHandleView(context);
+        LayoutParams rightParams = new LayoutParams(handleSize, handleSize);
+        rightParams.gravity = Gravity.RIGHT | Gravity.CENTER_VERTICAL;
+        rightParams.rightMargin = -dpToPx(16);
+        rightHandle.setLayoutParams(rightParams);
+        rightHandle.setOnTouchListener(new OnTouchListener() {
+            private float initialX;
+            private int initialSpanX;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        initialX = event.getRawX();
+                        initialSpanX = widget.getSpanX();
+                        getParent().requestDisallowInterceptTouchEvent(true);
+                        return true;
+                    case MotionEvent.ACTION_MOVE:
+                        float deltaX = event.getRawX() - initialX;
+                        int cellSize = getCellSize();
+                        int colCount = getColCount();
+                        if (cellSize > 0) {
+                            int gridDeltaX = Math.round(deltaX / cellSize);
+                            int newSpanX = Math.max(3, Math.min(colCount - widget.getCellX(), initialSpanX + gridDeltaX));
+                            if (newSpanX != widget.getSpanX()) {
+                                updateWidgetSize(newSpanX, widget.getSpanY(), widget.getCellX(), widget.getCellY());
+                            }
+                        }
+                        return true;
+                    case MotionEvent.ACTION_UP:
+                        onResizeCompleted();
+                        return true;
+                }
+                return false;
+            }
+        });
+        overlayContainer.addView(rightHandle);
+
+        // Ust Tutamac
+        topHandle = new WhiteDotHandleView(context);
+        LayoutParams topParams = new LayoutParams(handleSize, handleSize);
+        topParams.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+        topParams.topMargin = -dpToPx(16);
+        topHandle.setLayoutParams(topParams);
+        topHandle.setOnTouchListener(new OnTouchListener() {
+            private float initialY;
+            private int initialCellY;
+            private int initialSpanY;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        initialY = event.getRawY();
+                        initialCellY = widget.getCellY();
+                        initialSpanY = widget.getSpanY();
+                        getParent().requestDisallowInterceptTouchEvent(true);
+                        return true;
+                    case MotionEvent.ACTION_MOVE:
+                        float deltaY = event.getRawY() - initialY;
+                        int cellSize = getCellSize();
+                        if (cellSize > 0) {
+                            int gridDeltaY = Math.round(deltaY / cellSize);
+                            int maxPossibleCellY = initialCellY + initialSpanY - 3;
+                            int newCellY = Math.max(0, Math.min(maxPossibleCellY, initialCellY + gridDeltaY));
+                            int newSpanY = initialCellY + initialSpanY - newCellY;
+                            if (newCellY != widget.getCellY() || newSpanY != widget.getSpanY()) {
+                                updateWidgetSize(widget.getSpanX(), newSpanY, widget.getCellX(), newCellY);
+                            }
+                        }
+                        return true;
+                    case MotionEvent.ACTION_UP:
+                        onResizeCompleted();
+                        return true;
+                }
+                return false;
+            }
+        });
+        overlayContainer.addView(topHandle);
+
+        // Alt Tutamac
+        bottomHandle = new WhiteDotHandleView(context);
+        LayoutParams bottomParams = new LayoutParams(handleSize, handleSize);
+        bottomParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        bottomParams.bottomMargin = -dpToPx(16);
+        bottomHandle.setLayoutParams(bottomParams);
+        bottomHandle.setOnTouchListener(new OnTouchListener() {
+            private float initialY;
+            private int initialSpanY;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        initialY = event.getRawY();
+                        initialSpanY = widget.getSpanY();
+                        getParent().requestDisallowInterceptTouchEvent(true);
+                        return true;
+                    case MotionEvent.ACTION_MOVE:
+                        float deltaY = event.getRawY() - initialY;
+                        int cellSize = getCellSize();
+                        int rowCount = getRowCount();
+                        if (cellSize > 0) {
+                            int gridDeltaY = Math.round(deltaY / cellSize);
+                            int newSpanY = Math.max(3, Math.min(rowCount - widget.getCellY(), initialSpanY + gridDeltaY));
+                            if (newSpanY != widget.getSpanY()) {
+                                updateWidgetSize(widget.getSpanX(), newSpanY, widget.getCellX(), widget.getCellY());
+                            }
+                        }
+                        return true;
+                    case MotionEvent.ACTION_UP:
+                        onResizeCompleted();
+                        return true;
+                }
+                return false;
+            }
+        });
+        overlayContainer.addView(bottomHandle);
+
+        // 1x1 Uygulama kisayollari icin boyutlandirma butonlarini gizle
         if (widget.getId() != null && widget.getId().startsWith("shortcut_")) {
-            resizeHandle.setVisibility(GONE);
+            leftHandle.setVisibility(GONE);
+            rightHandle.setVisibility(GONE);
+            topHandle.setVisibility(GONE);
+            bottomHandle.setVisibility(GONE);
         }
-        overlayContainer.addView(resizeHandle);
 
         // Ust Sag Kose Kontrol Paneli (Ayarlar ve Silme Yan Yana)
         LinearLayout topControls = new LinearLayout(context);
@@ -243,22 +345,27 @@ public class WorkspaceWidgetFrame extends FrameLayout {
                     float y = event.getY();
                     
                     // Butonlarin sinirlari icinde mi kontrol et. Eger butonlara dokunulduysa dokunmayi yutma.
-                    // Ust sag kontrol butonlari alani (topControls)
                     boolean inTopControls = x >= (getWidth() - topControls.getWidth() - dpToPx(8)) 
                             && y <= (topControls.getHeight() + dpToPx(8));
                             
-                    // Sol alt done butonu alani
                     boolean inDoneBtn = x <= (doneBtn.getWidth() + dpToPx(8)) 
                             && y >= (getHeight() - doneBtn.getHeight() - dpToPx(8));
                             
-                    // Sag alt resize butonu alani
-                    boolean inResizeBtn = false;
-                    if (resizeHandle.getVisibility() == VISIBLE) {
-                        inResizeBtn = x >= (getWidth() - resizeHandle.getWidth() - dpToPx(8)) 
-                                && y >= (getHeight() - resizeHandle.getHeight() - dpToPx(8));
+                    // Yeni tutamaclarin alanlari
+                    boolean inLeftHandle = false;
+                    boolean inRightHandle = false;
+                    boolean inTopHandle = false;
+                    boolean inBottomHandle = false;
+                    
+                    int handleHitSize = dpToPx(24); // Dokunma hassasiyet alani (24dp)
+                    if (leftHandle != null && leftHandle.getVisibility() == VISIBLE) {
+                        inLeftHandle = x <= handleHitSize && Math.abs(y - getHeight() / 2f) <= handleHitSize;
+                        inRightHandle = x >= (getWidth() - handleHitSize) && Math.abs(y - getHeight() / 2f) <= handleHitSize;
+                        inTopHandle = y <= handleHitSize && Math.abs(x - getWidth() / 2f) <= handleHitSize;
+                        inBottomHandle = y >= (getHeight() - handleHitSize) && Math.abs(x - getWidth() / 2f) <= handleHitSize;
                     }
                     
-                    if (!inTopControls && !inDoneBtn && !inResizeBtn) {
+                    if (!inTopControls && !inDoneBtn && !inLeftHandle && !inRightHandle && !inTopHandle && !inBottomHandle) {
                         ClipData data = ClipData.newPlainText("widget_id", widget.getId());
                         DragShadowBuilder shadowBuilder = new DragShadowBuilder(WorkspaceWidgetFrame.this);
                         startDragAndDrop(data, shadowBuilder, WorkspaceWidgetFrame.this, 0);
@@ -294,10 +401,18 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         this.isEditMode = editMode;
         if (editMode) {
             overlayContainer.setVisibility(VISIBLE);
-            // Sistem widget'lari yuksek elevasyona sahip olabildigi icin overlayContainer'i yukseltelim
             overlayContainer.setElevation(dpToPx(30));
-            overlayContainer.bringToFront(); // Butonlari her zaman en ust katmana tasir
+            overlayContainer.bringToFront();
             configBtn.setVisibility(widget.isConfigurable() ? VISIBLE : GONE);
+            
+            // Tutamaclari kisayollar haric goster
+            boolean isShortcut = widget.getId() != null && widget.getId().startsWith("shortcut_");
+            int handleVisibility = isShortcut ? GONE : VISIBLE;
+            if (leftHandle != null) leftHandle.setVisibility(handleVisibility);
+            if (rightHandle != null) rightHandle.setVisibility(handleVisibility);
+            if (topHandle != null) topHandle.setVisibility(handleVisibility);
+            if (bottomHandle != null) bottomHandle.setVisibility(handleVisibility);
+            
             if (doneBtn != null) {
                 doneBtn.setVisibility(VISIBLE);
             }
@@ -305,6 +420,12 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         } else {
             overlayContainer.setVisibility(GONE);
             overlayContainer.setElevation(0);
+            
+            if (leftHandle != null) leftHandle.setVisibility(GONE);
+            if (rightHandle != null) rightHandle.setVisibility(GONE);
+            if (topHandle != null) topHandle.setVisibility(GONE);
+            if (bottomHandle != null) bottomHandle.setVisibility(GONE);
+            
             stopShakeAnimation();
             setAlpha(1.0f);
         }
@@ -538,15 +659,61 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         }
     }
 
+    private int getCellSize() {
+        int paddingLeft = parentLayout.getPaddingLeft();
+        int usableWidth = parentLayout.getWidth() - paddingLeft - parentLayout.getPaddingRight();
+        int usableHeight = parentLayout.getHeight() - parentLayout.getPaddingTop() - parentLayout.getPaddingBottom();
+        return WorkspaceCellLayout.getCellSize(getContext(), usableWidth, usableHeight);
+    }
+
+    private int getColCount() {
+        int paddingLeft = parentLayout.getPaddingLeft();
+        int usableWidth = parentLayout.getWidth() - paddingLeft - parentLayout.getPaddingRight();
+        int cellSize = getCellSize();
+        return WorkspaceCellLayout.getColCount(getContext(), usableWidth, cellSize);
+    }
+
+    private int getRowCount() {
+        int paddingTop = parentLayout.getPaddingTop();
+        int usableHeight = parentLayout.getHeight() - paddingTop - parentLayout.getPaddingBottom();
+        int cellSize = getCellSize();
+        return WorkspaceCellLayout.getRowCount(getContext(), usableHeight, cellSize);
+    }
+
+    private void updateWidgetSize(int spanX, int spanY, int cellX, int cellY) {
+        if (canWidgetFitAt(widget.getPageIndex(), cellX, cellY, spanX, spanY)) {
+            widget.setSpanX(spanX);
+            widget.setSpanY(spanY);
+            widget.setCellX(cellX);
+            widget.setCellY(cellY);
+
+            // WorkspaceCellLayout LayoutParams guncelle
+            WorkspaceCellLayout.LayoutParams lp = (WorkspaceCellLayout.LayoutParams) getLayoutParams();
+            lp.cellX = cellX;
+            lp.cellY = cellY;
+            lp.spanX = spanX;
+            lp.spanY = spanY;
+            setLayoutParams(lp);
+            parentLayout.requestLayout();
+        }
+    }
+
+    private void onResizeCompleted() {
+        WidgetManager.getInstance(getContext()).saveWidgetConfig();
+        if (onWidgetsChanged != null) {
+            onWidgetsChanged.run();
+        }
+    }
+
     /**
-     * Neon Mavi Resize Handle.
+     * Premium Modern Beyaz Resize Dairesi.
      */
-    private static class ResizeHandleView extends View {
+    private static class WhiteDotHandleView extends View {
         private final Paint bgPaint;
-        private final Paint iconPaint;
+        private final Paint borderPaint;
         private final float density;
 
-        public ResizeHandleView(Context context) {
+        public WhiteDotHandleView(Context context) {
             super(context);
             density = context.getResources().getDisplayMetrics().density;
             setClickable(true);
@@ -554,13 +721,12 @@ public class WorkspaceWidgetFrame extends FrameLayout {
 
             bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             bgPaint.setStyle(Paint.Style.FILL);
-            bgPaint.setColor(0xEE222222);
+            bgPaint.setColor(Color.WHITE);
 
-            iconPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            iconPaint.setStyle(Paint.Style.STROKE);
-            iconPaint.setStrokeWidth(1.8f * density);
-            iconPaint.setColor(0xFF00E5FF); // Neon Mavi
-            iconPaint.setStrokeCap(Paint.Cap.ROUND);
+            borderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            borderPaint.setStyle(Paint.Style.STROKE);
+            borderPaint.setStrokeWidth(1.5f * density);
+            borderPaint.setColor(0xFF00E5FF); // Neon Turkuaz
         }
 
         @Override
@@ -568,15 +734,19 @@ public class WorkspaceWidgetFrame extends FrameLayout {
             super.onDraw(canvas);
             float cx = getWidth() / 2f;
             float cy = getHeight() / 2f;
-            float radius = 10f * density; // 20dp cap
+            float radius = 7f * density; // 14dp cap
 
+            // Golge efekti
+            Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            shadowPaint.setStyle(Paint.Style.FILL);
+            shadowPaint.setColor(0x33000000);
+            canvas.drawCircle(cx, cy, radius + 2f * density, shadowPaint);
+
+            // Beyaz daire
             canvas.drawCircle(cx, cy, radius, bgPaint);
 
-            // Resize L seklinde kucuk ok cizimi
-            float size = 3f * density;
-            canvas.drawLine(cx - size, cy + size, cx + size, cy + size, iconPaint); // Yatay
-            canvas.drawLine(cx + size, cy - size, cx + size, cy + size, iconPaint); // Dikey
-            canvas.drawLine(cx - size, cy - size, cx + size, cy + size, iconPaint); // Kosegen
+            // Neon kenarlik
+            canvas.drawCircle(cx, cy, radius, borderPaint);
         }
     }
 
