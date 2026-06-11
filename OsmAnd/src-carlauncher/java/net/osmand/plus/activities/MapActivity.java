@@ -896,10 +896,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			case 2: // Full Screen
 				if (appDock != null) appDock.setVisibility(View.VISIBLE);
 				if (btnFullscreenExit != null) {
-                    btnFullscreenExit.setVisibility(View.VISIBLE);
-                    // android.widget.Toast.makeText(this, "Mode 2: Full Screen (Button VISIBLE)", android.widget.Toast.LENGTH_SHORT).show();
-                } else {
-                    // android.widget.Toast.makeText(this, "Mode 2: But NULL!", android.widget.Toast.LENGTH_SHORT).show();
+                    btnFullscreenExit.setVisibility(View.GONE);
                 }
 				break;
 		}

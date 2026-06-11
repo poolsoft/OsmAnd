@@ -161,10 +161,19 @@ public class CarFloatingButtonManager {
             // Ekranin sag orta kisminda baslat
             params.gravity = Gravity.TOP | Gravity.START;
             
-            int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
-            int screenHeight = context.getResources().getDisplayMetrics().heightPixels;
-            params.x = screenWidth - dpToPx(70);
-            params.y = screenHeight / 2 - dpToPx(26);
+            boolean isLandscape = context.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+            String prefix = isLandscape ? "land_" : "port_";
+            android.content.SharedPreferences prefs = context.getSharedPreferences("floating_button_prefs", Context.MODE_PRIVATE);
+            
+            if (prefs.getBoolean(prefix + "saved", false)) {
+                params.x = prefs.getInt(prefix + "x", 0);
+                params.y = prefs.getInt(prefix + "y", 0);
+            } else {
+                int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
+                int screenHeight = context.getResources().getDisplayMetrics().heightPixels;
+                params.x = screenWidth - dpToPx(70);
+                params.y = screenHeight / 2 - dpToPx(26);
+            }
 
             floatingView.setOnTouchListener(new View.OnTouchListener() {
                 @Override
@@ -213,7 +222,9 @@ public class CarFloatingButtonManager {
 
                         case MotionEvent.ACTION_UP:
                             gestureHandler.removeCallbacks(longClickRunnable);
-                            if (!isDragging) {
+                            if (isDragging) {
+                                saveButtonPosition(params.x, params.y);
+                            } else {
                                 if (!isLongClickTriggered) {
                                     onButtonClicked();
                                 }
@@ -515,6 +526,17 @@ public class CarFloatingButtonManager {
             }
             menuOverlayView = null;
         }
+    }
+
+    private void saveButtonPosition(int x, int y) {
+        boolean isLandscape = context.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        String prefix = isLandscape ? "land_" : "port_";
+        context.getSharedPreferences("floating_button_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .putInt(prefix + "x", x)
+                .putInt(prefix + "y", y)
+                .putBoolean(prefix + "saved", true)
+                .apply();
     }
 
     private int dpToPx(int dp) {
