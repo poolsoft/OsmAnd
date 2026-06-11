@@ -63,6 +63,7 @@ public class AppDockFragment extends Fragment
     private boolean isEditMode = false;
     private int currentOrientation = ORIENTATION_HORIZONTAL; // Varsayilan yatay
     private boolean isVerticalMode = false;
+    private int currentLayoutId = 0;
 
     private OnAppDockListener listener;
     private ImageButton menuButton;
@@ -179,6 +180,8 @@ public class AppDockFragment extends Fragment
         } else {
             layoutId = net.osmand.plus.R.layout.fragment_app_dock_horizontal;
         }
+        this.currentLayoutId = layoutId;
+
         View root = inflater.inflate(layoutId, container, false);
         root.post(() -> {
             ViewGroup.LayoutParams lp = root.getLayoutParams();
@@ -917,6 +920,25 @@ public class AppDockFragment extends Fragment
     private int dpToPx(int dp) {
         if (getContext() == null) return dp;
         return (int) (dp * getContext().getResources().getDisplayMetrics().density);
+    }
+
+    public boolean needsLayoutUpdate() {
+        if (getContext() == null) return false;
+        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+        String dockPos = settings.getDockPosition();
+        boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        boolean expectedVerticalMode = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
+
+        int expectedLayoutId;
+        if (isPortrait) {
+            expectedLayoutId = net.osmand.plus.R.layout.fragment_app_dock_portrait;
+        } else if (expectedVerticalMode) {
+            expectedLayoutId = net.osmand.plus.R.layout.fragment_app_dock_sidebar;
+        } else {
+            expectedLayoutId = net.osmand.plus.R.layout.fragment_app_dock_horizontal;
+        }
+        
+        return currentLayoutId != 0 && currentLayoutId != expectedLayoutId;
     }
 
     private void showDockPopupMenu(View anchor) {

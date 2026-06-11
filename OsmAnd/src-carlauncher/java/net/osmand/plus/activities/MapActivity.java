@@ -795,11 +795,13 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         }
     }
 
-    private void refreshDockFragment(String dockPos, boolean isPortrait) {
-        boolean isVertical = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
-        AppDockFragment dock = getAppDockFragment();
-        if (dock != null) {
-            dock.setOrientation(isVertical);
+    public void checkAndRefreshDockFragmentIfNeeded() {
+        net.osmand.plus.carlauncher.ui.AppDockFragment dock = getAppDockFragment();
+        if (dock != null && dock.needsLayoutUpdate()) {
+            net.osmand.plus.carlauncher.ui.AppDockFragment newDock = new net.osmand.plus.carlauncher.ui.AppDockFragment();
+            getSupportFragmentManager().beginTransaction()
+                .replace(net.osmand.plus.R.id.app_dock, newDock, "app_dock")
+                .commitAllowingStateLoss();
         }
     }
 
@@ -1410,10 +1412,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 
 		app.getNotificationHelper().refreshNotifications();
-		// fixing bug with action bar appearing on android 2.3.3
-		if (getSupportActionBar() != null) {
-			getSupportActionBar().hide();
-		}
+        // fixing bug with action bar appearing on android 2.3.3
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
+
+        checkAndRefreshDockFragmentIfNeeded();
 
 		// for voice navigation. Lags behind routingAppMode changes, hence repeated
 		// under onCalculationFinish()
@@ -2556,6 +2560,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		if (carLayoutManager != null) {
 			carLayoutManager.applyLayout(isWidgetPanelOpen, layoutMode);
 		}
+        
+        checkAndRefreshDockFragmentIfNeeded();
 	}
 
 	@Override
