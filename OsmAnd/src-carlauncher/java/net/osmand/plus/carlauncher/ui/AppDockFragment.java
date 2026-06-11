@@ -886,13 +886,24 @@ public class AppDockFragment extends Fragment
     private void updateRecyclerViewOrientation(View root) {
         if (recyclerView == null) recyclerView = root.findViewById(net.osmand.plus.R.id.dock_recycler);
         if (recyclerView != null) {
-            // Force clear recycled view pool to ensure fresh ViewHolders with correct LayoutParams
-            recyclerView.setRecycledViewPool(new androidx.recyclerview.widget.RecyclerView.RecycledViewPool());
+            int desiredOrientation = isVerticalMode ? LinearLayoutManager.VERTICAL : LinearLayoutManager.HORIZONTAL;
+            androidx.recyclerview.widget.RecyclerView.LayoutManager currentLayoutManager = recyclerView.getLayoutManager();
+            boolean needNewLayoutManager = true;
             
-            recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), 
-                isVerticalMode ? LinearLayoutManager.VERTICAL : LinearLayoutManager.HORIZONTAL, false));
-            if (adapter != null) {
-                adapter.setVerticalMode(isVerticalMode);
+            if (currentLayoutManager instanceof LinearLayoutManager) {
+                if (((LinearLayoutManager) currentLayoutManager).getOrientation() == desiredOrientation) {
+                    needNewLayoutManager = false;
+                }
+            }
+            
+            if (needNewLayoutManager) {
+                // Force clear recycled view pool to ensure fresh ViewHolders with correct LayoutParams
+                recyclerView.setRecycledViewPool(new androidx.recyclerview.widget.RecyclerView.RecycledViewPool());
+                
+                recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), desiredOrientation, false));
+                if (adapter != null) {
+                    adapter.setVerticalMode(isVerticalMode);
+                }
             }
         }
     }
