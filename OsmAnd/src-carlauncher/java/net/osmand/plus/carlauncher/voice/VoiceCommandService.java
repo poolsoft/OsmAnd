@@ -222,6 +222,7 @@ public class VoiceCommandService extends Service implements RecognitionListener 
         updateNotification("Model USB'den kuruluyor...");
         Executors.newSingleThreadExecutor().execute(() -> {
             File tempZip = new File(getExternalFilesDir(null), "vosk-model-tr-temp.zip");
+            File tempExtractDir = new File(getExternalFilesDir(null), "vosk-model-temp-extract");
             try (FileInputStream fis = new FileInputStream(usbZip);
                  FileOutputStream fos = new FileOutputStream(tempZip)) {
                 
@@ -232,20 +233,29 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                 }
                 fos.flush();
 
-                if (targetDir.exists()) {
-                    deleteRecursive(targetDir);
+                if (tempExtractDir.exists()) {
+                    deleteRecursive(tempExtractDir);
                 }
-                targetDir.mkdirs();
+                tempExtractDir.mkdirs();
 
-                unzip(tempZip, targetDir.getParentFile());
+                unzip(tempZip, tempExtractDir);
 
-                File extractedDir = new File(targetDir.getParentFile(), "vosk-model-small-tr-0.3");
-                if (extractedDir.exists()) {
-                    extractedDir.renameTo(targetDir);
+                File actualModelDir = findModelDirRecursive(tempExtractDir);
+                if (actualModelDir != null && actualModelDir.exists()) {
+                    if (targetDir.exists()) {
+                        deleteRecursive(targetDir);
+                    }
+                    boolean success = actualModelDir.renameTo(targetDir);
+                    android.util.Log.d("VoiceCommandService", "USB model klasoru basariyla tasindi: " + success);
+                } else {
+                    throw new IOException("Zip icerisinde gecerli bir model klasoru bulunamadi");
                 }
 
                 if (tempZip.exists()) {
                     tempZip.delete();
+                }
+                if (tempExtractDir.exists()) {
+                    deleteRecursive(tempExtractDir);
                 }
 
                 handler.post(() -> {
@@ -256,6 +266,7 @@ public class VoiceCommandService extends Service implements RecognitionListener 
             } catch (Exception e) {
                 android.util.Log.e("VoiceCommandService", "USB model yukleme hatasi", e);
                 if (tempZip.exists()) tempZip.delete();
+                if (tempExtractDir.exists()) deleteRecursive(tempExtractDir);
                 handler.post(() -> {
                     // USB basarisiz olursa internetten indirmeyi dene (Turkce karakter yok)
                     downloadAndExtractModel(targetDir);
@@ -315,6 +326,7 @@ public class VoiceCommandService extends Service implements RecognitionListener 
 
         Executors.newSingleThreadExecutor().execute(() -> {
             File tempZip = new File(getExternalFilesDir(null), "vosk-model-tr.zip");
+            File tempExtractDir = new File(getExternalFilesDir(null), "vosk-model-temp-extract");
             try {
                 URL url = new URL(MODEL_ZIP_URL);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -351,19 +363,29 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                 input.close();
 
                 updateNotification("Model dosyasi zipten cikariliyor...");
-                unzip(tempZip, targetDir.getParentFile());
+                if (tempExtractDir.exists()) {
+                    deleteRecursive(tempExtractDir);
+                }
+                tempExtractDir.mkdirs();
 
-                File extractedDir = new File(targetDir.getParentFile(), "vosk-model-small-tr-0.3");
-                if (extractedDir.exists()) {
+                unzip(tempZip, tempExtractDir);
+
+                File actualModelDir = findModelDirRecursive(tempExtractDir);
+                if (actualModelDir != null && actualModelDir.exists()) {
                     if (targetDir.exists()) {
                         deleteRecursive(targetDir);
                     }
-                    boolean success = extractedDir.renameTo(targetDir);
-                    android.util.Log.d("VoiceCommandService", "Model klasoru yeniden adlandirildi: " + success);
+                    boolean success = actualModelDir.renameTo(targetDir);
+                    android.util.Log.d("VoiceCommandService", "Model klasoru basariyla tasindi: " + success);
+                } else {
+                    throw new IOException("Zip icerisinde gecerli bir model klasoru bulunamadi");
                 }
 
                 if (tempZip.exists()) {
                     tempZip.delete();
+                }
+                if (tempExtractDir.exists()) {
+                    deleteRecursive(tempExtractDir);
                 }
 
                 handler.post(() -> {
@@ -375,6 +397,9 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                 android.util.Log.e("VoiceCommandService", "Model indirme/kurulum hatasi", e);
                 if (tempZip.exists()) {
                     tempZip.delete();
+                }
+                if (tempExtractDir.exists()) {
+                    deleteRecursive(tempExtractDir);
                 }
                 handler.post(() -> {
                     Toast.makeText(VoiceCommandService.this, "Model indirilemedi, internet baglantisini kontrol edin", Toast.LENGTH_LONG).show();
@@ -755,6 +780,29 @@ public class VoiceCommandService extends Service implements RecognitionListener 
             tts.shutdown();
             tts = null;
         }
+    }
+
+    private File findModelDirRecursive(File dir) {
+        if (dir == null || !dir.exists() || !dir.isDirectory()) {
+            return null;
+        }
+        File amDir = new File(dir, "am");
+        File graphDir = new File(dir, "graph");
+        if ((amDir.exists() && amDir.isDirectory()) || (graphDir.exists() && graphDir.isDirectory())) {
+            return dir;
+        }
+        File[] children = dir.listFiles();
+        if (children != null) {
+            for (File child : children) {
+                if (child.isDirectory()) {
+                    File found = findModelDirRecursive(child);
+                    if (found != null) {
+                        return found;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private void deleteRecursive(File fileOrDirectory) {

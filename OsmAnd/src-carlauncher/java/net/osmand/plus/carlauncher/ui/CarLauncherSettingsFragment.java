@@ -58,6 +58,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         setupAutoLaunchPrefs();
         setupBackupPrefs();
         setupDockPrefs();
+        setupAssistantPrefs();
         setupAboutPrefs();
     }
 
@@ -725,21 +726,6 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             }
         }
 
-        Preference importModelPref = findPreference("car_launcher_import_voice_model");
-        if (importModelPref != null) {
-            importModelPref.setOnPreferenceClickListener(preference -> {
-                try {
-                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                    intent.addCategory(Intent.CATEGORY_OPENABLE);
-                    intent.setType("application/zip");
-                    startActivityForResult(intent, RC_IMPORT_VOICE_MODEL);
-                } catch (Exception e) {
-                    Toast.makeText(getContext(), "Dosya seçici açılamadı", Toast.LENGTH_SHORT).show();
-                }
-                return true;
-            });
-        }
-
         Preference githubPref = findPreference("car_launcher_github");
         if (githubPref != null) {
             githubPref.setOnPreferenceClickListener(preference -> {
@@ -765,6 +751,23 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         }
     }
 
+    private void setupAssistantPrefs() {
+        Preference importModelPref = findPreference("car_launcher_import_voice_model");
+        if (importModelPref != null) {
+            importModelPref.setOnPreferenceClickListener(preference -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("application/zip");
+                    startActivityForResult(intent, RC_IMPORT_VOICE_MODEL);
+                } catch (Exception e) {
+                    Toast.makeText(getContext(), "Dosya seçici açılamadı", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            });
+        }
+    }
+
     private void importVoiceModelFromUri(Uri uri) {
         if (getContext() == null) return;
         Toast.makeText(getContext(), "Model dosyası kopyalanıyor, lütfen bekleyin...", Toast.LENGTH_SHORT).show();
@@ -772,6 +775,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
             File targetDir = new File(getContext().getExternalFilesDir(null), "vosk-model-tr");
             File tempZip = new File(getContext().getExternalFilesDir(null), "vosk-model-tr-temp.zip");
+            File tempExtractDir = new File(getContext().getExternalFilesDir(null), "vosk-model-temp-extract");
             
             try (android.os.ParcelFileDescriptor pfd = getContext().getContentResolver().openFileDescriptor(uri, "r");
                  java.io.FileInputStream fis = new java.io.FileInputStream(pfd.getFileDescriptor());
@@ -784,22 +788,29 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 }
                 fos.flush();
                 
-                // Zipten cikar (Turkce karakter yok)
-                if (targetDir.exists()) {
-                    deleteRecursive(targetDir);
+                if (tempExtractDir.exists()) {
+                    deleteRecursive(tempExtractDir);
                 }
-                targetDir.mkdirs();
+                tempExtractDir.mkdirs();
                 
-                unzip(tempZip, targetDir.getParentFile());
+                unzip(tempZip, tempExtractDir);
                 
-                // Vosk zipten cikinca genelde vosk-model-small-tr-0.3 klasorunu olusturur, onu kontrol et (Turkce karakter yok)
-                File extractedDir = new File(targetDir.getParentFile(), "vosk-model-small-tr-0.3");
-                if (extractedDir.exists()) {
-                    extractedDir.renameTo(targetDir);
+                File actualModelDir = findModelDirRecursive(tempExtractDir);
+                if (actualModelDir != null && actualModelDir.exists()) {
+                    if (targetDir.exists()) {
+                        deleteRecursive(targetDir);
+                    }
+                    boolean success = actualModelDir.renameTo(targetDir);
+                    android.util.Log.d("CarLauncherSettings", "Model klasoru basariyla tasindi: " + success);
+                } else {
+                    throw new java.io.IOException("Zip icerisinde gecerli bir model klasoru bulunamadi");
                 }
                 
                 if (tempZip.exists()) {
                     tempZip.delete();
+                }
+                if (tempExtractDir.exists()) {
+                    deleteRecursive(tempExtractDir);
                 }
                 
                 if (getActivity() != null) {
@@ -812,6 +823,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             } catch (Exception e) {
                 android.util.Log.e("CarLauncherSettings", "Model kopyalama/unzip hatası", e);
                 if (tempZip.exists()) tempZip.delete();
+                if (tempExtractDir.exists()) deleteRecursive(tempExtractDir);
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         Toast.makeText(getContext(), "Ses modeli yüklenemedi!", Toast.LENGTH_LONG).show();
@@ -819,6 +831,29 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 }
             }
         });
+    }
+
+    private File findModelDirRecursive(File dir) {
+        if (dir == null || !dir.exists() || !dir.isDirectory()) {
+            return null;
+        }
+        File amDir = new File(dir, "am");
+        File graphDir = new File(dir, "graph");
+        if ((amDir.exists() && amDir.isDirectory()) || (graphDir.exists() && graphDir.isDirectory())) {
+            return dir;
+        }
+        File[] children = dir.listFiles();
+        if (children != null) {
+            for (File child : children) {
+                if (child.isDirectory()) {
+                    File found = findModelDirRecursive(child);
+                    if (found != null) {
+                        return found;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private void restartVoiceService() {
