@@ -39,7 +39,7 @@
             android:contentDescription="Apps"
             android:scaleType="fitCenter"
             android:adjustViewBounds="true"
-            android:src="@drawable/dashboard_grid"
+            android:src="@drawable/ic_apps_9_dots"
             app:tint="@color/cl_primary"
             android:padding="4dp" />
 
@@ -69,14 +69,15 @@
         <LinearLayout
             android:id="@+id/mini_music_container"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="@drawable/bg_drawer_rounded" 
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
             android:minWidth="120dp">
 
             <ImageView

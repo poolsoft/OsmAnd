@@ -39,7 +39,7 @@
             android:contentDescription="Apps"
             android:scaleType="fitCenter"
             android:adjustViewBounds="true"
-            android:src="@drawable/dashboard_grid"
+            android:src="@drawable/ic_apps_9_dots"
             app:tint="@color/cl_primary"
             android:padding="4dp" />
 
@@ -63,16 +63,63 @@
             android:layout_height="match_parent"
             android:orientation="horizontal" />
 
-        <!-- Mini Music Player (Dikey Portrait modda yer darlığından tamamen kaldırıldı/gizlendi) -->
+        <!-- Mini Music Player -->
         <LinearLayout
             android:id="@+id/mini_music_container"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone">
-            <ImageView android:id="@+id/mini_music_icon" android:layout_width="0dp" android:layout_height="0dp" />
-            <TextView android:id="@+id/mini_music_title" android:layout_width="0dp" android:layout_height="0dp" />
-            <ImageButton android:id="@+id/mini_btn_play" android:layout_width="0dp" android:layout_height="0dp" />
-            <ImageButton android:id="@+id/mini_btn_next" android:layout_width="0dp" android:layout_height="0dp" />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_drawer_rounded" 
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:minWidth="100dp">
+
+            <ImageView
+                android:id="@+id/mini_music_icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@android:drawable/ic_media_play"
+                android:layout_marginStart="2dp"
+                app:tint="@color/cl_accent_orange"/>
+
+            <TextView
+                android:id="@+id/mini_music_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Muzik"
+                android:textColor="@color/cl_text_primary"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:ellipsize="marquee"
+                android:singleLine="true"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"/>
+
+            <ImageButton
+                android:id="@+id/mini_btn_play"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_media_play"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="4dp"
+                app:tint="@color/cl_primary"/>
+
+            <ImageButton
+                android:id="@+id/mini_btn_next"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_media_next"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="4dp"
+                android:layout_marginStart="8dp"
+                app:tint="@color/cl_text_secondary"/>
+
         </LinearLayout>
 
     </LinearLayout>
