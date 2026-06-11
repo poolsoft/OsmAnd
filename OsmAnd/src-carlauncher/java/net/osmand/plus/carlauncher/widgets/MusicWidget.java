@@ -156,6 +156,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         if (rootView == null) return;
 
         boolean isSmall = (newSize == WidgetSize.SMALL);
+        boolean isPortrait = context.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
 
         // Views
         View btnPrev = rootView.findViewById(net.osmand.plus.R.id.widget_btn_prev);
@@ -163,6 +164,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         TextView artist = rootView.findViewById(net.osmand.plus.R.id.widget_track_artist);
         TextView title = rootView.findViewById(net.osmand.plus.R.id.widget_track_title);
         View btnPlay = rootView.findViewById(net.osmand.plus.R.id.widget_btn_play);
+        View controlsContainer = rootView.findViewById(net.osmand.plus.R.id.controls_container);
 
         // Visibility
         int visibility = isSmall ? View.GONE : View.VISIBLE;
@@ -170,9 +172,24 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         if (btnNext != null) btnNext.setVisibility(visibility);
         if (artist != null) artist.setVisibility(visibility);
 
-        // Visualizer Visibility
+        // Visualizer Visibility (Dikey modda dikey sikismayi onlemek icin tamamen gizle)
         if (visualizerView != null) {
-            visualizerView.setVisibility(isSmall ? View.INVISIBLE : View.VISIBLE);
+            if (isPortrait) {
+                visualizerView.setVisibility(View.GONE);
+            } else {
+                visualizerView.setVisibility(isSmall ? View.INVISIBLE : View.VISIBLE);
+            }
+        }
+
+        // Butonlarin alt boslugunu (margin) dikey modda alta yaslanacak sekilde 16dp yap
+        if (controlsContainer != null) {
+            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) controlsContainer.getLayoutParams();
+            if (isPortrait) {
+                lp.bottomMargin = dpToPx(16); // Alta dayali, 16dp padding/margin
+            } else {
+                lp.bottomMargin = dpToPx(8);  // Normal modda 8dp
+            }
+            controlsContainer.setLayoutParams(lp);
         }
 
         // --- Music Layout is now handled by XML (widget_music_modern.xml) ---
