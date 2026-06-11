@@ -81,8 +81,13 @@ public class AppDockFragment extends Fragment
     private ImageButton miniBtnPlay;
     private ImageButton miniBtnNext;
     private ImageView miniMusicIcon;
-
     private MusicManager musicManager;
+
+    // New Containers & Assistant Button
+    private LinearLayout leftContainer;
+    private LinearLayout rightContainer;
+    private LinearLayout centerContainer;
+    private ImageButton btnAssistant;
 
     public interface OnAppDockListener {
         void onLayoutModeToggle();
@@ -168,6 +173,12 @@ public class AppDockFragment extends Fragment
         layoutButton = root.findViewById(net.osmand.plus.R.id.btn_layout_toggle);
         recyclerView = root.findViewById(net.osmand.plus.R.id.dock_recycler);
 
+        // Setup Containers & Assistant Button
+        leftContainer = root.findViewById(net.osmand.plus.R.id.left_buttons_container);
+        rightContainer = root.findViewById(net.osmand.plus.R.id.right_buttons_container);
+        centerContainer = root.findViewById(net.osmand.plus.R.id.center_content_container);
+        btnAssistant = root.findViewById(net.osmand.plus.R.id.btn_assistant);
+
         // Setup New Views
         clockView = root.findViewById(net.osmand.plus.R.id.dock_clock);
         miniMusicContainer = root.findViewById(net.osmand.plus.R.id.mini_music_container);
@@ -175,6 +186,14 @@ public class AppDockFragment extends Fragment
         miniBtnPlay = root.findViewById(net.osmand.plus.R.id.mini_btn_play);
         miniBtnNext = root.findViewById(net.osmand.plus.R.id.mini_btn_next);
         miniMusicIcon = root.findViewById(net.osmand.plus.R.id.mini_music_icon);
+
+        if (btnAssistant != null) {
+            btnAssistant.setOnClickListener(v -> checkVoicePermissionAndToggle());
+            btnAssistant.setOnLongClickListener(v -> {
+                openAssistantSettings();
+                return true;
+            });
+        }
 
         if (clockView != null) {
             clockView.setOnClickListener(v -> openSettings());
@@ -376,6 +395,7 @@ public class AppDockFragment extends Fragment
             musicManager.addListener(this);
         }
         updateMiniMusicUI(); // Ilk yuklemede durum guncelle (Turkce karakter yok)
+        updateAssistantButtonUI(); // Asistan buton durumunu guncelle
     }
 
     @Override
@@ -722,6 +742,9 @@ public class AppDockFragment extends Fragment
                 } else {
                     btnDesktopMode.setColorFilter(0xFF0084FF); // Fallback premium blue
                 }
+                if (miniMusicContainer != null) {
+                    miniMusicContainer.setVisibility(View.GONE);
+                }
             } else {
                 // Pasifken beyaz / yari transparan hint rengi
                 if (isVerticalMode) {
@@ -732,6 +755,9 @@ public class AppDockFragment extends Fragment
                     } else {
                         btnDesktopMode.setColorFilter(0xFF888888);
                     }
+                }
+                if (miniMusicContainer != null) {
+                    miniMusicContainer.setVisibility(isVerticalMode ? View.GONE : View.VISIBLE);
                 }
             }
         });
@@ -778,26 +804,49 @@ public class AppDockFragment extends Fragment
                 lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
                 ll.setLayoutParams(lp);
             }
+
+            // Bind containers
+            leftContainer = root.findViewById(net.osmand.plus.R.id.left_buttons_container);
+            rightContainer = root.findViewById(net.osmand.plus.R.id.right_buttons_container);
+            centerContainer = root.findViewById(net.osmand.plus.R.id.center_content_container);
+
+            if (leftContainer != null) {
+                leftContainer.setOrientation(LinearLayout.VERTICAL); // Her zaman dikey
+                leftContainer.setGravity(android.view.Gravity.CENTER);
+            }
+
+            if (rightContainer != null) {
+                rightContainer.setOrientation(isVertical ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+                rightContainer.setGravity(isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL);
+            }
+
+            if (centerContainer != null) {
+                centerContainer.setOrientation(isVertical ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
+                centerContainer.setGravity(android.view.Gravity.CENTER);
+            }
             
-            // 3. Conditional Visibility
+            // 3. Conditional Visibility of Mini Music Player (Sadece harita modunda aktif - isDesktopMode durumunu MapActivity'den sorgula)
             if (miniMusicContainer != null) {
-                miniMusicContainer.setVisibility(isVertical ? View.GONE : View.VISIBLE);
-                if (!isVertical) {
+                boolean isMapMode = true;
+                if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                    isMapMode = !((net.osmand.plus.activities.MapActivity) getActivity()).isDesktopMode();
+                }
+                miniMusicContainer.setVisibility((isVertical || !isMapMode) ? View.GONE : View.VISIBLE);
+                if (!isVertical && isMapMode) {
                     adjustMiniPlayerLayout();
                 }
             }
             
             View clockContainer = root.findViewById(net.osmand.plus.R.id.clock_settings_container);
             if (clockContainer != null) {
-                // Keep visible in vertical mode!
                 clockContainer.setVisibility(View.VISIBLE);
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) clockContainer.getLayoutParams();
                 lp.gravity = isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL;
                 lp.width = isVertical ? ViewGroup.LayoutParams.MATCH_PARENT : ViewGroup.LayoutParams.WRAP_CONTENT;
                 lp.height = isVertical ? ViewGroup.LayoutParams.WRAP_CONTENT : ViewGroup.LayoutParams.MATCH_PARENT;
-                lp.weight = 0.0f; // Weight degeri her zaman sifirlanarak tasmalar onlenir
+                lp.weight = 0.0f;
                 lp.setMargins(0, 0, 0, 0);
-                clockContainer.setPadding(isVertical ? 0 : dpToPx(12), isVertical ? dpToPx(2) : 0, isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(2) : 0);
+                clockContainer.setPadding(isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(2) : 0, isVertical ? 0 : dpToPx(4), isVertical ? dpToPx(2) : 0);
                 clockContainer.setLayoutParams(lp);
                 
                 if (clockContainer instanceof LinearLayout) {
@@ -818,45 +867,47 @@ public class AppDockFragment extends Fragment
             int gravity = isVertical ? android.view.Gravity.CENTER_HORIZONTAL : android.view.Gravity.CENTER_VERTICAL;
             int iconSize = getScaledIconSize();
             
-            if (appListButton != null) {
-                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) appListButton.getLayoutParams();
-                lp.gravity = gravity;
-                lp.width = iconSize;
-                lp.height = iconSize;
-                // Marginler dikey ve yatay modlar icin dinamik optimize edildi
-                lp.setMargins(isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(2) : 0, isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(2) : 0);
-                appListButton.setLayoutParams(lp);
-                appListButton.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
-            }
-            
             if (btnDesktopMode != null) {
                 btnDesktopMode.setVisibility(View.VISIBLE);
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) btnDesktopMode.getLayoutParams();
-                lp.gravity = gravity;
+                lp.gravity = android.view.Gravity.CENTER;
                 lp.width = iconSize;
                 lp.height = iconSize;
-                if (isVertical) {
-                    lp.setMargins(0, 0, 0, dpToPx(2));
-                } else {
-                    lp.setMargins(dpToPx(4), 0, dpToPx(4), 0);
-                }
+                lp.setMargins(0, 0, 0, dpToPx(2));
                 btnDesktopMode.setLayoutParams(lp);
                 btnDesktopMode.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
             }
 
-            if (layoutButton != null) {
-                layoutButton.setVisibility(View.GONE);
-                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) layoutButton.getLayoutParams();
+            if (appListButton != null) {
+                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) appListButton.getLayoutParams();
+                lp.gravity = android.view.Gravity.CENTER;
+                lp.width = iconSize;
+                lp.height = iconSize;
+                lp.setMargins(0, dpToPx(2), 0, 0);
+                appListButton.setLayoutParams(lp);
+                appListButton.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
+            }
+
+            if (btnAssistant != null) {
+                btnAssistant.setVisibility(View.VISIBLE);
+                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) btnAssistant.getLayoutParams();
                 lp.gravity = gravity;
+                lp.width = iconSize;
+                lp.height = iconSize;
                 if (isVertical) {
-                    lp.setMargins(0, 0, 0, dpToPx(2));
+                    lp.setMargins(0, 0, 0, dpToPx(4));
                 } else {
                     lp.setMargins(dpToPx(4), 0, dpToPx(4), 0);
                 }
-                layoutButton.setLayoutParams(lp);
+                btnAssistant.setLayoutParams(lp);
+                btnAssistant.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
+            }
+
+            if (layoutButton != null) {
+                layoutButton.setVisibility(View.GONE);
             }
             
-            // 5. RecyclerView Layout Adjustments (Yatay modda wrap_content ve weight=0, dikey portrait modda weight=1 ve width=0 yapildi - Turkce karakter yok)
+            // 5. RecyclerView Layout Adjustments
             if (recyclerView != null) {
                 LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) recyclerView.getLayoutParams();
                 boolean useWeight = isVertical || isScreenPortrait;
@@ -1066,35 +1117,36 @@ public class AppDockFragment extends Fragment
         
         View clockContainer = clockView != null ? (View) clockView.getParent() : null;
         
-        // Oncelikli gizleme mantigi (Priority Rules):
-        // 1. Esik 1: Genislik >= 480dp -> Saat, Player ve Recycler acik
+        boolean isMapMode = true;
+        if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+            isMapMode = !((net.osmand.plus.activities.MapActivity) getActivity()).isDesktopMode();
+        }
+
+        // Harita modundayken mini player her zaman gorunur kalmali ve hap tasarimina burunmeli
+        if (miniMusicContainer != null) {
+            if (isMapMode) {
+                miniMusicContainer.setVisibility(View.VISIBLE);
+                adjustMiniPlayerLayout();
+            } else {
+                miniMusicContainer.setVisibility(View.GONE);
+            }
+        }
+
+        // Oncelikli gizleme mantigi (Saat ve Recycler icin):
         if (totalWidthDp >= 480) {
             if (clockContainer != null) clockContainer.setVisibility(View.VISIBLE);
-            if (miniMusicContainer != null) {
-                miniMusicContainer.setVisibility(View.VISIBLE);
-                adjustMiniPlayerLayout();
-            }
             if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
         }
-        // 2. Esik 2: 420dp <= Genislik < 480dp -> Saat gizlenir, Player ve Recycler acik
         else if (totalWidthDp >= 420) {
             if (clockContainer != null) clockContainer.setVisibility(View.GONE);
-            if (miniMusicContainer != null) {
-                miniMusicContainer.setVisibility(View.VISIBLE);
-                adjustMiniPlayerLayout();
-            }
             if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
         }
-        // 3. Esik 3: 280dp <= Genislik < 420dp -> Saat VE Player gizlenir, Kisayol Recycler'ina tam alan kalir! (Dikey portrait telefon ve teyplerde simgelerin sigmasini saglar)
         else if (totalWidthDp >= 280) {
             if (clockContainer != null) clockContainer.setVisibility(View.GONE);
-            if (miniMusicContainer != null) miniMusicContainer.setVisibility(View.GONE);
             if (recyclerView != null) recyclerView.setVisibility(View.VISIBLE);
         }
-        // 4. Esik 4: Genislik < 280dp -> Kisayollar da gizlenir
         else {
             if (clockContainer != null) clockContainer.setVisibility(View.GONE);
-            if (miniMusicContainer != null) miniMusicContainer.setVisibility(View.GONE);
             if (recyclerView != null) recyclerView.setVisibility(View.GONE);
         }
     }
@@ -1115,5 +1167,61 @@ public class AppDockFragment extends Fragment
         }
 
         applyOrientationState(getView(), isVerticalMode);
+    }
+
+    private void checkVoicePermissionAndToggle() {
+        if (getContext() == null) return;
+        if (getContext().checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.RECORD_AUDIO}, 200);
+        } else {
+            toggleVoiceControlService();
+        }
+    }
+
+    private void toggleVoiceControlService() {
+        if (getContext() == null) return;
+        Intent intent = new Intent(getContext(), net.osmand.plus.carlauncher.voice.VoiceCommandService.class);
+        if (net.osmand.plus.carlauncher.voice.VoiceCommandService.isServiceRunning) {
+            getContext().stopService(intent);
+            android.widget.Toast.makeText(getContext(), "Sesli kontrol kapatildi", android.widget.Toast.LENGTH_SHORT).show();
+        } else {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                getContext().startForegroundService(intent);
+            } else {
+                getContext().startService(intent);
+            }
+            android.widget.Toast.makeText(getContext(), "Sesli kontrol baslatildi", android.widget.Toast.LENGTH_SHORT).show();
+        }
+        new Handler(Looper.getMainLooper()).postDelayed(this::updateAssistantButtonUI, 300);
+    }
+
+    private void updateAssistantButtonUI() {
+        if (btnAssistant == null) return;
+        boolean isRunning = net.osmand.plus.carlauncher.voice.VoiceCommandService.isServiceRunning;
+        if (isRunning) {
+            btnAssistant.setColorFilter(0xFF00FFFF);
+            btnAssistant.setBackgroundResource(net.osmand.plus.R.drawable.bg_circle_translucent_white);
+        } else {
+            btnAssistant.setColorFilter(0xFFFFFFFF);
+            btnAssistant.setBackgroundResource(0);
+        }
+    }
+
+    private void openAssistantSettings() {
+        if (getContext() instanceof net.osmand.plus.activities.MapActivity) {
+            ((net.osmand.plus.activities.MapActivity) getContext()).openCarLauncherSettings();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 200) {
+            if (grantResults.length > 0 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                toggleVoiceControlService();
+            } else {
+                android.widget.Toast.makeText(getContext(), "Ses kaydetme izni verilmedi", android.widget.Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }

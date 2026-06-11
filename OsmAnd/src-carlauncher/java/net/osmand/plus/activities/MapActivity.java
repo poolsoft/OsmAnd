@@ -894,7 +894,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				if (btnFullscreenExit != null) btnFullscreenExit.setVisibility(View.GONE);
 				break;
 			case 2: // Full Screen
-				if (appDock != null) appDock.setVisibility(View.GONE);
+				if (appDock != null) appDock.setVisibility(View.VISIBLE);
 				if (btnFullscreenExit != null) {
                     btnFullscreenExit.setVisibility(View.VISIBLE);
                     // android.widget.Toast.makeText(this, "Mode 2: Full Screen (Button VISIBLE)", android.widget.Toast.LENGTH_SHORT).show();
@@ -921,7 +921,24 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			// Animasyon devam ederken yeni tiklamalari engelle (Turkce karakter yok)
 			return;
 		}
-		setDesktopMode(!isDesktopMode);
+		if (!isDesktopMode && layoutMode == 0) {
+			// Normal -> Full Harita
+			layoutMode = 2;
+			isWidgetPanelOpen = false;
+			updateLayoutMode();
+		} else if (!isDesktopMode && layoutMode == 2) {
+			// Full Harita -> Desktop Mode
+			layoutMode = 0;
+			isWidgetPanelOpen = true;
+			updateLayoutMode();
+			setDesktopMode(true);
+		} else {
+			// Desktop Mode -> Normal
+			setDesktopMode(false);
+			layoutMode = 0;
+			isWidgetPanelOpen = true;
+			updateLayoutMode();
+		}
 	}
 
 	public void setDesktopMode(boolean active) {
