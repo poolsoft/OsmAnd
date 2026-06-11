@@ -890,7 +890,21 @@ public class AppDockFragment extends Fragment
             
             if (clockView != null) {
                 clockView.setGravity(isVertical ? android.view.Gravity.CENTER : android.view.Gravity.CENTER_VERTICAL);
-                clockView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, isVertical ? 18f : 22f);
+                
+                // Genislik ve yukseklik ayari (Turkce karakter yok)
+                android.view.ViewGroup.LayoutParams clp = clockView.getLayoutParams();
+                if (clp != null) {
+                    clp.width = isVertical ? android.view.ViewGroup.LayoutParams.MATCH_PARENT : android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+                    clockView.setLayoutParams(clp);
+                }
+                
+                net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+                int dockSizePercent = settings.getDockSize();
+                float scale = 0.3f + (dockSizePercent / 100.0f) * 1.4f;
+                
+                float baseTextSize = isVertical ? 18f : 22f;
+                clockView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, baseTextSize * scale);
+                
                 java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
                         isVertical ? "HH\nmm" : "HH:mm",
                         java.util.Locale.getDefault());

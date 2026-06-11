@@ -119,20 +119,6 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
 
         AppShortcut shortcut = shortcuts.get(position);
         holder.bind(shortcut);
-        setAnimation(holder.itemView, position);
-    }
-
-    private void setAnimation(View viewToAnimate, int position) {
-        // Simple Fade & Slide-In Animation
-        viewToAnimate.setAlpha(0f);
-        viewToAnimate.setTranslationY(dpToPx(20)); // Start slightly below
-        viewToAnimate.animate()
-                .alpha(1f)
-                .translationY(0)
-                .setDuration(400)
-                .setStartDelay(position * 50L) // Stagger effect
-                .setInterpolator(new android.view.animation.DecelerateInterpolator())
-                .start();
     }
 
     @Override
