@@ -157,6 +157,19 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
 
         boolean isSmall = (newSize == WidgetSize.SMALL);
         boolean isPortrait = context.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        
+        // cellX ve cellY -1 ise widget Kucuk Paneldedir (RecyclerView). Degilse Masaustundedir (Desktop/Workspace).
+        boolean isSmallPanel = (cellX == -1 && cellY == -1);
+        
+        // Daraltma karari (shouldCollapse): 
+        // Kucuk panelde dikey moddaysak HER ZAMAN daralt.
+        // Masaustunde (Desktop) ise sadece dikey modda ve SMALL (3x3) boyuttaysak daralt.
+        boolean shouldCollapse;
+        if (isSmallPanel) {
+            shouldCollapse = isPortrait;
+        } else {
+            shouldCollapse = isPortrait && isSmall;
+        }
 
         // Views
         View btnPrev = rootView.findViewById(net.osmand.plus.R.id.widget_btn_prev);
@@ -172,19 +185,19 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         if (btnNext != null) btnNext.setVisibility(visibility);
         if (artist != null) artist.setVisibility(visibility);
 
-        // Visualizer Visibility (Dikey modda dikey sikismayi onlemek icin tamamen gizle)
+        // Visualizer Visibility (Daraltma aktifse tamamen gizle)
         if (visualizerView != null) {
-            if (isPortrait) {
+            if (shouldCollapse) {
                 visualizerView.setVisibility(View.GONE);
             } else {
                 visualizerView.setVisibility(isSmall ? View.INVISIBLE : View.VISIBLE);
             }
         }
 
-        // Butonlarin alt boslugunu (margin) dikey modda alta yaslanacak sekilde 16dp yap
+        // Butonlarin alt boslugunu (margin) daraltma aktifse 16dp yapip alta yasla
         if (controlsContainer != null) {
             ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) controlsContainer.getLayoutParams();
-            if (isPortrait) {
+            if (shouldCollapse) {
                 lp.bottomMargin = dpToPx(16); // Alta dayali, 16dp padding/margin
             } else {
                 lp.bottomMargin = dpToPx(8);  // Normal modda 8dp
