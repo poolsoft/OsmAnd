@@ -742,9 +742,6 @@ public class AppDockFragment extends Fragment
                 } else {
                     btnDesktopMode.setColorFilter(0xFF0084FF); // Fallback premium blue
                 }
-                if (miniMusicContainer != null) {
-                    miniMusicContainer.setVisibility(View.GONE);
-                }
             } else {
                 // Pasifken beyaz / yari transparan hint rengi
                 if (isVerticalMode) {
@@ -756,8 +753,24 @@ public class AppDockFragment extends Fragment
                         btnDesktopMode.setColorFilter(0xFF888888);
                     }
                 }
-                if (miniMusicContainer != null) {
-                    miniMusicContainer.setVisibility(isVerticalMode ? View.GONE : View.VISIBLE);
+            }
+
+            // Mini muzik calarin gorunurlugunu desktop/harita moduna gore guncelle
+            if (miniMusicContainer != null) {
+                boolean isScreenPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+                int layoutMode = 0;
+                if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                    layoutMode = ((net.osmand.plus.activities.MapActivity) getActivity()).getLayoutMode();
+                }
+                boolean shouldShow = false;
+                if (!isScreenPortrait && !isVerticalMode) {
+                    if (active || layoutMode == 2) {
+                        shouldShow = true;
+                    }
+                }
+                miniMusicContainer.setVisibility(shouldShow ? View.VISIBLE : View.GONE);
+                if (shouldShow) {
+                    adjustMiniPlayerLayout();
                 }
             }
         });
@@ -831,14 +844,29 @@ public class AppDockFragment extends Fragment
                 centerContainer.setLayoutParams(lp);
             }
             
-            // 3. Conditional Visibility of Mini Music Player (Sadece harita modunda aktif - isDesktopMode durumunu MapActivity'den sorgula)
+            // 3. Conditional Visibility of Mini Music Player
             if (miniMusicContainer != null) {
-                boolean isMapMode = true;
+                boolean isDesktop = false;
+                int layoutMode = 0;
                 if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
-                    isMapMode = !((net.osmand.plus.activities.MapActivity) getActivity()).isDesktopMode();
+                    net.osmand.plus.activities.MapActivity activity = (net.osmand.plus.activities.MapActivity) getActivity();
+                    isDesktop = activity.isDesktopMode();
+                    layoutMode = activity.getLayoutMode();
                 }
-                miniMusicContainer.setVisibility((isVertical || !isMapMode) ? View.GONE : View.VISIBLE);
-                if (!isVertical && isMapMode) {
+
+                // Mini muzik calarin gorunurluk kurallari:
+                // 1. Ekran dikey portrait ise -> GONE
+                // 2. Rihtim dikey sidebar ise -> GONE
+                // 3. Yatay ekranda ve yatay rihtimda -> Sadece isDesktop == true VEYA layoutMode == 2 ise VISIBLE. Diger durumlarda GONE.
+                boolean shouldShow = false;
+                if (!isScreenPortrait && !isVertical) {
+                    if (isDesktop || layoutMode == 2) {
+                        shouldShow = true;
+                    }
+                }
+
+                miniMusicContainer.setVisibility(shouldShow ? View.VISIBLE : View.GONE);
+                if (shouldShow) {
                     adjustMiniPlayerLayout();
                 }
             }
@@ -862,7 +890,7 @@ public class AppDockFragment extends Fragment
             
             if (clockView != null) {
                 clockView.setGravity(isVertical ? android.view.Gravity.CENTER : android.view.Gravity.CENTER_VERTICAL);
-                clockView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, isVertical ? 26f : 22f);
+                clockView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, isVertical ? 18f : 22f);
                 java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
                         isVertical ? "HH\nmm" : "HH:mm",
                         java.util.Locale.getDefault());
@@ -1136,14 +1164,9 @@ public class AppDockFragment extends Fragment
             isMapMode = !((net.osmand.plus.activities.MapActivity) getActivity()).isDesktopMode();
         }
 
-        // Harita modundayken mini player her zaman gorunur kalmali ve hap tasarimina burunmeli
+        // Dikey portrait ekranda mini player her zaman gizlidir (dar alan)
         if (miniMusicContainer != null) {
-            if (isMapMode) {
-                miniMusicContainer.setVisibility(View.VISIBLE);
-                adjustMiniPlayerLayout();
-            } else {
-                miniMusicContainer.setVisibility(View.GONE);
-            }
+            miniMusicContainer.setVisibility(View.GONE);
         }
 
         // Oncelikli gizleme mantigi (Saat ve Recycler icin):

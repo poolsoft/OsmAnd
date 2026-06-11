@@ -915,6 +915,10 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		return isDesktopMode;
 	}
 
+	public int getLayoutMode() {
+		return layoutMode;
+	}
+
 	@Override
 	public void onDesktopModeToggle() {
 		if (isTransitioning) {
