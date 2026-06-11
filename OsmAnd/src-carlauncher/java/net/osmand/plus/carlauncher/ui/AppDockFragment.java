@@ -811,7 +811,7 @@ public class AppDockFragment extends Fragment
             centerContainer = root.findViewById(net.osmand.plus.R.id.center_content_container);
 
             if (leftContainer != null) {
-                leftContainer.setOrientation(LinearLayout.VERTICAL); // Her zaman dikey
+                leftContainer.setOrientation(isVertical ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
                 leftContainer.setGravity(android.view.Gravity.CENTER);
             }
 
@@ -823,6 +823,12 @@ public class AppDockFragment extends Fragment
             if (centerContainer != null) {
                 centerContainer.setOrientation(isVertical ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
                 centerContainer.setGravity(android.view.Gravity.CENTER);
+
+                LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) centerContainer.getLayoutParams();
+                lp.width = isVertical ? ViewGroup.LayoutParams.MATCH_PARENT : 0;
+                lp.height = isVertical ? 0 : ViewGroup.LayoutParams.MATCH_PARENT;
+                lp.weight = 1.0f;
+                centerContainer.setLayoutParams(lp);
             }
             
             // 3. Conditional Visibility of Mini Music Player (Sadece harita modunda aktif - isDesktopMode durumunu MapActivity'den sorgula)
@@ -873,7 +879,11 @@ public class AppDockFragment extends Fragment
                 lp.gravity = android.view.Gravity.CENTER;
                 lp.width = iconSize;
                 lp.height = iconSize;
-                lp.setMargins(0, 0, 0, dpToPx(2));
+                if (isVertical) {
+                    lp.setMargins(0, 0, 0, dpToPx(2));
+                } else {
+                    lp.setMargins(0, 0, dpToPx(4), 0);
+                }
                 btnDesktopMode.setLayoutParams(lp);
                 btnDesktopMode.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
             }
@@ -883,7 +893,11 @@ public class AppDockFragment extends Fragment
                 lp.gravity = android.view.Gravity.CENTER;
                 lp.width = iconSize;
                 lp.height = iconSize;
-                lp.setMargins(0, dpToPx(2), 0, 0);
+                if (isVertical) {
+                    lp.setMargins(0, dpToPx(2), 0, 0);
+                } else {
+                    lp.setMargins(dpToPx(4), 0, 0, 0);
+                }
                 appListButton.setLayoutParams(lp);
                 appListButton.setPadding(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4));
             }
