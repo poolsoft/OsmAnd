@@ -271,12 +271,7 @@ public class AppDockFragment extends Fragment
             btnDesktopMode.setImageResource(net.osmand.plus.R.drawable.ic_desktop_mode);
             btnDesktopMode.setColorFilter(0xFFFFFFFF);
             
-            // Premium yuvarlak mavi kenarlikli arka plan
-            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
-            bg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-            bg.setColor(0xDD181824); // Yari transparan premium lacivert
-            bg.setStroke(dpToPx(2), 0xFF3D63FF); // 2dp modern mavi kenarlik
-            btnDesktopMode.setBackground(bg);
+            // XML'deki varsayilan arkaplan korunsun (Daire silindi)
             
             // Tiklama: Desktop Mode Toggle
             btnDesktopMode.setOnClickListener(v -> {
@@ -298,6 +293,9 @@ public class AppDockFragment extends Fragment
                     listener.onAppDrawerOpen();
             });
         }
+
+        // Bütün dock butonlarının boyutunu kısayollar ile (AppDockAdapter) eşitle
+        adjustButtonSizes();
 
         // Sag Buton: 3-nokta Menu (Tiklandiginda acilir menu gosterir)
         if (layoutButton != null) {
@@ -815,6 +813,28 @@ public class AppDockFragment extends Fragment
         int dockSizePercent = settings.getDockSize();
         float scale = 0.3f + (dockSizePercent / 100.0f) * 1.4f;
         return (int) (baseSize * scale);
+    }
+
+    private void adjustButtonSizes() {
+        int iconSize = getScaledIconSize();
+        int itemSize = iconSize + dpToPx(16); // Sabit dokunma alani, AppDockAdapter ile ayni
+
+        View[] buttons = {btnDesktopMode, appListButton, btnAssistant};
+        for (View btn : buttons) {
+            if (btn != null) {
+                ViewGroup.LayoutParams lp = btn.getLayoutParams();
+                if (lp != null) {
+                    lp.width = itemSize;
+                    lp.height = itemSize;
+                    btn.setLayoutParams(lp);
+                }
+                int padding = dpToPx(8); // Standart ikon ici bosluk
+                btn.setPadding(padding, padding, padding, padding);
+                if (btn instanceof ImageView) {
+                    ((ImageView)btn).setScaleType(ImageView.ScaleType.FIT_CENTER);
+                }
+            }
+        }
     }
 
     public void setOrientation(boolean isVertical) {
