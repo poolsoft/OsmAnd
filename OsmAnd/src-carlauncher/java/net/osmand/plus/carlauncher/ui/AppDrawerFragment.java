@@ -87,6 +87,12 @@ public class AppDrawerFragment extends Fragment {
             } catch (Exception e) {
                 // fallback
             }
+        } else if (packageName.equals("internal://dashboard")) {
+            try {
+                return context.getResources().getDrawable(android.R.drawable.ic_menu_compass);
+            } catch (Exception e) {
+                // fallback
+            }
         } else {
             try {
                 return context.getPackageManager().getApplicationIcon(packageName);
@@ -369,6 +375,12 @@ public class AppDrawerFragment extends Fragment {
             antenna.packageName = "internal://antenna";
             internal.add(antenna);
 
+            // Dashboard
+            AppItem dashboard = new AppItem();
+            dashboard.label = "Dashboard (Gosterge)";
+            dashboard.packageName = "internal://dashboard";
+            internal.add(dashboard);
+
             return internal;
         }
 
@@ -558,6 +570,9 @@ public class AppDrawerFragment extends Fragment {
                 break;
             case "internal://antenna":
                 activity.openAntennaAlignmentInPanel();
+                break;
+            case "internal://dashboard":
+                activity.getPanelContentManager().setContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.DASHBOARD);
                 break;
         }
     }
