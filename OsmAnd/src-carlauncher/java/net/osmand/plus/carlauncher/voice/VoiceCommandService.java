@@ -256,6 +256,10 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                     }
                     boolean success = actualModelDir.renameTo(targetDir);
                     android.util.Log.d("VoiceCommandService", "USB model klasoru basariyla tasindi: " + success);
+                    if (success) {
+                        android.content.SharedPreferences prefs = getSharedPreferences("vosk_prefs", Context.MODE_PRIVATE);
+                        prefs.edit().putBoolean("vosk_model_installed", true).apply();
+                    }
                 } else {
                     throw new IOException("Zip icerisinde gecerli bir model klasoru bulunamadi");
                 }
@@ -394,6 +398,10 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                     }
                     boolean success = actualModelDir.renameTo(targetDir);
                     android.util.Log.d("VoiceCommandService", "Model klasoru basariyla tasindi: " + success);
+                    if (success) {
+                        android.content.SharedPreferences prefs = getSharedPreferences("vosk_prefs", Context.MODE_PRIVATE);
+                        prefs.edit().putBoolean("vosk_model_installed", true).apply();
+                    }
                 } else {
                     throw new IOException("Zip icerisinde gecerli bir model klasoru bulunamadi");
                 }

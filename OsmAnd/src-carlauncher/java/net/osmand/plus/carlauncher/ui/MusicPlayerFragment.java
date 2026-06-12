@@ -110,6 +110,13 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private List<MusicRepository.AudioTrack> allTracks = new ArrayList<>();
     private List<MusicRepository.AudioTrack> filteredTracks = new ArrayList<>();
 
+    // Now Playing Center UI Elements
+    private View nowPlayingCenterPanel;
+    private ImageView nowPlayingCenterArt;
+    private TextView nowPlayingCenterTitle;
+    private TextView nowPlayingCenterArtist;
+    private boolean isPlaylistVisible = true;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -139,6 +146,11 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         nowPlayingArtBlur = root.findViewById(net.osmand.plus.R.id.now_playing_art_blur);
         nowPlayingTitle = root.findViewById(net.osmand.plus.R.id.now_playing_title);
         nowPlayingArtist = root.findViewById(net.osmand.plus.R.id.now_playing_artist);
+        
+        nowPlayingCenterPanel = root.findViewById(net.osmand.plus.R.id.now_playing_center_panel);
+        nowPlayingCenterArt = root.findViewById(net.osmand.plus.R.id.now_playing_center_art);
+        nowPlayingCenterTitle = root.findViewById(net.osmand.plus.R.id.now_playing_center_title);
+        nowPlayingCenterArtist = root.findViewById(net.osmand.plus.R.id.now_playing_center_artist);
         seekbar = root.findViewById(net.osmand.plus.R.id.seekbar);
         timeCurrent = root.findViewById(net.osmand.plus.R.id.time_current);
         timeTotal = root.findViewById(net.osmand.plus.R.id.time_total);
@@ -345,7 +357,17 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
 
 
-        // Playlist Toggle (Switch Modes)
+        // Playlist Toggle (Switch Modes) - btnDockPlaylist uzerinden listeyi gizleme
+        if (btnDockPlaylist != null) {
+            btnDockPlaylist.setOnClickListener(v -> {
+                isPlaylistVisible = !isPlaylistVisible;
+                if (trackListPanel != null) trackListPanel.setVisibility(isPlaylistVisible ? View.VISIBLE : View.GONE);
+                if (nowPlayingCenterPanel != null) nowPlayingCenterPanel.setVisibility(isPlaylistVisible ? View.GONE : View.VISIBLE);
+                
+                btnDockPlaylist.setColorFilter(isPlaylistVisible ? 0xFFFFFFFF : 0xFF00FFFF);
+            });
+        }
+        
         if (btnPlaylist != null)
             btnPlaylist.setOnClickListener(v -> {
                 isExternalMode = !isExternalMode;
@@ -1398,6 +1420,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         getActivity().runOnUiThread(() -> {
             if (nowPlayingTitle != null)
                 nowPlayingTitle.setText(title != null ? title : "Muzik Secin");
+            if (nowPlayingCenterTitle != null)
+                nowPlayingCenterTitle.setText(title != null ? title : "Car Launcher Ses Sistemi");
+
             if (nowPlayingArtist != null) {
                 String artistText = artist;
                 if (artistText != null) {
@@ -1409,6 +1434,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     artistText = "";
                 }
                 nowPlayingArtist.setText(artistText);
+                if (nowPlayingCenterArtist != null) {
+                    nowPlayingCenterArtist.setText(artistText.isEmpty() ? "Hazir" : artistText);
+                }
             }
 
             if (nowPlayingArt != null) {
@@ -1416,6 +1444,10 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     nowPlayingArt.setPadding(0, 0, 0, 0);
                     nowPlayingArt.setImageBitmap(albumArt);
                     nowPlayingArt.setColorFilter(null);
+                    if (nowPlayingCenterArt != null) {
+                        nowPlayingCenterArt.setImageBitmap(albumArt);
+                        nowPlayingCenterArt.setColorFilter(null);
+                    }
                     if (nowPlayingArtBlur != null) {
                         nowPlayingArtBlur.setImageBitmap(albumArt);
                     }
@@ -1425,13 +1457,19 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     int visibleColor = ensureVisibleColor(dominantColor);
                     animateThemeColorChange(visibleColor);
                 } else {
-                    int p = (int) (32 * getResources().getDisplayMetrics().density);
+                    int p = (int) (8 * getContext().getResources().getDisplayMetrics().density);
                     nowPlayingArt.setPadding(p, p, p, p);
                     nowPlayingArt.setImageResource(net.osmand.plus.R.drawable.ic_default_album_art);
                     nowPlayingArt.setColorFilter(0x88FFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
+                    
+                    if (nowPlayingCenterArt != null) {
+                        nowPlayingCenterArt.setImageResource(net.osmand.plus.R.drawable.ic_default_album_art);
+                        nowPlayingCenterArt.setColorFilter(0x88FFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
+                    }
+
                     if (nowPlayingArtBlur != null) {
                         nowPlayingArtBlur.setImageResource(net.osmand.plus.R.drawable.bg_default_music_art);
-                    }
+                    }              }
                     
                     // Varsayilan Cyan temaya yumusak gecis (Turkce karakter yok)
                     animateThemeColorChange(0xFF00FFFF);
@@ -1620,24 +1658,21 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private void showAppPicker() {
         if (getContext() == null) return;
         AppPickerDialog dialog = new AppPickerDialog(getContext(), true, (packageName, appName, icon) -> {
+            musicManager.setPreferredPackage(packageName);
             musicManager.forceSetActiveController(packageName);
             
-            // Secilen harici uygulamayi split windowda baslat (Turkce karakter yok)
-            if (packageName != null && !"usage.internal.player".equals(packageName)) {
-                try {
-                    android.content.Intent launchIntent = getContext().getPackageManager().getLaunchIntentForPackage(packageName);
-                    if (launchIntent != null) {
-                        launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT | android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-                        android.app.ActivityOptions options = android.app.ActivityOptions.makeBasic();
-                        getContext().startActivity(launchIntent, options.toBundle());
-                    }
-                } catch (Exception e) {
-                    android.util.Log.e("MusicPlayerFragment", "Uygulama split modda baslatilamadi: " + packageName, e);
-                }
+            // Arkaplanda play komutu gonder (Uygulamayi ekranin onune zıplatma)
+            if (packageName != null) {
+                // Sadece arkaplanda (servis/media controller uzerinden) calismasini tetikliyoruz
+                // Teyplerde (XyAuto vs) Broadcast/MediaSession uzerinden arkada calmaya baslar
+                musicManager.play();
             }
             
             updateAppIcon();
         });
+        
+        // Aktif paketi dialoga bildir (Highlight icin)
+        dialog.setActivePackage(musicManager.getPreferredPackage());
         dialog.show();
     }
 

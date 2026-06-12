@@ -207,7 +207,11 @@ public class MusicRepository {
         }
 
         // Alps teyp yedek USB mount yollarini da tarayalim (Turkce karakter yok)
-        String[] fallbackPaths = {"/storage/udisk", "/storage/udisk2", "/storage/usb_storage", "/mnt/media_rw", "/mnt/usb", "/mnt/usb_storage"};
+        String[] fallbackPaths = {
+            "/storage/udisk", "/storage/udisk2", "/storage/usb_storage", 
+            "/mnt/media_rw", "/mnt/usb", "/mnt/usb_storage",
+            "/storage/usb0", "/storage/usb1", "/storage/usb2", "/storage/usb3", "/storage/usbotg"
+        };
         for (String path : fallbackPaths) {
             File fallbackDir = new File(path);
             if (fallbackDir.exists() && fallbackDir.isDirectory()) {

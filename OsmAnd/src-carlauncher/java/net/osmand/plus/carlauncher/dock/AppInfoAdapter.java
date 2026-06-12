@@ -74,12 +74,26 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.ViewHold
         public LinearLayout(Context context) { super(context); }
     }
 
+    private String activePackage;
+
+    public void setActivePackage(String pkg) {
+        this.activePackage = pkg;
+        notifyDataSetChanged();
+    }
+
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         AppPickerDialog.AppInfo app = apps.get(position);
         holder.nameView.setText(app.name);
         holder.iconView.setImageDrawable(app.icon);
         holder.itemView.setOnClickListener(v -> listener.onAppClick(app));
+
+        // Highlight logic
+        if (app.packageName != null && app.packageName.equals(activePackage)) {
+            holder.itemView.setBackgroundColor(android.graphics.Color.parseColor("#334488FF"));
+        } else {
+            holder.itemView.setBackgroundResource(android.R.drawable.list_selector_background);
+        }
     }
 
     @Override

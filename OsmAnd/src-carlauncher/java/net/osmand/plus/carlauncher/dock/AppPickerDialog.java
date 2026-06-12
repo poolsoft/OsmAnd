@@ -29,6 +29,7 @@ public class AppPickerDialog {
     private final OnAppSelectedListener listener;
     private final boolean onlyMusicApps;
     private BottomSheetDialog dialog;
+    private String activePackage;
 
     public AppPickerDialog(@NonNull Context context, @NonNull OnAppSelectedListener listener) {
         this(context, false, listener);
@@ -38,6 +39,10 @@ public class AppPickerDialog {
         this.context = context;
         this.onlyMusicApps = onlyMusicApps;
         this.listener = listener;
+    }
+
+    public void setActivePackage(String packageName) {
+        this.activePackage = packageName;
     }
 
     public void show() {
@@ -76,10 +81,20 @@ public class AppPickerDialog {
 
         List<AppInfo> apps = getInstalledApps();
         adapter.setApps(apps);
+        adapter.setActivePackage(this.activePackage);
 
         dialog.setContentView(root);
         View parent = (View) root.getParent();
         if (parent != null) parent.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+
+        dialog.setOnShowListener(d -> {
+            com.google.android.material.bottomsheet.BottomSheetDialog bsd = (com.google.android.material.bottomsheet.BottomSheetDialog) d;
+            View bottomSheetInternal = bsd.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            if (bottomSheetInternal != null) {
+                com.google.android.material.bottomsheet.BottomSheetBehavior.from(bottomSheetInternal).setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED);
+            }
+        });
+
         dialog.show();
     }
 
