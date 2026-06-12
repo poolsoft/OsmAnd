@@ -131,10 +131,19 @@ public class VoiceCommandService extends Service implements RecognitionListener 
     }
 
     private void checkAndPrepareModel() {
+        android.content.SharedPreferences prefs = getSharedPreferences("vosk_prefs", Context.MODE_PRIVATE);
+        boolean isModelInstalled = prefs.getBoolean("vosk_model_installed", false);
+
         File parentDir = getExternalFilesDir(null);
         File modelDir = new File(parentDir, "vosk-model-tr");
         File backupModelDir = new File(parentDir, "vosk-model-small-tr-0.3");
         
+        // Eger model daha onceden hatasiz yuklendiyse ve klasor silinmediyse direkt devam et
+        if (isModelInstalled && modelDir.exists()) {
+            loadModel(modelDir.getAbsolutePath());
+            return;
+        }
+
         if (modelDir.exists() && isModelDirectoryValid(modelDir)) {
             loadModel(modelDir.getAbsolutePath());
         } else if (backupModelDir.exists() && isModelDirectoryValid(backupModelDir)) {
@@ -293,12 +302,20 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                 // Genel komut cozumu icin serbest recognizer
                 commandRecognizer = new Recognizer(model, 16000.0f);
                 
+                // Basariyla yuklendiyse (exception olmadiysa) flag set et
+                android.content.SharedPreferences prefs = getSharedPreferences("vosk_prefs", Context.MODE_PRIVATE);
+                prefs.edit().putBoolean("vosk_model_installed", true).apply();
+                
                 handler.post(() -> {
                     updateNotification("\"Hey Car\" tetikleme kelimesi bekleniyor...");
                     startSpeechService(wakeWordRecognizer);
                 });
             } catch (Exception e) {
                 android.util.Log.e("VoiceCommandService", "Model yukleme hatasi", e);
+                // Hataliysa bayragi kaldir
+                android.content.SharedPreferences prefs = getSharedPreferences("vosk_prefs", Context.MODE_PRIVATE);
+                prefs.edit().putBoolean("vosk_model_installed", false).apply();
+                
                 handler.post(() -> {
                     Toast.makeText(VoiceCommandService.this, "Ses modeli yuklenemedi", Toast.LENGTH_LONG).show();
                     stopSelf();
