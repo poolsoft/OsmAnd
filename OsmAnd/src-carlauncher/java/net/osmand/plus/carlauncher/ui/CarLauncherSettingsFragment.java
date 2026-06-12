@@ -605,6 +605,20 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     // ═══════════════════════════════════════════════════════════════
 
     private void setupDockPrefs() {
+        androidx.preference.ListPreference dockPosPref = findPreference(CarLauncherSettings.KEY_DOCK_POSITION);
+        if (dockPosPref != null) {
+            dockPosPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                String val = (String) newValue;
+                if (settings != null) {
+                    settings.setDockPosition(val);
+                }
+                if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                    ((net.osmand.plus.activities.MapActivity) getActivity()).checkAndRefreshDockFragmentIfNeeded();
+                }
+                return true;
+            });
+        }
+
         SeekBarPreference maxShortcutsPref = findPreference(CarLauncherSettings.KEY_MAX_SHORTCUTS);
         if (maxShortcutsPref != null) {
             maxShortcutsPref.setOnPreferenceChangeListener((preference, newValue) -> {
