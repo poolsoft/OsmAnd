@@ -575,6 +575,9 @@ public class AppDockFragment extends Fragment
             case "internal://antenna":
                 activity.openAntennaAlignmentInPanel();
                 break;
+            case "internal://dashboard":
+                activity.getPanelContentManager().setContent(PanelContentManager.PanelContent.DASHBOARD);
+                break;
         }
     }
 

@@ -22,7 +22,8 @@ public class PanelContentManager {
         WEATHER,      // Hava durumu
         SETTINGS,     // Ayarlar fragmenti
         DESKTOP,      // Masaustu Modu (WidgetPanelFragment)
-        ANTENNA       // Anten Hizalama
+        ANTENNA,      // Anten Hizalama
+        DASHBOARD     // Arac Telemetri & Spor Kadran
     }
 
     private PanelContent currentContent = null;
@@ -84,6 +85,9 @@ public class PanelContentManager {
                 break;
             case ANTENNA:
                 fragment = new net.osmand.plus.carlauncher.antenna.AntennaWidgetFragment();
+                break;
+            case DASHBOARD:
+                fragment = new DashboardFragment();
                 break;
         }
 

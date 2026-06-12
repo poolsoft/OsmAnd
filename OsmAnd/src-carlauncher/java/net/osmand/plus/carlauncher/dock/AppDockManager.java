@@ -91,6 +91,9 @@ public class AppDockManager {
                         } else if (packageName.equals("internal://antenna")) {
                             appName = "Anten";
                             icon = context.getResources().getDrawable(net.osmand.plus.R.drawable.ic_action_compass, null);
+                        } else if (packageName.equals("internal://dashboard")) {
+                            appName = "Dashboard";
+                            icon = context.getResources().getDrawable(android.R.drawable.ic_menu_compass, null);
                         } else {
                             appName = "Bilinmeyen";
                             icon = context.getResources().getDrawable(android.R.drawable.sym_def_app_icon, null);
@@ -122,10 +125,10 @@ public class AppDockManager {
         PackageManager pm = context.getPackageManager();
 
         String[] defaultApps = {
+                "internal://dashboard",
                 "com.spotify.music",
                 "com.google.android.dialer",
                 "com.android.messaging",
-                "com.android.camera2",
                 "com.android.settings",
                 "net.osmand.plus"
         };
@@ -133,9 +136,20 @@ public class AppDockManager {
         int order = 0;
         for (String packageName : defaultApps) {
             try {
-                ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
-                String appName = appInfo.loadLabel(pm).toString();
-                Drawable icon = appInfo.loadIcon(pm);
+                String appName;
+                Drawable icon;
+                if (packageName.startsWith("internal://")) {
+                    if (packageName.equals("internal://dashboard")) {
+                        appName = "Dashboard";
+                        icon = context.getResources().getDrawable(android.R.drawable.ic_menu_compass, null);
+                    } else {
+                        continue;
+                    }
+                } else {
+                    ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
+                    appName = appInfo.loadLabel(pm).toString();
+                    icon = appInfo.loadIcon(pm);
+                }
 
                 shortcuts.add(new AppShortcut(packageName, appName, icon, order++, LaunchMode.FULL_SCREEN));
             } catch (PackageManager.NameNotFoundException e) {

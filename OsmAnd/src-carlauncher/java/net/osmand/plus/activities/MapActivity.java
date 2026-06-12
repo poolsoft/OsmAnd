@@ -1631,12 +1631,13 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 		getMapView().getAnimatedDraggingThread().toggleAnimations();
         
-        // --- Weather Widget Integration ---
+        // --- Weather Widget & Telemetry Integration ---
         if (weatherLocationListener == null) {
             weatherLocationListener = new OsmAndLocationProvider.OsmAndLocationListener() {
                 @Override
                 public void updateLocation(net.osmand.Location location) {
                      WeatherManager.getInstance(app).updateLocation(location);
+                     net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app).updateLocation(location);
                 }
             };
         }
@@ -1644,7 +1645,10 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
             app.getLocationProvider().addLocationListener(weatherLocationListener);
             // Initial Update
             net.osmand.Location loc = app.getLocationProvider().getLastKnownLocation();
-            if (loc != null) WeatherManager.getInstance(app).updateLocation(loc);
+            if (loc != null) {
+                 WeatherManager.getInstance(app).updateLocation(loc);
+                 net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app).updateLocation(loc);
+            }
         }
     }
 
