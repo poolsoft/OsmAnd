@@ -1064,6 +1064,10 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 	}
 
+	public net.osmand.plus.carlauncher.ui.PanelContentManager getPanelContentManager() {
+		return panelContentManager;
+	}
+
 	public void openMusicPlayer() {
 		// Muzik oynaticiyi sag panel swap kullanarak buyuk ekranda ac
 		setPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.MUSIC);
