@@ -242,6 +242,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	// Layout Mode: 0 = Normal, 1 = No Widgets, 2 = Full Screen
 	private int layoutMode = 0;
 	private int previousLayoutMode = -1;
+	
+	private net.osmand.plus.carlauncher.voice.VoiceVisualizerView voiceVisualizerView;
+	private android.content.BroadcastReceiver voiceStateReceiver;
 
 	private android.content.BroadcastReceiver musicDrawerReceiver = new android.content.BroadcastReceiver() {
 		@Override
@@ -533,6 +536,42 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			mapContainer.setBackgroundResource(R.drawable.bg_card_rounded_dark);
 			mapContainer.setClipToOutline(true);
 		}
+
+		// --- VOICE VISUALIZER UI SETUP ---
+		voiceVisualizerView = new net.osmand.plus.carlauncher.voice.VoiceVisualizerView(this);
+		voiceVisualizerView.setVisibility(View.GONE);
+		android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
+				android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+				300
+		);
+		lp.gravity = android.view.Gravity.BOTTOM;
+		lp.bottomMargin = 220; // Dock'un uzerinde gorunmesi icin margin
+		if (rootLayout instanceof android.view.ViewGroup) {
+			((android.view.ViewGroup) rootLayout).addView(voiceVisualizerView, lp);
+		}
+
+		voiceStateReceiver = new android.content.BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				String state = intent.getStringExtra("state");
+				if ("LISTENING".equals(state)) {
+					voiceVisualizerView.startListening();
+				} else if ("PROCESSING".equals(state)) {
+					voiceVisualizerView.startProcessing();
+				} else if ("CLOSED".equals(state)) {
+					voiceVisualizerView.stop();
+				}
+			}
+		};
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+			registerReceiver(voiceStateReceiver,
+					new android.content.IntentFilter("net.osmand.plus.carlauncher.VOICE_STATE"),
+					Context.RECEIVER_NOT_EXPORTED);
+		} else {
+			registerReceiver(voiceStateReceiver,
+					new android.content.IntentFilter("net.osmand.plus.carlauncher.VOICE_STATE"));
+		}
+		// --- END VOICE VISUALIZER UI SETUP ---
 		
 		// Initialize Layout Manager & Panel Content Manager
 		carLayoutManager = new net.osmand.plus.carlauncher.ui.CarLayoutManager(this);
@@ -1813,6 +1852,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		if (voiceStateReceiver != null) {
+			try {
+				unregisterReceiver(voiceStateReceiver);
+			} catch (Exception e) {}
+		}
 		destroyProgressBarForRouting();
 		getMapActions().setMapActivity(null);
 		getMapLayers().setMapActivity(null);

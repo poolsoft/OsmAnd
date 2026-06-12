@@ -487,9 +487,16 @@ public class VoiceCommandService extends Service implements RecognitionListener 
         }
     }
 
+    private void sendVoiceStateBroadcast(String state) {
+        Intent intent = new Intent("net.osmand.plus.carlauncher.VOICE_STATE");
+        intent.putExtra("state", state);
+        sendBroadcast(intent);
+    }
+
     private void triggerWakeWordReaction() {
         isListeningForCommand = true;
         updateNotification("Dinliyorum...");
+        sendVoiceStateBroadcast("LISTENING");
 
         try {
             ToneGenerator toneGen = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
@@ -508,10 +515,12 @@ public class VoiceCommandService extends Service implements RecognitionListener 
         if (!isListeningForCommand) return;
         isListeningForCommand = false;
         updateNotification("\"Hey Car\" tetikleme kelimesi bekleniyor...");
+        sendVoiceStateBroadcast("CLOSED");
         startSpeechService(wakeWordRecognizer);
     }
 
     private void executeVoiceCommand(String text) {
+        sendVoiceStateBroadcast("PROCESSING");
         handler.post(() -> {
             if (text.contains("muzik") && (text.contains("cal") || text.contains("oynat") || text.contains("baslat"))) {
                 speak("Muzik oynatiliyor");

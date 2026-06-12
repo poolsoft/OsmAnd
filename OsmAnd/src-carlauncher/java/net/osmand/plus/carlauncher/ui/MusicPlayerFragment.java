@@ -290,9 +290,13 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 updateRepeatUI();
             });
 
-        // App Selector Launch (Icon + Name) - Tiklamada ac, uzun basmada picker ac (Turkce karakter yok)
+        // App Selector Launch (Icon + Name) - Tiklamada direkt Kaynak Secici ac, uzun basmada da ac
         if (appSelectorLaunch != null) {
             appSelectorLaunch.setOnClickListener(v -> {
+                showAppPicker(); // Artik direkt secici aciliyor
+            });
+            appSelectorLaunch.setOnLongClickListener(v -> {
+                // Eger uzun basilirsa, o anki uygulamaya gitme fonksiyonu eklendi
                 String preferredPkg = musicManager.getPreferredPackage();
                 if (preferredPkg != null && !"usage.internal.player".equals(preferredPkg)) {
                     try {
@@ -301,13 +305,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                             launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
                             getContext().startActivity(launchIntent);
                         }
-                    } catch (Exception e) {
-                        android.util.Log.e("MusicPlayerFragment", "Uygulama on plana getirilemedi: " + preferredPkg, e);
-                    }
+                    } catch (Exception e) {}
                 }
-            });
-            appSelectorLaunch.setOnLongClickListener(v -> {
-                showAppPicker();
                 return true;
             });
         }
