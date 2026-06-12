@@ -179,6 +179,7 @@ public class AppDockFragment extends Fragment
             layoutId = net.osmand.plus.R.layout.fragment_app_dock_sidebar;
         } else {
             layoutId = net.osmand.plus.R.layout.fragment_app_dock_horizontal;
+        }
         this.currentLayoutId = layoutId;
         View root = inflater.inflate(layoutId, container, false);
         root.post(() -> {
