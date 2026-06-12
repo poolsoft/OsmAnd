@@ -92,8 +92,9 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         int iconSize = getScaledIconSize();
-        int itemWidth = isVerticalMode ? ViewGroup.LayoutParams.MATCH_PARENT : iconSize + dpToPx(12);
-        int itemHeight = isVerticalMode ? iconSize + dpToPx(8) : ViewGroup.LayoutParams.MATCH_PARENT;
+        int itemSize = iconSize + dpToPx(16); // Sabit dokunma alani
+        int itemWidth = itemSize;
+        int itemHeight = itemSize;
 
         LinearLayout itemView = new LinearLayout(context);
         itemView.setOrientation(LinearLayout.VERTICAL);
@@ -108,8 +109,9 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         int iconSize = getScaledIconSize();
-        int itemWidth = isVerticalMode ? ViewGroup.LayoutParams.MATCH_PARENT : iconSize + dpToPx(12);
-        int itemHeight = isVerticalMode ? iconSize + dpToPx(8) : ViewGroup.LayoutParams.MATCH_PARENT;
+        int itemSize = iconSize + dpToPx(16); // Sabit dokunma alani
+        int itemWidth = itemSize;
+        int itemHeight = itemSize;
         
         ViewGroup.LayoutParams lp = holder.itemView.getLayoutParams();
         if (lp != null) {
