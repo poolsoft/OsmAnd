@@ -9,7 +9,8 @@
     <androidx.preference.PreferenceCategory
         android:key="category_appearance"
         android:title="Görünüm"
-        android:iconSpaceReserved="false">
+        app:icon="@android:drawable/ic_menu_view"
+        android:iconSpaceReserved="true">
 
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_status_bar"
@@ -112,7 +113,8 @@
     <androidx.preference.PreferenceCategory
         android:key="category_music"
         android:title="Müzik"
-        android:iconSpaceReserved="false">
+        app:icon="@android:drawable/ic_media_play"
+        android:iconSpaceReserved="true">
 
         <androidx.preference.Preference
             android:key="car_launcher_music_app"
@@ -154,7 +156,8 @@
     <androidx.preference.PreferenceCategory
         android:key="category_weather"
         android:title="Hava Durumu"
-        android:iconSpaceReserved="false">
+        app:icon="@android:drawable/ic_menu_my_calendar"
+        android:iconSpaceReserved="true">
 
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_weather_enabled"
@@ -171,7 +174,8 @@
     <androidx.preference.PreferenceCategory
         android:key="category_autolaunch"
         android:title="Otomatik Başlatma"
-        android:iconSpaceReserved="false">
+        app:icon="@android:drawable/ic_menu_recent_history"
+        android:iconSpaceReserved="true">
 
         <androidx.preference.SwitchPreferenceCompat
             android:key="autolaunch_enable_1"
@@ -202,7 +206,8 @@
     <androidx.preference.PreferenceCategory
         android:key="category_backup"
         android:title="Yedekle ve Geri Yükle"
-        android:iconSpaceReserved="false">
+        app:icon="@android:drawable/ic_menu_save"
+        android:iconSpaceReserved="true">
 
         <androidx.preference.Preference
             android:key="action_backup_export"
@@ -224,7 +229,8 @@
     <androidx.preference.PreferenceCategory
         android:key="category_dock"
         android:title="Uygulama Dock (Sidebar)"
-        android:iconSpaceReserved="false">
+        app:icon="@android:drawable/ic_menu_sort_by_size"
+        android:iconSpaceReserved="true">
 
         <androidx.preference.ListPreference
             android:key="car_launcher_dock_position"
@@ -268,7 +274,8 @@
     <androidx.preference.PreferenceCategory
         android:key="category_assistant"
         android:title="Asistan"
-        android:iconSpaceReserved="false">
+        app:icon="@android:drawable/ic_btn_speak_now"
+        android:iconSpaceReserved="true">
 
         <androidx.preference.Preference
             android:key="car_launcher_import_voice_model"
@@ -284,7 +291,8 @@
     <androidx.preference.PreferenceCategory
         android:key="category_about"
         android:title="Hakkında"
-        android:iconSpaceReserved="false">
+        app:icon="@android:drawable/ic_menu_info_details"
+        android:iconSpaceReserved="true">
 
         <androidx.preference.Preference
             android:key="car_launcher_version"

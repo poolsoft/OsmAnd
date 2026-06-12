@@ -125,10 +125,24 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 0, android.view.ViewGroup.LayoutParams.MATCH_PARENT, 0.3f));
         leftScroll.setBackgroundColor(0xFF14141C); // Sleek Space Grey
         
+        // --- Sol Menü Başlığı ---
+        android.widget.TextView titleView = new android.widget.TextView(getContext());
+        titleView.setText("Araç Ayarları");
+        titleView.setTextColor(0xFFFFFFFF);
+        titleView.setTextSize(22);
+        titleView.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+        titleView.setPadding(dpToPx(24), dpToPx(32), dpToPx(24), dpToPx(16));
+
+        android.widget.LinearLayout headerContainer = new android.widget.LinearLayout(getContext());
+        headerContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
+        headerContainer.addView(titleView);
+
         categoriesList = new android.widget.LinearLayout(getContext());
         categoriesList.setOrientation(android.widget.LinearLayout.VERTICAL);
-        categoriesList.setPadding(0, dpToPx(24), 0, dpToPx(24));
-        leftScroll.addView(categoriesList);
+        categoriesList.setPadding(0, 0, 0, dpToPx(24));
+        
+        headerContainer.addView(categoriesList);
+        leftScroll.addView(headerContainer);
         
         splitContainer.addView(leftScroll);
         
@@ -225,6 +239,15 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         item.setTag(cat);
         item.setGravity(android.view.Gravity.CENTER_VERTICAL);
         
+        android.graphics.drawable.Drawable icon = cat.getIcon();
+        if (icon != null) {
+            android.graphics.drawable.Drawable wrappedIcon = androidx.core.graphics.drawable.DrawableCompat.wrap(icon.mutate());
+            wrappedIcon.setBounds(0, 0, dpToPx(24), dpToPx(24));
+            androidx.core.graphics.drawable.DrawableCompat.setTint(wrappedIcon, 0xFF8E8E93);
+            item.setCompoundDrawables(wrappedIcon, null, null, null);
+            item.setCompoundDrawablePadding(dpToPx(16));
+        }
+
         android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(dpToPx(16), dpToPx(6), dpToPx(16), dpToPx(6));
@@ -245,9 +268,14 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             View child = categoriesList.getChildAt(i);
             if (child instanceof android.widget.TextView) {
                 android.widget.TextView tv = (android.widget.TextView) child;
+                android.graphics.drawable.Drawable[] drawables = tv.getCompoundDrawables();
+                
                 if (tv.getTag() == target) {
                     tv.setTextColor(0xFF3D63FF);
                     tv.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
+                    if (drawables[0] != null) {
+                        androidx.core.graphics.drawable.DrawableCompat.setTint(drawables[0], 0xFF3D63FF);
+                    }
                     
                     android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
                     gd.setCornerRadius(dpToPx(12));
@@ -257,6 +285,9 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 } else {
                     tv.setTextColor(0xFF8E8E93);
                     tv.setTypeface(android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL));
+                    if (drawables[0] != null) {
+                        androidx.core.graphics.drawable.DrawableCompat.setTint(drawables[0], 0xFF8E8E93);
+                    }
                     
                     android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
                     gd.setCornerRadius(dpToPx(12));
