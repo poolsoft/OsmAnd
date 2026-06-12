@@ -539,6 +539,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 		// --- VOICE VISUALIZER UI SETUP ---
 		voiceVisualizerView = new net.osmand.plus.carlauncher.voice.VoiceVisualizerView(this);
+		voiceVisualizerView.setId(View.generateViewId()); // ConstraintLayout cökmesini önlemek icin
 		voiceVisualizerView.setVisibility(View.GONE);
 		android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
 				android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
