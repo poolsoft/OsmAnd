@@ -179,15 +179,18 @@ public class AppDockFragment extends Fragment
             layoutId = net.osmand.plus.R.layout.fragment_app_dock_sidebar;
         } else {
             layoutId = net.osmand.plus.R.layout.fragment_app_dock_horizontal;
-        }
         this.currentLayoutId = layoutId;
-
         View root = inflater.inflate(layoutId, container, false);
         root.post(() -> {
             ViewGroup.LayoutParams lp = root.getLayoutParams();
             if (lp != null) {
-                lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
-                lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                if (isVerticalMode) {
+                    lp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                } else {
+                    lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                    lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                }
                 root.setLayoutParams(lp);
             }
         });
@@ -824,6 +827,18 @@ public class AppDockFragment extends Fragment
             if (getContext() == null) return;
             boolean isScreenPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
 
+            ViewGroup.LayoutParams rootLp = root.getLayoutParams();
+            if (rootLp != null) {
+                if (isVertical) {
+                    rootLp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    rootLp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                } else {
+                    rootLp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                    rootLp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                }
+                root.setLayoutParams(rootLp);
+            }
+
             // 1. Update Recycler Orientation
             updateRecyclerViewOrientation(root);
 
@@ -874,6 +889,27 @@ public class AppDockFragment extends Fragment
             updateIconSize(appListButton, scale);
             updateIconSize(btnAssistant, scale);
             
+            // Adapter ikonlarının güncellenmesi için
+            if (adapter != null) {
+                adapter.notifyDataSetChanged();
+            }
+            
+            // Layout ve Apps butonlarının aralık/boşluk ayarı
+            if (leftContainer != null) {
+                leftContainer.setPadding(isVertical ? 0 : dpToPx(16), isVertical ? dpToPx(16) : 0, isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(8) : 0);
+            }
+            if (appListButton != null && appListButton.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+                ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) appListButton.getLayoutParams();
+                if (isVertical) {
+                    mlp.topMargin = dpToPx(12);
+                    mlp.leftMargin = 0;
+                } else {
+                    mlp.leftMargin = dpToPx(12);
+                    mlp.topMargin = 0;
+                }
+                appListButton.setLayoutParams(mlp);
+            }
+            
             if (layoutButton != null) {
                 layoutButton.setVisibility(View.GONE);
             }
@@ -882,8 +918,20 @@ public class AppDockFragment extends Fragment
 
     private void updateIconSize(View v, float scale) {
         if (v == null) return;
-        v.setScaleX(scale);
-        v.setScaleY(scale);
+        
+        int baseSize = dpToPx(48); // Varsayılan buton boyutu
+        int scaledSize = (int) (baseSize * scale);
+        
+        ViewGroup.LayoutParams lp = v.getLayoutParams();
+        if (lp != null) {
+            lp.width = scaledSize;
+            lp.height = scaledSize;
+            v.setLayoutParams(lp);
+        }
+        
+        if (v instanceof android.widget.ImageView) {
+            ((android.widget.ImageView) v).setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+        }
     }
 
     private void updateRecyclerViewOrientation(View root) {
