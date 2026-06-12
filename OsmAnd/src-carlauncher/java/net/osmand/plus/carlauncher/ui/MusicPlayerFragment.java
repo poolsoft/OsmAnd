@@ -1469,7 +1469,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
                     if (nowPlayingArtBlur != null) {
                         nowPlayingArtBlur.setImageResource(net.osmand.plus.R.drawable.bg_default_music_art);
-                    }              }
+                    }
                     
                     // Varsayilan Cyan temaya yumusak gecis (Turkce karakter yok)
                     animateThemeColorChange(0xFF00FFFF);
