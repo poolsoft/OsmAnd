@@ -534,7 +534,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             scanMusicPref.setOnPreferenceClickListener(preference -> {
                 if (getContext() != null) {
                     Toast.makeText(getContext(), "Muzik taramasi baslatildi...", Toast.LENGTH_SHORT).show();
-                    MusicManager.getInstance(getContext()).getRepository().scanMusic((tracks, folders) -> {
+                    MusicManager.getInstance(getContext()).getRepository().scanMusic((tracks, folders, artists) -> {
                         if (getActivity() != null) {
                             getActivity().runOnUiThread(() -> {
                                 Toast.makeText(getContext(), "Tarama tamamlandi. Bulunan sarki: " + tracks.size(), Toast.LENGTH_LONG).show();

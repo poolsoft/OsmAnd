@@ -874,7 +874,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         if (musicManager != null && musicManager.getRepository() != null) {
             List<MusicRepository.AudioFolder> folders = musicManager.getRepository().getCachedFolders();
             if (folders == null || folders.isEmpty()) {
-                musicManager.getRepository().scanMusic((tracks, f) -> {
+                musicManager.getRepository().scanMusic((tracks, f, a) -> {
                     allTracks.clear();
                     for (MusicRepository.AudioFolder folder : f) {
                         allTracks.addAll(folder.getTracks());

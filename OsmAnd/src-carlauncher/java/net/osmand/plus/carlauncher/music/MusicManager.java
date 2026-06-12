@@ -71,7 +71,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         adapters.add(new UniversalBluetoothAdapter(this.context, this));
 
         // Baslangicta muzikleri tara
-        repository.scanMusic((tracks, folders) -> {
+        repository.scanMusic((tracks, folders, artists) -> {
             Log.d(TAG, "Scan complete: " + tracks.size() + " tracks");
             if (!tracks.isEmpty()) {
                 internalPlayer.setPlaylist(tracks, 0, false);
