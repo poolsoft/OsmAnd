@@ -62,7 +62,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private View playerPanel;
     private View musicSideDock;
     private ImageButton btnDockPlaylist;
-    private ImageButton btnDockVoice;
     private ImageView appIcon;
     private View appSelectorLaunch;
     private ImageButton btnPlaylist, btnClose, btnEqualizer;
@@ -82,6 +81,21 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private View tabPlaylistsContainer;
     private ImageButton tabBtnSearch;
     private TextView tabFavorites;
+    
+    // YENI CAR RADIO UIs
+    private TextView tabFolders;
+    private TextView tabArtists;
+    private View folderHeaderContainer;
+    private ImageButton btnBackFolder;
+    private TextView folderHeaderTitle;
+
+    // View Modes
+    private enum ViewMode {
+        ALL_TRACKS, FOLDERS, ARTISTS, RECENT, FAVORITES, PLAYLIST, FOLDER_DETAIL, ARTIST_DETAIL
+    }
+    private ViewMode currentViewMode = ViewMode.ALL_TRACKS;
+    private MusicRepository.AudioFolder currentFolder = null;
+    private MusicRepository.AudioArtist currentArtist = null;
 
     // State
     private boolean isExternalMode = true; // Default: external app control
@@ -116,7 +130,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         playerPanel = root.findViewById(net.osmand.plus.R.id.player_panel);
         musicSideDock = root.findViewById(net.osmand.plus.R.id.music_side_dock);
         btnDockPlaylist = root.findViewById(net.osmand.plus.R.id.btn_dock_playlist);
-        btnDockVoice = root.findViewById(net.osmand.plus.R.id.btn_dock_voice);
         appIcon = root.findViewById(net.osmand.plus.R.id.app_icon);
         appSelectorLaunch = root.findViewById(net.osmand.plus.R.id.app_selector_launch);
         // btnPlaylist = root.findViewById(net.osmand.plus.R.id.btn_playlist);
@@ -147,6 +160,12 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         appName = root.findViewById(net.osmand.plus.R.id.app_name);
         tabBtnSearch = root.findViewById(net.osmand.plus.R.id.tab_btn_search);
         tabFavorites = root.findViewById(net.osmand.plus.R.id.tab_favorites);
+        
+        tabFolders = root.findViewById(net.osmand.plus.R.id.tab_folders);
+        tabArtists = root.findViewById(net.osmand.plus.R.id.tab_artists);
+        folderHeaderContainer = root.findViewById(net.osmand.plus.R.id.folder_header_container);
+        btnBackFolder = root.findViewById(net.osmand.plus.R.id.btn_back_folder);
+        folderHeaderTitle = root.findViewById(net.osmand.plus.R.id.folder_header_title);
 
         // Marquee
         if (nowPlayingTitle != null)
@@ -196,8 +215,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             playerPanel.setOnTouchListener(touchListener);
         }
 
-        updateVoiceButtonUI();
-
         return root;
     }
 
@@ -219,7 +236,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             musicManager.addVisualizerListener(this); // Centralized Visualizer
             // Update UI state
             updateModeUI(); 
-            updateVoiceButtonUI();
         }
     }
 
@@ -244,8 +260,24 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             });
         }
 
-        if (btnDockVoice != null) {
-            btnDockVoice.setOnClickListener(v -> checkVoicePermissionAndToggle());
+        // Yeni Klasor ve Sanatci tab listenerlari
+        if (tabFolders != null) {
+            tabFolders.setOnClickListener(v -> switchViewMode(ViewMode.FOLDERS));
+        }
+        if (tabArtists != null) {
+            tabArtists.setOnClickListener(v -> switchViewMode(ViewMode.ARTISTS));
+        }
+        if (tabAllTracks != null) {
+            tabAllTracks.setOnClickListener(v -> switchViewMode(ViewMode.ALL_TRACKS));
+        }
+        if (btnBackFolder != null) {
+            btnBackFolder.setOnClickListener(v -> {
+                if (currentViewMode == ViewMode.FOLDER_DETAIL) {
+                    switchViewMode(ViewMode.FOLDERS);
+                } else if (currentViewMode == ViewMode.ARTIST_DETAIL) {
+                    switchViewMode(ViewMode.ARTISTS);
+                }
+            });
         }
 
         // Close
@@ -487,6 +519,207 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         }
     }
 
+    // --- YENI: View Mode ve Navigasyon Yonetimi ---
+    private void switchViewMode(ViewMode mode) {
+        currentViewMode = mode;
+        updateTabUIForMode(mode);
+        
+        if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.GONE);
+        if (searchBarContainer != null) searchBarContainer.setVisibility(View.GONE);
+
+        switch (mode) {
+            case ALL_TRACKS:
+                if (searchBarContainer != null) searchBarContainer.setVisibility(View.VISIBLE);
+                showTracks(allTracks);
+                break;
+            case RECENT:
+                showTracks(getRecentTracks());
+                break;
+            case FAVORITES:
+                showTracks(getFavoriteTracks());
+                break;
+            case FOLDERS:
+                showFolders(musicManager.getRepository().getCachedFolders());
+                break;
+            case ARTISTS:
+                showArtists(musicManager.getRepository().getCachedArtists());
+                break;
+            case FOLDER_DETAIL:
+                if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
+                if (folderHeaderTitle != null && currentFolder != null) folderHeaderTitle.setText(currentFolder.getName());
+                if (currentFolder != null) showTracks(currentFolder.getTracks());
+                break;
+            case ARTIST_DETAIL:
+                if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
+                if (folderHeaderTitle != null && currentArtist != null) folderHeaderTitle.setText(currentArtist.getName());
+                if (currentArtist != null) showTracks(currentArtist.getTracks());
+                break;
+            case PLAYLIST:
+                // Spinner yonetiyor
+                break;
+        }
+    }
+
+    private void updateTabUIForMode(ViewMode mode) {
+        int selectedColor = 0xFFFFFFFF;
+        int unselectedColor = 0xFF888888;
+        int activeBg = net.osmand.plus.R.drawable.bg_tab_active;
+        
+        if (tabAllTracks != null) {
+            tabAllTracks.setTextColor(mode == ViewMode.ALL_TRACKS ? selectedColor : unselectedColor);
+            tabAllTracks.setBackgroundResource(mode == ViewMode.ALL_TRACKS ? activeBg : 0);
+        }
+        if (tabFolders != null) {
+            tabFolders.setTextColor((mode == ViewMode.FOLDERS || mode == ViewMode.FOLDER_DETAIL) ? selectedColor : unselectedColor);
+            tabFolders.setBackgroundResource((mode == ViewMode.FOLDERS || mode == ViewMode.FOLDER_DETAIL) ? activeBg : 0);
+        }
+        if (tabArtists != null) {
+            tabArtists.setTextColor((mode == ViewMode.ARTISTS || mode == ViewMode.ARTIST_DETAIL) ? selectedColor : unselectedColor);
+            tabArtists.setBackgroundResource((mode == ViewMode.ARTISTS || mode == ViewMode.ARTIST_DETAIL) ? activeBg : 0);
+        }
+        if (tabRecent != null) {
+            tabRecent.setTextColor(mode == ViewMode.RECENT ? selectedColor : unselectedColor);
+            tabRecent.setBackgroundResource(mode == ViewMode.RECENT ? activeBg : 0);
+        }
+        if (tabFavorites != null) {
+            tabFavorites.setTextColor(mode == ViewMode.FAVORITES ? selectedColor : unselectedColor);
+            tabFavorites.setBackgroundResource(mode == ViewMode.FAVORITES ? activeBg : 0);
+        }
+    }
+
+    private List<MusicRepository.AudioTrack> getRecentTracks() {
+        return allTracks; // TODO: Implement real recent logic
+    }
+
+    private List<MusicRepository.AudioTrack> getFavoriteTracks() {
+        List<String> favPaths = playlistManager.getFavorites();
+        List<MusicRepository.AudioTrack> favTracks = new ArrayList<>();
+        for (String path : favPaths) {
+            for (MusicRepository.AudioTrack t : allTracks) {
+                if (t.getPath().equals(path)) {
+                    favTracks.add(t);
+                    break;
+                }
+            }
+        }
+        return favTracks;
+    }
+
+    private void showFolders(List<MusicRepository.AudioFolder> folders) {
+        if (recyclerView != null) {
+            FolderAdapter folderAdapter = new FolderAdapter(folders, folder -> {
+                currentFolder = folder;
+                switchViewMode(ViewMode.FOLDER_DETAIL);
+            });
+            recyclerView.setAdapter(folderAdapter);
+        }
+    }
+
+    private void showArtists(List<MusicRepository.AudioArtist> artists) {
+        if (recyclerView != null) {
+            ArtistAdapter artistAdapter = new ArtistAdapter(artists, artist -> {
+                currentArtist = artist;
+                switchViewMode(ViewMode.ARTIST_DETAIL);
+            });
+            recyclerView.setAdapter(artistAdapter);
+        }
+    }
+
+    // --- Adaptorler ---
+    private class FolderAdapter extends RecyclerView.Adapter<FolderAdapter.FolderViewHolder> {
+        private final List<MusicRepository.AudioFolder> folders;
+        private final FolderClickListener listener;
+
+        public FolderAdapter(List<MusicRepository.AudioFolder> folders, FolderClickListener listener) {
+            this.folders = folders;
+            this.listener = listener;
+        }
+
+        @NonNull
+        @Override
+        public FolderViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(android.R.layout.simple_list_item_2, parent, false);
+            return new FolderViewHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull FolderViewHolder holder, int position) {
+            MusicRepository.AudioFolder folder = folders.get(position);
+            holder.text1.setText(folder.getName());
+            holder.text1.setTextColor(android.graphics.Color.WHITE);
+            holder.text1.setTextSize(18);
+            holder.text2.setText(folder.getTracks().size() + " Parca");
+            holder.text2.setTextColor(android.graphics.Color.GRAY);
+            holder.itemView.setOnClickListener(v -> listener.onFolderClick(folder));
+            holder.itemView.setPadding(32, 24, 32, 24);
+        }
+
+        @Override
+        public int getItemCount() {
+            return folders != null ? folders.size() : 0;
+        }
+
+        class FolderViewHolder extends RecyclerView.ViewHolder {
+            TextView text1, text2;
+            public FolderViewHolder(@NonNull View itemView) {
+                super(itemView);
+                text1 = itemView.findViewById(android.R.id.text1);
+                text2 = itemView.findViewById(android.R.id.text2);
+            }
+        }
+    }
+    
+    private interface FolderClickListener {
+        void onFolderClick(MusicRepository.AudioFolder folder);
+    }
+
+    private class ArtistAdapter extends RecyclerView.Adapter<ArtistAdapter.ArtistViewHolder> {
+        private final List<MusicRepository.AudioArtist> artists;
+        private final ArtistClickListener listener;
+
+        public ArtistAdapter(List<MusicRepository.AudioArtist> artists, ArtistClickListener listener) {
+            this.artists = artists;
+            this.listener = listener;
+        }
+
+        @NonNull
+        @Override
+        public ArtistViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(android.R.layout.simple_list_item_2, parent, false);
+            return new ArtistViewHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ArtistViewHolder holder, int position) {
+            MusicRepository.AudioArtist artist = artists.get(position);
+            holder.text1.setText(artist.getName());
+            holder.text1.setTextColor(android.graphics.Color.WHITE);
+            holder.text1.setTextSize(18);
+            holder.text2.setText(artist.getTracks().size() + " Parca");
+            holder.text2.setTextColor(android.graphics.Color.GRAY);
+            holder.itemView.setOnClickListener(v -> listener.onArtistClick(artist));
+            holder.itemView.setPadding(32, 24, 32, 24);
+        }
+
+        @Override
+        public int getItemCount() {
+            return artists != null ? artists.size() : 0;
+        }
+
+        class ArtistViewHolder extends RecyclerView.ViewHolder {
+            TextView text1, text2;
+            public ArtistViewHolder(@NonNull View itemView) {
+                super(itemView);
+                text1 = itemView.findViewById(android.R.id.text1);
+                text2 = itemView.findViewById(android.R.id.text2);
+            }
+        }
+    }
+    
+    private interface ArtistClickListener {
+        void onArtistClick(MusicRepository.AudioArtist artist);
+    }
+
     private void setupPlaylistSpinner() {
         if (playlistSpinner == null || getContext() == null)
             return;
@@ -633,12 +866,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 loadAllTracks();
             } else {
                 Toast.makeText(getContext(), "Muzik taramak icin izin gerekli!", Toast.LENGTH_SHORT).show();
-            }
-        } else if (requestCode == 200) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                toggleVoiceControlService();
-            } else {
-                Toast.makeText(getContext(), "Sesli kontrol icin mikrofon izni gereklidir", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -1049,44 +1276,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             getParentFragmentManager().beginTransaction().remove(this).commit();
         }
     }
-
-    private void checkVoicePermissionAndToggle() {
-        if (getContext() == null) return;
-        if (getContext().checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{android.Manifest.permission.RECORD_AUDIO}, 200);
-        } else {
-            toggleVoiceControlService();
-        }
-    }
-
-    private void toggleVoiceControlService() {
-        if (getContext() == null) return;
-        Intent intent = new Intent(getContext(), net.osmand.plus.carlauncher.voice.VoiceCommandService.class);
-        if (net.osmand.plus.carlauncher.voice.VoiceCommandService.isServiceRunning) {
-            getContext().stopService(intent);
-            Toast.makeText(getContext(), "Sesli kontrol kapatildi", Toast.LENGTH_SHORT).show();
-        } else {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                getContext().startForegroundService(intent);
-            } else {
-                getContext().startService(intent);
-            }
-            Toast.makeText(getContext(), "Sesli kontrol baslatildi", Toast.LENGTH_SHORT).show();
-        }
-        new Handler(Looper.getMainLooper()).postDelayed(this::updateVoiceButtonUI, 300);
-    }
-
-    private void updateVoiceButtonUI() {
-        if (btnDockVoice == null) return;
-        boolean isRunning = net.osmand.plus.carlauncher.voice.VoiceCommandService.isServiceRunning;
-        if (isRunning) {
-            btnDockVoice.setColorFilter(0xFF00FFFF);
-            btnDockVoice.setBackgroundResource(net.osmand.plus.R.drawable.bg_circle_translucent_white);
-        } else {
-            btnDockVoice.setColorFilter(0xFFFFFFFF);
-            btnDockVoice.setBackgroundResource(0);
-        }
-    }
+     private void updatePlaylistButtonUI() { }
 
     // --- Lifecycle & Seek Updater (BİRLEŞTİRİLMİŞ) ---
 

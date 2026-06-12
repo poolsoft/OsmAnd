@@ -25,6 +25,7 @@ public class MusicRepository {
     private final Context context;
     private List<AudioTrack> cachedTracks = new ArrayList<>();
     private List<AudioFolder> cachedFolders = new ArrayList<>();
+    private List<AudioArtist> cachedArtists = new ArrayList<>();
 
     // Singleton support if needed, or instantiated by MusicManager
     public MusicRepository(Context context) {
@@ -32,7 +33,7 @@ public class MusicRepository {
     }
 
     public interface OnScanCompletedListener {
-        void onScanCompleted(List<AudioTrack> tracks, List<AudioFolder> folders);
+        void onScanCompleted(List<AudioTrack> tracks, List<AudioFolder> folders, List<AudioArtist> artists);
     }
 
     /**
@@ -42,15 +43,17 @@ public class MusicRepository {
         new Thread(() -> {
             List<AudioTrack> tracks = scanDeviceForAudio();
             List<AudioFolder> folders = organizeIntoFolders(tracks);
+            List<AudioArtist> artists = organizeIntoArtists(tracks);
 
             synchronized (this) {
                 cachedTracks = tracks;
                 cachedFolders = folders;
+                cachedArtists = artists;
             }
 
             if (listener != null) {
                 // Return on main thread if possible, but caller usually handles threading
-                listener.onScanCompleted(tracks, folders);
+                listener.onScanCompleted(tracks, folders, artists);
             }
         }).start();
     }
@@ -61,6 +64,10 @@ public class MusicRepository {
 
     public List<AudioFolder> getCachedFolders() {
         return cachedFolders;
+    }
+
+    public List<AudioArtist> getCachedArtists() {
+        return cachedArtists;
     }
 
     private List<AudioTrack> scanDeviceForAudio() {
@@ -310,6 +317,35 @@ public class MusicRepository {
         return folders;
     }
 
+    private List<AudioArtist> organizeIntoArtists(List<AudioTrack> tracks) {
+        Map<String, List<AudioTrack>> artistMap = new HashMap<>();
+
+        for (AudioTrack track : tracks) {
+            String artistName = (track.getArtist() != null && !track.getArtist().trim().isEmpty()) 
+                                ? track.getArtist().trim() : "Bilinmeyen Sanatci";
+
+            if (!artistMap.containsKey(artistName)) {
+                artistMap.put(artistName, new ArrayList<>());
+            }
+            artistMap.get(artistName).add(track);
+        }
+
+        List<AudioArtist> artists = new ArrayList<>();
+        for (Map.Entry<String, List<AudioTrack>> entry : artistMap.entrySet()) {
+            artists.add(new AudioArtist(entry.getKey(), entry.getValue()));
+        }
+
+        // Sort artists by name
+        Collections.sort(artists, new Comparator<AudioArtist>() {
+            @Override
+            public int compare(AudioArtist o1, AudioArtist o2) {
+                return o1.getName().compareToIgnoreCase(o2.getName());
+            }
+        });
+
+        return artists;
+    }
+
     // --- Data Models ---
 
     public static class AudioTrack {
@@ -363,6 +399,24 @@ public class MusicRepository {
         public AudioFolder(String name, String path, List<AudioTrack> tracks) {
             this.name = name;
             this.path = path;
+            this.tracks = tracks;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public List<AudioTrack> getTracks() {
+            return tracks;
+        }
+    }
+
+    public static class AudioArtist {
+        private final String name;
+        private final List<AudioTrack> tracks;
+
+        public AudioArtist(String name, List<AudioTrack> tracks) {
+            this.name = name;
             this.tracks = tracks;
         }
 
