@@ -241,6 +241,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	// Layout Mode: 0 = Normal, 1 = No Widgets, 2 = Full Screen
 	private int layoutMode = 0;
+	private int previousLayoutMode = -1;
 
 	private android.content.BroadcastReceiver musicDrawerReceiver = new android.content.BroadcastReceiver() {
 		@Override
@@ -998,6 +999,25 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 					dock.updateDesktopModeState(false);
 				}
 			}
+
+			// KULLANICI ISTEGI: Eger Map Full Screen (layoutMode != 0) ise ve WIDGETS disinda bir panel aciliyorsa
+			if (content != net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS && content != net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.DESKTOP) {
+				if (layoutMode != 0) {
+					previousLayoutMode = layoutMode;
+					layoutMode = 0;
+					isWidgetPanelOpen = true;
+					updateLayoutMode();
+				}
+			} else {
+				// WIDGETS (Veya DESKTOP) aciliyorsa (Yani diger paneller kapaniyorsa)
+				if (previousLayoutMode != -1) {
+					layoutMode = previousLayoutMode;
+					isWidgetPanelOpen = (layoutMode == 0);
+					previousLayoutMode = -1;
+					updateLayoutMode();
+				}
+			}
+
 			panelContentManager.setContent(content);
 			// Son basarili panel icerigini statik olarak sakla (Turkce karakter yok)
 			lastPanelContent = content;
