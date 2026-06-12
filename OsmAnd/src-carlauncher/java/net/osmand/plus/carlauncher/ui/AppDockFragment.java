@@ -183,14 +183,14 @@ public class AppDockFragment extends Fragment
         this.currentLayoutId = layoutId;
 
         View root = inflater.inflate(layoutId, container, false);
-        root.post(() -> {
-            ViewGroup.LayoutParams lp = root.getLayoutParams();
-            if (lp != null) {
-                lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
-                lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
-                root.setLayoutParams(lp);
-            }
-        });
+        ViewGroup.LayoutParams lp = root.getLayoutParams();
+        if (lp == null) {
+            lp = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        } else {
+            lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+        }
+        root.setLayoutParams(lp);
 
         // Find Views
         appListButton = root.findViewById(net.osmand.plus.R.id.btn_app_list);
