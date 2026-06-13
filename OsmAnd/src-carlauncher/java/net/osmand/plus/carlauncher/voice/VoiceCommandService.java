@@ -494,11 +494,16 @@ public class VoiceCommandService extends Service implements RecognitionListener 
     private void parseAndProcessCommand(String hypothesis) {
         try {
             JSONObject json = new JSONObject(hypothesis);
-            String text = json.optString("text", "").toLowerCase(Locale.getDefault()).trim();
-            if (text.isEmpty()) return;
+            String originalText = json.optString("text", "").toLowerCase(Locale.getDefault()).trim();
+            if (originalText.isEmpty()) return;
+
+            // Ekranda orjinal metni goster
+            handler.post(() -> {
+                android.widget.Toast.makeText(VoiceCommandService.this, "🗣️ Duyulan: " + originalText, android.widget.Toast.LENGTH_SHORT).show();
+            });
 
             // Turkce karakterleri Ingilizce karakterlere cevir (Normalizasyon)
-            text = text.replace("ç", "c").replace("ğ", "g")
+            String text = originalText.replace("ç", "c").replace("ğ", "g")
                        .replace("ı", "i").replace("ö", "o")
                        .replace("ş", "s").replace("ü", "u");
 
@@ -527,6 +532,10 @@ public class VoiceCommandService extends Service implements RecognitionListener 
         isListeningForCommand = true;
         updateNotification("Dinliyorum...");
         sendVoiceStateBroadcast("LISTENING");
+        
+        handler.post(() -> {
+            android.widget.Toast.makeText(VoiceCommandService.this, "🎙️ Dinliyorum... Komutunuzu soyleyin.", android.widget.Toast.LENGTH_SHORT).show();
+        });
 
         try {
             ToneGenerator toneGen = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
@@ -546,6 +555,11 @@ public class VoiceCommandService extends Service implements RecognitionListener 
         isListeningForCommand = false;
         updateNotification("\"Hey Car\" tetikleme kelimesi bekleniyor...");
         sendVoiceStateBroadcast("CLOSED");
+        
+        handler.post(() -> {
+            android.widget.Toast.makeText(VoiceCommandService.this, "💤 Uyku moduna gecildi ('Hey Car' bekliyor)", android.widget.Toast.LENGTH_SHORT).show();
+        });
+        
         startSpeechService(wakeWordRecognizer);
     }
 
