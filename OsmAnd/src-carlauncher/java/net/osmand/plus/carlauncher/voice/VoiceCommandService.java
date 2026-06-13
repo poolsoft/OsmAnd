@@ -260,12 +260,11 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                 }
                 boolean success = moveDirectory(actualModelDir, targetDir);
                 android.util.Log.d("VoiceCommandService", "USB model klasoru basariyla tasindi: " + success);
-                    if (success) {
-                        android.content.SharedPreferences prefs = getSharedPreferences("vosk_prefs", Context.MODE_PRIVATE);
-                        prefs.edit().putBoolean("vosk_model_installed", true).apply();
-                    }
+                if (success) {
+                    android.content.SharedPreferences prefs = getSharedPreferences("vosk_prefs", Context.MODE_PRIVATE);
+                    prefs.edit().putBoolean("vosk_model_installed", true).apply();
                 } else {
-                    throw new IOException("Zip icerisinde gecerli bir model klasoru bulunamadi");
+                    throw new IOException("Klasor tasima islemi basarisiz oldu.");
                 }
 
                 if (tempZip.exists()) {
