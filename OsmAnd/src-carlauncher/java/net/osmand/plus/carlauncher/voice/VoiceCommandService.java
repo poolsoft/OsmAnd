@@ -497,6 +497,11 @@ public class VoiceCommandService extends Service implements RecognitionListener 
             String text = json.optString("text", "").toLowerCase(Locale.getDefault()).trim();
             if (text.isEmpty()) return;
 
+            // Turkce karakterleri Ingilizce karakterlere cevir (Normalizasyon)
+            text = text.replace("ç", "c").replace("ğ", "g")
+                       .replace("ı", "i").replace("ö", "o")
+                       .replace("ş", "s").replace("ü", "u");
+
             android.util.Log.d("VoiceCommandService", "Algilanan Metin: " + text);
 
             if (!isListeningForCommand) {
@@ -533,7 +538,7 @@ public class VoiceCommandService extends Service implements RecognitionListener 
         startSpeechService(commandRecognizer);
 
         handler.removeCallbacksAndMessages(null);
-        handler.postDelayed(this::switchToWakeWordMode, 5000);
+        handler.postDelayed(this::switchToWakeWordMode, 8000);
     }
 
     private void switchToWakeWordMode() {
@@ -652,7 +657,13 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                 tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
             }
         }
-        Toast.makeText(this, text, Toast.LENGTH_LONG).show();
+        
+        // TTS kurulu olmayan cihazlar icin Toast mesaj destegi (Turkce karakter yok)
+        handler.post(() -> {
+            try {
+                android.widget.Toast.makeText(this, text, android.widget.Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {}
+        });
     }
 
     private int parsePercentage(String text) {
