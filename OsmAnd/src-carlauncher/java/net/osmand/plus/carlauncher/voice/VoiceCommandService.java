@@ -254,7 +254,7 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                     if (targetDir.exists()) {
                         deleteRecursive(targetDir);
                     }
-                    boolean success = actualModelDir.renameTo(targetDir);
+                    boolean success = moveDirectory(actualModelDir, targetDir);
                     android.util.Log.d("VoiceCommandService", "USB model klasoru basariyla tasindi: " + success);
                     if (success) {
                         android.content.SharedPreferences prefs = getSharedPreferences("vosk_prefs", Context.MODE_PRIVATE);
@@ -396,7 +396,7 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                     if (targetDir.exists()) {
                         deleteRecursive(targetDir);
                     }
-                    boolean success = actualModelDir.renameTo(targetDir);
+                    boolean success = moveDirectory(actualModelDir, targetDir);
                     android.util.Log.d("VoiceCommandService", "Model klasoru basariyla tasindi: " + success);
                     if (success) {
                         android.content.SharedPreferences prefs = getSharedPreferences("vosk_prefs", Context.MODE_PRIVATE);
@@ -849,6 +849,42 @@ public class VoiceCommandService extends Service implements RecognitionListener 
             }
         }
         fileOrDirectory.delete();
+    }
+
+    private boolean moveDirectory(File sourceLocation, File targetLocation) {
+        if (sourceLocation.renameTo(targetLocation)) {
+            return true;
+        }
+        try {
+            if (sourceLocation.isDirectory()) {
+                if (!targetLocation.exists() && !targetLocation.mkdirs()) {
+                    return false;
+                }
+                String[] children = sourceLocation.list();
+                if (children != null) {
+                    for (String child : children) {
+                        if (!moveDirectory(new File(sourceLocation, child), new File(targetLocation, child))) {
+                            return false;
+                        }
+                    }
+                }
+                sourceLocation.delete();
+            } else {
+                java.io.InputStream in = new java.io.FileInputStream(sourceLocation);
+                java.io.OutputStream out = new java.io.FileOutputStream(targetLocation);
+                byte[] buf = new byte[8192];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+                in.close();
+                out.close();
+                sourceLocation.delete();
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Nullable
