@@ -376,6 +376,62 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             Log.e(TAG, "Failed to send media key: " + keycode, e);
         }
     }
+    public void play() {
+        if (!checkNotificationAccess()) {
+            android.widget.Toast.makeText(context, "Harici kontrol icin 'Bildirim Erisimi' izni gerekli!", android.widget.Toast.LENGTH_LONG).show();
+        }
+
+        if (mediaSessionManager != null) {
+            try {
+                android.content.ComponentName listenerComp = new android.content.ComponentName(context, "net.osmand.plus.carlauncher.MediaNotificationListener");
+                java.util.List<android.media.session.MediaController> controllers = mediaSessionManager.getActiveSessions(listenerComp);
+                updateActiveController(controllers);
+            } catch (Exception e) {}
+        }
+
+        BaseMediaAdapter localAdapter = null;
+        if (preferredPackage != null && !"usage.internal.player".equals(preferredPackage)) {
+            for (BaseMediaAdapter adapter : adapters) {
+                if (preferredPackage.equals(adapter.getPackageName()) 
+                    && !(adapter instanceof AndroidMediaSessionAdapter)
+                    && !(adapter instanceof InternalPlayerAdapter)) {
+                    localAdapter = adapter;
+                    break;
+                }
+            }
+        }
+
+        if (localAdapter != null) {
+            localAdapter.play();
+            notifyStateChanged();
+            return;
+        }
+
+        if (preferredPackage != null && !"usage.internal.player".equals(preferredPackage)) {
+            boolean hasPreferredController = false;
+            if (activeExternalController != null && preferredPackage.equals(activeExternalController.getPackageName())) {
+                hasPreferredController = true;
+            }
+
+            if (hasPreferredController) {
+                BaseMediaAdapter activeAdapter = getActiveAdapter();
+                if (activeAdapter != null && !(activeAdapter instanceof InternalPlayerAdapter)) {
+                    activeAdapter.play();
+                    notifyStateChanged();
+                    return;
+                }
+            }
+            
+            sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY);
+            return;
+        }
+
+        if (internalPlayer != null) {
+            internalPlayer.play();
+            notifyStateChanged();
+        }
+    }
+
 
     public void togglePlayPause() {
         if (!checkNotificationAccess()) {
