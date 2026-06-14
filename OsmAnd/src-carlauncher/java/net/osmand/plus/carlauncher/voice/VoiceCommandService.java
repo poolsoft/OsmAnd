@@ -516,7 +516,25 @@ public class VoiceCommandService extends Service implements RecognitionListener 
 
             if (!isListeningForCommand) {
                 if (text.contains("hey car") || text.contains("hey kar") || text.contains("hey kart") || text.contains("hey")) {
-                    triggerWakeWordReaction();
+                    
+                    // Uyandirma kelimesini metinden temizle, eger arkasinda komut varsa yakala
+                    String remainingCommand = text.replace("hey car", "")
+                                                  .replace("hey kar", "")
+                                                  .replace("hey kart", "")
+                                                  .replace("hey", "")
+                                                  .trim();
+
+                    triggerWakeWordReaction(); // Dinlemeye gec
+                    
+                    if (!remainingCommand.isEmpty()) {
+                        android.util.Log.d("VoiceCommandService", "Tek nefeste komut yakalandi: " + remainingCommand);
+                        accumulatedCommand = remainingCommand;
+                        
+                        boolean isCommandExecuted = executeVoiceCommand(accumulatedCommand);
+                        if (isCommandExecuted) {
+                            switchToWakeWordMode();
+                        }
+                    }
                 }
             } else {
                 accumulatedCommand += " " + text;
@@ -702,6 +720,57 @@ public class VoiceCommandService extends Service implements RecognitionListener 
         } else if (text.contains("parlaklik") || text.contains("parlaklık") || text.contains("karart") || (text.contains("ekran") && (text.contains("kis") || text.contains("kıs") || text.contains("azalt") || text.contains("dusur")))) {
             sendVoiceStateBroadcast("PROCESSING");
             handler.post(() -> adjustBrightness(text));
+            return true;
+        } else if (text.contains("radyo") && (text.contains("ac") || text.contains("oynat") || text.contains("baslat") || text.contains("goster"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> {
+                speak("Radyo aciliyor");
+                try {
+                    Intent intent = getPackageManager().getLaunchIntentForPackage("com.xyauto.radio");
+                    if (intent != null) {
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    }
+                } catch (Exception e) {}
+            });
+            return true;
+        } else if (text.contains("radyo") && (text.contains("kapat") || text.contains("durdur"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> speak("Radyo kapatiliyor"));
+            return true;
+        } else if (text.contains("bluetooth") && (text.contains("ac") || text.contains("bagla") || text.contains("goster"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> {
+                speak("Bluetooth aciliyor");
+                try {
+                    Intent intent = new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                } catch (Exception e) {}
+            });
+            return true;
+        } else if (text.contains("hava") && (text.contains("durumu") || text.contains("nasil"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> speak("Hava durumu bilgisi internet baglantisi gerektiriyor."));
+            return true;
+        } else if ((text.contains("uygulama") || text.contains("menu")) && (text.contains("ac") || text.contains("goster"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> {
+                speak("Uygulamalar aciliyor");
+                Intent intent = new Intent("net.osmand.plus.carlauncher.OPEN_DRAWER");
+                sendBroadcast(intent);
+            });
+            return true;
+        } else if (text.contains("ayar") && (text.contains("ac") || text.contains("goster"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> {
+                speak("Ayarlar aciliyor");
+                try {
+                    Intent intent = new Intent(android.provider.Settings.ACTION_SETTINGS);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                } catch (Exception e) {}
+            });
             return true;
         }
         
