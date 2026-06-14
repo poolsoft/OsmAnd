@@ -721,17 +721,38 @@ public class VoiceCommandService extends Service implements RecognitionListener 
             sendVoiceStateBroadcast("PROCESSING");
             handler.post(() -> adjustBrightness(text));
             return true;
-        } else if (text.contains("radyo") && (text.contains("ac") || text.contains("oynat") || text.contains("baslat") || text.contains("goster"))) {
+        } else if (text.contains("radyo") && (text.contains("ac") || text.contains("oynat") || text.contains("baslat") || text.contains("goster") || text.contains("gec"))) {
             sendVoiceStateBroadcast("PROCESSING");
+            float freq = extractFrequencyFromText(text);
+            
             handler.post(() -> {
-                speak("Radyo aciliyor");
-                try {
-                    Intent intent = getPackageManager().getLaunchIntentForPackage("com.xyauto.radio");
-                    if (intent != null) {
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                    }
-                } catch (Exception e) {}
+                if (freq > 0) {
+                    speak(freq + " frekansi aciliyor");
+                    try {
+                        Intent intent = getPackageManager().getLaunchIntentForPackage("com.xyauto.radio");
+                        if (intent != null) {
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            intent.putExtra("freq", freq);
+                            intent.putExtra("frequency", freq);
+                            
+                            Intent freqIntent = new Intent("xy.android.radio.SET_FREQUENCY");
+                            freqIntent.putExtra("frequency", freq);
+                            freqIntent.putExtra("freq", freq);
+                            sendBroadcast(freqIntent);
+                            
+                            startActivity(intent);
+                        }
+                    } catch (Exception e) {}
+                } else {
+                    speak("Radyo aciliyor");
+                    try {
+                        Intent intent = getPackageManager().getLaunchIntentForPackage("com.xyauto.radio");
+                        if (intent != null) {
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                        }
+                    } catch (Exception e) {}
+                }
             });
             return true;
         } else if (text.contains("radyo") && (text.contains("kapat") || text.contains("durdur"))) {
@@ -1037,6 +1058,83 @@ public class VoiceCommandService extends Service implements RecognitionListener 
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private float extractFrequencyFromText(String text) {
+        String t = text.replace("nokta", ".").replace("virgul", ".").replace("bucuk", ".5");
+        
+        t = t.replace("sifir", "0")
+             .replace("bir", "1")
+             .replace("iki", "2")
+             .replace("uc", "3")
+             .replace("dort", "4")
+             .replace("bes", "5")
+             .replace("alti", "6")
+             .replace("yedi", "7")
+             .replace("sekiz", "8")
+             .replace("dokuz", "9")
+             .replace("on", "10 ")
+             .replace("yirmi", "20 ")
+             .replace("otuz", "30 ")
+             .replace("kirk", "40 ")
+             .replace("elli", "50 ")
+             .replace("atmis", "60 ").replace("altmis", "60 ")
+             .replace("yetmis", "70 ")
+             .replace("seksen", "80 ")
+             .replace("doksan", "90 ")
+             .replace("yuz", "100 ");
+             
+        float integerPart = 0;
+        float decimalPart = -1;
+        float currentSum = 0;
+        boolean hasDecimal = false;
+        
+        String[] words = t.split("\\s+");
+        for (String w : words) {
+            try {
+                if (w.equals(".")) {
+                    integerPart += currentSum;
+                    currentSum = 0;
+                    hasDecimal = true;
+                    continue;
+                }
+                
+                if (w.contains(".")) {
+                     return Float.parseFloat(w);
+                }
+                
+                float val = Float.parseFloat(w);
+                
+                if (hasDecimal) {
+                    if (decimalPart == -1) decimalPart = 0;
+                    decimalPart = decimalPart * 10 + val; 
+                } else {
+                    if (val == 100) {
+                        currentSum += 100;
+                    } else if (val >= 10 && val <= 90) {
+                        currentSum += val;
+                    } else {
+                        currentSum += val;
+                    }
+                }
+            } catch (Exception e) {
+            }
+        }
+        
+        if (!hasDecimal) {
+            integerPart += currentSum;
+        }
+        
+        if (integerPart == 0 && decimalPart == -1) return -1f;
+        
+        float result = integerPart;
+        if (decimalPart != -1) {
+            float div = 10;
+            while (decimalPart >= div) div *= 10;
+            result += (decimalPart / div);
+        }
+        
+        return result;
     }
 
     @Nullable
