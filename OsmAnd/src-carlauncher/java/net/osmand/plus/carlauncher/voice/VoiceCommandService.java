@@ -648,6 +648,8 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                 openExternalMap();
             } else if (text.contains("parlaklik") || text.contains("parlaklık") || text.contains("karart") || (text.contains("ekran") && (text.contains("kis") || text.contains("kıs") || text.contains("azalt") || text.contains("dusur")))) {
                 adjustBrightness(text);
+            } else if (text.equals("hey") || text.equals("car") || text.equals("hey car") || text.equals("kar") || text.equals("hey kar") || text.equals("kart") || text.equals("hey kart") || text.trim().isEmpty()) {
+                // Sadece uyanma kelimesi parcalari duyulduysa anlasilamayan komut diyerek rahatsiz etme, sessiz kal
             } else {
                 speak("Anlasilamayan komut: " + text);
             }
