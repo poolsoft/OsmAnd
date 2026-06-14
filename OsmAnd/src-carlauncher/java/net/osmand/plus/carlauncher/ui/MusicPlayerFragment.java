@@ -819,8 +819,13 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         if (playerPanel != null) {
             playerPanel.setVisibility(View.VISIBLE);
         }
-        // Playlist panelinin gorunurlugu ilk acilista XML'den GONE gelir.
-        // Mod degisimlerinde veya parca degisimlerinde kullanicinin actigi/kapattigi durumu zorla degistirmiyoruz.
+        
+        if (isExternalMode) {
+            isPlaylistVisible = false;
+            if (trackListPanel != null) trackListPanel.setVisibility(View.GONE);
+            if (nowPlayingCenterPanel != null) nowPlayingCenterPanel.setVisibility(View.VISIBLE);
+            if (btnDockPlaylist != null) btnDockPlaylist.setColorFilter(0xFFFFFFFF);
+        }
 
         // Dock butonlarini guncelle
         updateDockButtonsUI();
