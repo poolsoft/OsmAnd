@@ -66,6 +66,7 @@ public class VoiceCommandService extends Service implements RecognitionListener 
     private boolean isListeningForCommand = false;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private MusicManager musicManager;
+    private String accumulatedCommand = "";
     
     // Servisin aktiflik durumunu tutan statik bayrak (Turkce karakter yok)
     public static boolean isServiceRunning = false;
@@ -518,8 +519,15 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                     triggerWakeWordReaction();
                 }
             } else {
-                executeVoiceCommand(text);
-                switchToWakeWordMode();
+                accumulatedCommand += " " + text;
+                accumulatedCommand = accumulatedCommand.trim();
+                
+                android.util.Log.d("VoiceCommandService", "Birikmis Komut: " + accumulatedCommand);
+
+                boolean isCommandExecuted = executeVoiceCommand(accumulatedCommand);
+                if (isCommandExecuted) {
+                    switchToWakeWordMode();
+                }
             }
         } catch (Exception e) {
             android.util.Log.e("VoiceCommandService", "JSON parse hatasi", e);
@@ -534,6 +542,7 @@ public class VoiceCommandService extends Service implements RecognitionListener 
 
     private void triggerWakeWordReaction() {
         isListeningForCommand = true;
+        accumulatedCommand = "";
         updateNotification("Dinliyorum...");
         sendVoiceStateBroadcast("LISTENING");
         
@@ -557,6 +566,14 @@ public class VoiceCommandService extends Service implements RecognitionListener 
     private void switchToWakeWordMode() {
         if (!isListeningForCommand) return;
         isListeningForCommand = false;
+
+        if (!accumulatedCommand.isEmpty()) {
+            if (!(accumulatedCommand.equals("hey") || accumulatedCommand.equals("car") || accumulatedCommand.equals("hey car") || accumulatedCommand.equals("kar") || accumulatedCommand.equals("hey kar") || accumulatedCommand.equals("kart") || accumulatedCommand.equals("hey kart"))) {
+                speak("Anlasilamayan komut: " + accumulatedCommand);
+            }
+        }
+        accumulatedCommand = "";
+
         updateNotification("\"Hey Car\" tetikleme kelimesi bekleniyor...");
         sendVoiceStateBroadcast("CLOSED");
         
@@ -567,30 +584,38 @@ public class VoiceCommandService extends Service implements RecognitionListener 
         startSpeechService(wakeWordRecognizer);
     }
 
-    private void executeVoiceCommand(String text) {
-        sendVoiceStateBroadcast("PROCESSING");
-        handler.post(() -> {
-            if (text.contains("muzik") && (text.contains("cal") || text.contains("oynat") || text.contains("baslat"))) {
+    private boolean executeVoiceCommand(String text) {
+        if (text.contains("muzik") && (text.contains("cal") || text.contains("oynat") || text.contains("baslat"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> {
                 speak("Muzik oynatiliyor");
-                if (musicManager != null) {
-                    musicManager.togglePlayPause();
-                }
-            } else if (text.contains("muzik") && (text.contains("durdur") || text.contains("duraklat") || text.contains("kes"))) {
+                if (musicManager != null) musicManager.togglePlayPause();
+            });
+            return true;
+        } else if (text.contains("muzik") && (text.contains("durdur") || text.contains("duraklat") || text.contains("kes"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> {
                 speak("Muzik durduruldu");
-                if (musicManager != null) {
-                    musicManager.togglePlayPause();
-                }
-            } else if (text.contains("sonraki") || text.contains("atla")) {
+                if (musicManager != null) musicManager.togglePlayPause();
+            });
+            return true;
+        } else if (text.contains("sonraki") || text.contains("atla")) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> {
                 speak("Sonraki sarki");
-                if (musicManager != null) {
-                    musicManager.skipToNext();
-                }
-            } else if (text.contains("onceki") || text.contains("geri")) {
+                if (musicManager != null) musicManager.skipToNext();
+            });
+            return true;
+        } else if (text.contains("onceki") || text.contains("geri")) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> {
                 speak("Onceki sarki");
-                if (musicManager != null) {
-                    musicManager.skipToPrevious();
-                }
-            } else if (text.contains("sesi") && (text.contains("kapa") || text.contains("kapat") || text.contains("sustur") || text.contains("sessize"))) {
+                if (musicManager != null) musicManager.skipToPrevious();
+            });
+            return true;
+        } else if (text.contains("sesi") && (text.contains("kapa") || text.contains("kapat") || text.contains("sustur") || text.contains("sessize"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> {
                 try {
                     AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
                     if (audioManager != null) {
@@ -598,7 +623,11 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                         speak("Ses kapatildi");
                     }
                 } catch (Exception e) {}
-            } else if (text.contains("sesi") && (text.contains("yuzde") || text.contains("yüzde"))) {
+            });
+            return true;
+        } else if (text.contains("sesi") && (text.contains("yuzde") || text.contains("yüzde"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> {
                 int pct = parsePercentage(text);
                 if (pct >= 0 && pct <= 100) {
                     try {
@@ -615,11 +644,19 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                 } else {
                     speak("Gecersiz ses yuzdesi.");
                 }
-            } else if (text.contains("sesi") && (text.contains("ac") || text.contains("yukselt") || text.contains("artir"))) {
-                adjustVolume(true);
-            } else if (text.contains("sesi") && (text.contains("kis") || text.contains("azalt") || text.contains("dusur"))) {
-                adjustVolume(false);
-            } else if (text.contains("ekran") && (text.contains("kapat") || text.contains("kapa"))) {
+            });
+            return true;
+        } else if (text.contains("sesi") && (text.contains("ac") || text.contains("yukselt") || text.contains("artir"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> adjustVolume(true));
+            return true;
+        } else if (text.contains("sesi") && (text.contains("kis") || text.contains("azalt") || text.contains("dusur"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> adjustVolume(false));
+            return true;
+        } else if (text.contains("ekran") && (text.contains("kapat") || text.contains("kapa"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> {
                 speak("Ekran kapatiliyor.");
                 try {
                     Intent screenIntent = new Intent("xy.android.setScreenState");
@@ -628,32 +665,48 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                 } catch (Exception e) {
                     android.util.Log.e("VoiceCommandService", "Ekran kapatma hatasi", e);
                 }
-            } else if (text.contains("saat") && (text.contains("kac") || text.contains("soyle"))) {
+            });
+            return true;
+        } else if (text.contains("saat") && (text.contains("kac") || text.contains("soyle"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> {
                 try {
                     java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm", new java.util.Locale("tr", "TR"));
                     String timeStr = sdf.format(new java.util.Date());
                     speak("Saat su an " + timeStr);
                 } catch (Exception e) {}
-            } else if (text.contains("tarih") && (text.contains("nedir") || text.contains("soyle") || text.contains("gunlerden"))) {
+            });
+            return true;
+        } else if (text.contains("tarih") && (text.contains("nedir") || text.contains("soyle") || text.contains("gunlerden"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> {
                 try {
                     java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd MMMM yyyy", new java.util.Locale("tr", "TR"));
                     String dateStr = sdf.format(new java.util.Date());
                     speak("Bugun " + dateStr);
                 } catch (Exception e) {}
-            } else if (text.contains("eve") && (text.contains("gotur") || text.contains("git"))) {
-                startNavigationTo("home");
-            } else if (text.contains("ise") && (text.contains("gotur") || text.contains("git"))) {
-                startNavigationTo("work");
-            } else if (text.contains("harita") || text.contains("navigasyon") || text.contains("yol")) {
-                openExternalMap();
-            } else if (text.contains("parlaklik") || text.contains("parlaklık") || text.contains("karart") || (text.contains("ekran") && (text.contains("kis") || text.contains("kıs") || text.contains("azalt") || text.contains("dusur")))) {
-                adjustBrightness(text);
-            } else if (text.equals("hey") || text.equals("car") || text.equals("hey car") || text.equals("kar") || text.equals("hey kar") || text.equals("kart") || text.equals("hey kart") || text.trim().isEmpty()) {
-                // Sadece uyanma kelimesi parcalari duyulduysa anlasilamayan komut diyerek rahatsiz etme, sessiz kal
-            } else {
-                speak("Anlasilamayan komut: " + text);
-            }
-        });
+            });
+            return true;
+        } else if (text.contains("eve") && (text.contains("gotur") || text.contains("git"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> startNavigationTo("home"));
+            return true;
+        } else if (text.contains("ise") && (text.contains("gotur") || text.contains("git"))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> startNavigationTo("work"));
+            return true;
+        } else if (text.contains("harita") || text.contains("navigasyon") || text.contains("yol")) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> openExternalMap());
+            return true;
+        } else if (text.contains("parlaklik") || text.contains("parlaklık") || text.contains("karart") || (text.contains("ekran") && (text.contains("kis") || text.contains("kıs") || text.contains("azalt") || text.contains("dusur")))) {
+            sendVoiceStateBroadcast("PROCESSING");
+            handler.post(() -> adjustBrightness(text));
+            return true;
+        }
+        
+        // Komut eslesmediyse false don (dinlemeye ve kelime biriktirmeye devam etsin)
+        return false;
     }
 
     private void adjustVolume(boolean increase) {
