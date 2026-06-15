@@ -4,14 +4,14 @@ import android.os.Bundle;
 import android.widget.ImageButton;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
+import android.app.Activity;
 
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.carlauncher.telemetry.TelemetryManager;
 import net.osmand.plus.carlauncher.widgets.view.FuturisticSpeedometerView;
 import net.osmand.plus.R;
 
-public class NeonDashboardActivity extends AppCompatActivity implements TelemetryManager.TelemetryListener {
+public class NeonDashboardActivity extends Activity implements TelemetryManager.TelemetryListener {
 
     private FuturisticSpeedometerView speedometerView;
     private TelemetryManager telemetryManager;
