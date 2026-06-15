@@ -70,7 +70,7 @@ public class OverlayWindowManager {
         }
 
         // 2. Normal uygulamalari serbest pencere (Freeform) olarak baslatmayi dene (Turkce karakter yok)
-        boolean isSpecialApp = packageName.startsWith("internal://") || 
+        boolean isSpecialApp = net.osmand.plus.carlauncher.dock.InternalApp.isInternalApp(packageName) || 
                                packageName.equals("com.google.android.youtube") || 
                                packageName.equals("com.google.android.youtube.tv") || 
                                packageName.equals("com.spotify.music") || 

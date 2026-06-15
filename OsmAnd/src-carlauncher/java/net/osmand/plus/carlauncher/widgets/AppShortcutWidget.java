@@ -109,22 +109,8 @@ public class AppShortcutWidget extends BaseWidget {
                 }
                 
                 // Dahili uygulamalari ac (Turkce karakter yok)
-                if (packageName != null && packageName.startsWith("internal://")) {
-                    if (v.getContext() instanceof net.osmand.plus.activities.MapActivity) {
-                        net.osmand.plus.activities.MapActivity activity = 
-                            (net.osmand.plus.activities.MapActivity) v.getContext();
-                        switch (packageName) {
-                            case "internal://settings":
-                                activity.openCarLauncherSettings();
-                                break;
-                            case "internal://music":
-                                activity.openMusicPlayer();
-                                break;
-                            case "internal://antenna":
-                                activity.openAntennaAlignmentInPanel();
-                                break;
-                        }
-                    }
+                if (net.osmand.plus.carlauncher.dock.InternalApp.isInternalApp(packageName)) {
+                    net.osmand.plus.carlauncher.dock.InternalAppLauncher.launch(v.getContext(), packageName);
                     return;
                 }
 

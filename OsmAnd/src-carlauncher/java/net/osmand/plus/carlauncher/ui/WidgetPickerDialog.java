@@ -947,7 +947,7 @@ public class WidgetPickerDialog extends DialogFragment {
 
         if (cachedList != null && !cachedList.isEmpty()) {
             for (net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem item : cachedList) {
-                if (item.packageName != null && item.packageName.startsWith("internal://")) {
+                if (net.osmand.plus.carlauncher.dock.InternalApp.isInternalApp(item.packageName)) {
                     continue;
                 }
                 Drawable icon = net.osmand.plus.carlauncher.ui.AppDrawerFragment.getAppIcon(ctx, item.packageName);
@@ -984,7 +984,7 @@ public class WidgetPickerDialog extends DialogFragment {
                 protected void onPostExecute(List<net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem> result) {
                     if (result != null && !result.isEmpty() && container != null) {
                         for (net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem item : result) {
-                            if (item.packageName != null && item.packageName.startsWith("internal://")) {
+                            if (net.osmand.plus.carlauncher.dock.InternalApp.isInternalApp(item.packageName)) {
                                 continue;
                             }
                             Drawable icon = net.osmand.plus.carlauncher.ui.AppDrawerFragment.getAppIcon(ctx, item.packageName);

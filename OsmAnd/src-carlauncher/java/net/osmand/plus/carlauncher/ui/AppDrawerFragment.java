@@ -69,30 +69,9 @@ public class AppDrawerFragment extends Fragment {
         if (context == null || packageName == null) {
             return null;
         }
-        if (packageName.equals("internal://settings")) {
-            try {
-                return context.getResources().getDrawable(net.osmand.plus.R.drawable.ic_action_settings);
-            } catch (Exception e) {
-                // fallback
-            }
-        } else if (packageName.equals("internal://music")) {
-            try {
-                return context.getResources().getDrawable(net.osmand.plus.R.drawable.ic_music_playlist);
-            } catch (Exception e) {
-                // fallback
-            }
-        } else if (packageName.equals("internal://antenna")) {
-            try {
-                return context.getResources().getDrawable(net.osmand.plus.R.drawable.ic_action_compass);
-            } catch (Exception e) {
-                // fallback
-            }
-        } else if (packageName.equals("internal://dashboard")) {
-            try {
-                return context.getResources().getDrawable(android.R.drawable.ic_menu_compass);
-            } catch (Exception e) {
-                // fallback
-            }
+        if (net.osmand.plus.carlauncher.dock.InternalApp.isInternalApp(packageName)) {
+            net.osmand.plus.carlauncher.dock.InternalApp app = net.osmand.plus.carlauncher.dock.InternalApp.fromPackageName(packageName);
+            if (app != null) return app.getIcon(context);
         } else {
             try {
                 return context.getPackageManager().getApplicationIcon(packageName);
@@ -356,31 +335,12 @@ public class AppDrawerFragment extends Fragment {
 
         private List<AppItem> getInternalApps() {
             List<AppItem> internal = new ArrayList<>();
-
-            // Settings
-            AppItem settings = new AppItem();
-            settings.label = "Car Launcher Ayarlar";
-            settings.packageName = "internal://settings";
-            internal.add(settings);
-
-            // Music Player
-            AppItem music = new AppItem();
-            music.label = "Muzik Calici";
-            music.packageName = "internal://music";
-            internal.add(music);
-
-            // Antenna Alignment
-            AppItem antenna = new AppItem();
-            antenna.label = "Anten Hizalama";
-            antenna.packageName = "internal://antenna";
-            internal.add(antenna);
-
-            // Dashboard
-            AppItem dashboard = new AppItem();
-            dashboard.label = "Dashboard (Gosterge)";
-            dashboard.packageName = "internal://dashboard";
-            internal.add(dashboard);
-
+            for (net.osmand.plus.carlauncher.dock.InternalApp app : net.osmand.plus.carlauncher.dock.InternalApp.values()) {
+                AppItem item = new AppItem();
+                item.label = app.getDefaultName();
+                item.packageName = app.getPackageName();
+                internal.add(item);
+            }
             return internal;
         }
 
@@ -538,8 +498,8 @@ public class AppDrawerFragment extends Fragment {
 
     private void launchApp(String packageName) {
         // Handle internal apps
-        if (packageName != null && packageName.startsWith("internal://")) {
-            handleInternalApp(packageName);
+        if (net.osmand.plus.carlauncher.dock.InternalApp.isInternalApp(packageName)) {
+            net.osmand.plus.carlauncher.dock.InternalAppLauncher.launch(getContext(), packageName);
             return;
         }
 
@@ -554,28 +514,7 @@ public class AppDrawerFragment extends Fragment {
         }
     }
 
-    private void handleInternalApp(String internalUri) {
-        if (getActivity() == null || !(getActivity() instanceof MapActivity))
-            return;
 
-        MapActivity activity = (MapActivity) getActivity();
-        // Note: Don't call closeDrawer() - internal fragments open in same container
-
-        switch (internalUri) {
-            case "internal://settings":
-                activity.openCarLauncherSettings();
-                break;
-            case "internal://music":
-                activity.openMusicPlayer();
-                break;
-            case "internal://antenna":
-                activity.openAntennaAlignmentInPanel();
-                break;
-            case "internal://dashboard":
-                activity.getPanelContentManager().setContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.DASHBOARD);
-                break;
-        }
-    }
 
     public static List<AppItem> getCachedApps() {
         return cachedApps;

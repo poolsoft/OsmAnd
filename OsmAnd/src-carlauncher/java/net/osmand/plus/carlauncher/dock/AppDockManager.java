@@ -80,23 +80,11 @@ public class AppDockManager {
                     String appName;
                     Drawable icon;
 
-                    if (packageName.startsWith("internal://")) {
-                        // Handle Internal Apps
-                        if (packageName.equals("internal://settings")) {
-                            appName = "Ayarlar";
-                            icon = context.getResources().getDrawable(android.R.drawable.ic_menu_preferences, null);
-                        } else if (packageName.equals("internal://music")) {
-                            appName = "Muzik";
-                            icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
-                        } else if (packageName.equals("internal://antenna")) {
-                            appName = "Anten";
-                            icon = context.getResources().getDrawable(net.osmand.plus.R.drawable.ic_action_compass, null);
-                        } else if (packageName.equals("internal://dashboard")) {
-                            appName = "Dashboard";
-                            icon = context.getResources().getDrawable(android.R.drawable.ic_menu_compass, null);
-                        } else if (packageName.equals("internal://neon_dashboard")) {
-                            appName = "Dijital Gosterge";
-                            icon = context.getResources().getDrawable(android.R.drawable.ic_menu_view, null);
+                    if (InternalApp.isInternalApp(packageName)) {
+                        InternalApp app = InternalApp.fromPackageName(packageName);
+                        if (app != null) {
+                            appName = app.getDefaultName();
+                            icon = app.getIcon(context);
                         } else {
                             appName = "Bilinmeyen";
                             icon = context.getResources().getDrawable(android.R.drawable.sym_def_app_icon, null);
@@ -142,13 +130,11 @@ public class AppDockManager {
             try {
                 String appName;
                 Drawable icon;
-                if (packageName.startsWith("internal://")) {
-                    if (packageName.equals("internal://dashboard")) {
-                        appName = "Dashboard";
-                        icon = context.getResources().getDrawable(android.R.drawable.ic_menu_compass, null);
-                    } else if (packageName.equals("internal://neon_dashboard")) {
-                        appName = "Dijital Gosterge";
-                        icon = context.getResources().getDrawable(android.R.drawable.ic_menu_view, null);
+                if (InternalApp.isInternalApp(packageName)) {
+                    InternalApp app = InternalApp.fromPackageName(packageName);
+                    if (app != null) {
+                        appName = app.getDefaultName();
+                        icon = app.getIcon(context);
                     } else {
                         continue;
                     }

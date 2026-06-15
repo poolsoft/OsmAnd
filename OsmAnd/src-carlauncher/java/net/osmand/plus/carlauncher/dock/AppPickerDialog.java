@@ -158,29 +158,13 @@ public class AppPickerDialog {
 
         if (!onlyMusicApps) {
             // Dahili Sistem Uygulamalari (Picker uzerinden secilebilmesi icin)
-            AppInfo dashboardApp = new AppInfo();
-            dashboardApp.name = "Dashboard (Gostergeler)";
-            dashboardApp.packageName = "internal://dashboard";
-            dashboardApp.icon = context.getResources().getDrawable(android.R.drawable.ic_menu_compass, null);
-            apps.add(dashboardApp);
-
-            AppInfo settingsApp = new AppInfo();
-            settingsApp.name = "Car Launcher Ayarlari";
-            settingsApp.packageName = "internal://settings";
-            settingsApp.icon = context.getResources().getDrawable(android.R.drawable.ic_menu_preferences, null);
-            apps.add(settingsApp);
-
-            AppInfo musicApp = new AppInfo();
-            musicApp.name = "Dahili Muzik Ekrani";
-            musicApp.packageName = "internal://music";
-            musicApp.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
-            apps.add(musicApp);
-            
-            AppInfo antennaApp = new AppInfo();
-            antennaApp.name = "Anten Hizalama";
-            antennaApp.packageName = "internal://antenna";
-            antennaApp.icon = context.getResources().getDrawable(net.osmand.plus.R.drawable.ic_action_compass, null);
-            apps.add(antennaApp);
+            for (net.osmand.plus.carlauncher.dock.InternalApp internalApp : net.osmand.plus.carlauncher.dock.InternalApp.values()) {
+                AppInfo app = new AppInfo();
+                app.name = internalApp.getDefaultName();
+                app.packageName = internalApp.getPackageName();
+                app.icon = internalApp.getIcon(context);
+                apps.add(app);
+            }
         }
 
         if (cachedList != null && !cachedList.isEmpty()) {
@@ -217,7 +201,7 @@ public class AppPickerDialog {
 
             for (net.osmand.plus.carlauncher.ui.AppDrawerFragment.AppItem item : cachedList) {
                 // Dahili uygulamalari secici listesinde gosterme (Turkce karakter yok)
-                if (item.packageName != null && item.packageName.startsWith("internal://")) {
+                if (net.osmand.plus.carlauncher.dock.InternalApp.isInternalApp(item.packageName)) {
                     continue;
                 }
                 

@@ -528,8 +528,8 @@ public class AppDockFragment extends Fragment
         if (getContext() == null)
             return;
         String packageName = shortcut.getPackageName();
-        if (packageName != null && packageName.startsWith("internal://")) {
-            handleInternalApp(packageName);
+        if (net.osmand.plus.carlauncher.dock.InternalApp.isInternalApp(packageName)) {
+            net.osmand.plus.carlauncher.dock.InternalAppLauncher.launch(getContext(), packageName);
             return;
         }
         LaunchMode mode = shortcut.getLaunchMode();
@@ -557,31 +557,7 @@ public class AppDockFragment extends Fragment
         }
     }
 
-    private void handleInternalApp(String internalUri) {
-        if (getActivity() == null || !(getActivity() instanceof net.osmand.plus.activities.MapActivity))
-            return;
 
-        net.osmand.plus.activities.MapActivity activity = (net.osmand.plus.activities.MapActivity) getActivity();
-
-        switch (internalUri) {
-            case "internal://settings":
-                activity.openCarLauncherSettings();
-                break;
-            case "internal://music":
-                activity.openMusicPlayer();
-                break;
-            case "internal://antenna":
-                activity.openAntennaAlignmentInPanel();
-                break;
-            case "internal://dashboard":
-                activity.getPanelContentManager().setContent(PanelContentManager.PanelContent.DASHBOARD);
-                break;
-            case "internal://neon_dashboard":
-                Intent neonIntent = new Intent(activity, NeonDashboardActivity.class);
-                activity.startActivity(neonIntent);
-                break;
-        }
-    }
 
     private void launchAppStandard(String packageName) {
         try {
