@@ -43,8 +43,9 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Sol Fake Data (Batarya vb) -->
+    <!-- Sol Dinamik Data (Yol/Sokak Ismi vs) -->
     <LinearLayout
+        android:id="@+id/panel_left"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -55,21 +56,24 @@
         android:layout_marginEnd="32dp">
         
         <ImageView
+            android:id="@+id/icon_left"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:src="@android:drawable/ic_lock_idle_charging"
-            app:tint="#00B4DB"/>
+            android:src="@drawable/ic_action_street_name"
+            app:tint="#00E5FF"/>
         <TextView
+            android:id="@+id/tv_left_metric"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="95%"
+            android:text="---"
             android:textColor="#FFFFFF"
             android:textSize="18sp"
             android:layout_marginTop="8dp"/>
     </LinearLayout>
 
-    <!-- Sag Fake Data (Sicaklik) -->
+    <!-- Sag Dinamik Data (Rakim/Pusula vs) -->
     <LinearLayout
+        android:id="@+id/panel_right"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -80,14 +84,16 @@
         android:layout_marginStart="32dp">
 
         <ImageView
+            android:id="@+id/icon_right"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:src="@drawable/ic_weather_cloudy" 
-            app:tint="#00B4DB"/>
+            android:src="@drawable/ic_action_altitude" 
+            app:tint="#00E5FF"/>
         <TextView
+            android:id="@+id/tv_right_metric"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="22 °C"
+            android:text="---"
             android:textColor="#FFFFFF"
             android:textSize="18sp"
             android:layout_marginTop="8dp"/>
