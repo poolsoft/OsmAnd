@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.SweepGradient;
@@ -22,6 +23,8 @@ public class FuturisticSpeedometerView extends View {
     private Paint textSpeedPaint;
     private Paint textUnitPaint;
     private Paint pulsePaint;
+    private Paint innerHudPaint;
+    private Paint dotGlowPaint;
     
     private RectF arcBounds;
     private RectF outerBounds;
@@ -49,20 +52,20 @@ public class FuturisticSpeedometerView extends View {
         
         bgArcPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         bgArcPaint.setStyle(Paint.Style.STROKE);
-        bgArcPaint.setStrokeWidth(dpToPx(4));
-        bgArcPaint.setColor(Color.parseColor("#152036"));
+        bgArcPaint.setStrokeWidth(dpToPx(6));
+        bgArcPaint.setColor(Color.parseColor("#1A2542"));
         bgArcPaint.setStrokeCap(Paint.Cap.ROUND);
 
         progressArcPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         progressArcPaint.setStyle(Paint.Style.STROKE);
-        progressArcPaint.setStrokeWidth(dpToPx(16));
+        progressArcPaint.setStrokeWidth(dpToPx(12));
         progressArcPaint.setStrokeCap(Paint.Cap.ROUND);
         
         glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         glowPaint.setStyle(Paint.Style.STROKE);
         glowPaint.setStrokeWidth(dpToPx(16));
         glowPaint.setStrokeCap(Paint.Cap.ROUND);
-        glowPaint.setMaskFilter(new BlurMaskFilter(dpToPx(24), BlurMaskFilter.Blur.NORMAL));
+        glowPaint.setMaskFilter(new BlurMaskFilter(dpToPx(28), BlurMaskFilter.Blur.NORMAL));
         
         tickPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         tickPaint.setStyle(Paint.Style.STROKE);
@@ -70,28 +73,38 @@ public class FuturisticSpeedometerView extends View {
 
         pulsePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         pulsePaint.setStyle(Paint.Style.STROKE);
-        pulsePaint.setStrokeWidth(dpToPx(2));
+        pulsePaint.setStrokeWidth(dpToPx(1.5f));
+        
+        innerHudPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        innerHudPaint.setStyle(Paint.Style.STROKE);
+        innerHudPaint.setStrokeWidth(dpToPx(1.5f));
+        innerHudPaint.setColor(Color.parseColor("#3300E5FF"));
+        // Kesik cizgili HUD cemberi
+        innerHudPaint.setPathEffect(new DashPathEffect(new float[]{dpToPx(15), dpToPx(8)}, 0));
+
+        dotGlowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        dotGlowPaint.setStyle(Paint.Style.FILL);
+        dotGlowPaint.setMaskFilter(new BlurMaskFilter(dpToPx(12), BlurMaskFilter.Blur.NORMAL));
         
         textSpeedPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textSpeedPaint.setColor(Color.WHITE);
         textSpeedPaint.setTextAlign(Paint.Align.CENTER);
-        textSpeedPaint.setTextSize(dpToPx(84));
-        textSpeedPaint.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
-        textSpeedPaint.setShadowLayer(dpToPx(10), 0, 0, Color.parseColor("#00B4DB"));
+        textSpeedPaint.setTextSize(dpToPx(96));
+        textSpeedPaint.setTypeface(Typeface.create("sans-serif-thin", Typeface.NORMAL));
+        textSpeedPaint.setShadowLayer(dpToPx(15), 0, 0, Color.parseColor("#00E5FF"));
 
         textUnitPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textUnitPaint.setColor(Color.parseColor("#00E5FF"));
         textUnitPaint.setTextAlign(Paint.Align.CENTER);
-        textUnitPaint.setTextSize(dpToPx(20));
+        textUnitPaint.setTextSize(dpToPx(18));
         textUnitPaint.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        textUnitPaint.setLetterSpacing(0.2f);
+        textUnitPaint.setLetterSpacing(0.3f);
         
         arcBounds = new RectF();
         outerBounds = new RectF();
 
-        // Pulsing (Nefes Alma / Radar) efekti
         pulseAnimator = ValueAnimator.ofFloat(0f, 1f);
-        pulseAnimator.setDuration(2500);
+        pulseAnimator.setDuration(3000);
         pulseAnimator.setRepeatCount(ValueAnimator.INFINITE);
         pulseAnimator.setInterpolator(new LinearInterpolator());
         pulseAnimator.addUpdateListener(animation -> {
@@ -104,22 +117,20 @@ public class FuturisticSpeedometerView extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        float padding = dpToPx(50);
+        float padding = dpToPx(60);
         arcBounds.set(padding, padding, w - padding, h - padding);
-        outerBounds.set(padding - dpToPx(30), padding - dpToPx(30), w - padding + dpToPx(30), h - padding + dpToPx(30));
+        outerBounds.set(padding - dpToPx(35), padding - dpToPx(35), w - padding + dpToPx(35), h - padding + dpToPx(35));
         
-        // Renk Gecisi: Cyan -> Mavi -> Mor -> Pembe
+        // Çok daha canli ve parlak gradient
         int[] colors = {
-            Color.parseColor("#00E5FF"), 
-            Color.parseColor("#2979FF"), 
-            Color.parseColor("#D500F9"), 
-            Color.parseColor("#FF1744")
+            Color.parseColor("#00FFFF"), // Çok parlak Cyan
+            Color.parseColor("#00B4DB"), // Mavi
+            Color.parseColor("#8E2DE2"), // Mor
+            Color.parseColor("#FF007F")  // Neon Pembe
         };
-        float[] positions = {0f, 0.4f, 0.7f, 1f};
+        float[] positions = {0f, 0.3f, 0.6f, 1f};
         
-        // Aciya gore SweepGradient
         SweepGradient gradient = new SweepGradient(w / 2f, h / 2f, colors, positions);
-        // Gradient'in baslangic noktasini cevir
         android.graphics.Matrix matrix = new android.graphics.Matrix();
         matrix.setRotate(135f, w / 2f, h / 2f);
         gradient.setLocalMatrix(matrix);
@@ -137,16 +148,30 @@ public class FuturisticSpeedometerView extends View {
         float startAngle = 135f;
         float sweepAngle = 270f;
         
-        // 1. Radar Nabiz Efekti (Pulse)
-        float maxRadius = outerBounds.width() / 2f;
-        float minRadius = arcBounds.width() / 2f - dpToPx(16);
-        float currentRadius = minRadius + (maxRadius - minRadius) * pulsePhase;
-        int alpha = (int) (255 * (1f - pulsePhase) * 0.4f); // Saydamlasarak genisler
-        pulsePaint.setColor(Color.parseColor("#00E5FF"));
-        pulsePaint.setAlpha(alpha);
-        canvas.drawCircle(cx, cy, currentRadius, pulsePaint);
+        // 1. Iç İçe Geçen HUD Çemberleri (Sci-Fi Hissi)
+        float hudRadius = arcBounds.width() / 2f - dpToPx(35);
+        canvas.drawCircle(cx, cy, hudRadius, innerHudPaint);
+        
+        // 2. Pulse Radar Animasyonu (2 Dalga halinde)
+        float maxRadius = outerBounds.width() / 2f - dpToPx(10);
+        float minRadius = hudRadius;
+        
+        // Dalga 1
+        float currentRadius1 = minRadius + (maxRadius - minRadius) * pulsePhase;
+        int alpha1 = (int) (255 * (1f - pulsePhase) * 0.5f);
+        pulsePaint.setColor(Color.parseColor("#00FFFF"));
+        pulsePaint.setAlpha(alpha1);
+        canvas.drawCircle(cx, cy, currentRadius1, pulsePaint);
+        
+        // Dalga 2 (Gecikmeli)
+        float phase2 = pulsePhase - 0.5f;
+        if (phase2 < 0) phase2 += 1f;
+        float currentRadius2 = minRadius + (maxRadius - minRadius) * phase2;
+        int alpha2 = (int) (255 * (1f - phase2) * 0.3f);
+        pulsePaint.setAlpha(alpha2);
+        canvas.drawCircle(cx, cy, currentRadius2, pulsePaint);
 
-        // 2. Dis Cizgili Kadran (Tick marks)
+        // 3. Modern Dis Kadran Çizgileri (Tick marks)
         float radius = outerBounds.width() / 2f;
         int tickCount = 60;
         for (int i = 0; i <= tickCount; i++) {
@@ -155,15 +180,13 @@ public class FuturisticSpeedometerView extends View {
             float startX, startY, endX, endY;
 
             if (i % 5 == 0) {
-                // Kalin / Uzun Cizgiler
                 tickPaint.setStrokeWidth(dpToPx(2.5f));
-                tickPaint.setColor(Color.parseColor("#8800E5FF"));
-                startX = cx + (float) Math.cos(rad) * (radius - dpToPx(12));
-                startY = cy + (float) Math.sin(rad) * (radius - dpToPx(12));
+                tickPaint.setColor(Color.parseColor("#CC00FFFF"));
+                startX = cx + (float) Math.cos(rad) * (radius - dpToPx(14));
+                startY = cy + (float) Math.sin(rad) * (radius - dpToPx(14));
             } else {
-                // Ince Cizgiler
                 tickPaint.setStrokeWidth(dpToPx(1f));
-                tickPaint.setColor(Color.parseColor("#3300E5FF"));
+                tickPaint.setColor(Color.parseColor("#4400FFFF"));
                 startX = cx + (float) Math.cos(rad) * (radius - dpToPx(6));
                 startY = cy + (float) Math.sin(rad) * (radius - dpToPx(6));
             }
@@ -172,20 +195,47 @@ public class FuturisticSpeedometerView extends View {
             canvas.drawLine(startX, startY, endX, endY, tickPaint);
         }
 
-        // 3. Arka Plan Yayi
+        // 4. Kalin Arka Plan Yayi
         canvas.drawArc(arcBounds, startAngle, sweepAngle, false, bgArcPaint);
         
-        // 4. Ilerleyis Yayi (Hiz = 0 iken bile ufak bir mavi isilti)
+        // 5. Hiz İlerleyişi (Progress)
         float progressSweep = (currentSpeed / maxSpeed) * sweepAngle;
-        if (progressSweep < 2f) progressSweep = 2f; // Her zaman hafif bir parlaklik ve renk olsun
-        if (progressSweep > sweepAngle) progressSweep = sweepAngle;
         
-        canvas.drawArc(arcBounds, startAngle, progressSweep, false, glowPaint);
-        canvas.drawArc(arcBounds, startAngle, progressSweep, false, progressArcPaint);
+        // Eger Hiz 0 ise sadece parlayan cok estetik bir "Nokta" (Neon Dot) goster
+        float arcRadius = arcBounds.width() / 2f;
+        if (progressSweep < 1f) {
+            double startRad = Math.toRadians(startAngle);
+            float dotX = cx + (float) Math.cos(startRad) * arcRadius;
+            float dotY = cy + (float) Math.sin(startRad) * arcRadius;
+            
+            dotGlowPaint.setColor(Color.parseColor("#00FFFF"));
+            canvas.drawCircle(dotX, dotY, dpToPx(8), dotGlowPaint); // Glowlu top
+            
+            Paint dotCore = new Paint(Paint.ANTI_ALIAS_FLAG);
+            dotCore.setStyle(Paint.Style.FILL);
+            dotCore.setColor(Color.WHITE);
+            canvas.drawCircle(dotX, dotY, dpToPx(4), dotCore); // Beyaz merkez
+        } else {
+            if (progressSweep > sweepAngle) progressSweep = sweepAngle;
+            // Parlama efekti ve Ana hat
+            canvas.drawArc(arcBounds, startAngle, progressSweep, false, glowPaint);
+            canvas.drawArc(arcBounds, startAngle, progressSweep, false, progressArcPaint);
+            
+            // Çizginin Ucunda Parlayan Top
+            double endRad = Math.toRadians(startAngle + progressSweep);
+            float endDotX = cx + (float) Math.cos(endRad) * arcRadius;
+            float endDotY = cy + (float) Math.sin(endRad) * arcRadius;
+            dotGlowPaint.setColor(Color.parseColor("#FF007F")); // Hiza gore pembe uclu glow
+            canvas.drawCircle(endDotX, endDotY, dpToPx(10), dotGlowPaint);
+            Paint dotCore = new Paint(Paint.ANTI_ALIAS_FLAG);
+            dotCore.setStyle(Paint.Style.FILL);
+            dotCore.setColor(Color.WHITE);
+            canvas.drawCircle(endDotX, endDotY, dpToPx(5), dotCore);
+        }
         
-        // 5. Metinler
-        canvas.drawText(String.valueOf((int) currentSpeed), cx, cy + dpToPx(10), textSpeedPaint);
-        canvas.drawText("KM/H", cx, cy + dpToPx(44), textUnitPaint);
+        // 6. Devasa İnce Tipografi Hız Metni
+        canvas.drawText(String.valueOf((int) currentSpeed), cx, cy + dpToPx(18), textSpeedPaint);
+        canvas.drawText("KM/H", cx, cy + dpToPx(54), textUnitPaint);
     }
 
     public void setSpeed(float speed) {
@@ -194,7 +244,7 @@ public class FuturisticSpeedometerView extends View {
             speedAnimator.cancel();
         }
         speedAnimator = ValueAnimator.ofFloat(currentSpeed, targetSpeed);
-        speedAnimator.setDuration(600);
+        speedAnimator.setDuration(700);
         speedAnimator.setInterpolator(new android.view.animation.OvershootInterpolator(1.2f));
         speedAnimator.addUpdateListener(animation -> {
             currentSpeed = (float) animation.getAnimatedValue();

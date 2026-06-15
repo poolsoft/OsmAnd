@@ -20,18 +20,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <TextView
-        android:id="@+id/tv_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="ECO MODE"
-        android:textColor="#00FFCC"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="24dp" />
+    <!-- ECO MODE silindi -->
 
     <!-- Neon Hiz Gostergesi -->
     <net.osmand.plus.carlauncher.widgets.view.FuturisticSpeedometerView
@@ -55,20 +44,22 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginEnd="32dp">
         
-        <ImageView
-            android:id="@+id/icon_left"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_action_street_name"
-            app:tint="#00E5FF"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="LOCATION"
+            android:textColor="#00E5FF"
+            android:textSize="10sp"
+            android:letterSpacing="0.2"/>
         <TextView
             android:id="@+id/tv_left_metric"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="---"
             android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:layout_marginTop="8dp"/>
+            android:textStyle="bold"
+            android:textSize="24sp"
+            android:layout_marginTop="4dp"/>
     </LinearLayout>
 
     <!-- Sag Dinamik Data (Rakim/Pusula vs) -->
@@ -83,32 +74,24 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginStart="32dp">
 
-        <ImageView
-            android:id="@+id/icon_right"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_action_altitude" 
-            app:tint="#00E5FF"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ALTITUDE"
+            android:textColor="#00E5FF"
+            android:textSize="10sp"
+            android:letterSpacing="0.2"/>
         <TextView
             android:id="@+id/tv_right_metric"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="---"
             android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:layout_marginTop="8dp"/>
+            android:textStyle="bold"
+            android:textSize="28sp"
+            android:layout_marginTop="4dp"/>
     </LinearLayout>
 
-    <!-- Statik Alt Bilgiler -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="12000 km | 22°C"
-        android:textColor="#888888"
-        android:textSize="14sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="32dp" />
+    <!-- Statik Alt Bilgi silindi -->
 
 </androidx.constraintlayout.widget.ConstraintLayout>
