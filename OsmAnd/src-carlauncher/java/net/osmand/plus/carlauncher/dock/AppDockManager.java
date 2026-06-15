@@ -94,6 +94,9 @@ public class AppDockManager {
                         } else if (packageName.equals("internal://dashboard")) {
                             appName = "Dashboard";
                             icon = context.getResources().getDrawable(android.R.drawable.ic_menu_compass, null);
+                        } else if (packageName.equals("internal://neon_dashboard")) {
+                            appName = "Dijital Gosterge";
+                            icon = context.getResources().getDrawable(android.R.drawable.ic_menu_view, null);
                         } else {
                             appName = "Bilinmeyen";
                             icon = context.getResources().getDrawable(android.R.drawable.sym_def_app_icon, null);
@@ -125,6 +128,7 @@ public class AppDockManager {
         PackageManager pm = context.getPackageManager();
 
         String[] defaultApps = {
+                "internal://neon_dashboard",
                 "internal://dashboard",
                 "com.spotify.music",
                 "com.google.android.dialer",
@@ -142,6 +146,9 @@ public class AppDockManager {
                     if (packageName.equals("internal://dashboard")) {
                         appName = "Dashboard";
                         icon = context.getResources().getDrawable(android.R.drawable.ic_menu_compass, null);
+                    } else if (packageName.equals("internal://neon_dashboard")) {
+                        appName = "Dijital Gosterge";
+                        icon = context.getResources().getDrawable(android.R.drawable.ic_menu_view, null);
                     } else {
                         continue;
                     }

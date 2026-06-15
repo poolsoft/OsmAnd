@@ -98,6 +98,11 @@
                   android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
                   android:screenOrientation="landscape" /> 
 
+        <activity android:name="net.osmand.plus.carlauncher.ui.NeonDashboardActivity"
+                  android:label="Neon Dashboard"
+                  android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+                  android:screenOrientation="landscape" /> 
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

@@ -576,6 +576,10 @@ public class AppDockFragment extends Fragment
             case "internal://dashboard":
                 activity.getPanelContentManager().setContent(PanelContentManager.PanelContent.DASHBOARD);
                 break;
+            case "internal://neon_dashboard":
+                Intent neonIntent = new Intent(activity, NeonDashboardActivity.class);
+                activity.startActivity(neonIntent);
+                break;
         }
     }
 
