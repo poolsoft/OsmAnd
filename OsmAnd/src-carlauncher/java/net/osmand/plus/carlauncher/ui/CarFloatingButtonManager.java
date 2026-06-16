@@ -146,9 +146,10 @@ public class CarFloatingButtonManager {
                 layoutType = WindowManager.LayoutParams.TYPE_PHONE;
             }
 
+            int size = dpToPx(86);
             params = new WindowManager.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    size,
+                    size,
                     layoutType,
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                     PixelFormat.TRANSLUCENT
