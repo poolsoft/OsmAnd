@@ -64,6 +64,10 @@ public class TelemetryManager implements OsmAndLocationProvider.OsmAndLocationLi
         initObdComputers();
     }
 
+    public LocationState getLocationState() { return locationState; }
+    public NavigationState getNavigationState() { return navigationState; }
+    public ObdState getObdState() { return obdState; }
+
     public static TelemetryManager getInstance(OsmandApplication app) {
         if (instance == null) {
             instance = new TelemetryManager(app);

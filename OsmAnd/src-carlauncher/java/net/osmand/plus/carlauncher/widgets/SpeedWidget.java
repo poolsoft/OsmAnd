@@ -183,7 +183,8 @@ public class SpeedWidget extends BaseWidget implements TelemetryManager.Telemetr
         }
         
         // Trigger update to refresh data on new views
-        updateLocation(app.getLocationProvider().getLastKnownLocation());
+        TelemetryManager tm = TelemetryManager.getInstance(app);
+        onTelemetryUpdated(tm.getLocationState(), tm.getNavigationState(), tm.getObdState());
     }
 
     @Override
