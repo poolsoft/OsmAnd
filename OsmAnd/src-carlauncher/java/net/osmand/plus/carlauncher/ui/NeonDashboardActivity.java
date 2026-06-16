@@ -21,9 +21,7 @@ public class NeonDashboardActivity extends Activity implements TelemetryManager.
     private TelemetryManager telemetryManager;
     private OsmandApplication app;
 
-    // Lokasyon (Sol/Sag)
-    private TextView tvLeftMetric;
-    private TextView tvRightMetric;
+    // Lokasyon (Sol/Sag) panelleri silindi
 
     // Navigasyon (Ust)
     private LinearLayout navContainer;
@@ -46,8 +44,7 @@ public class NeonDashboardActivity extends Activity implements TelemetryManager.
         speedometerView = findViewById(R.id.futuristic_speed);
         ImageButton btnClose = findViewById(R.id.btn_close);
         
-        tvLeftMetric = findViewById(R.id.tv_left_metric);
-        tvRightMetric = findViewById(R.id.tv_right_metric);
+        // Metric textviews removed
 
         navContainer = findViewById(R.id.nav_container);
         navIcon = findViewById(R.id.nav_icon);
@@ -89,12 +86,9 @@ public class NeonDashboardActivity extends Activity implements TelemetryManager.
                                    TelemetryManager.NavigationState nav, 
                                    TelemetryManager.ObdState obd) {
         
-        // 1. HIZ VE LOKASYON
+        // 1. HIZ
         if (speedometerView != null) {
             speedometerView.setSpeed(loc.speedKmh);
-        }
-        if (tvRightMetric != null) {
-            tvRightMetric.setText((int) loc.altitudeMeters + " m");
         }
 
         // 2. NAVIGASYON
@@ -105,22 +99,8 @@ public class NeonDashboardActivity extends Activity implements TelemetryManager.
             if (navInstruction != null) navInstruction.setText(nav.instructionStr);
             if (navEta != null) navEta.setText(nav.etaStr);
             
-            // Eger navigasyon varsa sol panele pusula koy, cunku yukarida sokak var
-            if (tvLeftMetric != null) {
-                tvLeftMetric.setText(getCompassDirection(loc.bearing));
-            }
         } else {
             if (navContainer != null) navContainer.setVisibility(View.GONE);
-            
-            // Navigasyon yoksa sol panelde sokak adi gostermeye calis
-            if (tvLeftMetric != null) {
-                String street = getStreetNameFallback();
-                if (!street.isEmpty()) {
-                    tvLeftMetric.setText(street);
-                } else {
-                    tvLeftMetric.setText(getCompassDirection(loc.bearing));
-                }
-            }
         }
 
         // 3. OBD
@@ -130,24 +110,4 @@ public class NeonDashboardActivity extends Activity implements TelemetryManager.
         if (obdVolt != null) obdVolt.setText(obd.volt);
     }
 
-    private String getCompassDirection(float bearing) {
-        String[] directions = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
-        int index = Math.round((bearing % 360) / 45);
-        if (index >= 8) index = 0;
-        return directions[index];
-    }
-
-    private String getStreetNameFallback() {
-        try {
-            net.osmand.plus.routing.RoutingHelper routingHelper = app.getRoutingHelper();
-            if (routingHelper != null) {
-                net.osmand.plus.routing.NextDirectionInfo info = new net.osmand.plus.routing.NextDirectionInfo();
-                net.osmand.plus.routing.CurrentStreetName csn = routingHelper.getCurrentName(info, false);
-                if (csn != null && csn.text != null) {
-                    return csn.text;
-                }
-            }
-        } catch (Exception e) {}
-        return "";
-    }
 }

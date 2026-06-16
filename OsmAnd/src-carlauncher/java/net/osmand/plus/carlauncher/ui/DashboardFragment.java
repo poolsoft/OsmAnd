@@ -20,8 +20,6 @@ import net.osmand.plus.carlauncher.widgets.view.FuturisticSpeedometerView;
 public class DashboardFragment extends Fragment implements TelemetryManager.TelemetryListener {
 
     private FuturisticSpeedometerView speedometerView;
-    private TextView altitudeText;
-    private TextView bearingText;
     private TelemetryManager telemetryManager;
 
     @Override
@@ -59,26 +57,7 @@ public class DashboardFragment extends Fragment implements TelemetryManager.Tele
         spLp.bottomMargin = dpToPx(24);
         contentLayout.addView(speedometerView, spLp);
 
-        // Alt Bilgi Paneli (Rakim ve Yon)
-        LinearLayout infoLayout = new LinearLayout(requireContext());
-        infoLayout.setOrientation(LinearLayout.HORIZONTAL);
-        infoLayout.setGravity(android.view.Gravity.CENTER);
-        
-        altitudeText = new TextView(requireContext());
-        altitudeText.setTextColor(0xFFAAAAAA);
-        altitudeText.setTextSize(18f);
-        altitudeText.setPadding(dpToPx(16), 0, dpToPx(16), 0);
-        altitudeText.setText("Rakim: -- m");
-
-        bearingText = new TextView(requireContext());
-        bearingText.setTextColor(0xFFAAAAAA);
-        bearingText.setTextSize(18f);
-        bearingText.setPadding(dpToPx(16), 0, dpToPx(16), 0);
-        bearingText.setText("Yon: --");
-
-        infoLayout.addView(altitudeText);
-        infoLayout.addView(bearingText);
-        contentLayout.addView(infoLayout);
+        // Alt Bilgi Paneli (Rakim ve Yon) tamamen kaldirildi (Kullanici istegi)
 
         // Sag Ust Kapat Butonu (Map'e donus)
         ImageView closeBtn = new ImageView(requireContext());
@@ -117,12 +96,6 @@ public class DashboardFragment extends Fragment implements TelemetryManager.Tele
     public void onTelemetryUpdated(TelemetryManager.LocationState loc, TelemetryManager.NavigationState nav, TelemetryManager.ObdState obd) {
         if (speedometerView != null) {
             speedometerView.setSpeed(loc.speedKmh);
-        }
-        if (altitudeText != null) {
-            altitudeText.setText(String.format("Rakim: %.0f m", loc.altitudeMeters));
-        }
-        if (bearingText != null) {
-            bearingText.setText(String.format("Yon: %.0f°", loc.bearing));
         }
     }
 
