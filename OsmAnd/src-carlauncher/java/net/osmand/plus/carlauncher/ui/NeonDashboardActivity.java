@@ -7,18 +7,18 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
-import net.osmand.Location;
-import net.osmand.plus.OsmAndLocationProvider;
 import net.osmand.plus.OsmandApplication;
+import net.osmand.plus.carlauncher.telemetry.TelemetryManager;
 import net.osmand.plus.carlauncher.widgets.view.FuturisticSpeedometerView;
 import net.osmand.plus.routing.CurrentStreetName;
 import net.osmand.plus.routing.NextDirectionInfo;
 import net.osmand.plus.routing.RoutingHelper;
 import net.osmand.plus.R;
 
-public class NeonDashboardActivity extends Activity implements OsmAndLocationProvider.OsmAndLocationListener {
+public class NeonDashboardActivity extends Activity implements TelemetryManager.TelemetryListener {
 
     private FuturisticSpeedometerView speedometerView;
+    private TelemetryManager telemetryManager;
     private OsmandApplication app;
 
     private TextView tvLeftMetric;
@@ -39,52 +39,44 @@ public class NeonDashboardActivity extends Activity implements OsmAndLocationPro
         }
 
         app = (OsmandApplication) getApplication();
+        telemetryManager = TelemetryManager.getInstance(app);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (app != null && app.getLocationProvider() != null) {
-            app.getLocationProvider().addLocationListener(this);
-            // Ilk giriste son bilinen lokasyonu basalim
-            updateLocation(app.getLocationProvider().getLastKnownLocation());
+        if (telemetryManager != null) {
+            telemetryManager.addListener(this);
         }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (app != null && app.getLocationProvider() != null) {
-            app.getLocationProvider().removeLocationListener(this);
+        if (telemetryManager != null) {
+            telemetryManager.removeListener(this);
         }
     }
 
+    // TelemetryManager otomatik olarak UI Thread'de cagirir
     @Override
-    public void updateLocation(Location location) {
-        if (location == null) return;
+    public void onTelemetryUpdated(float speedKmh, double altitudeMeters, float bearing, int engineRpm) {
+        if (speedometerView != null) {
+            speedometerView.setSpeed(speedKmh);
+        }
 
-        float speedKmh = location.hasSpeed() ? location.getSpeed() * 3.6f : 0f;
-        double altitudeMeters = location.hasAltitude() ? location.getAltitude() : 0.0;
-        float bearing = location.hasBearing() ? location.getBearing() : 0f;
+        if (tvRightMetric != null) {
+            tvRightMetric.setText((int) altitudeMeters + " m");
+        }
 
-        runOnUiThread(() -> {
-            if (speedometerView != null) {
-                speedometerView.setSpeed(speedKmh);
+        if (tvLeftMetric != null) {
+            String streetName = getStreetName();
+            if (streetName != null && !streetName.trim().isEmpty()) {
+                tvLeftMetric.setText(streetName);
+            } else {
+                tvLeftMetric.setText(getCompassDirection(bearing));
             }
-
-            if (tvRightMetric != null) {
-                tvRightMetric.setText((int) altitudeMeters + " m");
-            }
-
-            if (tvLeftMetric != null) {
-                String streetName = getStreetName();
-                if (streetName != null && !streetName.trim().isEmpty()) {
-                    tvLeftMetric.setText(streetName);
-                } else {
-                    tvLeftMetric.setText(getCompassDirection(bearing));
-                }
-            }
-        });
+        }
     }
 
     private String getStreetName() {
@@ -98,7 +90,7 @@ public class NeonDashboardActivity extends Activity implements OsmAndLocationPro
                 }
             }
         } catch (Exception e) {
-            // Ignore if street name cannot be retrieved
+            // Ignore
         }
         return "";
     }

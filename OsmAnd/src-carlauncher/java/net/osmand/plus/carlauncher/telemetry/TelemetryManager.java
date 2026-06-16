@@ -9,11 +9,12 @@ import net.osmand.plus.OsmandApplication;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.osmand.plus.OsmAndLocationProvider;
+
 /**
- * TelemetryManager: GPS ve OBD gibi kaynaklardan arac verilerini (Hız, Rakım, Devir, Sıcaklık) toplayan merkez.
- * İleride ELM327 OBD bağlandığında 'obdConnected' bayrağı true olacak ve hız/devir verileri Bluetooth'tan okunacak.
+ * TelemetryManager: GPS ve OBD gibi kaynaklardan arac verilerini toplayan merkez.
  */
-public class TelemetryManager {
+public class TelemetryManager implements OsmAndLocationProvider.OsmAndLocationListener {
 
     private static TelemetryManager instance;
     private final OsmandApplication app;
@@ -38,6 +39,9 @@ public class TelemetryManager {
     public static TelemetryManager getInstance(OsmandApplication app) {
         if (instance == null) {
             instance = new TelemetryManager(app);
+            if (app.getLocationProvider() != null) {
+                app.getLocationProvider().addLocationListener(instance);
+            }
         }
         return instance;
     }
@@ -54,10 +58,7 @@ public class TelemetryManager {
         listeners.remove(listener);
     }
 
-    /**
-     * GPS'ten gelen lokasyon verisini isler.
-     * Bu fonksiyon MapActivity'deki location listener'dan veya doğrudan app.getLocationProvider()'dan cagrilmalidir.
-     */
+    @Override
     public void updateLocation(Location location) {
         if (location == null) return;
 
