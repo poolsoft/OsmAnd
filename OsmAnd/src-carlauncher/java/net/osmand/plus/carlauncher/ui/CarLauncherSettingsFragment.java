@@ -166,8 +166,8 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         
         if (prefsView instanceof androidx.recyclerview.widget.RecyclerView) {
             androidx.recyclerview.widget.RecyclerView rv = (androidx.recyclerview.widget.RecyclerView) prefsView;
-            // Sağ panel paddingleri, "Görünüm" gibi sol başlıklarla tam Y ekseninde (üstte) aynı hizaya gelmesi için 0'a çekildi
-            rv.setPadding(dpToPx(16), 0, dpToPx(16), dpToPx(16));
+            // Sağ panel paddingleri, "Görünüm" gibi sol başlıklarla tam Y ekseninde (üstte) aynı hizaya gelmesi için 76dp yapıldı
+            rv.setPadding(dpToPx(16), dpToPx(76), dpToPx(16), dpToPx(16));
             rv.setClipToPadding(false);
             rv.setBackgroundColor(0xFF0B0B0E);
         }
@@ -228,6 +228,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 cat.setTitle(null);
                 cat.setIcon(null);
                 cat.setIconSpaceReserved(false);
+                cat.setLayoutResource(R.layout.empty_preference_category);
             }
         }
         
