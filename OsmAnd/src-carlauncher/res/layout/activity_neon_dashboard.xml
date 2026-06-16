@@ -4,11 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#050A1A"> <!-- Fütüristik Koyu Lacivert/Siyah Arkaplan -->
+    android:background="#050A1A">
 
-    <!-- Haritayi yari saydam gormek istersek baska bir katman eklenebilir, simdilik kapali renk -->
-
-    <!-- Kapat (Geri) Butonu -->
     <ImageButton
         android:id="@+id/btn_close"
         android:layout_width="48dp"
@@ -20,19 +17,70 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- ECO MODE silindi -->
+    <!-- UST: NAVIGASYON PANELI -->
+    <LinearLayout
+        android:id="@+id/nav_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="16dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+        
+        <ImageView
+            android:id="@+id/nav_icon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            app:tint="#00FFCC"/>
+            
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
+            
+            <TextView
+                android:id="@+id/nav_distance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:text="500m"/>
+                
+            <TextView
+                android:id="@+id/nav_instruction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#00FFCC"
+                android:textSize="14sp"
+                android:maxLines="2"
+                android:text="Atatürk Bulvarı"/>
+                
+            <TextView
+                android:id="@+id/nav_eta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#AAAAAA"
+                android:textSize="12sp"
+                android:text="Kalan: 5dk (2km)"/>
+        </LinearLayout>
+    </LinearLayout>
 
-    <!-- Neon Hiz Gostergesi -->
+    <!-- MERKEZ: HIZ GOSTERGESI -->
     <net.osmand.plus.carlauncher.widgets.view.FuturisticSpeedometerView
         android:id="@+id/futuristic_speed"
-        android:layout_width="360dp"
-        android:layout_height="360dp"
+        android:layout_width="320dp"
+        android:layout_height="320dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Sol Dinamik Data (Yol/Sokak Ismi vs) -->
+    <!-- SOL: LOKASYON / PUSULA -->
     <LinearLayout
         android:id="@+id/panel_left"
         android:layout_width="wrap_content"
@@ -42,7 +90,7 @@
         app:layout_constraintEnd_toStartOf="@id/futuristic_speed"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginEnd="32dp">
+        android:layout_marginEnd="24dp">
         
         <TextView
             android:layout_width="wrap_content"
@@ -58,11 +106,13 @@
             android:text="---"
             android:textColor="#FFFFFF"
             android:textStyle="bold"
-            android:textSize="24sp"
+            android:textSize="20sp"
+            android:gravity="center"
+            android:maxWidth="120dp"
             android:layout_marginTop="4dp"/>
     </LinearLayout>
 
-    <!-- Sag Dinamik Data (Rakim/Pusula vs) -->
+    <!-- SAG: RAKIM -->
     <LinearLayout
         android:id="@+id/panel_right"
         android:layout_width="wrap_content"
@@ -72,7 +122,7 @@
         app:layout_constraintStart_toEndOf="@id/futuristic_speed"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginStart="32dp">
+        android:layout_marginStart="24dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -88,10 +138,90 @@
             android:text="---"
             android:textColor="#FFFFFF"
             android:textStyle="bold"
-            android:textSize="28sp"
+            android:textSize="24sp"
             android:layout_marginTop="4dp"/>
     </LinearLayout>
 
-    <!-- Statik Alt Bilgi silindi -->
+    <!-- ALT: OBD METRIKLERI -->
+    <LinearLayout
+        android:id="@+id/obd_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="24dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+        
+        <!-- RPM -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginEnd="32dp">
+            <TextView
+                android:id="@+id/obd_rpm"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                android:textStyle="bold"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="RPM"
+                android:textColor="#888888"
+                android:textSize="10sp"/>
+        </LinearLayout>
+
+        <!-- TEMP -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginEnd="32dp">
+            <TextView
+                android:id="@+id/obd_temp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                android:textStyle="bold"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TEMP"
+                android:textColor="#888888"
+                android:textSize="10sp"/>
+        </LinearLayout>
+
+        <!-- VOLT -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+            <TextView
+                android:id="@+id/obd_volt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                android:textStyle="bold"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="VOLT"
+                android:textColor="#888888"
+                android:textSize="10sp"/>
+        </LinearLayout>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
