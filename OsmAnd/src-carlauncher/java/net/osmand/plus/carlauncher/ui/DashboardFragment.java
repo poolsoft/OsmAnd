@@ -114,15 +114,15 @@ public class DashboardFragment extends Fragment implements TelemetryManager.Tele
     }
 
     @Override
-    public void onTelemetryUpdated(float speedKmh, double altitudeMeters, float bearing, int engineRpm) {
+    public void onTelemetryUpdated(TelemetryManager.LocationState loc, TelemetryManager.NavigationState nav, TelemetryManager.ObdState obd) {
         if (speedometerView != null) {
-            speedometerView.setSpeed(speedKmh);
+            speedometerView.setSpeed(loc.speedKmh);
         }
         if (altitudeText != null) {
-            altitudeText.setText(String.format("Rakim: %.0f m", altitudeMeters));
+            altitudeText.setText(String.format("Rakim: %.0f m", loc.altitudeMeters));
         }
         if (bearingText != null) {
-            bearingText.setText(String.format("Yon: %.0f°", bearing));
+            bearingText.setText(String.format("Yon: %.0f°", loc.bearing));
         }
     }
 
