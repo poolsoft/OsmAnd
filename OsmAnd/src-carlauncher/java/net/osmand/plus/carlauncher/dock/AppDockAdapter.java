@@ -138,7 +138,6 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
     class ViewHolder extends RecyclerView.ViewHolder {
 
         private final ImageView iconView;
-        private final TextView nameView;
         private final ImageView removeButton;
 
         public ViewHolder(@NonNull View itemView) {
@@ -162,8 +161,6 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
             iconView.setLayoutParams(new LinearLayout.LayoutParams(iconSize, iconSize));
             iconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             container.addView(iconView);
-
-            // nameView gizli
 
             // itemView'ın kendi ripple'ı var, animate kodunu dokunma hissiyatı (basılma) olarak koruyabiliriz ama onClickListener çalışmasını bozmaması için dönüş değerini false tutuyoruz.
             itemView.setOnTouchListener((v, event) -> {
@@ -193,7 +190,6 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
             }
 
             iconView.setImageDrawable(shortcut.getIcon());
-            nameView.setText(shortcut.getAppName());
 
             // Edit mode kontrolu
             removeButton.setVisibility(isEditMode ? View.VISIBLE : View.GONE);
