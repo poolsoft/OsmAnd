@@ -124,14 +124,10 @@ public class NeonDashboardActivity extends Activity implements TelemetryManager.
         }
 
         // 3. OBD
-        if (obd.isActive) {
-            if (obdContainer != null) obdContainer.setVisibility(View.VISIBLE);
-            if (obdRpm != null) obdRpm.setText(obd.rpm);
-            if (obdTemp != null) obdTemp.setText(obd.temp);
-            if (obdVolt != null) obdVolt.setText(obd.volt);
-        } else {
-            if (obdContainer != null) obdContainer.setVisibility(View.GONE);
-        }
+        if (obdContainer != null) obdContainer.setVisibility(View.VISIBLE);
+        if (obdRpm != null) obdRpm.setText(obd.rpm);
+        if (obdTemp != null) obdTemp.setText(obd.temp);
+        if (obdVolt != null) obdVolt.setText(obd.volt);
     }
 
     private String getCompassDirection(float bearing) {
