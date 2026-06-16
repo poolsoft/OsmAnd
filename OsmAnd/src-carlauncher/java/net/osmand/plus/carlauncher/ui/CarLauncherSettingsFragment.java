@@ -166,7 +166,8 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         
         if (prefsView instanceof androidx.recyclerview.widget.RecyclerView) {
             androidx.recyclerview.widget.RecyclerView rv = (androidx.recyclerview.widget.RecyclerView) prefsView;
-            rv.setPadding(dpToPx(24), dpToPx(24), dpToPx(24), dpToPx(24));
+            // Sağ panel paddingleri daraltıldı, üst padding X tuşu seviyesine çekildi
+            rv.setPadding(dpToPx(16), dpToPx(8), dpToPx(16), dpToPx(16));
             rv.setClipToPadding(false);
             rv.setBackgroundColor(0xFF0B0B0E);
         }
@@ -224,7 +225,8 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 
                 // Sağ panelde (Detay) bu Kategori başlığının gereksiz yer/padding kaplamaması için siliyoruz.
                 // Sol menüye (Master) başlık ve ikon kopyalandığı için orası etkilenmez.
-                cat.setTitle("");
+                cat.setTitle(null);
+                cat.setIcon(null);
                 cat.setIconSpaceReserved(false);
             }
         }
