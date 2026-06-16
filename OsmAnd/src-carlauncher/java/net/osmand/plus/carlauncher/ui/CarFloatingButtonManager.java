@@ -258,24 +258,29 @@ public class CarFloatingButtonManager {
 
     private void createFloatingView() {
         floatingView = new FrameLayout(context);
-        int size = dpToPx(60); // Hiz yazisi icin biraz buyutuldu
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(size, size);
+        int width = dpToPx(86); // 3 rakam (örn. 120) ve km/h yazısı için büyütüldü
+        int height = dpToPx(86);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(width, height);
         floatingView.setLayoutParams(lp);
 
         // Arka plan: Premium koyu daire ve mavi kenarlik
         buttonBg = new GradientDrawable();
         buttonBg.setShape(GradientDrawable.OVAL);
-        buttonBg.setColor(0xDD181824); // Yari transparan premium koyu lacivert
-        buttonBg.setStroke(dpToPx(2), 0xFF3D63FF); // Modern mavi kenarlik
+        buttonBg.setColor(0xEE181824); // Yari transparan premium koyu lacivert
+        buttonBg.setStroke(dpToPx(3), 0xFF3D63FF); // Modern mavi kenarlik
         floatingView.setBackground(buttonBg);
 
         // İkon yerine hiz yazisi (Turkce karakter yok)
         speedText = new android.widget.TextView(context);
         speedText.setTextColor(0xFFFFFFFF);
-        speedText.setTextSize(22);
+        speedText.setTextSize(28); // 3 rakam sığacak font boyutu
         speedText.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         speedText.setGravity(Gravity.CENTER);
-        speedText.setText("--");
+        
+        // Spannable text placeholders
+        android.text.SpannableString span = new android.text.SpannableString("--\nkm/h");
+        span.setSpan(new android.text.style.RelativeSizeSpan(0.4f), 2, span.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        speedText.setText(span);
         
         FrameLayout.LayoutParams textLp = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -292,7 +297,11 @@ public class CarFloatingButtonManager {
             
             float currentSpeed = loc.speedKmh / 3.6f;
             int speedKmhInt = Math.round(loc.speedKmh);
-            speedText.setText(String.valueOf(speedKmhInt));
+            
+            String speedStr = String.valueOf(speedKmhInt);
+            android.text.SpannableString span = new android.text.SpannableString(speedStr + "\nkm/h");
+            span.setSpan(new android.text.style.RelativeSizeSpan(0.4f), speedStr.length(), span.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            speedText.setText(span);
 
             net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
             float maxSpeed = getMaxSpeed(app, loc.rawLocation);
