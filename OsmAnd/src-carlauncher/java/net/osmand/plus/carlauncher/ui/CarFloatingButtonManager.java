@@ -33,6 +33,8 @@ public class CarFloatingButtonManager {
     private WindowManager.LayoutParams params;
     private boolean isAdded = false;
     private boolean isAppInForeground = false;
+    private android.widget.TextView speedText;
+    private GradientDrawable buttonBg;
 
     // Surukleme durumlari
     private int initialX;
@@ -118,13 +120,7 @@ public class CarFloatingButtonManager {
         boolean enabled = settings.isFloatingButtonEnabled();
 
         if (enabled && !isInPipMode) {
-            // Akıllı Görünürlük Kontrolü ( Landscape + Foreground + Split panelde GIZLE ) (Turkce karakter yok)
-            boolean isLandscape = context.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
-            if (isAppInForeground && isLandscape && !isFullScreenMap) {
-                hideButton();
-            } else {
-                showButton();
-            }
+            showButton();
         } else {
             hideButton();
         }
@@ -237,6 +233,9 @@ public class CarFloatingButtonManager {
 
             windowManager.addView(floatingView, params);
             isAdded = true;
+            
+            net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
+            net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app).addListener(telemetryListener);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -249,6 +248,9 @@ public class CarFloatingButtonManager {
             windowManager.removeView(floatingView);
             isAdded = false;
             floatingView = null;
+            
+            net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
+            net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app).removeListener(telemetryListener);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -256,30 +258,85 @@ public class CarFloatingButtonManager {
 
     private void createFloatingView() {
         floatingView = new FrameLayout(context);
-        int size = dpToPx(52);
+        int size = dpToPx(60); // Hiz yazisi icin biraz buyutuldu
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(size, size);
         floatingView.setLayoutParams(lp);
 
         // Arka plan: Premium koyu daire ve mavi kenarlik
-        GradientDrawable bg = new GradientDrawable();
-        bg.setShape(GradientDrawable.OVAL);
-        bg.setColor(0xDD181824); // Yari transparan premium koyu lacivert
-        bg.setStroke(dpToPx(2), 0xFF3D63FF); // Modern mavi kenarlik
-        floatingView.setBackground(bg);
+        buttonBg = new GradientDrawable();
+        buttonBg.setShape(GradientDrawable.OVAL);
+        buttonBg.setColor(0xDD181824); // Yari transparan premium koyu lacivert
+        buttonBg.setStroke(dpToPx(2), 0xFF3D63FF); // Modern mavi kenarlik
+        floatingView.setBackground(buttonBg);
 
-        // İkon: Ortalanmis dashboard grid
-        ImageView icon = new ImageView(context);
-        int padding = dpToPx(14);
-        icon.setPadding(padding, padding, padding, padding);
-        icon.setImageResource(R.drawable.dashboard_grid);
-        icon.setColorFilter(0xFFFFFFFF);
+        // İkon yerine hiz yazisi (Turkce karakter yok)
+        speedText = new android.widget.TextView(context);
+        speedText.setTextColor(0xFFFFFFFF);
+        speedText.setTextSize(22);
+        speedText.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        speedText.setGravity(Gravity.CENTER);
+        speedText.setText("--");
         
-        FrameLayout.LayoutParams iconLp = new FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams textLp = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         );
-        iconLp.gravity = Gravity.CENTER;
-        floatingView.addView(icon, iconLp);
+        textLp.gravity = Gravity.CENTER;
+        floatingView.addView(speedText, textLp);
+    }
+
+    private net.osmand.plus.carlauncher.telemetry.TelemetryManager.TelemetryListener telemetryListener = new net.osmand.plus.carlauncher.telemetry.TelemetryManager.TelemetryListener() {
+        @Override
+        public void onTelemetryUpdated(net.osmand.plus.carlauncher.telemetry.TelemetryManager.LocationState loc, net.osmand.plus.carlauncher.telemetry.TelemetryManager.NavigationState nav, net.osmand.plus.carlauncher.telemetry.TelemetryManager.ObdState obd) {
+            if (floatingView == null || speedText == null || buttonBg == null) return;
+            
+            float currentSpeed = loc.speedKmh / 3.6f;
+            int speedKmhInt = Math.round(loc.speedKmh);
+            speedText.setText(String.valueOf(speedKmhInt));
+
+            net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
+            float maxSpeed = getMaxSpeed(app, loc.rawLocation);
+            
+            if (maxSpeed > 0 && maxSpeed != net.osmand.binary.RouteDataObject.NONE_MAX_SPEED) {
+                float diff = currentSpeed - maxSpeed;
+                float diffKmh = diff * 3.6f;
+                
+                if (diffKmh > 5) {
+                    buttonBg.setStroke(dpToPx(3), 0xFFFF0000); // Kirmizi border
+                    speedText.setTextColor(0xFFFF0000);
+                } else if (diffKmh > 0) {
+                    buttonBg.setStroke(dpToPx(3), 0xFFFFA500); // Turuncu border
+                    speedText.setTextColor(0xFFFFA500);
+                } else {
+                    buttonBg.setStroke(dpToPx(2), 0xFF3D63FF); // Normal Mavi
+                    speedText.setTextColor(0xFFFFFFFF);
+                }
+            } else {
+                buttonBg.setStroke(dpToPx(2), 0xFF3D63FF);
+                speedText.setTextColor(0xFFFFFFFF);
+            }
+        }
+    };
+
+    private float getMaxSpeed(net.osmand.plus.OsmandApplication app, net.osmand.Location location) {
+        if (location == null || app == null) return 0;
+        net.osmand.plus.routing.RoutingHelper routingHelper = app.getRoutingHelper();
+        if (routingHelper == null) return 0;
+        
+        if ((!routingHelper.isFollowingMode()
+                || routingHelper.isDeviatedFromRoute()
+                || (routingHelper.getCurrentGPXRoute() != null && !routingHelper.isCurrentGPXRouteV2()))) {
+            if (app.getLocationProvider() != null) {
+                net.osmand.binary.RouteDataObject routeObject = app.getLocationProvider().getLastKnownRouteSegment();
+                if (routeObject != null) {
+                    boolean direction = routeObject.bearingVsRouteDirection(location);
+                    return routeObject.getMaximumSpeed(direction);
+                }
+            }
+        } else {
+            return routingHelper.getCurrentMaxSpeed();
+        }
+        return 0;
     }
 
     private void onButtonClicked() {
