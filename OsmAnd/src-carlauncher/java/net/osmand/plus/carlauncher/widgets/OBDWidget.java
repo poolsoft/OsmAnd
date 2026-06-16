@@ -83,7 +83,6 @@ public class OBDWidget extends BaseWidget implements TelemetryManager.TelemetryL
 
         rootView = view;
         updateFromConfig(); // Build UI and Computers
-        startUpdate();
         return rootView;
     }
 

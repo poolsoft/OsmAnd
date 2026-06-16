@@ -5,11 +5,11 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
+import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.carlauncher.telemetry.TelemetryManager;
 
 /**
