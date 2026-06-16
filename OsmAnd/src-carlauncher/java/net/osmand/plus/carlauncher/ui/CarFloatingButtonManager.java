@@ -146,7 +146,8 @@ public class CarFloatingButtonManager {
                 layoutType = WindowManager.LayoutParams.TYPE_PHONE;
             }
 
-            int size = dpToPx(86);
+            CarLauncherSettings settings = new CarLauncherSettings(context);
+            int size = dpToPx(settings.getFloatingButtonSize());
             params = new WindowManager.LayoutParams(
                     size,
                     size,

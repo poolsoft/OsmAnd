@@ -49,6 +49,16 @@
             android:defaultValue="false"
             android:iconSpaceReserved="false" />
 
+        <androidx.preference.SeekBarPreference
+            android:key="car_launcher_floating_button_size"
+            android:title="Yuzen Buton Boyutu"
+            android:summary="Ekranda kapladigi alani ayarla"
+            android:defaultValue="86"
+            android:max="140"
+            app:min="50"
+            app:showSeekBarValue="true"
+            android:iconSpaceReserved="false" />
+
         <androidx.preference.ListPreference
             android:key="car_launcher_night_dim_mode"
             android:title="Gece Karartma Modu"

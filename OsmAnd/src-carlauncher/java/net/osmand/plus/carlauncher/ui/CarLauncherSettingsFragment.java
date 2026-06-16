@@ -166,8 +166,8 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         
         if (prefsView instanceof androidx.recyclerview.widget.RecyclerView) {
             androidx.recyclerview.widget.RecyclerView rv = (androidx.recyclerview.widget.RecyclerView) prefsView;
-            // Sağ panel paddingleri daraltıldı, üst padding X tuşu seviyesine çekildi
-            rv.setPadding(dpToPx(16), dpToPx(8), dpToPx(16), dpToPx(16));
+            // Sağ panel paddingleri, "Görünüm" gibi sol başlıklarla tam Y ekseninde (üstte) aynı hizaya gelmesi için 0'a çekildi
+            rv.setPadding(dpToPx(16), 0, dpToPx(16), dpToPx(16));
             rv.setClipToPadding(false);
             rv.setBackgroundColor(0xFF0B0B0E);
         }
@@ -411,6 +411,24 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 }
                 if (getContext() != null) {
                     CarFloatingButtonManager.getInstance(getContext()).updateButtonState();
+                }
+                return true;
+            });
+        }
+
+        // Yuzen Buton Boyutu
+        SeekBarPreference floatingButtonSizePref = findPreference(CarLauncherSettings.KEY_FLOATING_BUTTON_SIZE);
+        if (floatingButtonSizePref != null) {
+            floatingButtonSizePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                int val = (Integer) newValue;
+                if (settings != null) {
+                    settings.setFloatingButtonSize(val);
+                }
+                if (getContext() != null) {
+                    // Boyut degisikligini anlik yansitmak icin butonu kapatip aciyoruz
+                    CarFloatingButtonManager mgr = CarFloatingButtonManager.getInstance(getContext());
+                    mgr.hideButton();
+                    mgr.updateButtonState();
                 }
                 return true;
             });

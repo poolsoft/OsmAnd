@@ -181,6 +181,16 @@ public class CarLauncherSettings {
         prefs.edit().putBoolean(KEY_FLOATING_BUTTON, enabled).apply();
     }
 
+    public static final String KEY_FLOATING_BUTTON_SIZE = "car_launcher_floating_button_size";
+
+    public int getFloatingButtonSize() {
+        return prefs.getInt(KEY_FLOATING_BUTTON_SIZE, 86);
+    }
+
+    public void setFloatingButtonSize(int size) {
+        prefs.edit().putInt(KEY_FLOATING_BUTTON_SIZE, Math.max(50, Math.min(140, size))).apply();
+    }
+
     // --- Music Settings ---
 
     public String getMusicApp() {
