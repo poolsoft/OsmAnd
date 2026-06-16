@@ -15,11 +15,11 @@ import androidx.fragment.app.Fragment;
 
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.carlauncher.telemetry.TelemetryManager;
-import net.osmand.plus.carlauncher.widgets.view.AnalogSpeedometerView;
+import net.osmand.plus.carlauncher.widgets.view.FuturisticSpeedometerView;
 
 public class DashboardFragment extends Fragment implements TelemetryManager.TelemetryListener {
 
-    private AnalogSpeedometerView speedometerView;
+    private FuturisticSpeedometerView speedometerView;
     private TextView altitudeText;
     private TextView bearingText;
     private TelemetryManager telemetryManager;
@@ -51,8 +51,8 @@ public class DashboardFragment extends Fragment implements TelemetryManager.Tele
         root.addView(contentLayout, clp);
 
         // Speedometer View (Buyuk orta)
-        speedometerView = new AnalogSpeedometerView(requireContext());
-        // Custom ayarlamalar yapilabilir. (AnalogSpeedometerView 240 max limite ayarli)
+        speedometerView = new FuturisticSpeedometerView(requireContext());
+        // Custom ayarlamalar yapilabilir.
         LinearLayout.LayoutParams spLp = new LinearLayout.LayoutParams(
                 dpToPx(350), dpToPx(350) // Kocaman spor kadran
         );
