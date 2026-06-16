@@ -90,59 +90,100 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         return (int) (dp * getContext().getResources().getDisplayMetrics().density);
     }
 
-    private View createSingleLayout(View prefsView) {
-        prefsView.setBackgroundColor(0xFF0B0B0E);
-        if (prefsView instanceof androidx.recyclerview.widget.RecyclerView) {
-            androidx.recyclerview.widget.RecyclerView rv = (androidx.recyclerview.widget.RecyclerView) prefsView;
-            rv.setPadding(dpToPx(16), dpToPx(16), dpToPx(16), dpToPx(16));
-            rv.setClipToPadding(false);
-        }
-        android.widget.FrameLayout wrapper = new android.widget.FrameLayout(getContext());
-        wrapper.setLayoutParams(new android.view.ViewGroup.LayoutParams(
+    private View createTitleBar() {
+        android.widget.RelativeLayout titleBar = new android.widget.RelativeLayout(getContext());
+        titleBar.setLayoutParams(new android.view.ViewGroup.LayoutParams(
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT));
-        wrapper.setFitsSystemWindows(true);
-        wrapper.addView(prefsView);
-        addCloseButton(wrapper);
-        
-        // Ensure all categories visible in single layout (Portait)
-        restoreAllCategories();
-        
-        return wrapper;
-    }
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
+        titleBar.setBackgroundColor(0xFF14141C); // Sleek Space Grey
+        titleBar.setElevation(8f);
 
-    private View createSplitLayout(View prefsView) {
-        splitContainer = new android.widget.LinearLayout(getContext());
-        splitContainer.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-        splitContainer.setLayoutParams(new android.view.ViewGroup.LayoutParams(
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT));
-        splitContainer.setBackgroundColor(0xFF0B0B0E);
-
-        // --- Left Pane: Headers ---
-        android.widget.ScrollView leftScroll = new android.widget.ScrollView(getContext());
-        leftScroll.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
-                0, android.view.ViewGroup.LayoutParams.MATCH_PARENT, 0.3f));
-        leftScroll.setBackgroundColor(0xFF14141C); // Sleek Space Grey
-        
-        // --- Sol Menü Başlığı ---
+        // Title
         android.widget.TextView titleView = new android.widget.TextView(getContext());
         titleView.setText("Araç Ayarları");
         titleView.setTextColor(0xFFFFFFFF);
         titleView.setTextSize(22);
         titleView.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
-        titleView.setPadding(dpToPx(24), dpToPx(32), dpToPx(24), dpToPx(16));
+        titleView.setPadding(dpToPx(24), dpToPx(16), dpToPx(24), dpToPx(16));
+        
+        android.widget.RelativeLayout.LayoutParams titleParams = new android.widget.RelativeLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        titleParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_START);
+        titleParams.addRule(android.widget.RelativeLayout.CENTER_VERTICAL);
+        titleBar.addView(titleView, titleParams);
 
-        android.widget.LinearLayout headerContainer = new android.widget.LinearLayout(getContext());
-        headerContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
-        headerContainer.addView(titleView);
+        // Close Button
+        android.widget.ImageButton closeBtn = new android.widget.ImageButton(getContext());
+        closeBtn.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+        android.util.TypedValue outValue = new android.util.TypedValue();
+        getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, outValue, true);
+        closeBtn.setBackgroundResource(outValue.resourceId);
+        closeBtn.setColorFilter(0xFFFFFFFF);
+        closeBtn.setPadding(dpToPx(16), dpToPx(16), dpToPx(16), dpToPx(16));
+        closeBtn.setOnClickListener(v -> closeSettings());
 
+        android.widget.RelativeLayout.LayoutParams btnParams = new android.widget.RelativeLayout.LayoutParams(
+                dpToPx(56), dpToPx(56)); 
+        btnParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_END);
+        btnParams.addRule(android.widget.RelativeLayout.CENTER_VERTICAL);
+        btnParams.setMarginEnd(dpToPx(8));
+        titleBar.addView(closeBtn, btnParams);
+
+        return titleBar;
+    }
+
+    private View createSingleLayout(View prefsView) {
+        prefsView.setBackgroundColor(0xFF0B0B0E);
+        if (prefsView instanceof androidx.recyclerview.widget.RecyclerView) {
+            androidx.recyclerview.widget.RecyclerView rv = (androidx.recyclerview.widget.RecyclerView) prefsView;
+            rv.setPadding(dpToPx(16), dpToPx(8), dpToPx(16), dpToPx(16));
+            rv.setClipToPadding(false);
+        }
+
+        android.widget.LinearLayout mainContainer = new android.widget.LinearLayout(getContext());
+        mainContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
+        mainContainer.setLayoutParams(new android.view.ViewGroup.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+        mainContainer.setFitsSystemWindows(true);
+
+        mainContainer.addView(createTitleBar());
+
+        android.widget.LinearLayout.LayoutParams prefsParams = new android.widget.LinearLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f);
+        mainContainer.addView(prefsView, prefsParams);
+
+        restoreAllCategories();
+        return mainContainer;
+    }
+
+    private View createSplitLayout(View prefsView) {
+        android.widget.LinearLayout mainContainer = new android.widget.LinearLayout(getContext());
+        mainContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
+        mainContainer.setLayoutParams(new android.view.ViewGroup.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+        mainContainer.setBackgroundColor(0xFF0B0B0E);
+
+        mainContainer.addView(createTitleBar());
+
+        splitContainer = new android.widget.LinearLayout(getContext());
+        splitContainer.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        android.widget.LinearLayout.LayoutParams splitParams = new android.widget.LinearLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f);
+        splitContainer.setLayoutParams(splitParams);
+
+        // --- Left Pane: Categories ---
+        android.widget.ScrollView leftScroll = new android.widget.ScrollView(getContext());
+        leftScroll.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                0, android.view.ViewGroup.LayoutParams.MATCH_PARENT, 0.3f));
+        leftScroll.setBackgroundColor(0xFF14141C); // Sleek Space Grey
+        
         categoriesList = new android.widget.LinearLayout(getContext());
         categoriesList.setOrientation(android.widget.LinearLayout.VERTICAL);
-        categoriesList.setPadding(0, 0, 0, dpToPx(24));
-        
-        headerContainer.addView(categoriesList);
-        leftScroll.addView(headerContainer);
+        categoriesList.setPadding(0, dpToPx(8), 0, dpToPx(24));
+        leftScroll.addView(categoriesList);
         
         splitContainer.addView(leftScroll);
         
@@ -159,47 +200,23 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 0, android.view.ViewGroup.LayoutParams.MATCH_PARENT, 0.7f));
         rightPane.setBackgroundColor(0xFF0B0B0E);
         
-        // Add the Prefs RecyclerView here
         if (prefsView.getParent() != null) {
-            ((ViewGroup)prefsView.getParent()).removeView(prefsView);
+            ((android.view.ViewGroup)prefsView.getParent()).removeView(prefsView);
         }
         
         if (prefsView instanceof androidx.recyclerview.widget.RecyclerView) {
             androidx.recyclerview.widget.RecyclerView rv = (androidx.recyclerview.widget.RecyclerView) prefsView;
-            // Sağ panel paddingleri, "Görünüm" gibi sol başlıklarla tam Y ekseninde (üstte) aynı hizaya gelmesi için 76dp yapıldı
-            rv.setPadding(dpToPx(16), dpToPx(76), dpToPx(16), dpToPx(16));
+            rv.setPadding(dpToPx(16), dpToPx(8), dpToPx(16), dpToPx(16));
             rv.setClipToPadding(false);
             rv.setBackgroundColor(0xFF0B0B0E);
         }
         rightPane.addView(prefsView);
-        
         splitContainer.addView(rightPane);
-        
-        addCloseButton(rightPane); // Close button on right pane top corner
+
+        mainContainer.addView(splitContainer);
 
         setupCategoriesList();
-
-        return splitContainer;
-    }
-
-    private void addCloseButton(android.widget.FrameLayout container) {
-        if (getContext() != null) {
-            android.widget.ImageButton closeBtn = new android.widget.ImageButton(getContext());
-            closeBtn.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
-            android.util.TypedValue outValue = new android.util.TypedValue();
-            getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
-            closeBtn.setBackgroundResource(outValue.resourceId);
-            closeBtn.setColorFilter(0xFFFFFFFF);
-            closeBtn.setPadding(dpToPx(16), dpToPx(16), dpToPx(16), dpToPx(16));
-            closeBtn.setOnClickListener(v -> closeSettings());
-
-            android.widget.FrameLayout.LayoutParams btnParams = new android.widget.FrameLayout.LayoutParams(
-                    dpToPx(48), dpToPx(48)); 
-            btnParams.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
-            btnParams.setMargins(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
-
-            container.addView(closeBtn, btnParams);
-        }
+        return mainContainer;
     }
 
     private void restoreAllCategories() {
