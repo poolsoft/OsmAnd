@@ -100,8 +100,9 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
         itemView.setOrientation(LinearLayout.VERTICAL);
         itemView.setLayoutParams(new RecyclerView.LayoutParams(itemWidth, itemHeight));
         itemView.setGravity(android.view.Gravity.CENTER);
-        int padding = isVerticalMode ? dpToPx(2) : dpToPx(4);
+        int padding = isVerticalMode ? dpToPx(6) : dpToPx(8);
         itemView.setPadding(padding, padding, padding, padding);
+        itemView.setBackgroundResource(net.osmand.plus.R.drawable.bg_dock_item_ripple);
 
         return new ViewHolder(itemView);
     }
@@ -162,23 +163,20 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
             iconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             container.addView(iconView);
 
-            // Name
-            nameView = new TextView(context);
-            nameView.setVisibility(View.GONE); // Hide text
-            container.addView(nameView);
+            // nameView gizli
 
-            // Touch Feedback (Scale Effect)
+            // itemView'ın kendi ripple'ı var, animate kodunu dokunma hissiyatı (basılma) olarak koruyabiliriz ama onClickListener çalışmasını bozmaması için dönüş değerini false tutuyoruz.
             itemView.setOnTouchListener((v, event) -> {
                 switch (event.getAction()) {
                     case android.view.MotionEvent.ACTION_DOWN:
-                        v.animate().scaleX(0.9f).scaleY(0.9f).setDuration(100).start();
+                        v.animate().scaleX(0.92f).scaleY(0.92f).setDuration(100).start();
                         break;
                     case android.view.MotionEvent.ACTION_UP:
                     case android.view.MotionEvent.ACTION_CANCEL:
                         v.animate().scaleX(1f).scaleY(1f).setDuration(100).start();
                         break;
                 }
-                return false; // Don't consume, let click listener handle it
+                return false; 
             });
         }
 

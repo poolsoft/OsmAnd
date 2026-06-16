@@ -56,7 +56,7 @@
         android:id="@+id/app_dock"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#000000"
+        android:background="@drawable/bg_app_dock_rounded"
         android:elevation="8dp"
         android:clipToPadding="false"
         android:paddingHorizontal="4dp"

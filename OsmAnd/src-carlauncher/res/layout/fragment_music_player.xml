@@ -36,54 +36,54 @@
     <!-- SOL DİKEY DOCK (Music Side Dock - Asistan Kaldırıldı) -->
     <LinearLayout
         android:id="@+id/music_side_dock"
-        android:layout_width="60dp"
+        android:layout_width="72dp"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="#88000000"
+        android:background="#CC0A0A0E"
         android:gravity="center_horizontal"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <ImageButton
             android:id="@+id/btn_close"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:tint="#FFFFFF"
             android:contentDescription="Kapat"
-            android:padding="10dp"
-            android:layout_marginBottom="16dp"/>
+            android:padding="12dp"
+            android:layout_marginBottom="24dp"/>
 
         <FrameLayout
             android:id="@+id/app_selector_launch"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:background="@drawable/bg_circle_translucent_white"
             android:clickable="true"
             android:focusable="true"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="24dp">
             <ImageView
                 android:id="@+id/app_icon"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
                 android:layout_gravity="center"
                 android:src="@android:drawable/ic_media_play"/>
         </FrameLayout>
 
         <ImageButton
             android:id="@+id/btn_dock_playlist"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:src="@android:drawable/ic_menu_agenda"
             android:tint="#FFFFFF"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="Çalma Listesi Görünümü"
             android:scaleType="centerInside"
-            android:padding="10dp"
+            android:padding="12dp"
             android:visibility="visible"/>
 
         <!-- btn_dock_voice KESİNLİKLE YOK! -->
@@ -92,14 +92,14 @@
 
         <ImageButton
             android:id="@+id/btn_dock_equalizer"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:src="@drawable/ic_music_equalizer"
             android:tint="#FFFFFF"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="Equalizer"
             android:scaleType="centerInside"
-            android:padding="10dp"/>
+            android:padding="12dp"/>
     </LinearLayout>
 
     <!-- SAĞ TARAF: Liste + Bottom Bar -->
@@ -169,6 +169,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:orientation="vertical"
+            android:background="#F20A0A0E"
             android:padding="8dp">
 
             <!-- Yatay Kaydırılabilir Sekmeler (Horizontal Tabs) -->

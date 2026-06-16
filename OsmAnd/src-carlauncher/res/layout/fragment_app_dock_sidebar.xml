@@ -159,10 +159,10 @@
                 android:layout_height="wrap_content"
                 android:text="12\n00"
                 android:textColor="@color/cl_m3_light_blue"
-                android:textSize="18sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:fontFamily="sans-serif-medium"/>
+                android:fontFamily="sans-serif-black"/>
 
         </LinearLayout>
 

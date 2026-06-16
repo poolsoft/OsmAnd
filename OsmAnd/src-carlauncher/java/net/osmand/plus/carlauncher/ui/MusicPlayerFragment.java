@@ -227,6 +227,11 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             playerPanel.setOnTouchListener(touchListener);
         }
 
+        // Başlangıçta playlist açık olduğundan visualizer gizli olmalı
+        if (visualizerView != null) {
+            visualizerView.setVisibility(isPlaylistVisible ? View.GONE : View.VISIBLE);
+        }
+
         return root;
     }
 
@@ -363,6 +368,10 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 isPlaylistVisible = !isPlaylistVisible;
                 if (trackListPanel != null) trackListPanel.setVisibility(isPlaylistVisible ? View.VISIBLE : View.GONE);
                 if (nowPlayingCenterPanel != null) nowPlayingCenterPanel.setVisibility(isPlaylistVisible ? View.GONE : View.VISIBLE);
+                
+                if (visualizerView != null) {
+                    visualizerView.setVisibility(isPlaylistVisible ? View.GONE : View.VISIBLE);
+                }
                 
                 btnDockPlaylist.setColorFilter(isPlaylistVisible ? 0xFFFFFFFF : 0xFF00FFFF);
             });
