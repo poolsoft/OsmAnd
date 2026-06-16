@@ -28,16 +28,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.osmand.plus.carlauncher.telemetry.TelemetryManager;
+
 /**
  * OBD Dashboard Widget (Dynamic).
  * Displays selected metrics from VehicleMetricsPlugin.
  */
-public class OBDWidget extends BaseWidget {
+public class OBDWidget extends BaseWidget implements TelemetryManager.TelemetryListener {
 
     private final OsmandApplication app;
     private VehicleMetricsPlugin plugin;
-    private final Handler handler = new Handler(Looper.getMainLooper());
-    private Runnable updateRunnable;
     private final CarLauncherSettings settings;
 
     // Dynamic Computers & Views
@@ -231,32 +231,18 @@ public class OBDWidget extends BaseWidget {
     @Override
     public void onStart() {
         super.onStart();
-        startUpdate();
+        TelemetryManager.getInstance(app).addListener(this);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        stopUpdate();
+        TelemetryManager.getInstance(app).removeListener(this);
     }
 
-    private void startUpdate() {
-        stopUpdate();
-        updateRunnable = new Runnable() {
-            @Override
-            public void run() {
-                updateUI();
-                handler.postDelayed(this, 1000);
-            }
-        };
-        handler.post(updateRunnable);
-    }
-
-    private void stopUpdate() {
-        if (updateRunnable != null) {
-            handler.removeCallbacks(updateRunnable);
-            updateRunnable = null;
-        }
+    @Override
+    public void onTelemetryUpdated(TelemetryManager.LocationState loc, TelemetryManager.NavigationState nav, TelemetryManager.ObdState obd) {
+        updateUI();
     }
 
     private void updateUI() {

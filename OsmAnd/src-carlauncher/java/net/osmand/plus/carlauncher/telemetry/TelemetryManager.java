@@ -24,10 +24,10 @@ public class TelemetryManager implements OsmAndLocationProvider.OsmAndLocationLi
 
     private final List<TelemetryListener> listeners = new ArrayList<>();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private Runnable pollingRunnable;
 
     // --- State Modelleri ---
     public static class LocationState {
+        public Location rawLocation;
         public float speedKmh = 0f;
         public double altitudeMeters = 0.0;
         public float bearing = 0f;
@@ -89,49 +89,27 @@ public class TelemetryManager implements OsmAndLocationProvider.OsmAndLocationLi
             listeners.add(listener);
             listener.onTelemetryUpdated(locationState, navigationState, obdState);
         }
-        if (listeners.size() == 1) {
-            startPolling(); // Ilk dinleyici eklendiginde basla
-        }
     }
 
     public void removeListener(TelemetryListener listener) {
         listeners.remove(listener);
-        if (listeners.isEmpty()) {
-            stopPolling(); // Dinleyici kalmadiginda dur
-        }
     }
 
     @Override
     public void updateLocation(Location location) {
         if (location == null) return;
+        
+        locationState.rawLocation = location;
 
         if (location.hasSpeed()) locationState.speedKmh = location.getSpeed() * 3.6f;
         if (location.hasAltitude()) locationState.altitudeMeters = location.getAltitude();
         if (location.hasBearing()) locationState.bearing = location.getBearing();
 
+        // OsmAnd'in yerel GPS tetiklemesine bagli olarak diger verileri de guncelle
+        pollNavigation();
+        pollObd();
+
         notifyListeners();
-    }
-
-    private void startPolling() {
-        if (pollingRunnable == null) {
-            pollingRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    pollNavigation();
-                    pollObd();
-                    notifyListeners();
-                    mainHandler.postDelayed(this, 1000); // 1 saniyede bir
-                }
-            };
-            mainHandler.post(pollingRunnable);
-        }
-    }
-
-    private void stopPolling() {
-        if (pollingRunnable != null) {
-            mainHandler.removeCallbacks(pollingRunnable);
-            pollingRunnable = null;
-        }
     }
 
     private void pollNavigation() {

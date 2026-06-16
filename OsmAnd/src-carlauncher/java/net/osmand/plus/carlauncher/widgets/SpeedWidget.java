@@ -11,17 +11,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
-import net.osmand.plus.R;
-
 import net.osmand.Location;
-import net.osmand.plus.OsmAndLocationProvider;
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.carlauncher.widgets.view.AnalogSpeedometerView;
 import net.osmand.plus.utils.FormattedValue;
 import net.osmand.plus.utils.OsmAndFormatter;
 import net.osmand.binary.RouteDataObject;
 import net.osmand.plus.routing.RoutingHelper;
+import net.osmand.plus.carlauncher.telemetry.TelemetryManager;
 
 /**
  * Hız widget - S/M/L destegi.
@@ -29,7 +26,7 @@ import net.osmand.plus.routing.RoutingHelper;
  * M: Hız + Limit
  * L: Analog Hız
  */
-public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.OsmAndLocationListener {
+public class SpeedWidget extends BaseWidget implements TelemetryManager.TelemetryListener {
 
     private final OsmandApplication app;
     
@@ -189,13 +186,8 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
     public void update() {}
 
     @Override
-    public void updateLocation(Location location) {
-        if (location == null) return;
-
-        float currentSpeed = 0;
-        if (location.hasSpeed()) {
-            currentSpeed = location.getSpeed();
-        }
+    public void onTelemetryUpdated(TelemetryManager.LocationState loc, TelemetryManager.NavigationState nav, TelemetryManager.ObdState obd) {
+        float currentSpeed = loc.speedKmh / 3.6f; // m/s cinsinden lazim (OsmAndFormatter ve updateMaxSpeed icin)
 
         // 1. Digital View Update
         if (speedText != null) {
@@ -210,12 +202,13 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
 
         // 2. Analog View Update
         if (analogView != null) {
-             float kmh = currentSpeed * 3.6f;
-             analogView.setSpeed(kmh);
+             analogView.setSpeed(loc.speedKmh);
         }
 
-        // 3. Limit Update
-        updateMaxSpeed(location, currentSpeed);
+        // 3. Limit Update (Orijinal Location objesi gerekir)
+        if (loc.rawLocation != null) {
+            updateMaxSpeed(loc.rawLocation, currentSpeed);
+        }
     }
     
     private void updateMaxSpeed(Location location, float currentSpeed) {
@@ -316,13 +309,13 @@ public class SpeedWidget extends BaseWidget implements OsmAndLocationProvider.Os
     @Override
     public void onStart() {
         super.onStart();
-        if (app != null) app.getLocationProvider().addLocationListener(this);
+        if (app != null) TelemetryManager.getInstance(app).addListener(this);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        if (app != null) app.getLocationProvider().removeLocationListener(this);
+        if (app != null) TelemetryManager.getInstance(app).removeListener(this);
     }
 
     @Override

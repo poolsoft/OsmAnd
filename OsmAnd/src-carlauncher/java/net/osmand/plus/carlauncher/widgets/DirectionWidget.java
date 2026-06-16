@@ -10,14 +10,12 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
-import net.osmand.Location;
-import net.osmand.plus.OsmAndLocationProvider;
-import net.osmand.plus.OsmandApplication;
+import net.osmand.plus.carlauncher.telemetry.TelemetryManager;
 
 /**
  * Yon widget - Pusula yonunu gosterir.
  */
-public class DirectionWidget extends BaseWidget implements OsmAndLocationProvider.OsmAndLocationListener {
+public class DirectionWidget extends BaseWidget implements TelemetryManager.TelemetryListener {
 
     private TextView labelText;
     private TextView directionText;
@@ -85,16 +83,12 @@ public class DirectionWidget extends BaseWidget implements OsmAndLocationProvide
     }
 
     @Override
-    public void updateLocation(Location location) {
-        if (directionText != null && location != null) {
-            if (location.hasBearing()) {
-                int bearing = (int) location.getBearing();
-                String direction = getDirectionString(bearing);
-                String text = direction + " " + bearing + "°";
-                directionText.post(() -> directionText.setText(text));
-            } else {
-                directionText.post(() -> directionText.setText("--"));
-            }
+    public void onTelemetryUpdated(TelemetryManager.LocationState loc, TelemetryManager.NavigationState nav, TelemetryManager.ObdState obd) {
+        if (directionText != null) {
+            int bearing = (int) loc.bearing;
+            String direction = getDirectionString(bearing);
+            String text = direction + " " + bearing + "°";
+            directionText.post(() -> directionText.setText(text));
         }
     }
 
@@ -125,7 +119,7 @@ public class DirectionWidget extends BaseWidget implements OsmAndLocationProvide
     public void onStart() {
         super.onStart();
         if (app != null) {
-            app.getLocationProvider().addLocationListener(this);
+            TelemetryManager.getInstance(app).addListener(this);
         }
     }
 
@@ -133,7 +127,7 @@ public class DirectionWidget extends BaseWidget implements OsmAndLocationProvide
     public void onStop() {
         super.onStop();
         if (app != null) {
-            app.getLocationProvider().removeLocationListener(this);
+            TelemetryManager.getInstance(app).removeListener(this);
         }
     }
 }
