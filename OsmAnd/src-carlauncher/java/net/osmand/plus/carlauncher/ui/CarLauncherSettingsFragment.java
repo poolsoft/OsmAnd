@@ -221,6 +221,11 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 androidx.preference.PreferenceCategory cat = (androidx.preference.PreferenceCategory) p;
                 allCategories.add(cat);
                 addCategoryToMenu(cat);
+                
+                // Sağ panelde (Detay) bu Kategori başlığının gereksiz yer/padding kaplamaması için siliyoruz.
+                // Sol menüye (Master) başlık ve ikon kopyalandığı için orası etkilenmez.
+                cat.setTitle("");
+                cat.setIconSpaceReserved(false);
             }
         }
         
@@ -235,9 +240,15 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         item.setText(cat.getTitle());
         item.setTextColor(0xFF8E8E93);
         item.setTextSize(15);
-        item.setPadding(dpToPx(20), dpToPx(16), dpToPx(20), dpToPx(16));
+        item.setPadding(dpToPx(16), dpToPx(12), dpToPx(16), dpToPx(12));
         item.setTag(cat);
         item.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        
+        item.setMaxLines(2);
+        item.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            item.setBreakStrategy(android.text.Layout.BREAK_STRATEGY_SIMPLE);
+        }
         
         android.graphics.drawable.Drawable icon = cat.getIcon();
         if (icon != null) {
@@ -245,12 +256,12 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             wrappedIcon.setBounds(0, 0, dpToPx(24), dpToPx(24));
             androidx.core.graphics.drawable.DrawableCompat.setTint(wrappedIcon, 0xFF8E8E93);
             item.setCompoundDrawables(wrappedIcon, null, null, null);
-            item.setCompoundDrawablePadding(dpToPx(16));
+            item.setCompoundDrawablePadding(dpToPx(8));
         }
 
         android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(dpToPx(16), dpToPx(6), dpToPx(16), dpToPx(6));
+        lp.setMargins(dpToPx(8), dpToPx(4), dpToPx(8), dpToPx(4));
         item.setLayoutParams(lp);
 
         item.setOnClickListener(v -> selectCategory(cat));
