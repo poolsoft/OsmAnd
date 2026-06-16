@@ -156,6 +156,7 @@
             android:gravity="center_vertical"
             android:background="?attr/selectableItemBackground"
             android:paddingStart="4dp"
+            android:visibility="gone"
             android:paddingEnd="4dp">
 
             <TextView

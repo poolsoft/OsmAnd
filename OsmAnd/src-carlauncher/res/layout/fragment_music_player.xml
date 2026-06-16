@@ -169,7 +169,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:background="#F20A0A0E"
+            android:background="#0A0A0E"
             android:padding="8dp">
 
             <!-- Yatay Kaydırılabilir Sekmeler (Horizontal Tabs) -->

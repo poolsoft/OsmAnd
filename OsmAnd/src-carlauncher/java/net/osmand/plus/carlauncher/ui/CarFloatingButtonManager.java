@@ -167,8 +167,16 @@ public class CarFloatingButtonManager {
             } else {
                 int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
                 int screenHeight = context.getResources().getDisplayMetrics().heightPixels;
-                params.x = screenWidth - dpToPx(70);
-                params.y = screenHeight / 2 - dpToPx(26);
+                
+                if (isLandscape) {
+                    // Yatay modda sol altta (Dock'un hemen ustu veya Harita kosesi)
+                    params.x = dpToPx(20);
+                    params.y = screenHeight - dpToPx(140);
+                } else {
+                    // Dikey modda sag ortalar
+                    params.x = screenWidth - dpToPx(90);
+                    params.y = screenHeight / 2 - dpToPx(26);
+                }
             }
 
             floatingView.setOnTouchListener(new View.OnTouchListener() {
