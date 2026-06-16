@@ -6,7 +6,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- GÖRÜNÜM AYARLARI -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <androidx.preference.PreferenceCategory
+    <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_appearance"
         android:title="Görünüm"
         app:icon="@android:drawable/ic_menu_view"
@@ -113,14 +113,14 @@
             android:defaultValue="swap"
             android:iconSpaceReserved="false" />
 
-    </androidx.preference.PreferenceCategory>
+    </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
 
 
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- MÜZİK AYARLARI -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <androidx.preference.PreferenceCategory
+    <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_music"
         android:title="Müzik"
         app:icon="@android:drawable/ic_media_play"
@@ -158,12 +158,12 @@
             android:summary="Dahili depolama ve USB bellekleri tara"
             android:iconSpaceReserved="false" />
 
-    </androidx.preference.PreferenceCategory>
+    </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- HAVA DURUMU AYARLARI -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <androidx.preference.PreferenceCategory
+    <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_weather"
         android:title="Hava Durumu"
         app:icon="@android:drawable/ic_menu_my_calendar"
@@ -176,12 +176,12 @@
             android:defaultValue="true"
             android:iconSpaceReserved="false" />
 
-    </androidx.preference.PreferenceCategory>
+    </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- OTOMATİK BAŞLATMA -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <androidx.preference.PreferenceCategory
+    <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_autolaunch"
         android:title="Otomatik Başlatma"
         app:icon="@android:drawable/ic_menu_recent_history"
@@ -208,12 +208,12 @@
             android:defaultValue="false"
             android:iconSpaceReserved="false" />
 
-    </androidx.preference.PreferenceCategory>
+    </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- YEDEKLEME -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <androidx.preference.PreferenceCategory
+    <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_backup"
         android:title="Yedekle ve Geri Yükle"
         app:icon="@android:drawable/ic_menu_save"
@@ -231,12 +231,12 @@
             android:summary="Dosyadan geri yükle"
             android:iconSpaceReserved="false" />
 
-    </androidx.preference.PreferenceCategory>
+    </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- DOCK AYARLARI -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <androidx.preference.PreferenceCategory
+    <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_dock"
         android:title="Uygulama Dock (Sidebar)"
         app:icon="@android:drawable/ic_menu_sort_by_size"
@@ -276,12 +276,12 @@
             android:summary="Tüm kısayolları kaldır"
             android:iconSpaceReserved="false" />
 
-    </androidx.preference.PreferenceCategory>
+    </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- ASİSTAN AYARLARI -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <androidx.preference.PreferenceCategory
+    <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_assistant"
         android:title="Asistan"
         app:icon="@android:drawable/ic_btn_speak_now"
@@ -293,12 +293,12 @@
             android:summary="İnternet yoksa USB'den indirdiğiniz zip modelini yükleyin"
             android:iconSpaceReserved="false" />
 
-    </androidx.preference.PreferenceCategory>
+    </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- HAKKINDA -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <androidx.preference.PreferenceCategory
+    <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_about"
         android:title="Hakkında"
         app:icon="@android:drawable/ic_menu_info_details"
@@ -323,6 +323,6 @@
             android:summary="Kaynak kodunu görüntüle"
             android:iconSpaceReserved="false" />
 
-    </androidx.preference.PreferenceCategory>
+    </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
 
 </androidx.preference.PreferenceScreen>
