@@ -1454,6 +1454,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                         nowPlayingCenterArt.setColorFilter(null);
                     }
                     if (nowPlayingArtBlur != null) {
+                        nowPlayingArtBlur.setVisibility(View.VISIBLE);
                         nowPlayingArtBlur.setImageBitmap(albumArt);
                     }
                     
@@ -1473,7 +1474,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     }
 
                     if (nowPlayingArtBlur != null) {
-                        nowPlayingArtBlur.setImageResource(net.osmand.plus.R.drawable.bg_default_music_art);
+                        nowPlayingArtBlur.setVisibility(View.GONE);
                     }
                     
                     // Varsayilan Cyan temaya yumusak gecis (Turkce karakter yok)
