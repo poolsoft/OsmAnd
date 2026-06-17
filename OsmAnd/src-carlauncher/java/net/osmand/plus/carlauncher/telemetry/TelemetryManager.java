@@ -59,9 +59,23 @@ public class TelemetryManager implements OsmAndLocationProvider.OsmAndLocationLi
     private OBDDataComputer.OBDComputerWidget compVolt;
     private OBDDataComputer.OBDComputerWidget compLoad;
 
+    private long lastLocationTime = 0;
+    private final Runnable staleGpsRunnable = new Runnable() {
+        @Override
+        public void run() {
+            long now = System.currentTimeMillis();
+            if (now - lastLocationTime >= 3000 && locationState.speedKmh > 0) {
+                locationState.speedKmh = 0f;
+                notifyListeners();
+            }
+            mainHandler.postDelayed(this, 1000);
+        }
+    };
+
     private TelemetryManager(OsmandApplication app) {
         this.app = app;
         initObdComputers();
+        mainHandler.postDelayed(staleGpsRunnable, 1000);
     }
 
     public LocationState getLocationState() { return locationState; }
@@ -103,9 +117,18 @@ public class TelemetryManager implements OsmAndLocationProvider.OsmAndLocationLi
     public void updateLocation(Location location) {
         if (location == null) return;
         
+        lastLocationTime = System.currentTimeMillis();
         locationState.rawLocation = location;
 
-        if (location.hasSpeed()) locationState.speedKmh = location.getSpeed() * 3.6f;
+        if (location.hasSpeed()) {
+            float speedKmh = location.getSpeed() * 3.6f;
+            // YAZILIM FILTRESI: 3 km/h alti 0 gosterilir (Dalgalanmayi onler)
+            if (speedKmh <= 3.0f) {
+                locationState.speedKmh = 0f;
+            } else {
+                locationState.speedKmh = speedKmh;
+            }
+        }
         if (location.hasAltitude()) locationState.altitudeMeters = location.getAltitude();
         if (location.hasBearing()) locationState.bearing = location.getBearing();
 
