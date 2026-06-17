@@ -226,6 +226,13 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         if (playerPanel != null) {
             playerPanel.setOnTouchListener(touchListener);
         }
+        if (nowPlayingCenterPanel != null) {
+            nowPlayingCenterPanel.setOnTouchListener(touchListener);
+        }
+        if (nowPlayingCenterArt != null) {
+            nowPlayingCenterArt.setOnTouchListener(touchListener);
+        }
+
 
         // Başlangıçta playlist açık olduğundan visualizer gizli olmalı
         if (visualizerView != null) {
