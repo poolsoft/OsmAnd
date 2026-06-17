@@ -1507,6 +1507,20 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     adapter.updateCurrentTrack(path, isPlaying);
                 }
             }
+
+            // Dinamik Visualizer Boyutlandirmasi (Cover yoksa tam ekran)
+            if (visualizerView != null) {
+                androidx.constraintlayout.widget.ConstraintLayout.LayoutParams params = 
+                    (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) visualizerView.getLayoutParams();
+                if (albumArt != null) {
+                    params.height = dpToPx(200);
+                    params.topToTop = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.UNSET;
+                } else {
+                    params.height = 0; // 0dp for MATCH_CONSTRAINT
+                    params.topToTop = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID;
+                }
+                visualizerView.setLayoutParams(params);
+            }
         });
     }
 
