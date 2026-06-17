@@ -1468,9 +1468,12 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     if (nowPlayingCenterArt != null) {
                         nowPlayingCenterArt.setImageBitmap(albumArt);
                         nowPlayingCenterArt.setColorFilter(null);
+                        if (nowPlayingCenterArt.getParent() instanceof android.view.View) {
+                            ((android.view.View)nowPlayingCenterArt.getParent()).setVisibility(android.view.View.VISIBLE);
+                        }
                     }
                     if (nowPlayingArtBlur != null) {
-                        nowPlayingArtBlur.setVisibility(View.VISIBLE);
+                        nowPlayingArtBlur.setVisibility(android.view.View.VISIBLE);
                         nowPlayingArtBlur.setImageBitmap(albumArt);
                     }
                     
@@ -1487,10 +1490,13 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     if (nowPlayingCenterArt != null) {
                         nowPlayingCenterArt.setImageResource(net.osmand.plus.R.drawable.ic_default_album_art);
                         nowPlayingCenterArt.setColorFilter(0x88FFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
+                        if (nowPlayingCenterArt.getParent() instanceof android.view.View) {
+                            ((android.view.View)nowPlayingCenterArt.getParent()).setVisibility(android.view.View.GONE);
+                        }
                     }
 
                     if (nowPlayingArtBlur != null) {
-                        nowPlayingArtBlur.setVisibility(View.GONE);
+                        nowPlayingArtBlur.setVisibility(android.view.View.GONE);
                     }
                     
                     // Varsayilan Cyan temaya yumusak gecis (Turkce karakter yok)
