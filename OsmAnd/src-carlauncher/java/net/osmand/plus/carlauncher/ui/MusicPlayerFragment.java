@@ -841,6 +841,18 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             if (trackListPanel != null) trackListPanel.setVisibility(View.GONE);
             if (nowPlayingCenterPanel != null) nowPlayingCenterPanel.setVisibility(View.VISIBLE);
             if (btnDockPlaylist != null) btnDockPlaylist.setColorFilter(0xFFFFFFFF);
+        } else {
+            if (btnPlay != null) btnPlay.setVisibility(View.VISIBLE);
+            if (btnNext != null) btnNext.setVisibility(View.VISIBLE);
+            if (btnPrev != null) btnPrev.setVisibility(View.VISIBLE);
+            
+            if (musicManager != null && musicManager.getInternalPlayer() != null) {
+                MusicRepository.AudioTrack current = musicManager.getInternalPlayer().getCurrentTrack();
+                if (current != null) {
+                    onTrackChanged(current.getTitle(), current.getArtist(), current.getAlbumArtBitmap(getContext()), "internal");
+                }
+                onPlaybackStateChanged(musicManager.getInternalPlayer().isPlaying());
+            }
         }
 
         // Dock butonlarini guncelle
@@ -1468,9 +1480,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     if (nowPlayingCenterArt != null) {
                         nowPlayingCenterArt.setImageBitmap(albumArt);
                         nowPlayingCenterArt.setColorFilter(null);
-                        if (nowPlayingCenterArt.getParent() instanceof android.view.View) {
-                            ((android.view.View)nowPlayingCenterArt.getParent()).setVisibility(android.view.View.VISIBLE);
-                        }
                     }
                     if (nowPlayingArtBlur != null) {
                         nowPlayingArtBlur.setVisibility(android.view.View.VISIBLE);
@@ -1490,9 +1499,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     if (nowPlayingCenterArt != null) {
                         nowPlayingCenterArt.setImageResource(net.osmand.plus.R.drawable.ic_default_album_art);
                         nowPlayingCenterArt.setColorFilter(0x88FFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
-                        if (nowPlayingCenterArt.getParent() instanceof android.view.View) {
-                            ((android.view.View)nowPlayingCenterArt.getParent()).setVisibility(android.view.View.GONE);
-                        }
                     }
 
                     if (nowPlayingArtBlur != null) {
@@ -1526,6 +1532,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             if (btnPlay != null) {
                 btnPlay.setImageResource(
                         isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play);
+                btnPlay.setColorFilter(0xFFFFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
             }
 
             // Update Adapter Icon
