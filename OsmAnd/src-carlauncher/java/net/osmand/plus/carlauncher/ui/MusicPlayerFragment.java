@@ -849,7 +849,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             if (musicManager != null && musicManager.getInternalPlayer() != null) {
                 MusicRepository.AudioTrack current = musicManager.getInternalPlayer().getCurrentTrack();
                 if (current != null) {
-                    onTrackChanged(current.getTitle(), current.getArtist(), current.getAlbumArtBitmap(getContext()), "internal");
+                    musicManager.notifyTrackChanged();
                 }
                 onPlaybackStateChanged(musicManager.getInternalPlayer().isPlaying());
             }
