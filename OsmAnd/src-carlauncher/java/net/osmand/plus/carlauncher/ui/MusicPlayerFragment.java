@@ -1519,7 +1519,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 androidx.constraintlayout.widget.ConstraintLayout.LayoutParams params = 
                     (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) visualizerView.getLayoutParams();
                 if (albumArt != null) {
-                    params.height = dpToPx(200);
+                    params.height = (int) (200 * getContext().getResources().getDisplayMetrics().density);
                     params.topToTop = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.UNSET;
                 } else {
                     params.height = 0; // 0dp for MATCH_CONSTRAINT
