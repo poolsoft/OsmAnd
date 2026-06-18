@@ -163,6 +163,20 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         searchInput = root.findViewById(net.osmand.plus.R.id.search_input);
         searchBarContainer = root.findViewById(net.osmand.plus.R.id.search_bar_container);
         searchClearBtn = root.findViewById(net.osmand.plus.R.id.search_clear_btn);
+        
+        // Responsive Layout Listener
+        root.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+            private int lastWidth = 0;
+            @Override
+            public void onGlobalLayout() {
+                int width = root.getWidth();
+                if (width != lastWidth && width > 0) {
+                    lastWidth = width;
+                    updateResponsiveLayout(width);
+                }
+            }
+        });
+
         recyclerView = root.findViewById(net.osmand.plus.R.id.music_recycler);
 
         tabAllTracks = root.findViewById(net.osmand.plus.R.id.tab_all_tracks);
@@ -376,8 +390,10 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 if (trackListPanel != null) trackListPanel.setVisibility(isPlaylistVisible ? View.VISIBLE : View.GONE);
                 if (nowPlayingCenterPanel != null) nowPlayingCenterPanel.setVisibility(isPlaylistVisible ? View.GONE : View.VISIBLE);
                 
-                if (visualizerView != null) {
-                    visualizerView.setVisibility(isPlaylistVisible ? View.GONE : View.VISIBLE);
+                if (visualizerView != null && !isExternalMode) {
+                    int widthPx = getView() != null ? getView().getWidth() : 1000;
+                    float widthDp = widthPx / getResources().getDisplayMetrics().density;
+                    visualizerView.setVisibility(isPlaylistVisible || widthDp < 500 ? android.view.View.GONE : android.view.View.VISIBLE);
                 }
                 
                 btnDockPlaylist.setColorFilter(isPlaylistVisible ? 0xFFFFFFFF : 0xFF00FFFF);
