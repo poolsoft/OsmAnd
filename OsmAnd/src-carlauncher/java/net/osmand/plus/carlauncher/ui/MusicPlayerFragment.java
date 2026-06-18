@@ -1480,6 +1480,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     if (nowPlayingCenterArt != null) {
                         nowPlayingCenterArt.setImageBitmap(albumArt);
                         nowPlayingCenterArt.setColorFilter(null);
+                        nowPlayingCenterArt.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
                     }
                     if (nowPlayingArtBlur != null) {
                         nowPlayingArtBlur.setVisibility(android.view.View.VISIBLE);
@@ -1499,6 +1500,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     if (nowPlayingCenterArt != null) {
                         nowPlayingCenterArt.setImageResource(net.osmand.plus.R.drawable.ic_default_album_art);
                         nowPlayingCenterArt.setColorFilter(0x88FFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
+                        nowPlayingCenterArt.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
                     }
 
                     if (nowPlayingArtBlur != null) {
@@ -1532,7 +1534,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             if (btnPlay != null) {
                 btnPlay.setImageResource(
                         isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play);
-                btnPlay.setColorFilter(0xFFFFFFFF, android.graphics.PorterDuff.Mode.SRC_IN);
+                btnPlay.setColorFilter(0xFF000000, android.graphics.PorterDuff.Mode.SRC_IN);
             }
 
             // Update Adapter Icon

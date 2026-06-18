@@ -140,7 +140,7 @@
                     android:layout_gravity="bottom"
                     android:orientation="vertical"
                     android:background="#A6000000"
-                    android:padding="20dp"
+                    android:padding="12dp"
                     android:gravity="center_horizontal">
                     
                     <TextView
@@ -148,20 +148,20 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Car Launcher Ses Sistemi"
-                        android:textSize="28sp"
+                        android:textSize="22sp"
                         android:textStyle="bold"
                         android:textColor="#FFFFFF"
                         android:gravity="center"
                         android:singleLine="true"
                         android:ellipsize="marquee"
-                        android:layout_marginBottom="4dp"/>
+                        android:layout_marginBottom="2dp"/>
                         
                     <TextView
                         android:id="@+id/now_playing_center_artist"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Hazır"
-                        android:textSize="18sp"
+                        android:textSize="16sp"
                         android:textColor="#CCCCCC"
                         android:gravity="center"
                         android:singleLine="true"/>
