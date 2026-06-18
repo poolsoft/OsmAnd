@@ -832,6 +832,37 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             }
         });
     }
+    private void updateResponsiveLayout(int widthPx) {
+        if (getContext() == null || getView() == null) return;
+        float widthDp = widthPx / getResources().getDisplayMetrics().density;
+        
+        android.view.View visualizer = getView().findViewById(net.osmand.plus.R.id.player_visualizer);
+        android.view.View bottomArt = getView().findViewById(net.osmand.plus.R.id.card_album_art);
+        android.view.View centerCard = getView().findViewById(net.osmand.plus.R.id.now_playing_center_art_card);
+        androidx.constraintlayout.widget.ConstraintLayout centerPanel = getView().findViewById(net.osmand.plus.R.id.now_playing_center_panel);
+        
+        if (centerPanel == null || centerCard == null) return;
+        
+        if (widthDp < 500) { // Dar Ekran (Split Screen) Modu
+            if (visualizer != null) visualizer.setVisibility(android.view.View.GONE);
+            if (bottomArt != null) bottomArt.setVisibility(android.view.View.GONE);
+            
+            androidx.constraintlayout.widget.ConstraintSet set = new androidx.constraintlayout.widget.ConstraintSet();
+            set.clone(centerPanel);
+            set.constrainPercentWidth(net.osmand.plus.R.id.now_playing_center_art_card, 0.70f);
+            set.connect(net.osmand.plus.R.id.now_playing_center_art_card, androidx.constraintlayout.widget.ConstraintSet.END, androidx.constraintlayout.widget.ConstraintSet.PARENT_ID, androidx.constraintlayout.widget.ConstraintSet.END);
+            set.applyTo(centerPanel);
+        } else { // Genis Ekran (Normal) Modu
+            if (visualizer != null && !isExternalMode && !isPlaylistVisible) visualizer.setVisibility(android.view.View.VISIBLE);
+            if (bottomArt != null) bottomArt.setVisibility(android.view.View.VISIBLE);
+            
+            androidx.constraintlayout.widget.ConstraintSet set = new androidx.constraintlayout.widget.ConstraintSet();
+            set.clone(centerPanel);
+            set.constrainPercentWidth(net.osmand.plus.R.id.now_playing_center_art_card, 0.45f);
+            set.clear(net.osmand.plus.R.id.now_playing_center_art_card, androidx.constraintlayout.widget.ConstraintSet.END);
+            set.applyTo(centerPanel);
+        }
+    }
 
     private void updateModeUI() {
         // Dahili moddaysa veya liste bossa (izin varsa yukle, yoksa iste)
