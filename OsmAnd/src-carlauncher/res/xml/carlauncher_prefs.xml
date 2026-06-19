@@ -32,15 +32,6 @@
             android:summary="@string/car_pref_language_desc"
             app:iconSpaceReserved="false" />
 
-        <androidx.preference.ListPreference
-            android:key="widget_display_mode"
-            android:title="Widget Görünüm Modu"
-            android:summary="%s"
-            android:entries="@array/widget_display_mode_entries"
-            android:entryValues="@array/widget_display_mode_values"
-            android:defaultValue="0"
-            app:iconSpaceReserved="false" />
-
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_portrait_map_only"
             android:title="Dikey Ekranda Sadece Harita Goster"
