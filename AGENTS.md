@@ -97,7 +97,9 @@ Many resources (icons, fonts, voice files) are not in the main `res` folder but 
   - `colors.xml` for application colors and palette.
   - `attrs.xml` for custom theme attributes.
 - **Fragments:** All new fragments must extend `net.osmand.plus.base.BaseOsmAndFragment` (or its specialized subclasses like `BaseFullScreenFragment` or `BaseNestedFragment`) to ensure proper theming, application service access, and consistent lifecycle handling.
-- **Strings:** All new user-visible strings must be added to the **beginning** of `OsmAnd/res/values/strings.xml` to support localization and simplify translation management. Avoid hardcoding strings in code or layouts.
+- **Strings (Main App):** All new user-visible strings must be added to the **beginning** of `OsmAnd/res/values/strings.xml` to support localization and simplify translation management. Avoid hardcoding strings in code or layouts.
+- **Strings (Car Launcher):** For the Car Launcher module, strictly maintain isolated localization. Do NOT pollute the main `strings.xml`. Instead, add new strings to `OsmAnd/src-carlauncher/res/values/strings_car.xml` (and corresponding localized folders like `values-tr`). The system will automatically merge them.
+- **Language Synchronization:** Car Launcher's language logic synchronizes directly with OsmAnd's core `PREFERRED_LOCALE`. Do not create separate persistent language preferences for the launcher; instead update `app.getSettings().PREFERRED_LOCALE` and `recreate()` the Activity.
 - **Prefer Kotlin** for new UI code and modern components.
 - **Keep core logic** in `OsmAnd-shared` (KMP) or `OsmAnd-java` where possible to maintain platform independence.
 - **Use the Plugin system** for new optional features.
@@ -105,7 +107,8 @@ Many resources (icons, fonts, voice files) are not in the main `res` folder but 
 - **Resource handling:** Be aware that many resources are dynamically collected; check `OsmAnd/build-common.gradle` for details.
 
 ## 8. Common Tasks for Agents
-- **Adding a new Setting:** Register it in `OsmandSettings` and add it to the relevant settings fragment.
+- **Adding a new Setting (Main App):** Register it in `OsmandSettings` and add it to the relevant settings fragment.
+- **Adding a new Setting (Car Launcher):** Define preference UI in `OsmAnd/src-carlauncher/res/xml/carlauncher_prefs.xml` and handle logic inside `CarLauncherSettingsFragment`.
 - **Creating a new Fragment:** Extend `BaseOsmAndFragment` and implement required UI logic using Material Design principles.
 - **Modifying Map UI:** Look into `net.osmand.plus.views.OsmandMapTileView` and its layers.
 - **Extending Search:** Check `net.osmand.plus.search` and `net.osmand.search.core`.
