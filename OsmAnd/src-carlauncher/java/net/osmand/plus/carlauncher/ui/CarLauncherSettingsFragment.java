@@ -54,6 +54,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         }
 
         setupAppearancePrefs();
+        setupLanguagePrefs();
         setupMusicPrefs();
         setupAutoLaunchPrefs();
         setupBackupPrefs();
@@ -550,6 +551,35 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     private void applyStatusBarVisibility(boolean show) {
         if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
             ((net.osmand.plus.activities.MapActivity) getActivity()).applyStatusBarVisibility();
+        }
+    }
+
+    private void setupLanguagePrefs() {
+        androidx.preference.ListPreference langPref = findPreference("car_launcher_language");
+        if (langPref != null) {
+            net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) getContext().getApplicationContext();
+            
+            // Secenekleri ayarla
+            langPref.setEntries(new CharSequence[]{"Sistem (System)", "Türkçe", "English", "Deutsch"});
+            langPref.setEntryValues(new CharSequence[]{"", "tr", "en", "de"});
+            
+            // Mevcut degeri set et
+            String current = app.getSettings().PREFERRED_LOCALE.get();
+            langPref.setValue(current);
+            
+            langPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                String val = (String) newValue;
+                app.getSettings().PREFERRED_LOCALE.set(val);
+                
+                // Dil guncelle ve yeniden baslat
+                Toast.makeText(getContext(), "Dil güncelleniyor...", Toast.LENGTH_SHORT).show();
+                if (getActivity() != null) {
+                    Intent intent = getActivity().getIntent();
+                    getActivity().finish();
+                    startActivity(intent);
+                }
+                return true;
+            });
         }
     }
 

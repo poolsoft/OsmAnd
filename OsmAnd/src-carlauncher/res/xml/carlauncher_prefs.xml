@@ -27,6 +27,12 @@
             app:iconSpaceReserved="false" />
 
         <androidx.preference.ListPreference
+            android:key="car_launcher_language"
+            android:title="@string/car_pref_language_title"
+            android:summary="@string/car_pref_language_desc"
+            app:iconSpaceReserved="false" />
+
+        <androidx.preference.ListPreference
             android:key="widget_display_mode"
             android:title="Widget Görünüm Modu"
             android:summary="%s"

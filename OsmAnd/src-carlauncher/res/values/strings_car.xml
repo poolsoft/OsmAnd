@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Car Launcher Ayarları -->
+    <string name="car_pref_category_language">Language / Dil</string>
+    <string name="car_pref_language_title">App Language</string>
+    <string name="car_pref_language_desc">Change interface language (Requires restart)</string>
+    
+    <!-- İleride eklenebilecek çeviriler -->
+    <!-- <string name="car_launcher_example">Example Text</string> -->
+</resources>
