@@ -13,7 +13,8 @@ OsmAnd (OSM Automated Navigation Directions) is a powerful, open-source map and 
 The project is divided into several sub-projects:
 
 - `:OsmAnd`: The main Android application module.
-  - `src/`: Java/Kotlin source code.
+  - `src/`: Java/Kotlin source code for the main app.
+  - `src-carlauncher/`: Source code and resources specifically for the Car Launcher module.
   - `res/`: Android resources.
   - `assets/`: App assets.
   - `test/`: Instrumentation and Unit tests.
@@ -96,6 +97,8 @@ Many resources (icons, fonts, voice files) are not in the main `res` folder but 
   - `dimens.xml` and `sizes.xml` for dimensions and spacing.
   - `colors.xml` for application colors and palette.
   - `attrs.xml` for custom theme attributes.
+- **Manifest Edits (Car Launcher):** When adding or modifying components (Activities, Services, etc.) for the Car Launcher, ALWAYS use `OsmAnd/AndroidManifest-carlauncher.xml` instead of the main `AndroidManifest.xml`.
+- **Isolation Principle:** Minimize modifications to the core `OsmAnd` files. Keep Car Launcher logic completely self-contained within `src-carlauncher` whenever possible.
 - **Fragments:** All new fragments must extend `net.osmand.plus.base.BaseOsmAndFragment` (or its specialized subclasses like `BaseFullScreenFragment` or `BaseNestedFragment`) to ensure proper theming, application service access, and consistent lifecycle handling.
 - **Strings (Main App):** All new user-visible strings must be added to the **beginning** of `OsmAnd/res/values/strings.xml` to support localization and simplify translation management. Avoid hardcoding strings in code or layouts.
 - **Strings (Car Launcher):** For the Car Launcher module, strictly maintain isolated localization. Do NOT pollute the main `strings.xml`. Instead, add new strings to `OsmAnd/src-carlauncher/res/values/strings_car.xml` (and corresponding localized folders like `values-tr`). The system will automatically merge them.
