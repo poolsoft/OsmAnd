@@ -98,6 +98,7 @@ public class MusicVisualizerView extends View {
             visualizerType = TYPE_NEON_MODERN;
         }
 
+        /* Jestleri (swipe vb.) engellememesi icin secim ozelligini kaldirdik
         setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -113,6 +114,7 @@ public class MusicVisualizerView extends View {
                 invalidate();
             }
         });
+        */
 
         // Golge ve parilti efektlerinin cizilmesi icin yazilimsal katman destegi (Turkce karakter yok)
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
