@@ -218,6 +218,15 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         
         // Find Visualizer
         visualizerView = root.findViewById(net.osmand.plus.R.id.player_visualizer);
+        
+        View btnChangeVisualizer = root.findViewById(net.osmand.plus.R.id.btn_change_visualizer);
+        if (btnChangeVisualizer != null) {
+            btnChangeVisualizer.setOnClickListener(v -> {
+                if (visualizerView != null) {
+                    visualizerView.cycleVisualizerType();
+                }
+            });
+        }
 
         // Gesture ve Double Tap Kontrollerinin Tanimlanmasi (Turkce karakter yok)
         View cardAlbumArt = root.findViewById(net.osmand.plus.R.id.card_album_art);
@@ -269,6 +278,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     @Override
     public void onResume() {
         super.onResume();
+        if (visualizerView != null) {
+            visualizerView.reloadSettings();
+        }
         if (musicManager != null) {
             musicManager.addListener(this);
             musicManager.addVisualizerListener(this); // Centralized Visualizer

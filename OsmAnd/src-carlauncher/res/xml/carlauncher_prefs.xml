@@ -145,6 +145,15 @@
             android:summary="Tıklayarak seçin"
             app:iconSpaceReserved="false" />
 
+        <androidx.preference.ListPreference
+            android:key="car_launcher_visualizer_type"
+            android:title="Görselleştirici Tipi"
+            android:summary="%s"
+            android:entries="@array/visualizer_type_entries"
+            android:entryValues="@array/visualizer_type_values"
+            android:defaultValue="2"
+            app:iconSpaceReserved="false" />
+
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_auto_play_music"
             android:title="Açılışta Otomatik Oynat"

@@ -81,4 +81,16 @@
         <item>swap</item>
         <item>fixed</item>
     </string-array>
+
+    <!-- Müzik Görselleştirici Tipleri -->
+    <string-array name="visualizer_type_entries">
+        <item>Klasik</item>
+        <item>Glow Peak</item>
+        <item>Neon Modern</item>
+    </string-array>
+    <string-array name="visualizer_type_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
 </resources>

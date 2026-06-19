@@ -90,10 +90,11 @@ public class MusicVisualizerView extends View {
         mPeakPaint.setStyle(Paint.Style.FILL);
         mPeakPaint.setColor(Color.WHITE);
 
-        // Son secilen tipi SharedPreferences uzerinden yukluyoruz
+        // Son secilen tipi ana SharedPreferences uzerinden yukluyoruz
         try {
-            android.content.SharedPreferences prefs = getContext().getSharedPreferences("music_visualizer_prefs", Context.MODE_PRIVATE);
-            visualizerType = prefs.getInt("visualizer_type", TYPE_NEON_MODERN);
+            android.content.SharedPreferences prefs = getContext().getSharedPreferences("car_launcher_prefs", Context.MODE_PRIVATE);
+            String typeStr = prefs.getString("car_launcher_visualizer_type", "2");
+            visualizerType = Integer.parseInt(typeStr);
         } catch (Exception e) {
             visualizerType = TYPE_NEON_MODERN;
         }
@@ -118,6 +119,34 @@ public class MusicVisualizerView extends View {
 
         // Golge ve parilti efektlerinin cizilmesi icin yazilimsal katman destegi (Turkce karakter yok)
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+    }
+
+    public void cycleVisualizerType() {
+        visualizerType = (visualizerType + 1) % 3;
+        try {
+            android.content.SharedPreferences.Editor editor = getContext().getSharedPreferences("car_launcher_prefs", Context.MODE_PRIVATE).edit();
+            editor.putString("car_launcher_visualizer_type", String.valueOf(visualizerType));
+            editor.apply();
+        } catch (Exception e) {
+            // ignore
+        }
+        mFirst = true; // Paint ayarlari yeniden yapilsin
+        invalidate();
+    }
+
+    public void reloadSettings() {
+        try {
+            android.content.SharedPreferences prefs = getContext().getSharedPreferences("car_launcher_prefs", Context.MODE_PRIVATE);
+            String typeStr = prefs.getString("car_launcher_visualizer_type", "2");
+            int newType = Integer.parseInt(typeStr);
+            if (visualizerType != newType) {
+                visualizerType = newType;
+                mFirst = true;
+                invalidate();
+            }
+        } catch (Exception e) {
+            // ignore
+        }
     }
 
     public void updateVisualizer(byte[] fft) {
