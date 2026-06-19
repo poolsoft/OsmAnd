@@ -5,4 +5,8 @@
     <string name="car_pref_language_title">Uygulama Dili</string>
     <string name="car_pref_language_desc">Arayüz dilini değiştirin (Yeniden başlatma gerektirir)</string>
     
+    <!-- Floating Button Force GPS -->
+    <string name="car_floating_button_force_gps">Sürekli GPS (Yüzen Buton)</string>
+    <string name="car_floating_button_force_gps_desc">Arka planda dahi hızı güncellemek için GPS\'i açık tutar. Daha fazla batarya harcar.</string>
+
 </resources>

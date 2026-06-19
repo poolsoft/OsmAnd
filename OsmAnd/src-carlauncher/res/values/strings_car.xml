@@ -7,4 +7,8 @@
     
     <!-- İleride eklenebilecek çeviriler -->
     <!-- <string name="car_launcher_example">Example Text</string> -->
+    <!-- Floating Button Force GPS -->
+    <string name="car_floating_button_force_gps">Continuous GPS (Floating Button)</string>
+    <string name="car_floating_button_force_gps_desc">Keeps GPS active even in the background to continuously update speed. Consumes more battery.</string>
+
 </resources>

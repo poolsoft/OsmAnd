@@ -181,6 +181,16 @@ public class CarLauncherSettings {
         prefs.edit().putBoolean(KEY_FLOATING_BUTTON, enabled).apply();
     }
 
+    public static final String KEY_FLOATING_BUTTON_FORCE_GPS = "car_launcher_floating_button_force_gps";
+
+    public boolean isFloatingButtonForceGpsEnabled() {
+        return prefs.getBoolean(KEY_FLOATING_BUTTON_FORCE_GPS, false);
+    }
+
+    public void setFloatingButtonForceGpsEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_FLOATING_BUTTON_FORCE_GPS, enabled).apply();
+    }
+
     public static final String KEY_FLOATING_BUTTON_SIZE = "car_launcher_floating_button_size";
 
     public int getFloatingButtonSize() {

@@ -1995,7 +1995,15 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		if (mapViewWithLayers != null) {
 			mapViewWithLayers.onPause();
 		}
-		app.getLocationProvider().pauseAllUpdates();
+
+		// Yuzen Buton (Floating Button) Force GPS Kontrolu (Turkce karakter yok)
+		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(this);
+		boolean shouldKeepGpsAlive = carSettings.isFloatingButtonEnabled() && carSettings.isFloatingButtonForceGpsEnabled();
+		
+		if (!shouldKeepGpsAlive) {
+			app.getLocationProvider().pauseAllUpdates();
+		}
+
 		app.getDaynightHelper().stopSensorIfNeeded();
 		settings.APPLICATION_MODE.removeListener(applicationModeListener);
 

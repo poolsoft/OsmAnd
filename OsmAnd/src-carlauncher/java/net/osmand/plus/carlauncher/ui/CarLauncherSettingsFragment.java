@@ -435,6 +435,18 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             });
         }
 
+        // Yuzen Buton Surekli GPS (Force GPS)
+        SwitchPreferenceCompat floatingButtonForceGpsPref = findPreference(CarLauncherSettings.KEY_FLOATING_BUTTON_FORCE_GPS);
+        if (floatingButtonForceGpsPref != null) {
+            floatingButtonForceGpsPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                boolean val = (Boolean) newValue;
+                if (settings != null) {
+                    settings.setFloatingButtonForceGpsEnabled(val);
+                }
+                return true;
+            });
+        }
+
         // Yuzen Buton Boyutu
         SeekBarPreference floatingButtonSizePref = findPreference(CarLauncherSettings.KEY_FLOATING_BUTTON_SIZE);
         if (floatingButtonSizePref != null) {

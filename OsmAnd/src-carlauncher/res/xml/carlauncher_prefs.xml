@@ -55,6 +55,13 @@
             android:defaultValue="false"
             app:iconSpaceReserved="false" />
 
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="car_launcher_floating_button_force_gps"
+            android:title="@string/car_floating_button_force_gps"
+            android:summary="@string/car_floating_button_force_gps_desc"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
         <androidx.preference.SeekBarPreference
             android:key="car_launcher_floating_button_size"
             android:title="Yuzen Buton Boyutu"
