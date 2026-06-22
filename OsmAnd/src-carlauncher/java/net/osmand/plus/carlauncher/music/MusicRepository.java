@@ -206,8 +206,10 @@ public class MusicRepository {
             }
         }
 
-        // Alps teyp yedek USB mount yollarini da tarayalim (Turkce karakter yok)
+        // Alps teyp yedek USB mount yollarini ve dahili hafiza Müzik/Download klasorlerini de tarayalim
         String[] fallbackPaths = {
+            "/storage/emulated/0/Music", "/sdcard/Music", 
+            "/storage/emulated/0/Download", "/sdcard/Download",
             "/storage/udisk", "/storage/udisk2", "/storage/usb_storage", 
             "/mnt/media_rw", "/mnt/usb", "/mnt/usb_storage",
             "/storage/usb0", "/storage/usb1", "/storage/usb2", "/storage/usb3", "/storage/usbotg"
