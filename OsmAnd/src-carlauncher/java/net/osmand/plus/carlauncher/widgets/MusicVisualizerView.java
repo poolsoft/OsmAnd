@@ -17,6 +17,11 @@ public class MusicVisualizerView extends View {
     public static final int TYPE_CLASSIC = 0;
     public static final int TYPE_GLOW_PEAK = 1;
     public static final int TYPE_NEON_MODERN = 2;
+    public static final int TYPE_WAVE = 3;
+    public static final int TYPE_RADIAL = 4;
+    public static final int TYPE_CENTER_MIRRORED = 5;
+    public static final int TYPE_PARTICLE = 6;
+    public static final int TYPE_RINGS = 7;
     private int visualizerType = TYPE_NEON_MODERN;
     private int dominantColor = 0;
 
@@ -122,7 +127,7 @@ public class MusicVisualizerView extends View {
     }
 
     public void cycleVisualizerType() {
-        visualizerType = (visualizerType + 1) % 3;
+        visualizerType = (visualizerType + 1) % 8;
         try {
             android.content.SharedPreferences.Editor editor = getContext().getSharedPreferences("car_launcher_prefs", Context.MODE_PRIVATE).edit();
             editor.putString("car_launcher_visualizer_type", String.valueOf(visualizerType));
@@ -178,19 +183,13 @@ public class MusicVisualizerView extends View {
             return;
         }
 
-        if (mPoints == null || mPoints.length < mBytes.length * 4) {
-            mPoints = new float[mBytes.length * 4];
-        }
-
         mRect.set(0, 0, getWidth(), getHeight());
 
         mPeakPaint.setColor(dominantColor != 0 ? getLighterColor(dominantColor, 0.5f) : Color.WHITE);
 
-        // Tipine gore gradient olusturuluyor
         if (mFirst) {
             int heightVal = getHeight() > 0 ? getHeight() : 100;
             if (dominantColor != 0) {
-                // Alt taraf yari saydam, ust taraf ise canli neon renk (Turkce karakter yok)
                 int startColor = Color.argb(38, Color.red(dominantColor), Color.green(dominantColor), Color.blue(dominantColor));
                 int endColor = dominantColor;
                 int[] colors = {startColor, endColor};
@@ -200,10 +199,9 @@ public class MusicVisualizerView extends View {
                 mForePaint.setShader(shader);
                 mForePaint.setShadowLayer(15f, 0f, 0f, dominantColor);
             } else if (visualizerType == TYPE_NEON_MODERN) {
-                // Neon Modern icin Cyan -> Mavi gecisi (Turkce karakter yok)
                 int[] colors = {
-                    Color.parseColor("#0044FF"), // Alt kisim: Koyu Mavi (Turkce karakter yok)
-                    Color.parseColor("#00FFFF")  // Ust kisim: Parlak Cyan (Turkce karakter yok)
+                    Color.parseColor("#0044FF"),
+                    Color.parseColor("#00FFFF")
                 };
                 LinearGradient shader = new LinearGradient(
                         0, heightVal, 0, 0, 
@@ -211,14 +209,10 @@ public class MusicVisualizerView extends View {
                 mForePaint.setShader(shader);
                 mForePaint.setShadowLayer(15f, 0f, 0f, Color.parseColor("#00FFFF"));
             } else {
-                // Klasik ve Glow Peak icin cok renkli gradient (Turkce karakter yok)
                 int[] colors = {
-                    Color.parseColor("#FF0000"), // Kirmizi (Turkce karakter yok)
-                    Color.parseColor("#FFFF00"), // Sari (Turkce karakter yok)
-                    Color.parseColor("#00FF00"), // Yesil (Turkce karakter yok)
-                    Color.parseColor("#00FFFF"), // Turkuaz
-                    Color.parseColor("#0000FF"), // Mavi (Turkce karakter yok)
-                    Color.parseColor("#FF00FF")  // Mor
+                    Color.parseColor("#FF0000"), Color.parseColor("#FFFF00"),
+                    Color.parseColor("#00FF00"), Color.parseColor("#00FFFF"),
+                    Color.parseColor("#0000FF"), Color.parseColor("#FF00FF")
                 };
                 LinearGradient shader = new LinearGradient(
                         0, heightVal, 0, 0, 
@@ -232,13 +226,11 @@ public class MusicVisualizerView extends View {
         int spectrumNum = Math.min(mSpectrumNum, mBytes.length);
         float barWidth = getWidth() / (float) spectrumNum;
         
-        // Neon modda barlari daha ince ve aralari acik yapiyoruz
-        float gapRatio = (visualizerType == TYPE_NEON_MODERN) ? 0.35f : 0.20f;
+        float gapRatio = (visualizerType == TYPE_NEON_MODERN || visualizerType == TYPE_PARTICLE) ? 0.35f : 0.20f;
         float gap = barWidth * gapRatio;
         float effectiveBarWidth = barWidth - gap;
 
-        // Peak dizilerini kontrol edip ilklendiriyoruz
-        if (visualizerType == TYPE_GLOW_PEAK) {
+        if (visualizerType == TYPE_GLOW_PEAK || visualizerType == TYPE_PARTICLE) {
             if (mPeaks == null || mPeaks.length != spectrumNum) {
                 mPeaks = new float[spectrumNum];
                 mPeakTimes = new long[spectrumNum];
@@ -252,51 +244,106 @@ public class MusicVisualizerView extends View {
 
         long now = System.currentTimeMillis();
 
-        for (int i = 0; i < spectrumNum; i++) {
-            byte rfk = mBytes[i];
-            float magnitude = (float) (Math.abs(rfk) * 4); 
-            float height = (magnitude / 128f) * getHeight();
-            if (height > getHeight()) height = getHeight();
-            if (height < 0) height = 0;
+        if (visualizerType == TYPE_WAVE) {
+            android.graphics.Path path = new android.graphics.Path();
+            path.moveTo(0, getHeight());
+            float prevX = 0;
+            float prevY = getHeight();
+            for (int i = 0; i < spectrumNum; i++) {
+                float magnitude = (float) (Math.abs(mBytes[i]) * 4); 
+                float height = (magnitude / 128f) * getHeight() * 0.8f;
+                float currentX = i * barWidth + (barWidth / 2f);
+                float currentY = getHeight() - height;
+                path.quadTo(prevX, prevY, (prevX + currentX) / 2f, (prevY + currentY) / 2f);
+                prevX = currentX;
+                prevY = currentY;
+            }
+            path.lineTo(getWidth(), prevY);
+            path.lineTo(getWidth(), getHeight());
+            path.close();
+            canvas.drawPath(path, mForePaint);
+        } else if (visualizerType == TYPE_RADIAL) {
+            float centerX = getWidth() / 2f;
+            float centerY = getHeight() / 2f;
+            float baseRadius = Math.min(centerX, centerY) * 0.3f;
+            for (int i = 0; i < spectrumNum; i++) {
+                float magnitude = (float) (Math.abs(mBytes[i]) * 4); 
+                float height = (magnitude / 128f) * Math.min(centerX, centerY) * 0.7f;
+                float angle = (float) (i * 2 * Math.PI / spectrumNum);
+                float startX = centerX + (float) Math.cos(angle) * baseRadius;
+                float startY = centerY + (float) Math.sin(angle) * baseRadius;
+                float endX = centerX + (float) Math.cos(angle) * (baseRadius + height);
+                float endY = centerY + (float) Math.sin(angle) * (baseRadius + height);
+                mForePaint.setStrokeWidth(effectiveBarWidth);
+                mForePaint.setStyle(Paint.Style.STROKE);
+                mForePaint.setStrokeCap(Paint.Cap.ROUND);
+                canvas.drawLine(startX, startY, endX, endY, mForePaint);
+            }
+            mForePaint.setStyle(Paint.Style.FILL);
+        } else if (visualizerType == TYPE_RINGS) {
+            float centerX = getWidth() / 2f;
+            float centerY = getHeight() / 2f;
+            mForePaint.setStyle(Paint.Style.STROKE);
+            for (int r = 0; r < 4; r++) {
+                int index = (r * spectrumNum) / 5;
+                if (index < spectrumNum) {
+                    float magnitude = (float) (Math.abs(mBytes[index]) * 4);
+                    float extraRadius = (magnitude / 128f) * Math.min(centerX, centerY) * 0.5f;
+                    mForePaint.setStrokeWidth(10f - (r * 2f));
+                    canvas.drawCircle(centerX, centerY, 50f + (r * 40f) + extraRadius, mForePaint);
+                }
+            }
+            mForePaint.setStyle(Paint.Style.FILL);
+        } else {
+            for (int i = 0; i < spectrumNum; i++) {
+                float magnitude = (float) (Math.abs(mBytes[i]) * 4); 
+                float height = (magnitude / 128f) * getHeight();
+                if (height > getHeight()) height = getHeight();
+                if (height < 0) height = 0;
 
-            float left = i * barWidth + (gap/2);
-            float top = getHeight() - height;
-            float right = left + effectiveBarWidth;
-            float bottom = getHeight();
+                float left = i * barWidth + (gap/2);
+                float top = getHeight() - height;
+                float right = left + effectiveBarWidth;
+                float bottom = getHeight();
 
-            if (visualizerType == TYPE_NEON_MODERN) {
-                // Yuvarlatilmis barlar (Capsule bar)
-                canvas.drawRoundRect(left, top, right, bottom, effectiveBarWidth / 2f, effectiveBarWidth / 2f, mForePaint);
-            } else if (visualizerType == TYPE_GLOW_PEAK) {
-                // Klasik bar cizimi
-                canvas.drawRect(left, top, right, bottom, mForePaint);
-
-                // Peak hesabi ve decay (sonumleme) islemleri
-                if (height >= mPeaks[i]) {
-                    mPeaks[i] = height;
-                    mPeakTimes[i] = now;
+                if (visualizerType == TYPE_NEON_MODERN) {
+                    canvas.drawRoundRect(left, top, right, bottom, effectiveBarWidth / 2f, effectiveBarWidth / 2f, mForePaint);
+                } else if (visualizerType == TYPE_CENTER_MIRRORED) {
+                    float midY = getHeight() / 2f;
+                    float halfHeight = height / 2f;
+                    canvas.drawRoundRect(left, midY - halfHeight, right, midY + halfHeight, effectiveBarWidth / 2f, effectiveBarWidth / 2f, mForePaint);
+                } else if (visualizerType == TYPE_PARTICLE) {
+                    if (height >= mPeaks[i]) {
+                        mPeaks[i] = height;
+                        mPeakTimes[i] = now;
+                    } else {
+                        float elapsed = (now - mPeakTimes[i]) / 1000f;
+                        float decay = elapsed * elapsed * getHeight() * 1.5f; // Yercekimi ivmesi
+                        mPeaks[i] = Math.max(0, mPeaks[i] - decay);
+                    }
+                    float peakTop = getHeight() - mPeaks[i];
+                    canvas.drawRect(left, peakTop - effectiveBarWidth, right, peakTop, mPeakPaint);
+                } else if (visualizerType == TYPE_GLOW_PEAK) {
+                    canvas.drawRect(left, top, right, bottom, mForePaint);
+                    if (height >= mPeaks[i]) {
+                        mPeaks[i] = height;
+                        mPeakTimes[i] = now;
+                    } else {
+                        float elapsed = (now - mPeakTimes[i]) / 1000f;
+                        float decay = elapsed * getHeight() * 0.6f;
+                        mPeaks[i] = Math.max(0, mPeaks[i] - decay);
+                        mPeakTimes[i] = now;
+                    }
+                    float peakTop = getHeight() - mPeaks[i];
+                    canvas.drawRect(left, peakTop, right, peakTop + 6f, mPeakPaint);
                 } else {
-                    float elapsed = (now - mPeakTimes[i]) / 1000f; // Saniye
-                    float decay = elapsed * getHeight() * 0.6f; // Saniyede ekranin yuzde 60'i kadar dussun
-                    mPeaks[i] = Math.max(0, mPeaks[i] - decay);
-                    mPeakTimes[i] = now;
+                    canvas.drawRect(left, top, right, bottom, mForePaint);
                 }
-
-                // Peak bar cizimi
-                float peakTop = getHeight() - mPeaks[i];
-                float peakBottom = peakTop + 6f; // 6px kalinlik
-                if (peakTop < getHeight() - 6f) {
-                    canvas.drawRect(left, peakTop, right, peakBottom, mPeakPaint);
-                }
-            } else {
-                // Klasik Mod
-                canvas.drawRect(left, top, right, bottom, mForePaint);
             }
         }
         
-        // Glow Peak modunda peak noktalarinin yumusak dususu icin surekli invalidate tetikliyoruz
-        if (visualizerType == TYPE_GLOW_PEAK) {
-            postInvalidateDelayed(16); // Yaklasik 60 FPS guncelleme
+        if (visualizerType == TYPE_GLOW_PEAK || visualizerType == TYPE_PARTICLE || visualizerType == TYPE_WAVE) {
+            postInvalidateDelayed(16);
         }
     }
 }
