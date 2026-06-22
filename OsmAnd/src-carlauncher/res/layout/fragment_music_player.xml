@@ -120,7 +120,7 @@
                 app:cardElevation="24dp"
                 app:cardBackgroundColor="#1AFFFFFF"
                 android:layout_margin="16dp"
-                app:layout_constraintWidth_percent="0.45"
+                app:layout_constraintHeight_percent="0.8"
                 app:layout_constraintDimensionRatio="1:1"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
