@@ -900,6 +900,20 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			// Animasyon devam ederken yeni tiklamalari engelle (Turkce karakter yok)
 			return;
 		}
+
+		// YENI: Eger panelde Muzik, Uygulamalar vb. aciksa bu butonu "Geri Don" olarak kullan
+		if (panelContentManager != null) {
+			net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent current = panelContentManager.getCurrentContent();
+			if (current != net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS && 
+				current != net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.DESKTOP) {
+				
+				panelContentManager.setContent(isDesktopMode ? 
+					net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.DESKTOP : 
+					net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS);
+				return;
+			}
+		}
+
 		if (!isDesktopMode && layoutMode == 0) {
 			// Normal -> Full Harita
 			layoutMode = 2;
