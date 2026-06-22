@@ -119,41 +119,6 @@ public class AppPickerDialog {
             internalPlayer.packageName = "usage.internal.player";
             internalPlayer.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
             apps.add(internalPlayer);
-
-            // XYAuto Yerel Muzik her durumda picker listesine sabit olarak eklenir
-            AppInfo xyPlayer = new AppInfo();
-            xyPlayer.name = "XYAuto Yerel Muzik";
-            xyPlayer.packageName = "com.acloud.stub.localmusic";
-            xyPlayer.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
-            apps.add(xyPlayer);
-
-            // XYAuto Yerel Radyo picker listesine sabit olarak eklenir
-            AppInfo xyRadio = new AppInfo();
-            xyRadio.name = "XYAuto Yerel Radyo";
-            xyRadio.packageName = "com.acloud.stub.extradio";
-            xyRadio.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
-            apps.add(xyRadio);
-
-            // HCN Yerel Muzik picker listesine sabit olarak eklenir
-            AppInfo hcnPlayer = new AppInfo();
-            hcnPlayer.name = "HCN Yerel Muzik";
-            hcnPlayer.packageName = "com.hcn.AutoMediaPlayer";
-            hcnPlayer.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
-            apps.add(hcnPlayer);
-
-            // HCN Yerel Radyo picker listesine sabit olarak eklenir
-            AppInfo hcnRadio = new AppInfo();
-            hcnRadio.name = "HCN Yerel Radyo";
-            hcnRadio.packageName = "com.hcn.autoradio";
-            hcnRadio.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
-            apps.add(hcnRadio);
-
-            // ZLink picker listesine sabit olarak eklenir
-            AppInfo zlinkApp = new AppInfo();
-            zlinkApp.name = "ZLink";
-            zlinkApp.packageName = "com.zmarties.zlink";
-            zlinkApp.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
-            apps.add(zlinkApp);
         }
 
         if (!onlyMusicApps) {
@@ -228,6 +193,9 @@ public class AppPickerDialog {
                 apps.add(app);
             }
             
+            if (onlyMusicApps) {
+                addFallbackStubApps(apps);
+            }
             Collections.sort(apps, (a1, a2) -> a1.name.compareToIgnoreCase(a2.name));
             if (onlyMusicApps) cachedMusicApps = apps;
             else cachedAllApps = apps;
@@ -283,10 +251,39 @@ public class AppPickerDialog {
             } catch (Exception e) { }
         }
 
+        if (onlyMusicApps) {
+            addFallbackStubApps(apps);
+        }
         Collections.sort(apps, (a1, a2) -> a1.name.compareToIgnoreCase(a2.name));
         if (onlyMusicApps) cachedMusicApps = apps;
         else cachedAllApps = apps;
         return apps;
+    }
+
+    private void addFallbackStubApps(List<AppInfo> apps) {
+        String[][] stubs = {
+            {"XYAuto Yerel Muzik", "com.acloud.stub.localmusic"},
+            {"XYAuto Yerel Radyo", "com.acloud.stub.extradio"},
+            {"HCN Yerel Muzik", "com.hcn.AutoMediaPlayer"},
+            {"HCN Yerel Radyo", "com.hcn.autoradio"},
+            {"ZLink", "com.zmarties.zlink"}
+        };
+        for (String[] stub : stubs) {
+            boolean found = false;
+            for (AppInfo existing : apps) {
+                if (stub[1].equals(existing.packageName)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                AppInfo app = new AppInfo();
+                app.name = stub[0];
+                app.packageName = stub[1];
+                app.icon = context.getResources().getDrawable(android.R.drawable.ic_media_play, null);
+                apps.add(app);
+            }
+        }
     }
 
     public static void clearCache() {
