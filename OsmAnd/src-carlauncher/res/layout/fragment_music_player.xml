@@ -18,6 +18,13 @@
         android:src="@drawable/bg_default_music_art"
         android:alpha="0.25"/>
 
+    <!-- AMBİANS PARLAMA KATMANI -->
+    <View
+        android:id="@+id/ambiance_glow_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:alpha="0.0" />
 
     <View
         android:layout_width="match_parent"

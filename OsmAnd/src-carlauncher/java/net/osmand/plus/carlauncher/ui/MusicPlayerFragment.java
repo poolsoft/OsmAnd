@@ -116,6 +116,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private TextView nowPlayingCenterTitle;
     private TextView nowPlayingCenterArtist;
     private boolean isPlaylistVisible = true;
+    private View ambianceGlowLayer;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -144,6 +145,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         btnClose = root.findViewById(net.osmand.plus.R.id.btn_close);
         nowPlayingArt = root.findViewById(net.osmand.plus.R.id.now_playing_art);
         nowPlayingArtBlur = root.findViewById(net.osmand.plus.R.id.now_playing_art_blur);
+        ambianceGlowLayer = root.findViewById(net.osmand.plus.R.id.ambiance_glow_layer);
         nowPlayingTitle = root.findViewById(net.osmand.plus.R.id.now_playing_title);
         nowPlayingArtist = root.findViewById(net.osmand.plus.R.id.now_playing_artist);
         
@@ -275,6 +277,24 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     public void onFftDataCapture(byte[] fft) {
         if (visualizerView != null) {
             visualizerView.updateVisualizer(fft);
+        }
+        
+        if (ambianceGlowLayer != null && fft != null && fft.length > 2) {
+            float totalMag = 0;
+            // İlk düşük frekans bantları (Bass) hesaplanıyor
+            int count = Math.min(10, fft.length / 2);
+            for (int i = 0; i < count; i++) {
+                byte rfk = fft[i * 2];
+                totalMag += Math.abs(rfk);
+            }
+            float avg = totalMag / count;
+            // Ortalama şiddeti alpha (0.0 - 0.6) aralığına çeviriyoruz
+            float targetAlpha = (avg / 128f) * 0.7f;
+            if (targetAlpha > 0.6f) targetAlpha = 0.6f;
+            if (targetAlpha < 0.0f) targetAlpha = 0.0f;
+            
+            final float alpha = targetAlpha;
+            ambianceGlowLayer.post(() -> ambianceGlowLayer.setAlpha(alpha));
         }
     }
 
@@ -1508,6 +1528,13 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             // Ambians gorsellestirici ayarina gore dinamik renk veya varsayilan (0) secimi (Turkce karakter yok)
             final int visualizerColor = (albumArt != null && clSettings.isAmbianceVisualizerEnabled()) ? finalColor : 0;
             visualizerView.post(() -> visualizerView.setDominantColor(visualizerColor));
+            if (ambianceGlowLayer != null) {
+                // Sadece RGB kısmını al, Alpha kısmını arkaplan için tamamen kapat
+                int glowColor = (0xFFFFFF & visualizerColor) | 0xFF000000;
+                if (visualizerColor == 0) glowColor = 0xFF000000; // Eger ambians kapaliysa siyah yap
+                final int fglow = glowColor;
+                ambianceGlowLayer.post(() -> ambianceGlowLayer.setBackgroundColor(fglow));
+            }
         }
         
         if (getActivity() == null)

@@ -36,6 +36,10 @@ public class CarFloatingButtonManager {
     private android.widget.TextView speedText;
     private GradientDrawable buttonBg;
 
+    private android.location.LocationManager locationManager;
+    private android.location.LocationListener locationListener;
+    private float nativeGpsSpeed = -1f;
+
     // Surukleme durumlari
     private int initialX;
     private int initialY;
@@ -246,6 +250,27 @@ public class CarFloatingButtonManager {
             
             net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
             net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app).addListener(telemetryListener);
+
+            // Native GPS Speed Listener
+            if (locationManager == null) {
+                locationManager = (android.location.LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+                locationListener = new android.location.LocationListener() {
+                    @Override
+                    public void onLocationChanged(android.location.Location location) {
+                        if (location != null && location.hasSpeed()) {
+                            nativeGpsSpeed = location.getSpeed() * 3.6f;
+                        }
+                    }
+                    @Override public void onStatusChanged(String provider, int status, android.os.Bundle extras) {}
+                    @Override public void onProviderEnabled(String provider) {}
+                    @Override public void onProviderDisabled(String provider) {}
+                };
+            }
+            try {
+                locationManager.requestLocationUpdates(android.location.LocationManager.GPS_PROVIDER, 1000, 0, locationListener);
+            } catch (SecurityException e) {
+                // ignore
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -253,7 +278,7 @@ public class CarFloatingButtonManager {
 
     public void hideButton() {
         hideCustomOverlayMenu();
-        if (!isAdded || floatingView == null) return;
+        if (!isAdded) return;
         try {
             windowManager.removeView(floatingView);
             isAdded = false;
@@ -261,6 +286,14 @@ public class CarFloatingButtonManager {
             
             net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
             net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app).removeListener(telemetryListener);
+
+            if (locationManager != null && locationListener != null) {
+                try {
+                    locationManager.removeUpdates(locationListener);
+                } catch (SecurityException e) {
+                    // ignore
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -305,8 +338,9 @@ public class CarFloatingButtonManager {
         public void onTelemetryUpdated(net.osmand.plus.carlauncher.telemetry.TelemetryManager.LocationState loc, net.osmand.plus.carlauncher.telemetry.TelemetryManager.NavigationState nav, net.osmand.plus.carlauncher.telemetry.TelemetryManager.ObdState obd) {
             if (floatingView == null || speedText == null || buttonBg == null) return;
             
-            float currentSpeed = loc.speedKmh / 3.6f;
-            int speedKmhInt = Math.round(loc.speedKmh);
+            float speedKmh = (nativeGpsSpeed >= 0) ? nativeGpsSpeed : loc.speedKmh;
+            float currentSpeed = speedKmh / 3.6f;
+            int speedKmhInt = Math.round(speedKmh);
             
             String speedStr = String.valueOf(speedKmhInt);
             android.text.SpannableString span = new android.text.SpannableString(speedStr + "\nkm/h");
