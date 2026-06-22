@@ -24,6 +24,12 @@ public class MusicVisualizerView extends View {
     public static final int TYPE_RINGS = 7;
     private int visualizerType = TYPE_NEON_MODERN;
     private int dominantColor = 0;
+    private boolean isSmallPanel = true;
+
+    public void setVisualizerContext(boolean isSmallPanel) {
+        this.isSmallPanel = isSmallPanel;
+        reloadSettings();
+    }
 
     public void setDominantColor(int color) {
         if (color != 0) {
@@ -95,10 +101,10 @@ public class MusicVisualizerView extends View {
         mPeakPaint.setStyle(Paint.Style.FILL);
         mPeakPaint.setColor(Color.WHITE);
 
-        // Son secilen tipi ana SharedPreferences uzerinden yukluyoruz
+        // Baslangic olarak kucuk panel varsayiliyor, disaridan context atandiginda degisecek
         try {
             android.content.SharedPreferences prefs = getContext().getSharedPreferences("car_launcher_prefs", Context.MODE_PRIVATE);
-            String typeStr = prefs.getString("car_launcher_visualizer_type", "2");
+            String typeStr = prefs.getString("car_launcher_visualizer_type_small", "2");
             visualizerType = Integer.parseInt(typeStr);
         } catch (Exception e) {
             visualizerType = TYPE_NEON_MODERN;
@@ -130,7 +136,8 @@ public class MusicVisualizerView extends View {
         visualizerType = (visualizerType + 1) % 8;
         try {
             android.content.SharedPreferences.Editor editor = getContext().getSharedPreferences("car_launcher_prefs", Context.MODE_PRIVATE).edit();
-            editor.putString("car_launcher_visualizer_type", String.valueOf(visualizerType));
+            String key = isSmallPanel ? "car_launcher_visualizer_type_small" : "car_launcher_visualizer_type_large";
+            editor.putString(key, String.valueOf(visualizerType));
             editor.apply();
         } catch (Exception e) {
             // ignore
@@ -142,7 +149,9 @@ public class MusicVisualizerView extends View {
     public void reloadSettings() {
         try {
             android.content.SharedPreferences prefs = getContext().getSharedPreferences("car_launcher_prefs", Context.MODE_PRIVATE);
-            String typeStr = prefs.getString("car_launcher_visualizer_type", "2");
+            String key = isSmallPanel ? "car_launcher_visualizer_type_small" : "car_launcher_visualizer_type_large";
+            String defaultType = isSmallPanel ? "2" : "4";
+            String typeStr = prefs.getString(key, defaultType);
             int newType = Integer.parseInt(typeStr);
             if (visualizerType != newType) {
                 visualizerType = newType;

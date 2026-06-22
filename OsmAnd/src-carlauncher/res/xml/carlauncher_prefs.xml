@@ -137,12 +137,21 @@
             app:iconSpaceReserved="false" />
 
         <androidx.preference.ListPreference
-            android:key="car_launcher_visualizer_type"
-            android:title="Görselleştirici Tipi"
+            android:key="car_launcher_visualizer_type_small"
+            android:title="Görselleştirici Tipi (Küçük Panel)"
             android:summary="%s"
             android:entries="@array/visualizer_type_entries"
             android:entryValues="@array/visualizer_type_values"
             android:defaultValue="2"
+            app:iconSpaceReserved="false" />
+
+        <androidx.preference.ListPreference
+            android:key="car_launcher_visualizer_type_large"
+            android:title="Görselleştirici Tipi (Büyük Panel)"
+            android:summary="%s"
+            android:entries="@array/visualizer_type_entries"
+            android:entryValues="@array/visualizer_type_values"
+            android:defaultValue="4"
             app:iconSpaceReserved="false" />
 
         <androidx.preference.SwitchPreferenceCompat

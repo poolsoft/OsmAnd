@@ -218,6 +218,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         
         // Find Visualizer
         visualizerView = root.findViewById(net.osmand.plus.R.id.player_visualizer);
+        if (visualizerView != null) {
+            visualizerView.setVisualizerContext(false); // Buyuk panel (Large context)
+        }
         
         View btnChangeVisualizer = root.findViewById(net.osmand.plus.R.id.btn_change_visualizer);
         if (btnChangeVisualizer != null) {

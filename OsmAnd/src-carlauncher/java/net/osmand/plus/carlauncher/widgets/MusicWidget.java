@@ -53,6 +53,9 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         artistText = view.findViewById(net.osmand.plus.R.id.widget_track_artist);
         albumArtView = view.findViewById(net.osmand.plus.R.id.widget_album_art);
         visualizerView = view.findViewById(net.osmand.plus.R.id.widget_visualizer);
+        if (visualizerView != null) {
+            visualizerView.setVisualizerContext(true); // Kucuk panel (Small context)
+        }
 
         ImageButton btnPrev = view.findViewById(net.osmand.plus.R.id.widget_btn_prev);
         ImageButton btnNext = view.findViewById(net.osmand.plus.R.id.widget_btn_next);
