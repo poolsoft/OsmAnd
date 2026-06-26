@@ -8,21 +8,21 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_appearance"
-        android:title="Görünüm"
+        android:title="@string/car_pref_title_appearance"
         app:icon="@android:drawable/ic_menu_view"
         android:iconSpaceReserved="true">
 
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_status_bar"
-            android:title="Status Bar Göster"
-            android:summary="Sistem çubuğunu açıp kapatır"
+            android:title="@string/car_pref_title_status_bar"
+            android:summary="@string/car_pref_summary_status_bar"
             android:defaultValue="true"
             app:iconSpaceReserved="false" />
 
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_dark_theme"
-            android:title="Koyu Tema"
-            android:summary="Karanlık arka plan kullan"
+            android:title="@string/car_pref_title_dark_theme"
+            android:summary="@string/car_pref_summary_dark_theme"
             android:defaultValue="true"
             app:iconSpaceReserved="false" />
 
@@ -34,15 +34,15 @@
 
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_portrait_map_only"
-            android:title="Dikey Ekranda Sadece Harita Goster"
-            android:summary="Dikey modda widget paneli ve rihtimi gizler"
+            android:title="@string/car_pref_title_portrait_map_only"
+            android:summary="@string/car_pref_summary_portrait_map_only"
             android:defaultValue="false"
             app:iconSpaceReserved="false" />
 
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_floating_button"
-            android:title="Yuzen Yardimci Buton (Floating Button)"
-            android:summary="Ekranda tasinabilir sistem menu butonu gosterir"
+            android:title="@string/car_pref_title_floating_button"
+            android:summary="@string/car_pref_summary_floating_button"
             android:defaultValue="false"
             app:iconSpaceReserved="false" />
 
@@ -55,8 +55,8 @@
 
         <androidx.preference.SeekBarPreference
             android:key="car_launcher_floating_button_size"
-            android:title="Yuzen Buton Boyutu"
-            android:summary="Ekranda kapladigi alani ayarla"
+            android:title="@string/car_pref_title_floating_button_size"
+            android:summary="@string/car_pref_summary_floating_button_size"
             android:defaultValue="86"
             android:max="140"
             app:min="50"
@@ -65,7 +65,7 @@
 
         <androidx.preference.ListPreference
             android:key="car_launcher_night_dim_mode"
-            android:title="Gece Karartma Modu"
+            android:title="@string/car_pref_title_night_dim_mode"
             android:summary="%s"
             android:entries="@array/night_dim_mode_entries"
             android:entryValues="@array/night_dim_mode_values"
@@ -75,8 +75,8 @@
         <!-- Premium Kisiklestirme Ayarlari -->
         <androidx.preference.SeekBarPreference
             android:key="car_launcher_parallax_intensity"
-            android:title="Parallax Arka Plan Gucu"
-            android:summary="ViewPager kaydirilirken arka planin kayma miktarini ayarlar (Varsayilan: %20)"
+            android:title="@string/car_pref_title_parallax_intensity"
+            android:summary="@string/car_pref_summary_parallax_intensity"
             android:defaultValue="20"
             android:max="50"
             app:min="0"
@@ -85,7 +85,7 @@
 
         <androidx.preference.ListPreference
             android:key="car_launcher_background_style"
-            android:title="Parallax Arka Plan Secici"
+            android:title="@string/car_pref_title_background_style"
             android:summary="%s"
             android:entries="@array/background_style_entries"
             android:entryValues="@array/background_style_values"
@@ -94,14 +94,14 @@
 
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_pip_mode"
-            android:title="Yüzen Harita (Picture-in-Picture)"
-            android:summary="Arka plana geçildiğinde haritayı yüzen küçük ekran olarak açık tutar"
+            android:title="@string/car_pref_title_pip_mode"
+            android:summary="@string/car_pref_summary_pip_mode"
             android:defaultValue="true"
             app:iconSpaceReserved="false" />
 
         <androidx.preference.ListPreference
             android:key="widget_panel_position"
-            android:title="Büyük Panel Konumu"
+            android:title="@string/car_pref_title_widget_panel_position"
             android:summary="%s"
             android:entries="@array/widget_panel_position_entries"
             android:entryValues="@array/widget_panel_position_values"
@@ -110,7 +110,7 @@
 
         <androidx.preference.ListPreference
             android:key="car_launcher_expansion_behavior"
-            android:title="Büyük Panel Açılış Stratejisi"
+            android:title="@string/car_pref_title_expansion_behavior"
             android:summary="%s"
             android:entries="@array/expansion_behavior_entries"
             android:entryValues="@array/expansion_behavior_values"
@@ -126,19 +126,19 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_music"
-        android:title="Müzik"
+        android:title="@string/car_pref_title_music"
         app:icon="@android:drawable/ic_media_play"
         android:iconSpaceReserved="true">
 
         <androidx.preference.Preference
             android:key="car_launcher_music_app"
-            android:title="Varsayılan Müzik Uygulaması"
-            android:summary="Tıklayarak seçin"
+            android:title="@string/car_pref_title_music_app"
+            android:summary="@string/car_pref_summary_music_app"
             app:iconSpaceReserved="false" />
 
         <androidx.preference.ListPreference
             android:key="car_launcher_visualizer_type_small"
-            android:title="Görselleştirici Tipi (Küçük Panel)"
+            android:title="@string/car_pref_title_visualizer_type_small"
             android:summary="%s"
             android:entries="@array/visualizer_type_entries"
             android:entryValues="@array/visualizer_type_values"
@@ -147,7 +147,7 @@
 
         <androidx.preference.ListPreference
             android:key="car_launcher_visualizer_type_large"
-            android:title="Görselleştirici Tipi (Büyük Panel)"
+            android:title="@string/car_pref_title_visualizer_type_large"
             android:summary="%s"
             android:entries="@array/visualizer_type_entries"
             android:entryValues="@array/visualizer_type_values"
@@ -156,28 +156,28 @@
 
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_auto_play_music"
-            android:title="Açılışta Otomatik Oynat"
-            android:summary="Uygulama başladığında müziği başlat"
+            android:title="@string/car_pref_title_auto_play_music"
+            android:summary="@string/car_pref_summary_auto_play_music"
             android:defaultValue="false"
             app:iconSpaceReserved="false" />
 
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_ambiance_visualizer"
-            android:title="Ambians Görselleştirici"
-            android:summary="Müzik görselleştirici renklerini albüm kapağına göre dinamik olarak belirler"
+            android:title="@string/car_pref_title_ambiance_visualizer"
+            android:summary="@string/car_pref_summary_ambiance_visualizer"
             android:defaultValue="true"
             app:iconSpaceReserved="false" />
 
         <androidx.preference.Preference
             android:key="car_launcher_equalizer"
-            android:title="Equalizer"
-            android:summary="Sistem ses ayarlarını aç"
+            android:title="@string/car_pref_title_equalizer"
+            android:summary="@string/car_pref_summary_equalizer"
             app:iconSpaceReserved="false" />
 
         <androidx.preference.Preference
             android:key="car_launcher_scan_music"
-            android:title="Muzikleri Yeniden Tara"
-            android:summary="Dahili depolama ve USB bellekleri tara"
+            android:title="@string/car_pref_title_scan_music"
+            android:summary="@string/car_pref_summary_scan_music"
             app:iconSpaceReserved="false" />
 
     </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
@@ -187,14 +187,14 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_weather"
-        android:title="Hava Durumu"
+        android:title="@string/car_pref_title_weather"
         app:icon="@android:drawable/ic_menu_my_calendar"
         android:iconSpaceReserved="true">
 
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_weather_enabled"
-            android:title="Hava Durumu Servisi"
-            android:summary="Saat widget'ında hava durumu gösterimi"
+            android:title="@string/car_pref_title_weather_enabled"
+            android:summary="@string/car_pref_summary_weather_enabled"
             android:defaultValue="true"
             app:iconSpaceReserved="false" />
 
@@ -205,28 +205,28 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_autolaunch"
-        android:title="Otomatik Başlatma"
+        android:title="@string/car_pref_title_autolaunch"
         app:icon="@android:drawable/ic_menu_recent_history"
         android:iconSpaceReserved="true">
 
         <androidx.preference.SwitchPreferenceCompat
             android:key="autolaunch_enable_1"
-            android:title="Uygulama 1"
-            android:summary="Seçmek için metne tıklayın"
+            android:title="@string/car_pref_title_app1"
+            android:summary="@string/car_pref_summary_click_to_select"
             android:defaultValue="false"
             app:iconSpaceReserved="false" />
 
         <androidx.preference.SwitchPreferenceCompat
             android:key="autolaunch_enable_2"
-            android:title="Uygulama 2"
-            android:summary="Seçmek için metne tıklayın"
+            android:title="@string/car_pref_title_app2"
+            android:summary="@string/car_pref_summary_click_to_select"
             android:defaultValue="false"
             app:iconSpaceReserved="false" />
 
         <androidx.preference.SwitchPreferenceCompat
             android:key="autolaunch_enable_3"
-            android:title="Uygulama 3"
-            android:summary="Seçmek için metne tıklayın"
+            android:title="@string/car_pref_title_app3"
+            android:summary="@string/car_pref_summary_click_to_select"
             android:defaultValue="false"
             app:iconSpaceReserved="false" />
 
@@ -237,20 +237,20 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_backup"
-        android:title="Yedekle ve Geri Yükle"
+        android:title="@string/car_pref_title_backup"
         app:icon="@android:drawable/ic_menu_save"
         android:iconSpaceReserved="true">
 
         <androidx.preference.Preference
             android:key="action_backup_export"
-            android:title="Ayarları Dışa Aktar"
-            android:summary="Widget düzenini ve ayarları dosyaya kaydet"
+            android:title="@string/car_pref_title_backup_export"
+            android:summary="@string/car_pref_summary_backup_export"
             app:iconSpaceReserved="false" />
 
         <androidx.preference.Preference
             android:key="action_backup_import"
-            android:title="Ayarları Geri Yükle"
-            android:summary="Dosyadan geri yükle"
+            android:title="@string/car_pref_title_backup_import"
+            android:summary="@string/car_pref_summary_backup_import"
             app:iconSpaceReserved="false" />
 
     </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
@@ -260,13 +260,13 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_dock"
-        android:title="Uygulama Dock (Sidebar)"
+        android:title="@string/car_pref_title_dock"
         app:icon="@android:drawable/ic_menu_sort_by_size"
         android:iconSpaceReserved="true">
 
         <androidx.preference.ListPreference
             android:key="car_launcher_dock_position"
-            android:title="Dock Konumu"
+            android:title="@string/car_pref_title_dock_position"
             android:summary="%s"
             android:entries="@array/dock_position_entries"
             android:entryValues="@array/dock_position_values"
@@ -275,8 +275,8 @@
 
         <androidx.preference.SeekBarPreference
             android:key="car_launcher_dock_size"
-            android:title="Dock Boyutu"
-            android:summary="0: Küçük, 50: Normal, 100: Büyük"
+            android:title="@string/car_pref_title_dock_size"
+            android:summary="@string/car_pref_summary_dock_size"
             android:defaultValue="50"
             android:max="100"
             app:min="0"
@@ -285,7 +285,7 @@
 
         <androidx.preference.SeekBarPreference
             android:key="car_launcher_max_shortcuts"
-            android:title="Maksimum Kısayol Sayısı"
+            android:title="@string/car_pref_title_max_shortcuts"
             android:defaultValue="6"
             android:max="10"
             app:min="3"
@@ -294,8 +294,8 @@
 
         <androidx.preference.Preference
             android:key="car_launcher_reset_dock"
-            android:title="Dock'u Sıfırla"
-            android:summary="Tüm kısayolları kaldır"
+            android:title="@string/car_pref_title_reset_dock"
+            android:summary="@string/car_pref_summary_reset_dock"
             app:iconSpaceReserved="false" />
 
     </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
@@ -305,14 +305,14 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_assistant"
-        android:title="Asistan"
+        android:title="@string/car_pref_title_assistant"
         app:icon="@android:drawable/ic_btn_speak_now"
         android:iconSpaceReserved="true">
 
         <androidx.preference.Preference
             android:key="car_launcher_import_voice_model"
-            android:title="Ses Modelini USB/Dosyadan Yukle"
-            android:summary="İnternet yoksa USB'den indirdiğiniz zip modelini yükleyin"
+            android:title="@string/car_pref_title_import_voice_model"
+            android:summary="@string/car_pref_summary_import_voice_model"
             app:iconSpaceReserved="false" />
 
     </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
@@ -322,27 +322,27 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
         android:key="category_about"
-        android:title="Hakkında"
+        android:title="@string/car_pref_title_about"
         app:icon="@android:drawable/ic_menu_info_details"
         android:iconSpaceReserved="true">
 
         <androidx.preference.Preference
             android:key="car_launcher_version"
-            android:title="Versiyon"
+            android:title="@string/car_pref_title_version"
             android:summary="1.0.0"
             android:selectable="false"
             app:iconSpaceReserved="false" />
 
         <androidx.preference.Preference
             android:key="car_launcher_check_updates"
-            android:title="Güncellemeleri Denetle"
-            android:summary="Yeni bir sürüm olup olmadığını kontrol et"
+            android:title="@string/car_pref_title_check_updates"
+            android:summary="@string/car_pref_summary_check_updates"
             app:iconSpaceReserved="false" />
 
         <androidx.preference.Preference
             android:key="car_launcher_github"
-            android:title="GitHub"
-            android:summary="Kaynak kodunu görüntüle"
+            android:title="@string/car_pref_title_github"
+            android:summary="@string/car_pref_summary_github"
             app:iconSpaceReserved="false" />
 
     </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>

@@ -5,10 +5,89 @@
     <string name="car_pref_language_title">App Language</string>
     <string name="car_pref_language_desc">Change interface language (Requires restart)</string>
     
-    <!-- İleride eklenebilecek çeviriler -->
-    <!-- <string name="car_launcher_example">Example Text</string> -->
     <!-- Floating Button Force GPS -->
     <string name="car_floating_button_force_gps">Continuous GPS (Floating Button)</string>
     <string name="car_floating_button_force_gps_desc">Keeps GPS active even in the background to continuously update speed. Consumes more battery.</string>
 
+    <!-- Appearance / Görünüm -->
+    <string name="car_pref_title_appearance">Appearance</string>
+    <string name="car_pref_title_status_bar">Show Status Bar</string>
+    <string name="car_pref_summary_status_bar">Toggles the system status bar</string>
+    <string name="car_pref_title_dark_theme">Dark Theme</string>
+    <string name="car_pref_summary_dark_theme">Use dark background</string>
+    <string name="car_pref_title_portrait_map_only">Show Map Only in Portrait Screen</string>
+    <string name="car_pref_summary_portrait_map_only">Hides widget panel and dock in portrait mode</string>
+    <string name="car_pref_title_floating_button">Floating Assistant Button</string>
+    <string name="car_pref_summary_floating_button">Shows a movable system menu button on the screen</string>
+    <string name="car_pref_title_floating_button_size">Floating Button Size</string>
+    <string name="car_pref_summary_floating_button_size">Adjust the area it occupies on the screen</string>
+    <string name="car_pref_title_night_dim_mode">Night Dim Mode</string>
+    <string name="car_pref_title_parallax_intensity">Parallax Background Strength</string>
+    <string name="car_pref_summary_parallax_intensity">Adjusts background scroll amount when ViewPager is scrolled (Default: 20%)</string>
+    <string name="car_pref_title_background_style">Parallax Background Selector</string>
+    <string name="car_pref_title_pip_mode">Floating Map (Picture-in-Picture)</string>
+    <string name="car_pref_summary_pip_mode">Keeps the map active as a floating small screen when backgrounded</string>
+    <string name="car_pref_title_widget_panel_position">Large Panel Position</string>
+    <string name="car_pref_title_expansion_behavior">Large Panel Opening Strategy</string>
+
+    <!-- Music / Müzik -->
+    <string name="car_pref_title_music">Music</string>
+    <string name="car_pref_title_music_app">Default Music App</string>
+    <string name="car_pref_summary_music_app">Tap to select</string>
+    <string name="car_pref_title_visualizer_type_small">Visualizer Type (Small Panel)</string>
+    <string name="car_pref_title_visualizer_type_large">Visualizer Type (Large Panel)</string>
+    <string name="car_pref_title_auto_play_music">Auto Play on Startup</string>
+    <string name="car_pref_summary_auto_play_music">Start music when app starts</string>
+    <string name="car_pref_title_ambiance_visualizer">Ambiance Visualizer</string>
+    <string name="car_pref_summary_ambiance_visualizer">Dynamically sets music visualizer colors based on album art</string>
+    <string name="car_pref_title_equalizer">Equalizer</string>
+    <string name="car_pref_summary_equalizer">Open system audio settings</string>
+    <string name="car_pref_title_scan_music">Rescan Music</string>
+    <string name="car_pref_summary_scan_music">Scan internal storage and USB drives</string>
+
+    <!-- Weather / Hava Durumu -->
+    <string name="car_pref_title_weather">Weather</string>
+    <string name="car_pref_title_weather_enabled">Weather Service</string>
+    <string name="car_pref_summary_weather_enabled">Show weather on clock widget</string>
+
+    <!-- Auto Launch / Otomatik Başlatma -->
+    <string name="car_pref_title_autolaunch">Auto Launch</string>
+    <string name="car_pref_title_app1">App 1</string>
+    <string name="car_pref_title_app2">App 2</string>
+    <string name="car_pref_title_app3">App 3</string>
+    <string name="car_pref_summary_click_to_select">Tap to select</string>
+
+    <!-- Backup / Yedekleme -->
+    <string name="car_pref_title_backup">Backup and Restore</string>
+    <string name="car_pref_title_backup_export">Export Settings</string>
+    <string name="car_pref_summary_backup_export">Save widget layout and settings to file</string>
+    <string name="car_pref_title_backup_import">Restore Settings</string>
+    <string name="car_pref_summary_backup_import">Restore from file</string>
+
+    <!-- Dock / Uygulama Dock -->
+    <string name="car_pref_title_dock">App Dock (Sidebar)</string>
+    <string name="car_pref_title_dock_position">Dock Position</string>
+    <string name="car_pref_title_dock_size">Dock Size</string>
+    <string name="car_pref_summary_dock_size">0: Small, 50: Normal, 100: Large</string>
+    <string name="car_pref_title_max_shortcuts">Maximum Number of Shortcuts</string>
+    <string name="car_pref_title_reset_dock">Reset Dock</string>
+    <string name="car_pref_summary_reset_dock">Remove all shortcuts</string>
+
+    <!-- Assistant / Asistan -->
+    <string name="car_pref_title_assistant">Assistant</string>
+    <string name="car_pref_title_import_voice_model">Load Voice Model from USB/File</string>
+    <string name="car_pref_summary_import_voice_model">If no internet, load the zip model you downloaded from USB</string>
+
+    <!-- About / Hakkında -->
+    <string name="car_pref_title_about">About</string>
+    <string name="car_pref_title_version">Version</string>
+    <string name="car_pref_title_check_updates">Check for Updates</string>
+    <string name="car_pref_summary_check_updates">Check if there is a new version</string>
+    <string name="car_pref_title_github">GitHub</string>
+    <string name="car_pref_summary_github">View source code</string>
+
+    <!-- Floating Menu Items -->
+    <string name="car_floating_menu_layout_toggle">Toggle Layout</string>
+    <string name="car_floating_menu_desktop_toggle">Desktop Mode</string>
+    <string name="car_floating_menu_settings">Car Launcher Settings</string>
 </resources>

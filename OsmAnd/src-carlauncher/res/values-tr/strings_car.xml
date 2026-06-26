@@ -9,4 +9,85 @@
     <string name="car_floating_button_force_gps">Sürekli GPS</string>
     <string name="car_floating_button_force_gps_desc">Arka planda dahi hızı güncellemek için GPS\'i açık tutar. Daha fazla batarya harcar.</string>
 
+    <!-- Appearance / Görünüm -->
+    <string name="car_pref_title_appearance">Görünüm</string>
+    <string name="car_pref_title_status_bar">Status Bar Göster</string>
+    <string name="car_pref_summary_status_bar">Sistem çubuğunu açıp kapatır</string>
+    <string name="car_pref_title_dark_theme">Koyu Tema</string>
+    <string name="car_pref_summary_dark_theme">Karanlık arka plan kullan</string>
+    <string name="car_pref_title_portrait_map_only">Dikey Ekranda Sadece Harita Göster</string>
+    <string name="car_pref_summary_portrait_map_only">Dikey modda widget paneli ve rıhtımı gizler</string>
+    <string name="car_pref_title_floating_button">Yüzen Yardımcı Buton (Floating Button)</string>
+    <string name="car_pref_summary_floating_button">Ekranda taşınabilir sistem menü butonu gösterir</string>
+    <string name="car_pref_title_floating_button_size">Yüzen Buton Boyutu</string>
+    <string name="car_pref_summary_floating_button_size">Ekranda kapladığı alanı ayarla</string>
+    <string name="car_pref_title_night_dim_mode">Gece Karartma Modu</string>
+    <string name="car_pref_title_parallax_intensity">Parallax Arka Plan Gücü</string>
+    <string name="car_pref_summary_parallax_intensity">ViewPager kaydırılırken arka planın kayma miktarını ayarlar (Varsayılan: %20)</string>
+    <string name="car_pref_title_background_style">Parallax Arka Plan Seçici</string>
+    <string name="car_pref_title_pip_mode">Yüzen Harita (Picture-in-Picture)</string>
+    <string name="car_pref_summary_pip_mode">Arka plana geçildiğinde haritayı yüzen küçük ekran olarak açık tutar</string>
+    <string name="car_pref_title_widget_panel_position">Büyük Panel Konumu</string>
+    <string name="car_pref_title_expansion_behavior">Büyük Panel Açılış Stratejisi</string>
+
+    <!-- Music / Müzik -->
+    <string name="car_pref_title_music">Müzik</string>
+    <string name="car_pref_title_music_app">Varsayılan Müzik Uygulaması</string>
+    <string name="car_pref_summary_music_app">Tıklayarak seçin</string>
+    <string name="car_pref_title_visualizer_type_small">Görselleştirici Tipi (Küçük Panel)</string>
+    <string name="car_pref_title_visualizer_type_large">Görselleştirici Tipi (Büyük Panel)</string>
+    <string name="car_pref_title_auto_play_music">Açılışta Otomatik Oynat</string>
+    <string name="car_pref_summary_auto_play_music">Uygulama başladığında müziği başlat</string>
+    <string name="car_pref_title_ambiance_visualizer">Ambians Görselleştirici</string>
+    <string name="car_pref_summary_ambiance_visualizer">Müzik görselleştirici renklerini albüm kapağına göre dinamik olarak belirler</string>
+    <string name="car_pref_title_equalizer">Equalizer</string>
+    <string name="car_pref_summary_equalizer">Sistem ses ayarlarını aç</string>
+    <string name="car_pref_title_scan_music">Müzikleri Yeniden Tara</string>
+    <string name="car_pref_summary_scan_music">Dahili depolama ve USB bellekleri tara</string>
+
+    <!-- Weather / Hava Durumu -->
+    <string name="car_pref_title_weather">Hava Durumu</string>
+    <string name="car_pref_title_weather_enabled">Hava Durumu Servisi</string>
+    <string name="car_pref_summary_weather_enabled">Saat widget\'ında hava durumu gösterimi</string>
+
+    <!-- Auto Launch / Otomatik Başlatma -->
+    <string name="car_pref_title_autolaunch">Otomatik Başlatma</string>
+    <string name="car_pref_title_app1">Uygulama 1</string>
+    <string name="car_pref_title_app2">Uygulama 2</string>
+    <string name="car_pref_title_app3">Uygulama 3</string>
+    <string name="car_pref_summary_click_to_select">Seçmek için metne tıklayın</string>
+
+    <!-- Backup / Yedekleme -->
+    <string name="car_pref_title_backup">Yedekle ve Geri Yükle</string>
+    <string name="car_pref_title_backup_export">Ayarları Dışa Aktar</string>
+    <string name="car_pref_summary_backup_export">Widget düzenini ve ayarları dosyaya kaydet</string>
+    <string name="car_pref_title_backup_import">Ayarları Geri Yükle</string>
+    <string name="car_pref_summary_backup_import">Dosyadan geri yükle</string>
+
+    <!-- Dock / Uygulama Dock -->
+    <string name="car_pref_title_dock">Uygulama Dock (Sidebar)</string>
+    <string name="car_pref_title_dock_position">Dock Konumu</string>
+    <string name="car_pref_title_dock_size">Dock Boyutu</string>
+    <string name="car_pref_summary_dock_size">0: Küçük, 50: Normal, 100: Büyük</string>
+    <string name="car_pref_title_max_shortcuts">Maksimum Kısayol Sayısı</string>
+    <string name="car_pref_title_reset_dock">Dock\'u Sıfırla</string>
+    <string name="car_pref_summary_reset_dock">Tüm kısayolları kaldır</string>
+
+    <!-- Assistant / Asistan -->
+    <string name="car_pref_title_assistant">Asistan</string>
+    <string name="car_pref_title_import_voice_model">Ses Modelini USB/Dosyadan Yükle</string>
+    <string name="car_pref_summary_import_voice_model">İnternet yoksa USB\'den indirdiğiniz zip modelini yükleyin</string>
+
+    <!-- About / Hakkında -->
+    <string name="car_pref_title_about">Hakkında</string>
+    <string name="car_pref_title_version">Versiyon</string>
+    <string name="car_pref_title_check_updates">Güncellemeleri Denetle</string>
+    <string name="car_pref_summary_check_updates">Yeni bir sürüm olup olmadığını kontrol et</string>
+    <string name="car_pref_title_github">GitHub</string>
+    <string name="car_pref_summary_github">Kaynak kodunu görüntüle</string>
+
+    <!-- Yüzen Buton Menü Elemanları -->
+    <string name="car_floating_menu_layout_toggle">Görünümü Değiştir</string>
+    <string name="car_floating_menu_desktop_toggle">Masaüstü Modu (Desktop)</string>
+    <string name="car_floating_menu_settings">Car Launcher Ayarları</string>
 </resources>

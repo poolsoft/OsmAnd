@@ -452,9 +452,9 @@ public class CarFloatingButtonManager {
         menuOverlayView.addView(content, contentLp);
 
         // Menü elemanları (Türkçe karakter yok!)
-        addMenuItem(content, "Gorunumu Degistir", "net.osmand.carlauncher.ACTION_LAYOUT_TOGGLE");
-        addMenuItem(content, "Masaustu Modu (Desktop)", "net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE");
-        addMenuItem(content, "Car Launcher Ayarlari", "net.osmand.carlauncher.ACTION_OPEN_SETTINGS");
+        addMenuItem(content, context.getString(R.string.car_floating_menu_layout_toggle), "net.osmand.carlauncher.ACTION_LAYOUT_TOGGLE");
+        addMenuItem(content, context.getString(R.string.car_floating_menu_desktop_toggle), "net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE");
+        addMenuItem(content, context.getString(R.string.car_floating_menu_settings), "net.osmand.carlauncher.ACTION_OPEN_SETTINGS");
 
         int layoutType;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -531,9 +531,9 @@ public class CarFloatingButtonManager {
         menuOverlayView.addView(content, contentLp);
 
         // Menü elemanları (Türkçe karakter yok!)
-        addMenuItem(content, "Gorunumu Degistir", "net.osmand.carlauncher.ACTION_LAYOUT_TOGGLE");
-        addMenuItem(content, "Masaustu Modu (Desktop)", "net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE");
-        addMenuItem(content, "Car Launcher Ayarlari", "net.osmand.carlauncher.ACTION_OPEN_SETTINGS");
+        addMenuItem(content, context.getString(R.string.car_floating_menu_layout_toggle), "net.osmand.carlauncher.ACTION_LAYOUT_TOGGLE");
+        addMenuItem(content, context.getString(R.string.car_floating_menu_desktop_toggle), "net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE");
+        addMenuItem(content, context.getString(R.string.car_floating_menu_settings), "net.osmand.carlauncher.ACTION_OPEN_SETTINGS");
 
         int layoutType;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
