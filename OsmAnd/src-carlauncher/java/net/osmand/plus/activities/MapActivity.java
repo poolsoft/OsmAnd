@@ -1177,7 +1177,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	private void checkAppInitialization() {
 		if (app.isApplicationInitializing()) {
-			findViewById(R.id.init_progress).setVisibility(View.VISIBLE);
+			// Yukleme gorunumunun null olma ihtimaline karsi null-safe kontrol eklendi
+			View initProgress = findViewById(R.id.init_progress);
+			if (initProgress != null) {
+				initProgress.setVisibility(View.VISIBLE);
+			}
 
 			initListener = new MapAppInitializeListener(this);
 			app.checkApplicationIsBeingInitialized(initListener);
