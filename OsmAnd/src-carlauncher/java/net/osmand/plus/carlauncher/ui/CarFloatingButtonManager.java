@@ -251,7 +251,7 @@ public class CarFloatingButtonManager {
             net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
             net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app).addListener(telemetryListener);
 
-            // Native GPS Speed Listener
+            // Native GPS Speed Listener - dogrudan ekrani guncelliyor (Turkce karakter yok)
             if (locationManager == null) {
                 locationManager = (android.location.LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
                 locationListener = new android.location.LocationListener() {
@@ -259,6 +259,8 @@ public class CarFloatingButtonManager {
                     public void onLocationChanged(android.location.Location location) {
                         if (location != null && location.hasSpeed()) {
                             nativeGpsSpeed = location.getSpeed() * 3.6f;
+                            // OsmAnd pause olsa dahi aninda guncelle (Turkce karakter yok)
+                            updateSpeedDisplay(nativeGpsSpeed, location);
                         }
                     }
                     @Override public void onStatusChanged(String provider, int status, android.os.Bundle extras) {}
@@ -333,55 +335,94 @@ public class CarFloatingButtonManager {
         floatingView.addView(speedText, textLp);
     }
 
-    private net.osmand.plus.carlauncher.telemetry.TelemetryManager.TelemetryListener telemetryListener = new net.osmand.plus.carlauncher.telemetry.TelemetryManager.TelemetryListener() {
+    /**
+     * Floating button hiz ekranini dogrudan gunceller.
+     * OsmAnd pause olsa dahi native GPS callback'i bu metodu tetikler (Turkce karakter yok).
+     */
+    private void updateSpeedDisplay(float speedKmh, android.location.Location nativeLocation) {
+        if (floatingView == null || speedText == null || buttonBg == null) return;
+
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            if (speedText == null || buttonBg == null) return;
+
+            float displaySpeed = speedKmh <= 3f ? 0f : speedKmh;
+            int speedInt = Math.round(displaySpeed);
+            String speedStr = String.valueOf(speedInt);
+            android.text.SpannableString span = new android.text.SpannableString(speedStr + "\nkm/h");
+            span.setSpan(new android.text.style.RelativeSizeSpan(0.4f), speedStr.length(), span.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            speedText.setText(span);
+
+            // Hiz limiti: OsmAnd RAM'deki son segment verisinden al - OsmAnd pause'da da calisir (Turkce karakter yok)
+            net.osmand.plus.OsmandApplication app =
+                    (net.osmand.plus.OsmandApplication) context.getApplicationContext();
+            net.osmand.plus.carlauncher.telemetry.TelemetryManager.LocationState locState =
+                    net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app).getLocationState();
+            net.osmand.Location osmLocation = locState != null ? locState.rawLocation : null;
+            float maxSpeed = getMaxSpeed(app, osmLocation);
+            applySpeedColors(displaySpeed / 3.6f, maxSpeed);
+        });
+    }
+
+    /**
+     * Hiz degerine gore floating button renk temasini uygular (Turkce karakter yok).
+     * Hem native GPS hem de TelemetryManager yolu bu metodu kullanir.
+     */
+    private void applySpeedColors(float currentSpeedMs, float maxSpeedMs) {
+        if (buttonBg == null || speedText == null) return;
+        if (maxSpeedMs > 0 && maxSpeedMs != net.osmand.binary.RouteDataObject.NONE_MAX_SPEED) {
+            float diffKmh = (currentSpeedMs - maxSpeedMs) * 3.6f;
+            if (diffKmh > 5) {
+                buttonBg.setStroke(dpToPx(3), 0xFFFF0000); // Kirmizi
+                speedText.setTextColor(0xFFFF0000);
+            } else if (diffKmh > 0) {
+                buttonBg.setStroke(dpToPx(3), 0xFFFFA500); // Turuncu
+                speedText.setTextColor(0xFFFFA500);
+            } else {
+                buttonBg.setStroke(dpToPx(2), 0xFF3D63FF); // Normal mavi
+                speedText.setTextColor(0xFFFFFFFF);
+            }
+        } else {
+            buttonBg.setStroke(dpToPx(2), 0xFF3D63FF);
+            speedText.setTextColor(0xFFFFFFFF);
+        }
+    }
+
+    private net.osmand.plus.carlauncher.telemetry.TelemetryManager.TelemetryListener telemetryListener =
+            new net.osmand.plus.carlauncher.telemetry.TelemetryManager.TelemetryListener() {
         @Override
-        public void onTelemetryUpdated(net.osmand.plus.carlauncher.telemetry.TelemetryManager.LocationState loc, net.osmand.plus.carlauncher.telemetry.TelemetryManager.NavigationState nav, net.osmand.plus.carlauncher.telemetry.TelemetryManager.ObdState obd) {
+        public void onTelemetryUpdated(
+                net.osmand.plus.carlauncher.telemetry.TelemetryManager.LocationState loc,
+                net.osmand.plus.carlauncher.telemetry.TelemetryManager.NavigationState nav,
+                net.osmand.plus.carlauncher.telemetry.TelemetryManager.ObdState obd) {
             if (floatingView == null || speedText == null || buttonBg == null) return;
-            
+
+            // Native GPS onceligiyle kullan, yoksa OsmAnd verisine don (Turkce karakter yok)
             float speedKmh = (nativeGpsSpeed >= 0) ? nativeGpsSpeed : loc.speedKmh;
-            float currentSpeed = speedKmh / 3.6f;
-            int speedKmhInt = Math.round(speedKmh);
-            
-            String speedStr = String.valueOf(speedKmhInt);
+            float displaySpeed = speedKmh <= 3f ? 0f : speedKmh;
+            int speedInt = Math.round(displaySpeed);
+
+            String speedStr = String.valueOf(speedInt);
             android.text.SpannableString span = new android.text.SpannableString(speedStr + "\nkm/h");
             span.setSpan(new android.text.style.RelativeSizeSpan(0.4f), speedStr.length(), span.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             speedText.setText(span);
 
             net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
             float maxSpeed = getMaxSpeed(app, loc.rawLocation);
-            
-            if (maxSpeed > 0 && maxSpeed != net.osmand.binary.RouteDataObject.NONE_MAX_SPEED) {
-                float diff = currentSpeed - maxSpeed;
-                float diffKmh = diff * 3.6f;
-                
-                if (diffKmh > 5) {
-                    buttonBg.setStroke(dpToPx(3), 0xFFFF0000); // Kirmizi border
-                    speedText.setTextColor(0xFFFF0000);
-                } else if (diffKmh > 0) {
-                    buttonBg.setStroke(dpToPx(3), 0xFFFFA500); // Turuncu border
-                    speedText.setTextColor(0xFFFFA500);
-                } else {
-                    buttonBg.setStroke(dpToPx(2), 0xFF3D63FF); // Normal Mavi
-                    speedText.setTextColor(0xFFFFFFFF);
-                }
-            } else {
-                buttonBg.setStroke(dpToPx(2), 0xFF3D63FF);
-                speedText.setTextColor(0xFFFFFFFF);
-            }
+            applySpeedColors(displaySpeed / 3.6f, maxSpeed);
         }
     };
 
     private float getMaxSpeed(net.osmand.plus.OsmandApplication app, net.osmand.Location location) {
-        if (location == null || app == null) return 0;
+        if (app == null) return 0;
         net.osmand.plus.routing.RoutingHelper routingHelper = app.getRoutingHelper();
         if (routingHelper == null) return 0;
-        
-        if ((!routingHelper.isFollowingMode()
+
+        if (!routingHelper.isFollowingMode()
                 || routingHelper.isDeviatedFromRoute()
-                || (routingHelper.getCurrentGPXRoute() != null && !routingHelper.isCurrentGPXRouteV2()))) {
+                || (routingHelper.getCurrentGPXRoute() != null && !routingHelper.isCurrentGPXRouteV2())) {
             if (app.getLocationProvider() != null) {
                 net.osmand.binary.RouteDataObject routeObject = app.getLocationProvider().getLastKnownRouteSegment();
-                if (routeObject != null) {
+                if (routeObject != null && location != null) {
                     boolean direction = routeObject.bearingVsRouteDirection(location);
                     return routeObject.getMaximumSpeed(direction);
                 }
