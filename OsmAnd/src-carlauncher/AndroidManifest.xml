@@ -9,7 +9,8 @@
     <!-- Car Launcher Specific Application Attributes -->
     <application
         android:resizeableActivity="true"
-        android:supportsPictureInPicture="true">
+        android:supportsPictureInPicture="true"
+        android:description="@string/app_description">
         
         <service android:name="net.osmand.plus.carlauncher.MediaNotificationListener"
                  android:label="OsmAnd Media Control"

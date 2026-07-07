@@ -3,4 +3,5 @@
     <!-- CarLauncher spesifik stringler -->
     <string name="car_launcher_welcome">CarLauncher hos geldiniz</string>
     <string name="car_launcher_settings">Ayarlar</string>
+    <string name="app_description">OsmAnd Arac Baslatici, surus sirasinda sorunsuz navigasyon ve metrik takibi saglamak icin ozel olarak tasarlanmis bir gosterge panelidir.</string>
 </resources>

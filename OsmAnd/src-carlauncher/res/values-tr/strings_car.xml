@@ -90,4 +90,5 @@
     <string name="car_floating_menu_layout_toggle">Görünümü Değiştir</string>
     <string name="car_floating_menu_desktop_toggle">Masaüstü Modu (Desktop)</string>
     <string name="car_floating_menu_settings">Car Launcher Ayarları</string>
+    <string name="app_description">OsmAnd Araç Başlatıcı, sürüş sırasında sorunsuz navigasyon ve metrik takibi sağlamak için özel olarak tasarlanmış bir gösterge panelidir.</string>
 </resources>

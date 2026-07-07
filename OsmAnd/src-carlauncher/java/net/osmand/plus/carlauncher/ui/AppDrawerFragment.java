@@ -69,22 +69,54 @@ public class AppDrawerFragment extends Fragment {
         if (context == null || packageName == null) {
             return null;
         }
+        Drawable icon = null;
         if (net.osmand.plus.carlauncher.dock.InternalApp.isInternalApp(packageName)) {
             net.osmand.plus.carlauncher.dock.InternalApp app = net.osmand.plus.carlauncher.dock.InternalApp.fromPackageName(packageName);
-            if (app != null) return app.getIcon(context);
+            if (app != null) {
+                icon = app.getIcon(context);
+            }
         } else {
             try {
-                return context.getPackageManager().getApplicationIcon(packageName);
+                icon = context.getPackageManager().getApplicationIcon(packageName);
             } catch (Exception e) {
                 // fallback
             }
         }
-        // Varsayilan sistem ikonunu don (Turkce karakter yok)
-        try {
-            return context.getPackageManager().getDefaultActivityIcon();
-        } catch (Exception e) {
-            return null;
+        if (icon == null) {
+            try {
+                icon = context.getPackageManager().getDefaultActivityIcon();
+            } catch (Exception e) {
+                return null;
+            }
         }
+
+        // Eger ikon AdaptiveIcon degilse veya dahili uygulama ise, daire zemin ile sarmala (Turkce karakter yok)
+        if (net.osmand.plus.carlauncher.dock.InternalApp.isInternalApp(packageName) 
+                || (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O 
+                    && !(icon instanceof android.graphics.drawable.AdaptiveIconDrawable))) {
+            return createCircularIcon(context, icon);
+        }
+        return icon;
+    }
+
+    private static Drawable createCircularIcon(Context context, Drawable icon) {
+        if (icon == null) return null;
+        
+        // 1. Dairesel arka plan olustur (Turkce karakter yok)
+        android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
+        background.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        background.setColor(android.graphics.Color.parseColor("#2A2C32")); // Koyu gri sik arka plan (Turkce karakter yok)
+        
+        // 2. LayerDrawable ile ust uste koy (Turkce karakter yok)
+        Drawable[] layers = new Drawable[2];
+        layers[0] = background;
+        layers[1] = icon;
+        
+        android.graphics.drawable.LayerDrawable layerDrawable = new android.graphics.drawable.LayerDrawable(layers);
+        int padding = (int) (14 * context.getResources().getDisplayMetrics().density);
+        layerDrawable.setLayerInset(1, padding, padding, padding, padding);
+        
+        return layerDrawable;
     }
 
     // Arka planda ikon yukleyen asenkron gorev sinifi (Turkce karakter yok)
