@@ -322,10 +322,7 @@ public class CarFloatingButtonManager {
         speedText.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         speedText.setGravity(Gravity.CENTER);
         
-        // Spannable text placeholders
-        android.text.SpannableString span = new android.text.SpannableString("--\nkm/h");
-        span.setSpan(new android.text.style.RelativeSizeSpan(0.4f), 2, span.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        speedText.setText(span);
+        speedText.setText("--");
         
         FrameLayout.LayoutParams textLp = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -347,10 +344,7 @@ public class CarFloatingButtonManager {
 
             float displaySpeed = speedKmh <= 3f ? 0f : speedKmh;
             int speedInt = Math.round(displaySpeed);
-            String speedStr = String.valueOf(speedInt);
-            android.text.SpannableString span = new android.text.SpannableString(speedStr + "\nkm/h");
-            span.setSpan(new android.text.style.RelativeSizeSpan(0.4f), speedStr.length(), span.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            speedText.setText(span);
+            speedText.setText(String.valueOf(speedInt));
 
             // Hiz limiti: OsmAnd RAM'deki son segment verisinden al - OsmAnd pause'da da calisir (Turkce karakter yok)
             net.osmand.plus.OsmandApplication app =
@@ -369,21 +363,19 @@ public class CarFloatingButtonManager {
      */
     private void applySpeedColors(float currentSpeedMs, float maxSpeedMs) {
         if (buttonBg == null || speedText == null) return;
+        // Yazi rengi her zaman beyaz - sadece border rengi degisir (Turkce karakter yok)
+        speedText.setTextColor(0xFFFFFFFF);
         if (maxSpeedMs > 0 && maxSpeedMs != net.osmand.binary.RouteDataObject.NONE_MAX_SPEED) {
             float diffKmh = (currentSpeedMs - maxSpeedMs) * 3.6f;
             if (diffKmh > 5) {
-                buttonBg.setStroke(dpToPx(3), 0xFFFF0000); // Kirmizi
-                speedText.setTextColor(0xFFFF0000);
+                buttonBg.setStroke(dpToPx(4), 0xFFFF0000); // Kirmizi border (hiz asimi)
             } else if (diffKmh > 0) {
-                buttonBg.setStroke(dpToPx(3), 0xFFFFA500); // Turuncu
-                speedText.setTextColor(0xFFFFA500);
+                buttonBg.setStroke(dpToPx(3), 0xFFFFA500); // Turuncu border (uyari)
             } else {
-                buttonBg.setStroke(dpToPx(2), 0xFF3D63FF); // Normal mavi
-                speedText.setTextColor(0xFFFFFFFF);
+                buttonBg.setStroke(dpToPx(2), 0xFF3D63FF); // Normal mavi border
             }
         } else {
             buttonBg.setStroke(dpToPx(2), 0xFF3D63FF);
-            speedText.setTextColor(0xFFFFFFFF);
         }
     }
 
@@ -400,11 +392,7 @@ public class CarFloatingButtonManager {
             float speedKmh = (nativeGpsSpeed >= 0) ? nativeGpsSpeed : loc.speedKmh;
             float displaySpeed = speedKmh <= 3f ? 0f : speedKmh;
             int speedInt = Math.round(displaySpeed);
-
-            String speedStr = String.valueOf(speedInt);
-            android.text.SpannableString span = new android.text.SpannableString(speedStr + "\nkm/h");
-            span.setSpan(new android.text.style.RelativeSizeSpan(0.4f), speedStr.length(), span.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            speedText.setText(span);
+            speedText.setText(String.valueOf(speedInt));
 
             net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
             float maxSpeed = getMaxSpeed(app, loc.rawLocation);
