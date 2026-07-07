@@ -307,6 +307,9 @@ public class UnifiedPanelFragment extends Fragment
         if (musicBtnPlay != null) {
             musicBtnPlay.setImageResource(isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
         }
+        if (!isPlaying && musicVisualizer != null) {
+            musicVisualizer.clear();
+        }
     }
 
     @Override

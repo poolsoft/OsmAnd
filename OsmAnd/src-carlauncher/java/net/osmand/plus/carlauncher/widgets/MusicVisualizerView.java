@@ -75,6 +75,7 @@ public class MusicVisualizerView extends View {
 
     private float[] mPeaks;
     private long[] mPeakTimes;
+    private final android.graphics.Path mWavePath = new android.graphics.Path();
 
     public MusicVisualizerView(Context context) {
         super(context);
@@ -128,8 +129,7 @@ public class MusicVisualizerView extends View {
         });
         */
 
-        // Golge ve parilti efektlerinin cizilmesi icin yazilimsal katman destegi (Turkce karakter yok)
-        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        // Donanim ivmeli cizim destegi icin yazilimsal katman zorlamasini kaldirdik (Turkce karakter yok)
     }
 
     public void cycleVisualizerType() {
@@ -206,7 +206,6 @@ public class MusicVisualizerView extends View {
                         0, heightVal, 0, 0, 
                         colors, null, Shader.TileMode.CLAMP);
                 mForePaint.setShader(shader);
-                mForePaint.setShadowLayer(15f, 0f, 0f, dominantColor);
             } else if (visualizerType == TYPE_NEON_MODERN) {
                 int[] colors = {
                     Color.parseColor("#0044FF"),
@@ -216,7 +215,6 @@ public class MusicVisualizerView extends View {
                         0, heightVal, 0, 0, 
                         colors, null, Shader.TileMode.CLAMP);
                 mForePaint.setShader(shader);
-                mForePaint.setShadowLayer(15f, 0f, 0f, Color.parseColor("#00FFFF"));
             } else {
                 int[] colors = {
                     Color.parseColor("#FF0000"), Color.parseColor("#FFFF00"),
@@ -227,7 +225,6 @@ public class MusicVisualizerView extends View {
                         0, heightVal, 0, 0, 
                         colors, null, Shader.TileMode.CLAMP);
                 mForePaint.setShader(shader);
-                mForePaint.clearShadowLayer();
             }
             mFirst = false;
         }
@@ -254,8 +251,8 @@ public class MusicVisualizerView extends View {
         long now = System.currentTimeMillis();
 
         if (visualizerType == TYPE_WAVE) {
-            android.graphics.Path path = new android.graphics.Path();
-            path.moveTo(0, getHeight());
+            mWavePath.reset();
+            mWavePath.moveTo(0, getHeight());
             float prevX = 0;
             float prevY = getHeight();
             for (int i = 0; i < spectrumNum; i++) {
@@ -263,14 +260,14 @@ public class MusicVisualizerView extends View {
                 float height = (magnitude / 128f) * getHeight() * 0.8f;
                 float currentX = i * barWidth + (barWidth / 2f);
                 float currentY = getHeight() - height;
-                path.quadTo(prevX, prevY, (prevX + currentX) / 2f, (prevY + currentY) / 2f);
+                mWavePath.quadTo(prevX, prevY, (prevX + currentX) / 2f, (prevY + currentY) / 2f);
                 prevX = currentX;
                 prevY = currentY;
             }
-            path.lineTo(getWidth(), prevY);
-            path.lineTo(getWidth(), getHeight());
-            path.close();
-            canvas.drawPath(path, mForePaint);
+            mWavePath.lineTo(getWidth(), prevY);
+            mWavePath.lineTo(getWidth(), getHeight());
+            mWavePath.close();
+            canvas.drawPath(mWavePath, mForePaint);
         } else if (visualizerType == TYPE_RADIAL) {
             float centerX = getWidth() / 2f;
             float centerY = getHeight() / 2f;
@@ -352,7 +349,7 @@ public class MusicVisualizerView extends View {
         }
         
         if (visualizerType == TYPE_GLOW_PEAK || visualizerType == TYPE_PARTICLE || visualizerType == TYPE_WAVE) {
-            postInvalidateDelayed(16);
+            postInvalidateDelayed(33);
         }
     }
 }

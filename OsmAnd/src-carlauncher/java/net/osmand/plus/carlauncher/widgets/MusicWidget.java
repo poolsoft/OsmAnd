@@ -304,6 +304,9 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                         isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play);
             });
         }
+        if (!isPlaying && visualizerView != null) {
+            visualizerView.clear();
+        }
     }
 
     @Override

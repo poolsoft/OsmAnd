@@ -120,5 +120,7 @@ Many resources (icons, fonts, voice files) are not in the main `res` folder but 
 ## 9. Restrictions
 - **Building Gradle project:** YOU MUST NEVER run Gradle buid task by yourself! EVEN for verifying build errors!!!
 
+- **PowerShell BOM Warning:** When modifying XML or Java files using Windows PowerShell, NEVER use simple string replacement and `Set-Content -Encoding UTF8` as it automatically prepends a hidden UTF-8 BOM (`\ufeff`). This crashes the Android Resource Merger (AAPT) and Java Compiler. ALWAYS use binary byte-level manipulation to remove BOM, or rely on Antigravity's built-in file editing tools (like replace_file_content) to safely edit files without corrupting their encoding.
+
 ---
 *Note: This file is a living document and should be updated as the project evolves.*

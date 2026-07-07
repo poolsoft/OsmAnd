@@ -1625,6 +1625,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                         isPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play);
                 btnPlay.setColorFilter(0xFF000000, android.graphics.PorterDuff.Mode.SRC_IN);
             }
+            if (!isPlaying && visualizerView != null) {
+                visualizerView.clear();
+            }
 
             // Update Adapter Icon
             if (!isExternalMode && musicManager.getInternalPlayer() != null) {
