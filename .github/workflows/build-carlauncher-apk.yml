@@ -79,11 +79,11 @@ jobs:
 
     - name: Build with Gradle (Quiet mode)
       working-directory: ./android
-      run: ./gradlew assemblecarlauncherLegacyFatDebug -x test --no-daemon -q
+      run: ./gradlew assemblecarlauncherLegacyArmonlyDebug -x test --no-daemon -q
 
     - name: Rename APK
       working-directory: ./android
-      run: cp OsmAnd/build/outputs/apk/carlauncherLegacyFat/debug/OsmAnd-carlauncher-legacy-fat-debug.apk CarLauncher.apk
+      run: cp OsmAnd/build/outputs/apk/carlauncherLegacyArmonly/debug/OsmAnd-carlauncher-legacy-armonly-debug.apk CarLauncher.apk
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4

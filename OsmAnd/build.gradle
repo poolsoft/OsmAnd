@@ -167,6 +167,7 @@ android {
 			applicationId "net.osmand.carlauncher"
 			resValue "string", "app_name", "OsmAnd Auto"
 			resValue "string", "app_edition", System.getenv("APP_EDITION") ? System.getenv("APP_EDITION") : ""
+			resConfigs "tr", "en"
 			
 			if (project.hasProperty('versionCode')) {
 				versionCode project.versionCode.toInteger()
