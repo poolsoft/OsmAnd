@@ -86,7 +86,7 @@ public class WidgetsSettingsHelper {
 
 	public void copyConfigureScreenSettings(@NonNull ApplicationMode fromAppMode) {
 		for (WidgetsPanel panel : WidgetsPanel.values()) {
-			copyWidgetsForPanel(fromAppMode, null, panel);
+			copyWidgetsForPanel(fromAppMode, layoutMode, panel);
 		}
 		copyPrefFromAppMode(settings.getPanelsLayoutMode(mapActivity, layoutMode), fromAppMode);
 		copyPrefFromAppMode(settings.getTransparentMapThemePreference(layoutMode), fromAppMode);
@@ -102,7 +102,9 @@ public class WidgetsSettingsHelper {
 		mapButtonsHelper.copyButtonStatesFromMode(appMode, fromAppMode, mapButtonsHelper.getAllButtonsStates());
 	}
 
-	public void copyWidgetsForPanel(@NonNull ApplicationMode fromAppMode, @Nullable ScreenLayoutMode fromLayoutMode, @NonNull WidgetsPanel panel) {
+	public void copyWidgetsForPanel(@NonNull ApplicationMode fromAppMode,
+	                                @Nullable ScreenLayoutMode fromLayoutMode,
+	                                @NonNull WidgetsPanel panel) {
 		int filter = ENABLED_MODE | AVAILABLE_MODE | MATCHING_PANELS_MODE;
 		List<WidgetsPanel> panels = Collections.singletonList(panel);
 		Set<MapWidgetInfo> widgetInfosToCopy = widgetRegistry.getWidgetsForPanel(mapActivity, fromAppMode, fromLayoutMode, filter, panels);
@@ -118,18 +120,23 @@ public class WidgetsSettingsHelper {
 			}
 
 			WidgetType widgetTypeToCopy = widgetInfoToCopy.widget.getWidgetType();
-			boolean duplicateNotPossible = widgetTypeToCopy == null;
 			String defaultWidgetId = WidgetType.getDefaultWidgetId(widgetInfoToCopy.key);
 			MapWidgetInfo defaultWidgetInfo = getWidgetInfoById(defaultWidgetId, defaultWidgetInfos);
 
 			if (defaultWidgetInfo != null) {
-				String widgetIdToAdd;
+				String widgetIdToAdd = null;
+				boolean duplicateNotPossible = widgetTypeToCopy == null;
 				boolean disabled = !defaultWidgetInfo.isEnabledForAppMode(appMode, widgetsVisibility);
 				boolean inAnotherPanel = defaultWidgetInfo.getWidgetPanel() != panel;
-				if (duplicateNotPossible || (disabled && !inAnotherPanel)) {
+				boolean defaultAlreadyUsed = newPagedOrder.stream()
+						.anyMatch(page -> page.contains(defaultWidgetInfo.key));
+
+				boolean canReuseDefault = (duplicateNotPossible || (disabled && !inAnotherPanel)) && !defaultAlreadyUsed;
+
+				if (canReuseDefault) {
 					widgetRegistry.enableDisableWidgetForMode(appMode, defaultWidgetInfo, true, layoutMode, false);
 					widgetIdToAdd = defaultWidgetInfo.key;
-				} else {
+				} else if (widgetTypeToCopy != null) {
 					MapWidgetInfo duplicateWidgetInfo = createDuplicateWidgetInfo(widgetTypeToCopy, panel);
 					widgetIdToAdd = duplicateWidgetInfo != null ? duplicateWidgetInfo.key : null;
 				}
@@ -138,7 +145,7 @@ public class WidgetsSettingsHelper {
 					String customId = !widgetIdToAdd.equals(defaultWidgetInfo.key) ? widgetIdToAdd : null;
 					widgetInfoToCopy.widget.copySettingsFromMode(fromAppMode, appMode, customId);
 
-					if (previousPage != widgetInfoToCopy.pageIndex || newPagedOrder.size() == 0) {
+					if (previousPage != widgetInfoToCopy.pageIndex || newPagedOrder.isEmpty()) {
 						previousPage = widgetInfoToCopy.pageIndex;
 						newPagedOrder.add(new ArrayList<>());
 					}

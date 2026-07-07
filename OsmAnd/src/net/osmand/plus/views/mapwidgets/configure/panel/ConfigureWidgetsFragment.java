@@ -111,6 +111,11 @@ public class ConfigureWidgetsFragment extends BaseFullScreenFragment implements 
 		return selectedPanel;
 	}
 
+	@NonNull
+	public ApplicationMode getSelectedAppMode() {
+		return selectedAppMode;
+	}
+
 	@Nullable
 	public ScreenLayoutMode getScreenLayoutMode() {
 		return layoutMode;
@@ -538,9 +543,10 @@ public class ConfigureWidgetsFragment extends BaseFullScreenFragment implements 
 
 	@Override
 	public void onWidgetAdded(@NonNull MapWidgetInfo widgetInfo) {
-		WidgetsListFragment fragment = getSelectedFragment();
+		WidgetsListFragment fragment = getFragment(widgetInfo.getWidgetPanel());
 		if (isEditMode && fragment != null) {
 			fragment.addWidget(widgetInfo);
+			onWidgetsConfigurationChanged();
 		} else {
 			createWidgets(Collections.singletonList(widgetInfo));
 		}
@@ -548,23 +554,24 @@ public class ConfigureWidgetsFragment extends BaseFullScreenFragment implements 
 
 	@Override
 	public void onWidgetSelectedToAdd(@NonNull String widgetsId, @NonNull WidgetsPanel panel, boolean recreateControls) {
-		controller.openAddNewWidgetScreen(requireMapActivity(), selectedPanel, widgetsId, selectedAppMode, this);
+		controller.openAddNewWidgetScreen(requireMapActivity(), panel, widgetsId, selectedAppMode, this);
 	}
 
 	public void createWidgets(@NonNull List<MapWidgetInfo> newWidgetInfos) {
 		for (MapWidgetInfo widgetInfo : newWidgetInfos) {
+			WidgetsPanel widgetPanel = widgetInfo.getWidgetPanel();
 			Bundle args = getArguments();
 			if (args != null) {
 				String selectedWidget = args.getString(CONTEXT_SELECTED_WIDGET);
 				boolean addToNext = args.getBoolean(ADD_TO_NEXT);
 				if (selectedWidget != null) {
-					createNewWidget(requireMapActivity(), widgetInfo, selectedPanel, selectedAppMode,
+					createNewWidget(requireMapActivity(), widgetInfo, widgetPanel, selectedAppMode,
 							layoutMode, true, selectedWidget, addToNext);
 					onWidgetsConfigurationChanged();
 					return;
 				}
 			}
-			createNewWidget(requireMapActivity(), widgetInfo, selectedPanel, selectedAppMode, layoutMode, true);
+			createNewWidget(requireMapActivity(), widgetInfo, widgetPanel, selectedAppMode, layoutMode, true);
 			onWidgetsConfigurationChanged();
 		}
 	}
@@ -608,13 +615,16 @@ public class ConfigureWidgetsFragment extends BaseFullScreenFragment implements 
 
 	@Nullable
 	private WidgetsListFragment getSelectedFragment() {
-		if (isResumed()) {
-			FragmentManager manager = getChildFragmentManager();
-			for (Fragment fragment : manager.getFragments()) {
-				if (fragment instanceof WidgetsListFragment widgetsFragment
-						&& Algorithms.objectEquals(widgetsFragment.getSelectedPanel(), selectedPanel)) {
-					return widgetsFragment;
-				}
+		return getFragment(selectedPanel);
+	}
+
+	@Nullable
+	private WidgetsListFragment getFragment(@NonNull WidgetsPanel panel) {
+		FragmentManager manager = getChildFragmentManager();
+		for (Fragment fragment : manager.getFragments()) {
+			if (fragment instanceof WidgetsListFragment widgetsFragment
+					&& Algorithms.objectEquals(widgetsFragment.getSelectedPanel(), panel)) {
+				return widgetsFragment;
 			}
 		}
 		return null;

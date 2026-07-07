@@ -26,7 +26,7 @@ import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
 import net.osmand.plus.mapmarkers.MapMarkersGroup;
 import net.osmand.plus.mapmarkers.MapMarkersHelper;
-import net.osmand.plus.myplaces.favorites.SaveFavoritesTask.SaveFavoritesListener;
+import net.osmand.plus.myplaces.favorites.FavoriteDeletionsJournal.ReadResult;
 import net.osmand.plus.myplaces.favorites.add.AddFavoriteOptions;
 import net.osmand.plus.myplaces.favorites.add.AddFavoriteResult;
 import net.osmand.plus.myplaces.favorites.dialogs.FavoriteSortModesHelper;
@@ -47,9 +47,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -68,8 +70,14 @@ public class FavouritesHelper {
 	@Nullable
 	private FavoriteFolderSnapshot favoriteFolderSnapshot;
 
-	private final Set<FavoritesListener> listeners = new HashSet<>();
+	private List<FavoritesListener> listeners = new ArrayList<>();
 	private final Map<FavouritePoint, AddressLookupRequest> addressRequestMap = new ConcurrentHashMap<>();
+	private final FavoritesListener saveFavoritesListener = new FavoritesListener() {
+		@Override
+		public void onSavingFavoritesFinished(boolean success) {
+			notifySavingFavoritesFinished(null, success);
+		}
+	};
 
 	private boolean favoritesLoaded;
 	private long lastModifiedTime;
@@ -257,8 +265,16 @@ public class FavouritesHelper {
 	}
 
 	public void loadFavorites() {
+		ReadResult journalRead = FavoriteDeletionsJournal.read(app);
+		FavoritePendingDeletions pendingDeletions = journalRead.getDeletions();
+
 		Map<String, FavoriteGroup> groups = fileHelper.loadInternalGroups();
 		Map<String, FavoriteGroup> extGroups = fileHelper.loadExternalGroups();
+
+		if (!pendingDeletions.isEmpty()) {
+			applyPendingDeletions(groups, pendingDeletions);
+			applyPendingDeletions(extGroups, pendingDeletions);
+		}
 
 		boolean changed = merge(extGroups, groups);
 
@@ -272,7 +288,8 @@ public class FavouritesHelper {
 		File legacyExternalFile = fileHelper.getLegacyExternalFile();
 		// Force save favorites to file if internals are different from externals
 		// or no favorites created yet or legacy favourites.gpx present
-		if (changed || !fileHelper.getExternalDir().exists() || legacyExternalFile.exists()) {
+		if (changed || !fileHelper.getExternalDir().exists()
+				|| legacyExternalFile.exists() || !pendingDeletions.isEmpty()) {
 			saveCurrentPointsIntoFile(false);
 			// Delete legacy favourites.gpx if exists
 			if (legacyExternalFile.exists()) {
@@ -283,6 +300,22 @@ public class FavouritesHelper {
 		}
 		favoritesLoaded = true;
 		notifyListeners();
+	}
+
+	private void applyPendingDeletions(@NonNull Map<String, FavoriteGroup> groups,
+	                                   @NonNull FavoritePendingDeletions pendingDeletions) {
+		Set<String> pendingGroupDeletions = pendingDeletions.getGroupNames();
+		Set<String> pendingPointDeletions = pendingDeletions.getPointKeys();
+
+		Iterator<Entry<String, FavoriteGroup>> it = groups.entrySet().iterator();
+		while (it.hasNext()) {
+			Map.Entry<String, FavoriteGroup> entry = it.next();
+			if (pendingGroupDeletions.contains(entry.getKey())) {
+				it.remove();
+			} else {
+				entry.getValue().getPoints().removeIf(point -> pendingPointDeletions.contains(point.getKey()));
+			}
+		}
 	}
 
 	public long getLastModifiedTime() {
@@ -343,11 +376,18 @@ public class FavouritesHelper {
 	}
 
 	public void addListener(@NonNull FavoritesListener listener) {
-		listeners.add(listener);
+		boolean added = false;
+		if (!listeners.contains(listener)) {
+			listeners = CollectionUtils.addToList(listeners, listener);
+			added = true;
+		}
+		if (isFavoritesLoaded()) {
+			listener.onFavoritesLoaded();
+		}
 	}
 
 	public void removeListener(@NonNull FavoritesListener listener) {
-		listeners.remove(listener);
+		listeners = CollectionUtils.removeFromList(listeners, listener);
 	}
 
 	private boolean merge(@NonNull Map<String, FavoriteGroup> source, @NonNull Map<String, FavoriteGroup> destination) {
@@ -416,6 +456,9 @@ public class FavouritesHelper {
 	}
 
 	public void delete(@Nullable Set<FavoriteGroup> groupsToDelete, @Nullable Set<FavouritePoint> favoritesSelected) {
+		if (!Algorithms.isEmpty(favoritesSelected) || !Algorithms.isEmpty(groupsToDelete)) {
+			FavoriteDeletionsJournal.addAll(app, favoritesSelected, groupsToDelete);
+		}
 		if (!Algorithms.isEmpty(favoritesSelected)) {
 			Set<FavoriteGroup> groupsToSync = new HashSet<>();
 			for (FavouritePoint point : favoritesSelected) {
@@ -459,6 +502,8 @@ public class FavouritesHelper {
 
 	public boolean deleteFavourite(FavouritePoint p, boolean saveImmediately) {
 		if (p != null) {
+			FavoriteDeletionsJournal.addPoint(app, p);
+
 			FavoriteGroup group = flatGroups.get(p.getCategory());
 			if (group != null) {
 				group.getPoints().remove(p);
@@ -738,18 +783,30 @@ public class FavouritesHelper {
 		saveGroupsInternal(new ArrayList<>(favoriteGroups), true, async);
 	}
 
+	public void saveCurrentPointsIntoFile(boolean async, @Nullable FavoritesListener listener) {
+		saveFavoriteGroups(new ArrayList<>(favoriteGroups), true, async, listener);
+	}
+
 	public void saveSelectedGroupsIntoFile(@NonNull List<FavoriteGroup> groups, boolean async) {
 		saveGroupsInternal(groups, false, async);
 	}
 
 	private void saveGroupsInternal(@NonNull List<FavoriteGroup> groups, boolean saveAllGroups, boolean async) {
-		updateLastModifiedTime();
-		SaveFavoritesListener listener = this::onSavingFavoritesFinished;
+		saveFavoriteGroups(groups, saveAllGroups, async, null);
+	}
 
+	private void saveFavoriteGroups(@NonNull List<FavoriteGroup> groups, boolean saveAllGroups, boolean async, @Nullable FavoritesListener listener) {
+		updateLastModifiedTime();
+		FavoritesListener saveListener = listener == null ? saveFavoritesListener : new FavoritesListener() {
+			@Override
+			public void onSavingFavoritesFinished(boolean success) {
+				notifySavingFavoritesFinished(listener, success);
+			}
+		};
 		if (async) {
-			fileHelper.saveFavoritesIntoFile(groups, saveAllGroups, listener);
+			fileHelper.saveFavoritesIntoFile(groups, saveAllGroups, saveListener);
 		} else {
-			fileHelper.saveFavoritesIntoFileSync(groups, saveAllGroups, listener);
+			fileHelper.saveFavoritesIntoFileSync(groups, saveAllGroups, saveListener);
 		}
 	}
 
@@ -757,6 +814,7 @@ public class FavouritesHelper {
 		List<FavoriteGroup> tmpFavoriteGroups = new ArrayList<>(favoriteGroups);
 		boolean remove = tmpFavoriteGroups.remove(group);
 		if (remove) {
+			FavoriteDeletionsJournal.addGroup(app, group);
 			favoriteGroups = tmpFavoriteGroups;
 			Map<String, FavoriteGroup> tmpFlatGroups = new LinkedHashMap<>(flatGroups);
 			tmpFlatGroups.remove(group.getName());
@@ -783,6 +841,7 @@ public class FavouritesHelper {
 		List<FavoriteGroup> tmpFavoriteGroups = new ArrayList<>(favoriteGroups);
 		Map<String, FavoriteGroup> tmpFlatGroups = new LinkedHashMap<>(flatGroups);
 		for (FavoriteGroup group : groupsToDelete) {
+			FavoriteDeletionsJournal.addGroup(app, group);
 			tmpFavoriteGroups.remove(group);
 			tmpFlatGroups.remove(group.getName());
 			removeFavouritePoints(group.getPoints());
@@ -1212,10 +1271,15 @@ public class FavouritesHelper {
 		}
 	}
 
-	private void onSavingFavoritesFinished() {
-		invalidateFavoriteFolderCache();
+	private void notifySavingFavoritesFinished(@Nullable FavoritesListener saveListener, boolean success) {
+		if (success) {
+			invalidateFavoriteFolderCache();
+		}
 		for (FavoritesListener listener : listeners) {
-			listener.onSavingFavoritesFinished();
+			listener.onSavingFavoritesFinished(success);
+		}
+		if (saveListener != null) {
+			saveListener.onSavingFavoritesFinished(success);
 		}
 	}
 
