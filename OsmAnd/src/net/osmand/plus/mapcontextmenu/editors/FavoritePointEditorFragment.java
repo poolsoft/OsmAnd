@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
@@ -23,6 +24,8 @@ import androidx.fragment.app.FragmentManager;
 import net.osmand.data.BackgroundType;
 import net.osmand.data.FavouritePoint;
 import net.osmand.data.LatLon;
+import net.osmand.plus.gallery.data.GalleryKey;
+import net.osmand.shared.gpx.primitives.Linkable;
 import net.osmand.plus.myplaces.MyPlacesActivity;
 import net.osmand.plus.settings.enums.ThemeUsageContext;
 import net.osmand.shared.gpx.GpxUtilities.PointsGroup;
@@ -31,6 +34,7 @@ import net.osmand.plus.R;
 import net.osmand.plus.activities.MapActivity;
 import net.osmand.plus.dialogs.FavoriteDialogs;
 import net.osmand.plus.mapcontextmenu.MapContextMenu;
+import net.osmand.plus.myplaces.favorites.FavoriteFolderFormatter;
 import net.osmand.plus.myplaces.favorites.FavoriteGroup;
 import net.osmand.plus.myplaces.favorites.FavouritesHelper;
 import net.osmand.plus.render.RenderingIcons;
@@ -351,10 +355,45 @@ public class FavoritePointEditorFragment extends PointEditorFragment {
 		return pointsGroups;
 	}
 
+	@Override
+	protected void setupGroupName(@NonNull TextView groupName, @NonNull PointsGroup group) {
+		FavoriteFolderFormatter.setupStyledBreadcrumb(groupName, group.getName(), nightMode);
+	}
+
 	@NonNull
 	@Override
 	protected LatLon getPointCoordinates() {
 		return new LatLon(favorite.getLatitude(), favorite.getLongitude());
+	}
+
+	private boolean canAttachMedia() {
+		return getFavorite() != null;
+	}
+
+	@Nullable
+	@Override
+	protected GalleryKey getMediaGalleryKey() {
+		FavouritePoint favorite = getFavorite();
+		if (favorite == null) {
+			return null;
+		}
+		return canAttachMedia() ? new GalleryKey.Favorite(favorite.getKey()) : null;
+	}
+
+	@Nullable
+	@Override
+	protected Linkable getMediaTarget() {
+		return canAttachMedia() ? getFavorite() : null;
+	}
+
+	@Nullable
+	@Override
+	protected LatLon getMediaLatLon() {
+		FavouritePoint favorite = getFavorite();
+		if (favorite == null) {
+			return null;
+		}
+		return canAttachMedia() ? new LatLon(favorite.getLatitude(), favorite.getLongitude()) : null;
 	}
 
 	@Override
