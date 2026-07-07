@@ -132,6 +132,9 @@ import net.osmand.shared.palette.data.PaletteRepository;
 import net.osmand.shared.settings.enums.MetricsConstants;
 import net.osmand.util.Algorithms;
 
+import net.osmand.plus.gallery.GalleryHelper;
+import net.osmand.plus.settings.coordinates.CoordinateFormatHelper;
+
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -224,6 +227,9 @@ public class OsmandApplication extends MultiDexApplication {
 	ExplorePlacesOnlineProvider explorePlacesProvider;
 	HelpArticlesHelper helpArticlesHelper;
 	ClickableWayHelper clickableWayHelper;
+
+	private final CoordinateFormatHelper coordinateFormatHelper = new CoordinateFormatHelper(this);
+	private final GalleryHelper galleryHelper = new GalleryHelper(this);
 
 	private final Map<String, Builder> customRoutingConfigs = new ConcurrentHashMap<>();
 	private File externalStorageDirectory;
@@ -744,6 +750,16 @@ public class OsmandApplication extends MultiDexApplication {
 	@NonNull
 	public HelpArticlesHelper getHelpArticlesHelper() {
 		return helpArticlesHelper;
+	}
+
+	@NonNull
+	public CoordinateFormatHelper getCoordinateFormatHelper() {
+		return coordinateFormatHelper;
+	}
+
+	@NonNull
+	public GalleryHelper getGalleryHelper() {
+		return galleryHelper;
 	}
 
 	public CommandPlayer getPlayer() {
