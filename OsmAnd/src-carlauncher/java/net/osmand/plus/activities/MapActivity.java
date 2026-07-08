@@ -372,15 +372,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		//android.widget.Toast.makeText(this, "CarLauncher MapActivity Active!", android.widget.Toast.LENGTH_LONG).show();
 
 		enterToFullScreen();
-		// Navigation Drawer
-		AndroidUtils.addStatusBarPadding21v(this, findViewById(R.id.menuItems));
-
-		View mapHudLayout = findViewById(R.id.map_hud_container);
-		if (InsetsUtils.isEdgeToEdgeSupported()) {
-			mapHudLayout.setFitsSystemWindows(false);
-		}
-
-		InsetsUtils.processInsets(this, findViewById(R.id.drawer_layout), null, false);
+		// statusbar/insets configuration is moved to the lazy loading block to avoid null view crashes
 
 		if (WhatsNewDialogFragment.shouldShowDialog(app)) {
 			boolean showed = WhatsNewDialogFragment.showInstance(getSupportFragmentManager());
@@ -440,12 +432,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 		mapView.refreshMap(true);
 
-		drawerLayout = findViewById(R.id.drawer_layout);
-		mapViewWithLayers = findViewById(R.id.map_view_with_layers);
-
+		// drawerLayout and mapViewWithLayers lookups and updateDrawerMenu are moved to the lazy loading block to avoid null views
 		checkAppInitialization();
-
-		getMapActions().updateDrawerMenu();
 
 		IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
 		screenOffReceiver = new ScreenOffReceiver();
@@ -656,12 +644,29 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				mapViewWithLayers = findViewById(R.id.map_view_with_layers);
 				drawerLayout = findViewById(R.id.drawer_layout);
 
+				// status bar ve inset ayarlarini uygula (Turkce karakter yok)
+				View menuItems = findViewById(R.id.menuItems);
+				if (menuItems != null) {
+					AndroidUtils.addStatusBarPadding21v(this, menuItems);
+				}
+				View mapHudLayout = findViewById(R.id.map_hud_container);
+				if (mapHudLayout != null && InsetsUtils.isEdgeToEdgeSupported()) {
+					mapHudLayout.setFitsSystemWindows(false);
+				}
+				View drawerLayoutView = findViewById(R.id.drawer_layout);
+				if (drawerLayoutView != null) {
+					InsetsUtils.processInsets(this, drawerLayoutView, null, false);
+				}
+
 				if (mapViewWithLayers != null) {
 					mapViewWithLayers.onCreate(null);
 					if (settings.MAP_ACTIVITY_ENABLED) {
 						mapViewWithLayers.onResume();
 					}
 				}
+
+				// Rendering view kurulumunu tetikle (Turkce karakter yok)
+				app.getOsmandMap().setupRenderingView();
 
 				OsmandMapTileView mapView = getMapView();
 				if (mapView != null) {
@@ -680,6 +685,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				if (carLayoutManager != null) {
 					mapContainer.setInterceptTouch(carLayoutManager.isContentFullScreen(), () -> closeAppDrawer());
 				}
+
+				// Drawer menusunu guncelle (Turkce karakter yok)
+				getMapActions().updateDrawerMenu();
 
 				// Yukleme barini gizle (Turkce karakter yok)
 				if (initProgress != null) {
