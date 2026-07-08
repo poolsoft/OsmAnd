@@ -193,19 +193,20 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     public void requestSmartFocus(String activePackageName) {
         if (activePackageName == null) return;
 
-        // 1. Dahili oynatici odagi kaybettiyse duraklat
+        // 1. Harici kaynak aktiflesince dahili oynaticiyi kesin durdur (Turkce karakter yok)
+        // isPlaying() kontrolu olmaksizin - race condition'i onler
         if (!"usage.internal.player".equals(activePackageName)) {
-            if (internalPlayer != null && internalPlayer.isPlaying()) {
+            if (internalPlayer != null) {
                 internalPlayer.pause();
             }
         }
 
-        // 2. Diger tum adaptorleri duraklat
+        // 2. Diger tum adaptorleri duraklat (null packageName ile guvenli karsilastir)
         for (BaseMediaAdapter adapter : adapters) {
-            if (adapter != null && !activePackageName.equals(adapter.getPackageName())) {
-                if (adapter.isPlaying()) {
-                    adapter.pause();
-                }
+            if (adapter == null) continue;
+            String adapterPkg = adapter.getPackageName();
+            if (adapterPkg != null && !adapterPkg.equals(activePackageName) && adapter.isPlaying()) {
+                adapter.pause();
             }
         }
     }
@@ -327,18 +328,11 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                     
                     // Akilli odaklanma tetikle
                     requestSmartFocus(pkg);
-                    
+
+                    // preferredPackage guncelle - setPreferredPackage ile (Turkce karakter yok)
+                    // Direkt atama yerine metodu kullan: dahili player durdurmasi + XY bind + bildirimler
                     if (pkg != null && !pkg.equals(preferredPackage)) {
-                        preferredPackage = pkg;
-                        for (BaseMediaAdapter adapter : adapters) {
-                            if (adapter instanceof XyAutoMusicAdapter) {
-                                if ("com.acloud.stub.localmusic".equals(pkg)) {
-                                    ((XyAutoMusicAdapter) adapter).bindService();
-                                } else {
-                                    ((XyAutoMusicAdapter) adapter).unbindService();
-                                }
-                            }
-                        }
+                        setPreferredPackage(pkg);
                     }
                 } else {
                     if (internalPlayer.isPlaying()) {
@@ -780,19 +774,19 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     }
 
     private void startVisualizer() {
-        if (mVisualizer != null) return;
-        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) 
-            != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-             Log.w(TAG, "RECORD_AUDIO permission missing for Visualizer.");
-             return;
+        // Onceki instance'i kapat: kaynak dahiliden hariciye (veya tersi) gecmis olabilir (Turkce karakter yok)
+        stopVisualizer();
+
+        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            Log.w(TAG, "RECORD_AUDIO permission missing for Visualizer.");
+            return;
         }
 
         try {
-            int sessionId = 0;
-            if (internalPlayer.isPlaying()) {
-                sessionId = internalPlayer.getAudioSessionId();
-            }
-            
+            // Dahili caliyorsa session ID'sini kullan, degilse 0 (sistem output mix - harici icin)
+            int sessionId = internalPlayer.isPlaying() ? internalPlayer.getAudioSessionId() : 0;
+
             mVisualizer = new android.media.audiofx.Visualizer(sessionId);
             mVisualizer.setCaptureSize(android.media.audiofx.Visualizer.getCaptureSizeRange()[1]);
             mVisualizer.setDataCaptureListener(new android.media.audiofx.Visualizer.OnDataCaptureListener() {
@@ -803,13 +797,13 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 @Override
                 public void onFftDataCapture(android.media.audiofx.Visualizer visualizer, byte[] fft, int samplingRate) {
                     for (MusicVisualizerListener l : visualizerListeners) {
-                         l.onFftDataCapture(fft);
+                        l.onFftDataCapture(fft);
                     }
                 }
             }, android.media.audiofx.Visualizer.getMaxCaptureRate() / 2, false, true);
-            
+
             mVisualizer.setEnabled(true);
-            Log.d(TAG, "Visualizer Started. Session: " + sessionId);
+            Log.d(TAG, "Visualizer Started. Session: " + sessionId + " (" + (sessionId == 0 ? "external/mix" : "internal") + ")");
 
         } catch (Exception e) {
             Log.e(TAG, "Failed to start Visualizer", e);

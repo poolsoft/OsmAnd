@@ -306,6 +306,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		app.getSettings().CONTOUR_LINES_PURCHASED.set(true);
 		app.getSettings().DEPTH_CONTOURS_PURCHASED.set(true);
 		app.getSettings().BACKUP_PURCHASE_ACTIVE.set(true);
+		
+		// Navigasyonda seslerin duyulabilmesi icin varsayilan olarak muzik kesme ayarini aktif et (Turkce karakter yok)
+		if (!app.getSettings().INTERRUPT_MUSIC.get()) {
+			app.getSettings().INTERRUPT_MUSIC.set(true);
+		}
         
         // V8: Initialize Car Launcher UI AFTER window setup
 	    setupCarLauncherUI();
@@ -630,15 +635,58 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 
 
-		// 3. Orijinal main.xml layout'unu inflate et ve referansını sakla
-		mainLayoutRoot = getLayoutInflater().inflate(R.layout.main, mapContainer, false);
+		// Yukleme progress barini goster (Turkce karakter yok)
+		final View initProgress = findViewById(R.id.init_progress);
+		if (initProgress != null) {
+			initProgress.setVisibility(View.VISIBLE);
+		}
 
-		// 4. main.xml'i map_container'a ekle
-		mapContainer.addView(mainLayoutRoot);
+		if (mapContainer != null) {
+			mapContainer.post(() -> {
+				if (isDestroyed() || isFinishing()) {
+					return;
+				}
+				long start = System.currentTimeMillis();
+				// 3. Orijinal main.xml layout'unu inflate et ve referansini sakla (Turkce karakter yok)
+				mainLayoutRoot = getLayoutInflater().inflate(R.layout.main, mapContainer, false);
+				// 4. main.xml'i map_container'a ekle (Turkce karakter yok)
+				mapContainer.addView(mainLayoutRoot);
 
-		// Harita kucuk paneldeyken dokunmalari engellemek ve tiklayinca buyutmek icin
-		if (mapContainer != null && carLayoutManager != null) {
-			mapContainer.setInterceptTouch(carLayoutManager.isContentFullScreen(), () -> closeAppDrawer());
+				// map view referanslarini guncelle (Turkce karakter yok)
+				mapViewWithLayers = findViewById(R.id.map_view_with_layers);
+				drawerLayout = findViewById(R.id.drawer_layout);
+
+				if (mapViewWithLayers != null) {
+					mapViewWithLayers.onCreate(null);
+					if (settings.MAP_ACTIVITY_ENABLED) {
+						mapViewWithLayers.onResume();
+					}
+				}
+
+				OsmandMapTileView mapView = getMapView();
+				if (mapView != null) {
+					mapView.setMapActivity(this);
+					mapView.refreshMap(true);
+					if (settings.isLastKnownMapLocation()) {
+						LatLon l = settings.getLastKnownMapLocation();
+						mapView.setLatLon(l.getLatitude(), l.getLongitude());
+						mapView.setHeight(settings.getLastKnownMapHeight());
+						mapView.setZoomWithFloatPart(settings.getLastKnownMapZoom(), settings.getLastKnownMapZoomFloatPart());
+						mapView.initMapRotationByCompassMode();
+					}
+				}
+
+				// Harita kucuk paneldeyken dokunmalari engellemek ve tiklayinca buyutmek icin (Turkce karakter yok)
+				if (carLayoutManager != null) {
+					mapContainer.setInterceptTouch(carLayoutManager.isContentFullScreen(), () -> closeAppDrawer());
+				}
+
+				// Yukleme barini gizle (Turkce karakter yok)
+				if (initProgress != null) {
+					initProgress.setVisibility(View.GONE);
+				}
+				LOG.error("Lazy loading OsmAnd Map completed in " + (System.currentTimeMillis() - start) + " ms");
+			});
 		}
 
 		// 5. CarLauncher bileşenlerini başlat
