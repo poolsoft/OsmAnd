@@ -143,7 +143,7 @@ public class CarLayoutManager {
 
             cs.connect(R.id.widget_panel, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
             
-            if (isPortrait || "bottom".equals(dockPos)) {
+            if (isPortrait) {
                 cs.connect(R.id.widget_panel, ConstraintSet.BOTTOM, R.id.app_dock, ConstraintSet.TOP);
                 cs.connect(R.id.widget_panel, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
                 cs.connect(R.id.widget_panel, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
@@ -179,7 +179,7 @@ public class CarLayoutManager {
             cs.setVisibility(R.id.widget_panel, View.VISIBLE);
             boolean isSwapped = isContentFullScreen;
 
-            if (isPortrait || "bottom".equals(dockPos)) {
+            if (isPortrait) {
                 // Dikey yerlesim: Ust Panel ve Alt Panel
                 int topViewId;
                 int bottomViewId;

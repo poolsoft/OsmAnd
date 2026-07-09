@@ -956,6 +956,12 @@ public class AppDockFragment extends Fragment
                 recyclerView.setRecycledViewPool(new androidx.recyclerview.widget.RecyclerView.RecycledViewPool());
                 
                 recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), desiredOrientation, false));
+                
+                // Kısayolların yarım görünmesini engellemek için scroll sonrası en yakın öğeye yapışmasını sağla
+                recyclerView.setOnFlingListener(null);
+                androidx.recyclerview.widget.LinearSnapHelper snapHelper = new androidx.recyclerview.widget.LinearSnapHelper();
+                snapHelper.attachToRecyclerView(recyclerView);
+                
                 if (adapter != null) {
                     adapter.setVerticalMode(isVerticalMode);
                 }
