@@ -74,12 +74,13 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         repository.scanMusic((tracks, folders, artists) -> {
             Log.d(TAG, "Scan complete: " + tracks.size() + " tracks");
             if (!tracks.isEmpty()) {
-                internalPlayer.setPlaylist(tracks, 0, false);
+                internalPlayer.setPlaylist(tracks, -1, false);
+                internalPlayer.restoreState();
                 
                 net.osmand.plus.carlauncher.CarLauncherSettings settings = 
                      new net.osmand.plus.carlauncher.CarLauncherSettings(this.context);
-                if (settings.isAutoPlayMusicEnabled()) {
-                     internalPlayer.play();
+                if (settings.isAutoPlayMusicEnabled() || internalPlayer.wasPlayingBefore()) {
+                     internalPlayer.resumeLastSession();
                 }
             }
         });
