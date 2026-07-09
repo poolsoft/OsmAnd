@@ -409,7 +409,8 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/music_recycler"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:scrollbars="vertical"
                 android:clipToPadding="false"/>
         </LinearLayout>
