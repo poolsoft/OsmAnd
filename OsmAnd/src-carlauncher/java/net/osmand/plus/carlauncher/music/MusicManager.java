@@ -193,6 +193,8 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
     public void requestSmartFocus(String activePackageName) {
         if (activePackageName == null) return;
+        
+        lastSmartFocusTime = System.currentTimeMillis();
 
         // 1. Harici kaynak aktiflesince dahili oynaticiyi kesin durdur (Turkce karakter yok)
         // isPlaying() kontrolu olmaksizin - race condition'i onler
@@ -317,10 +319,21 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         }
     }
 
+    private long lastSmartFocusTime = 0;
+
     private final MediaController.Callback externalCallback = new MediaController.Callback() {
         @Override
         public void onPlaybackStateChanged(@Nullable PlaybackState state) {
             boolean isExternalPlaying = state != null && state.getState() == PlaybackState.STATE_PLAYING;
+            
+            // Bluetooth gibi inatçı oynatıcıların pause isteğini yok sayıp gönderdiği sahte PLAYING bildirimlerini engelle (Turkce karakter yok)
+            if (isExternalPlaying && "usage.internal.player".equals(preferredPackage)) {
+                if (System.currentTimeMillis() - lastSmartFocusTime < 2000) {
+                    // Yakin zamanda smart focus ile durdurma gonderilmisse, bu gecikmeli durumu yoksay.
+                    return;
+                }
+            }
+
             if (isExternalPlaying) {
                 lastActiveSource = MusicSource.EXTERNAL;
                 

@@ -438,6 +438,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         if (btnPlaylist != null)
             btnPlaylist.setOnClickListener(v -> {
                 isExternalMode = !isExternalMode;
+                if (!isExternalMode) {
+                    musicManager.setPreferredPackage("usage.internal.player");
+                }
                 updateModeUI();
             });
 
@@ -1052,7 +1055,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                         }
                     }
                     // Force MusicManager to drop external preference so it picks up internal player
-                    musicManager.setPreferredPackage(null);
+                    musicManager.setPreferredPackage("usage.internal.player");
                     
                     updateModeUI();
                 }
