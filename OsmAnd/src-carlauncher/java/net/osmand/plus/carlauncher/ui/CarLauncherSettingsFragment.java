@@ -50,15 +50,17 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         setPreferencesFromResource(R.xml.carlauncher_prefs, rootKey);
 
         if (getContext() != null) {
-            settings = new CarLauncherSettings(getContext());
+            settings = CarLauncherSettings.getInstance(getContext());
         }
 
-        setupAppearancePrefs();
-        setupLanguagePrefs();
+        setupAppearanceGeneralPrefs();
+        setupAppearancePortraitPrefs();
+        setupAppearanceLandscapePrefs();
         setupMusicPrefs();
         setupAutoLaunchPrefs();
         setupBackupPrefs();
-        setupDockPrefs();
+        setupDockLandscapePrefs();
+        setupDockPortraitPrefs();
         setupAssistantPrefs();
         setupAboutPrefs();
     }
@@ -348,7 +350,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     // GÖRÜNÜM AYARLARI
     // ═══════════════════════════════════════════════════════════════
 
-    private void setupAppearancePrefs() {
+    private void setupAppearanceGeneralPrefs() {
         // Status Bar
         SwitchPreferenceCompat statusBarPref = findPreference(CarLauncherSettings.KEY_STATUS_BAR);
         if (statusBarPref != null) {
@@ -368,57 +370,10 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+        
+        setupLanguagePrefs();
 
-        // Widget Display Mode
-        androidx.preference.ListPreference displayModePref = findPreference(CarLauncherSettings.KEY_WIDGET_DISPLAY_MODE);
-        if (displayModePref != null) {
-            displayModePref.setEntries(new CharSequence[]{"Liste (Varsayılan)", "Sayfalı (Carousel)"});
-            displayModePref.setEntryValues(new CharSequence[]{"0", "1"});
-            displayModePref.setOnPreferenceChangeListener((preference, newValue) -> {
-                CarLauncherSettings settings = new CarLauncherSettings(getContext());
-                try {
-                    settings.setWidgetDisplayMode(Integer.parseInt((String) newValue));
-                } catch (NumberFormatException e) {
-                    settings.setWidgetDisplayMode(0);
-                }
-
-                Toast.makeText(getContext(), "Görünüm değişikliği için widget paneli yenilenecek",
-                        Toast.LENGTH_SHORT).show();
-                
-                 if (getActivity() != null) {
-                    Intent intent = new Intent("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
-                    getActivity().sendBroadcast(intent);
-                }
-                return true;
-            });
-        }
-
-        // Widget Manager
-        Preference widgetPref = findPreference("car_launcher_widget_manager");
-        if (widgetPref != null) {
-            widgetPref.setOnPreferenceClickListener(preference -> {
-                if (getContext() != null) {
-                    Toast.makeText(getContext(), "Widget ayarlari ust panelde duzenlenir", Toast.LENGTH_SHORT).show();
-                }
-                return true;
-            });
-        }
-
-        // Dikey modda sadece harita
-        SwitchPreferenceCompat portraitMapOnlyPref = findPreference(CarLauncherSettings.KEY_PORTRAIT_MAP_ONLY);
-        if (portraitMapOnlyPref != null) {
-            portraitMapOnlyPref.setOnPreferenceChangeListener((preference, newValue) -> {
-                boolean val = (Boolean) newValue;
-                if (settings != null) {
-                    settings.setPortraitMapOnly(val);
-                }
-                if (getActivity() != null) {
-                    Intent intent = new Intent("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
-                    getActivity().sendBroadcast(intent);
-                }
-                return true;
-            });
-        }
+        // ... removed widget settings that are now unused here
 
         // Yuzen yardimci buton
         SwitchPreferenceCompat floatingButtonPref = findPreference(CarLauncherSettings.KEY_FLOATING_BUTTON);
@@ -526,8 +481,44 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+    }
 
-        // Widget Paneli Konumu (Turkce karakter yok)
+    private void setupAppearancePortraitPrefs() {
+        // Dikey modda sadece harita
+        SwitchPreferenceCompat portraitMapOnlyPref = findPreference(CarLauncherSettings.KEY_PORTRAIT_MAP_ONLY);
+        if (portraitMapOnlyPref != null) {
+            portraitMapOnlyPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                boolean val = (Boolean) newValue;
+                if (settings != null) {
+                    settings.setPortraitMapOnly(val);
+                }
+                if (getActivity() != null) {
+                    Intent intent = new Intent("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
+                    getActivity().sendBroadcast(intent);
+                }
+                return true;
+            });
+        }
+
+        // Panel Genisleme Davranisi (Dikey)
+        androidx.preference.ListPreference portraitExpansionPref = findPreference(CarLauncherSettings.KEY_PORTRAIT_EXPANSION);
+        if (portraitExpansionPref != null) {
+            portraitExpansionPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                String val = (String) newValue;
+                if (settings != null) {
+                    settings.setPortraitExpansion(val);
+                }
+                if (getActivity() != null) {
+                    Intent intent = new Intent("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
+                    getActivity().sendBroadcast(intent);
+                }
+                return true;
+            });
+        }
+    }
+
+    private void setupAppearanceLandscapePrefs() {
+        // Widget Paneli Konumu
         androidx.preference.ListPreference panelPositionPref = findPreference(CarLauncherSettings.KEY_WIDGET_PANEL_POSITION);
         if (panelPositionPref != null) {
             panelPositionPref.setOnPreferenceChangeListener((preference, newValue) -> {
@@ -543,13 +534,13 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             });
         }
 
-        // Panel Genisleme Davranisi (Turkce karakter yok)
-        androidx.preference.ListPreference expansionBehaviorPref = findPreference("car_launcher_expansion_behavior");
-        if (expansionBehaviorPref != null) {
-            expansionBehaviorPref.setOnPreferenceChangeListener((preference, newValue) -> {
+        // Panel Genisleme Davranisi (Yatay)
+        androidx.preference.ListPreference landscapeExpansionPref = findPreference(CarLauncherSettings.KEY_LANDSCAPE_EXPANSION);
+        if (landscapeExpansionPref != null) {
+            landscapeExpansionPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 String val = (String) newValue;
                 if (settings != null) {
-                    settings.setExpansionBehavior(val);
+                    settings.setLandscapeExpansion(val);
                 }
                 if (getActivity() != null) {
                     Intent intent = new Intent("net.osmand.carlauncher.WIDGET_MODE_CHANGED");
@@ -695,13 +686,27 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     // DOCK AYARLARI
     // ═══════════════════════════════════════════════════════════════
 
-    private void setupDockPrefs() {
+    private void setupDockLandscapePrefs() {
         androidx.preference.ListPreference dockPosPref = findPreference(CarLauncherSettings.KEY_DOCK_POSITION);
         if (dockPosPref != null) {
             dockPosPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 String val = (String) newValue;
                 if (settings != null) {
                     settings.setDockPosition(val);
+                }
+                if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                    ((net.osmand.plus.activities.MapActivity) getActivity()).checkAndRefreshDockFragmentIfNeeded();
+                }
+                return true;
+            });
+        }
+
+        SeekBarPreference dockSizePref = findPreference(CarLauncherSettings.KEY_DOCK_SIZE);
+        if (dockSizePref != null) {
+            dockSizePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                int val = (Integer) newValue;
+                if (settings != null) {
+                    settings.setDockSize(val);
                 }
                 if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
                     ((net.osmand.plus.activities.MapActivity) getActivity()).checkAndRefreshDockFragmentIfNeeded();
@@ -725,6 +730,36 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         if (resetPref != null) {
             resetPref.setOnPreferenceClickListener(preference -> {
                 confirmResetDock();
+                return true;
+            });
+        }
+    }
+
+    private void setupDockPortraitPrefs() {
+        androidx.preference.ListPreference dockPosPref = findPreference(CarLauncherSettings.KEY_DOCK_POSITION_PORTRAIT);
+        if (dockPosPref != null) {
+            dockPosPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                String val = (String) newValue;
+                if (settings != null) {
+                    settings.setDockPositionPortrait(val);
+                }
+                if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                    ((net.osmand.plus.activities.MapActivity) getActivity()).checkAndRefreshDockFragmentIfNeeded();
+                }
+                return true;
+            });
+        }
+
+        SeekBarPreference dockSizePref = findPreference(CarLauncherSettings.KEY_DOCK_SIZE_PORTRAIT);
+        if (dockSizePref != null) {
+            dockSizePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                int val = (Integer) newValue;
+                if (settings != null) {
+                    settings.setDockSizePortrait(val);
+                }
+                if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                    ((net.osmand.plus.activities.MapActivity) getActivity()).checkAndRefreshDockFragmentIfNeeded();
+                }
                 return true;
             });
         }

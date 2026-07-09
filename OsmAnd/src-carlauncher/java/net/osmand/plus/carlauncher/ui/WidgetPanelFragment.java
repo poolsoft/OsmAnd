@@ -183,7 +183,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         
         popup.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
-            CarLauncherSettings settings = new CarLauncherSettings(getContext());
+            CarLauncherSettings settings = CarLauncherSettings.getInstance(getContext());
             if (id == 1) {
                 showWidgetControlDialog();
                 return true;
@@ -234,7 +234,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                     } catch (Exception e) {
                         // ignore
                     }
-                    CarLauncherSettings settings = new CarLauncherSettings(getContext());
+                    CarLauncherSettings settings = CarLauncherSettings.getInstance(getContext());
                     settings.getPrefs().edit().putString("car_launcher_wallpaper_uri", uri.toString()).apply();
                     settings.setBackgroundStyle("custom");
                     
@@ -437,7 +437,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                     int width = viewPager.getWidth() > 0 ? viewPager.getWidth() : getResources().getDisplayMetrics().widthPixels;
                     float intensity = 20f;
                     if (getContext() != null) {
-                        CarLauncherSettings settings = new CarLauncherSettings(getContext());
+                        CarLauncherSettings settings = CarLauncherSettings.getInstance(getContext());
                         intensity = settings.getParallaxIntensity();
                     }
                     float translationX = -totalScroll * width * (intensity / 100f); // Premium parallax kaydirma katsayisi
@@ -612,7 +612,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
 
     private void updateBackgroundStyle() {
         if (parallaxBg == null || getContext() == null) return;
-        CarLauncherSettings settings = new CarLauncherSettings(getContext());
+        CarLauncherSettings settings = CarLauncherSettings.getInstance(getContext());
         String style = settings.getBackgroundStyle();
         
         if ("custom".equals(style)) {
@@ -653,7 +653,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         dialog.setOnWallpaperSelectedListener(new WallpaperChooserDialog.OnWallpaperSelectedListener() {
             @Override
             public void onWallpaperSelected(String style) {
-                CarLauncherSettings settings = new CarLauncherSettings(getContext());
+                CarLauncherSettings settings = CarLauncherSettings.getInstance(getContext());
                 settings.setBackgroundStyle(style);
                 updateBackgroundStyle();
             }
@@ -672,7 +672,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
 
             @Override
             public void onSetSystemWallpaper() {
-                CarLauncherSettings settings = new CarLauncherSettings(getContext());
+                CarLauncherSettings settings = CarLauncherSettings.getInstance(getContext());
                 settings.setBackgroundStyle("system");
                 updateBackgroundStyle();
             }
@@ -684,7 +684,7 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
                     startActivity(Intent.createChooser(intent, "Duvar Kagidi Secin"));
                     
                     // Geri donuldugunde otomatik sistemi yuklesin
-                    CarLauncherSettings settings = new CarLauncherSettings(getContext());
+                    CarLauncherSettings settings = CarLauncherSettings.getInstance(getContext());
                     settings.setBackgroundStyle("system");
                 } catch (Exception e) {
                     android.widget.Toast.makeText(getContext(), "Sistem duvar kagidi secicisi acilamadi", android.widget.Toast.LENGTH_SHORT).show();

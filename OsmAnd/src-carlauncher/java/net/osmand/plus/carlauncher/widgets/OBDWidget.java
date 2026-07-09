@@ -48,7 +48,7 @@ public class OBDWidget extends BaseWidget implements TelemetryManager.TelemetryL
     public OBDWidget(@NonNull Context context, @NonNull OsmandApplication app) {
         super(context, "obd_dashboard", "Araç Verileri");
         this.app = app;
-        this.settings = new CarLauncherSettings(context);
+        this.settings = CarLauncherSettings.getInstance(context);
         this.order = 2;
     }
 

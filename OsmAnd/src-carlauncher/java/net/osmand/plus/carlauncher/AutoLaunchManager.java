@@ -22,7 +22,7 @@ public class AutoLaunchManager {
 
     public AutoLaunchManager(Context context) {
         this.context = context;
-        this.settings = new CarLauncherSettings(context);
+        this.settings = CarLauncherSettings.getInstance(context);
     }
 
     public void execute() {

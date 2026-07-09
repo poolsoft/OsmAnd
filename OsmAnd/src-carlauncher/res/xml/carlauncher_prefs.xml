@@ -4,11 +4,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- GÖRÜNÜM AYARLARI -->
+    <!-- GÖRÜNÜM - GENEL -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
-        android:key="category_appearance"
-        android:title="@string/car_pref_title_appearance"
+        android:key="category_appearance_general"
+        android:title="@string/car_pref_title_appearance_general"
         app:icon="@android:drawable/ic_menu_view"
         android:iconSpaceReserved="true">
 
@@ -30,13 +30,6 @@
             android:key="car_launcher_language"
             android:title="@string/car_pref_language_title"
             android:summary="@string/car_pref_language_desc"
-            app:iconSpaceReserved="false" />
-
-        <androidx.preference.SwitchPreferenceCompat
-            android:key="car_launcher_portrait_map_only"
-            android:title="@string/car_pref_title_portrait_map_only"
-            android:summary="@string/car_pref_summary_portrait_map_only"
-            android:defaultValue="false"
             app:iconSpaceReserved="false" />
 
         <androidx.preference.SwitchPreferenceCompat
@@ -72,7 +65,6 @@
             android:defaultValue="osmand"
             app:iconSpaceReserved="false" />
 
-        <!-- Premium Kisiklestirme Ayarlari -->
         <androidx.preference.SeekBarPreference
             android:key="car_launcher_parallax_intensity"
             android:title="@string/car_pref_title_parallax_intensity"
@@ -99,27 +91,63 @@
             android:defaultValue="true"
             app:iconSpaceReserved="false" />
 
+    </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- GÖRÜNÜM - DİKEY EKRAN -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
+        android:key="category_appearance_portrait"
+        android:title="@string/car_pref_title_appearance_portrait"
+        app:icon="@android:drawable/ic_menu_crop"
+        android:iconSpaceReserved="true">
+
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="car_launcher_portrait_map_only"
+            android:title="@string/car_pref_title_portrait_map_only"
+            android:summary="@string/car_pref_summary_portrait_map_only"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
+        <androidx.preference.ListPreference
+            android:key="car_launcher_portrait_expansion"
+            android:title="@string/car_pref_title_portrait_expansion"
+            android:summary="%s"
+            android:entries="@array/portrait_expansion_entries"
+            android:entryValues="@array/portrait_expansion_values"
+            android:defaultValue="expand_up"
+            app:iconSpaceReserved="false" />
+
+    </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- GÖRÜNÜM - YATAY EKRAN -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
+        android:key="category_appearance_landscape"
+        android:title="@string/car_pref_title_appearance_landscape"
+        app:icon="@android:drawable/ic_menu_gallery"
+        android:iconSpaceReserved="true">
+
         <androidx.preference.ListPreference
             android:key="widget_panel_position"
             android:title="@string/car_pref_title_widget_panel_position"
             android:summary="%s"
             android:entries="@array/widget_panel_position_entries"
             android:entryValues="@array/widget_panel_position_values"
-            android:defaultValue="right"
+            android:defaultValue="left"
             app:iconSpaceReserved="false" />
 
         <androidx.preference.ListPreference
-            android:key="car_launcher_expansion_behavior"
-            android:title="@string/car_pref_title_expansion_behavior"
+            android:key="car_launcher_landscape_expansion"
+            android:title="@string/car_pref_title_landscape_expansion"
             android:summary="%s"
-            android:entries="@array/expansion_behavior_entries"
-            android:entryValues="@array/expansion_behavior_values"
-            android:defaultValue="swap"
+            android:entries="@array/landscape_expansion_entries"
+            android:entryValues="@array/landscape_expansion_values"
+            android:defaultValue="expand_right"
             app:iconSpaceReserved="false" />
 
     </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
-
-
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- MÜZİK AYARLARI -->
@@ -256,11 +284,11 @@
     </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- DOCK AYARLARI -->
+    <!-- DOCK AYARLARI - YATAY EKRAN -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
-        android:key="category_dock"
-        android:title="@string/car_pref_title_dock"
+        android:key="category_dock_landscape"
+        android:title="@string/car_pref_title_dock_landscape"
         app:icon="@android:drawable/ic_menu_sort_by_size"
         android:iconSpaceReserved="true">
 
@@ -296,6 +324,36 @@
             android:key="car_launcher_reset_dock"
             android:title="@string/car_pref_title_reset_dock"
             android:summary="@string/car_pref_summary_reset_dock"
+            app:iconSpaceReserved="false" />
+
+    </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- DOCK AYARLARI - DİKEY EKRAN -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
+        android:key="category_dock_portrait"
+        android:title="@string/car_pref_title_dock_portrait"
+        app:icon="@android:drawable/ic_menu_sort_by_size"
+        android:iconSpaceReserved="true">
+
+        <androidx.preference.ListPreference
+            android:key="car_launcher_dock_position_portrait"
+            android:title="@string/car_pref_title_dock_position_portrait"
+            android:summary="%s"
+            android:entries="@array/dock_position_portrait_entries"
+            android:entryValues="@array/dock_position_portrait_values"
+            android:defaultValue="bottom"
+            app:iconSpaceReserved="false" />
+
+        <androidx.preference.SeekBarPreference
+            android:key="car_launcher_dock_size_portrait"
+            android:title="@string/car_pref_title_dock_size"
+            android:summary="@string/car_pref_summary_dock_size"
+            android:defaultValue="50"
+            android:max="100"
+            app:min="0"
+            app:showSeekBarValue="true"
             app:iconSpaceReserved="false" />
 
     </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>

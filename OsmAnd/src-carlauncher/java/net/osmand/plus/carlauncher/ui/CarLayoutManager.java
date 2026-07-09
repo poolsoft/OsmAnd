@@ -53,10 +53,10 @@ public class CarLayoutManager {
             return;
         }
 
-        CarLauncherSettings carSettings = new CarLauncherSettings(activity);
-        String dockPos = carSettings.getDockPosition(); 
-        String widgetPos = carSettings.getWidgetPanelPosition();
+        CarLauncherSettings carSettings = CarLauncherSettings.getInstance(activity);
         boolean isPortrait = activity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
+        String dockPos = isPortrait ? carSettings.getDockPositionPortrait() : carSettings.getDockPosition();
+        String widgetPos = carSettings.getWidgetPanelPosition();
 
         ConstraintSet cs = new ConstraintSet();
         cs.clone(rootLayout);
@@ -179,17 +179,24 @@ public class CarLayoutManager {
             cs.setVisibility(R.id.widget_panel, View.VISIBLE);
             boolean isSwapped = isContentFullScreen;
 
-            if (isPortrait || "bottom".equals(widgetPos)) {
+            if (isPortrait || "bottom".equals(dockPos)) {
                 // Dikey yerlesim: Ust Panel ve Alt Panel
                 int topViewId;
                 int bottomViewId;
-                if (isSwapped) {
-                    topViewId = R.id.widget_panel;   // LARGE
-                    bottomViewId = R.id.map_container; // SMALL
+                boolean expandUp = "expand_up".equals(carSettings.getPortraitExpansion());
+
+                if (expandUp) {
+                    // Widget altta, yukari genisler
+                    topViewId = R.id.map_container;
+                    bottomViewId = R.id.widget_panel;
                 } else {
-                    topViewId = R.id.map_container;  // LARGE
-                    bottomViewId = R.id.widget_panel;  // SMALL
+                    // Widget ustte, asagi genisler
+                    topViewId = R.id.widget_panel;
+                    bottomViewId = R.id.map_container;
                 }
+
+                int largeViewId = isContentFullScreen ? R.id.widget_panel : R.id.map_container;
+                int smallViewId = isContentFullScreen ? R.id.map_container : R.id.widget_panel;
 
                 float portraitPanelHeight = isPortrait ? carSettings.getWidgetPanelHeightPortrait() : 0.30f;
                 int smallHeight = (int) (screenHeight * portraitPanelHeight);
@@ -228,8 +235,8 @@ public class CarLayoutManager {
                 cs.constrainHeight(R.id.widget_handle, handleSize);
 
                 // Yukseklikleri sinirla
-                cs.constrainHeight(topViewId, 0); // LARGE gorunum kalan alani doldurur
-                cs.constrainHeight(bottomViewId, smallHeight); // SMALL gorunum sabit/hesapli yukseklik alir
+                cs.constrainHeight(largeViewId, 0); // LARGE gorunum kalan alani doldurur
+                cs.constrainHeight(smallViewId, smallHeight); // SMALL gorunum sabit/hesapli yukseklik alir
 
                 View clockContainer = activity.findViewById(R.id.clock_settings_container);
                 if (clockContainer != null) clockContainer.setVisibility(isPortrait ? View.GONE : View.VISIBLE);
@@ -241,43 +248,22 @@ public class CarLayoutManager {
                 int leftSide = "left".equals(dockPos) ? ConstraintSet.END : ConstraintSet.START;
                 int rightSide = "right".equals(dockPos) ? ConstraintSet.START : ConstraintSet.END;
 
-                boolean isFixed = "fixed".equals(carSettings.getExpansionBehavior());
+                boolean expandRight = "expand_right".equals(carSettings.getLandscapeExpansion());
                 int leftViewId;
                 int rightViewId;
-                boolean leftViewIsSmall = "left".equals(widgetPos);
 
-                if (isFixed) {
-                    if (leftViewIsSmall) {
-                        leftViewId = R.id.widget_panel;
-                        rightViewId = R.id.map_container;
-                    } else {
-                        leftViewId = R.id.map_container;
-                        rightViewId = R.id.widget_panel;
-                    }
+                if (expandRight) {
+                    // Widget solda, saga dogru genisler
+                    leftViewId = R.id.widget_panel;
+                    rightViewId = R.id.map_container;
                 } else {
-                    if (leftViewIsSmall) {
-                        if (isSwapped) {
-                            // SMALL solda (harita), LARGE sagda (widget)
-                            leftViewId = R.id.map_container;
-                            rightViewId = R.id.widget_panel;
-                        } else {
-                            // SMALL solda (widget), LARGE sagda (harita)
-                            leftViewId = R.id.widget_panel;
-                            rightViewId = R.id.map_container;
-                        }
-                    } else {
-                        // Sagdaki panel SMALL
-                        if (isSwapped) {
-                            // LARGE solda (widget), SMALL sagda (harita)
-                            leftViewId = R.id.widget_panel;
-                            rightViewId = R.id.map_container;
-                        } else {
-                            // LARGE solda (harita), SMALL sagda (widget)
-                            leftViewId = R.id.map_container;
-                            rightViewId = R.id.widget_panel;
-                        }
-                    }
+                    // Widget sagda, sola dogru genisler
+                    leftViewId = R.id.map_container;
+                    rightViewId = R.id.widget_panel;
                 }
+
+                int largeViewId = isContentFullScreen ? R.id.widget_panel : R.id.map_container;
+                int smallViewId = isContentFullScreen ? R.id.map_container : R.id.widget_panel;
 
                 float density = activity.getResources().getDisplayMetrics().density;
                 int smallWidth = (int) (screenWidth * panelPercent);
@@ -313,37 +299,10 @@ public class CarLayoutManager {
                 cs.constrainHeight(R.id.widget_handle, handleSize);
 
                 // Genislikleri yerlesime gore ayarla
-                if (isFixed) {
-                    if (leftViewIsSmall) {
-                        if (isSwapped) {
-                            cs.constrainWidth(R.id.widget_panel, 0);
-                            cs.constrainWidth(R.id.map_container, smallWidth);
-                        } else {
-                            cs.constrainWidth(R.id.widget_panel, smallWidth);
-                            cs.constrainWidth(R.id.map_container, 0);
-                        }
-                    } else {
-                        if (isSwapped) {
-                            cs.constrainWidth(R.id.map_container, smallWidth);
-                            cs.constrainWidth(R.id.widget_panel, 0);
-                        } else {
-                            cs.constrainWidth(R.id.map_container, 0);
-                            cs.constrainWidth(R.id.widget_panel, smallWidth);
-                        }
-                    }
-                } else {
-                    if (leftViewIsSmall) {
-                        cs.constrainWidth(leftViewId, smallWidth);
-                        cs.constrainWidth(rightViewId, 0);
-                    } else {
-                        cs.constrainWidth(leftViewId, 0);
-                        cs.constrainWidth(rightViewId, smallWidth);
-                    }
-                }
+                cs.constrainWidth(largeViewId, 0); // LARGE kalan alani doldurur
+                cs.constrainWidth(smallViewId, smallWidth); // SMALL yuzdelik genislik alir
             }
         }
-
-        // 5. App Drawer Region
         cs.connect(R.id.app_drawer_container, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
         cs.connect(R.id.app_drawer_container, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
         cs.connect(R.id.app_drawer_container, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);

@@ -120,7 +120,7 @@ public class CarFloatingButtonManager {
     }
 
     public void updateButtonState() {
-        CarLauncherSettings settings = new CarLauncherSettings(context);
+        CarLauncherSettings settings = CarLauncherSettings.getInstance(context);
         boolean enabled = settings.isFloatingButtonEnabled();
 
         if (enabled && !isInPipMode) {
@@ -150,7 +150,7 @@ public class CarFloatingButtonManager {
                 layoutType = WindowManager.LayoutParams.TYPE_PHONE;
             }
 
-            CarLauncherSettings settings = new CarLauncherSettings(context);
+            CarLauncherSettings settings = CarLauncherSettings.getInstance(context);
             int size = dpToPx(settings.getFloatingButtonSize());
             params = new WindowManager.LayoutParams(
                     size,

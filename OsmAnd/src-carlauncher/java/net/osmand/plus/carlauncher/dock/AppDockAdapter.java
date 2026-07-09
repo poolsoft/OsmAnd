@@ -82,7 +82,7 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
      */
     private int getScaledIconSize() {
         int baseSize = (int) context.getResources().getDimension(net.osmand.plus.R.dimen.dock_icon_size);
-        CarLauncherSettings settings = new CarLauncherSettings(context);
+        CarLauncherSettings settings = CarLauncherSettings.getInstance(context);
         int dockSizePercent = settings.getDockSize();
         float scale = 0.3f + (dockSizePercent / 100.0f) * 1.4f;
         return (int) (baseSize * scale);

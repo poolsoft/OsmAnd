@@ -11,6 +11,9 @@
 
     <!-- Appearance / Görünüm -->
     <string name="car_pref_title_appearance">Appearance</string>
+    <string name="car_pref_title_appearance_general">Appearance - General</string>
+    <string name="car_pref_title_appearance_portrait">Appearance - Portrait Screen</string>
+    <string name="car_pref_title_appearance_landscape">Appearance - Landscape Screen</string>
     <string name="car_pref_title_status_bar">Show Status Bar</string>
     <string name="car_pref_summary_status_bar">Toggles the system status bar</string>
     <string name="car_pref_title_dark_theme">Dark Theme</string>
@@ -27,8 +30,10 @@
     <string name="car_pref_title_background_style">Parallax Background Selector</string>
     <string name="car_pref_title_pip_mode">Floating Map (Picture-in-Picture)</string>
     <string name="car_pref_summary_pip_mode">Keeps the map active as a floating small screen when backgrounded</string>
-    <string name="car_pref_title_widget_panel_position">Large Panel Position</string>
-    <string name="car_pref_title_expansion_behavior">Large Panel Opening Strategy</string>
+    <string name="car_pref_title_widget_panel_position">Widget Panel Position</string>
+    <string name="car_pref_title_expansion_behavior">Expansion Direction</string>
+    <string name="car_pref_title_landscape_expansion">Expansion Direction</string>
+    <string name="car_pref_title_portrait_expansion">Expansion Direction</string>
 
     <!-- Music / Müzik -->
     <string name="car_pref_title_music">Music</string>
@@ -66,7 +71,10 @@
 
     <!-- Dock / Uygulama Dock -->
     <string name="car_pref_title_dock">App Dock (Sidebar)</string>
+    <string name="car_pref_title_dock_landscape">App Dock - Landscape</string>
+    <string name="car_pref_title_dock_portrait">App Dock - Portrait</string>
     <string name="car_pref_title_dock_position">Dock Position</string>
+    <string name="car_pref_title_dock_position_portrait">Dock Position (Portrait)</string>
     <string name="car_pref_title_dock_size">Dock Size</string>
     <string name="car_pref_summary_dock_size">0: Small, 50: Normal, 100: Large</string>
     <string name="car_pref_title_max_shortcuts">Maximum Number of Shortcuts</string>

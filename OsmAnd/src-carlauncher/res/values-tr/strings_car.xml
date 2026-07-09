@@ -11,6 +11,9 @@
 
     <!-- Appearance / Görünüm -->
     <string name="car_pref_title_appearance">Görünüm</string>
+    <string name="car_pref_title_appearance_general">Görünüm - Genel</string>
+    <string name="car_pref_title_appearance_portrait">Görünüm - Dikey Ekran</string>
+    <string name="car_pref_title_appearance_landscape">Görünüm - Yatay Ekran</string>
     <string name="car_pref_title_status_bar">Status Bar Göster</string>
     <string name="car_pref_summary_status_bar">Sistem çubuğunu açıp kapatır</string>
     <string name="car_pref_title_dark_theme">Koyu Tema</string>
@@ -27,8 +30,10 @@
     <string name="car_pref_title_background_style">Parallax Arka Plan Seçici</string>
     <string name="car_pref_title_pip_mode">Yüzen Harita (Picture-in-Picture)</string>
     <string name="car_pref_summary_pip_mode">Arka plana geçildiğinde haritayı yüzen küçük ekran olarak açık tutar</string>
-    <string name="car_pref_title_widget_panel_position">Büyük Panel Konumu</string>
-    <string name="car_pref_title_expansion_behavior">Büyük Panel Açılış Stratejisi</string>
+    <string name="car_pref_title_widget_panel_position">Widget Panel Konumu</string>
+    <string name="car_pref_title_expansion_behavior">Genişletme Yönü</string>
+    <string name="car_pref_title_landscape_expansion">Genişletme Yönü</string>
+    <string name="car_pref_title_portrait_expansion">Genişletme Yönü</string>
 
     <!-- Music / Müzik -->
     <string name="car_pref_title_music">Müzik</string>
@@ -66,7 +71,10 @@
 
     <!-- Dock / Uygulama Dock -->
     <string name="car_pref_title_dock">Uygulama Dock (Sidebar)</string>
+    <string name="car_pref_title_dock_landscape">Uygulama Dock - Yatay Ekran</string>
+    <string name="car_pref_title_dock_portrait">Uygulama Dock - Dikey Ekran</string>
     <string name="car_pref_title_dock_position">Dock Konumu</string>
+    <string name="car_pref_title_dock_position_portrait">Dock Konumu (Dikey)</string>
     <string name="car_pref_title_dock_size">Dock Boyutu</string>
     <string name="car_pref_summary_dock_size">0: Küçük, 50: Normal, 100: Büyük</string>
     <string name="car_pref_title_max_shortcuts">Maksimum Kısayol Sayısı</string>

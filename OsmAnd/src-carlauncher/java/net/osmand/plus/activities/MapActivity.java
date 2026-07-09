@@ -1432,7 +1432,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		hideSystemUI();
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			CarLauncherSettings carSettings = new CarLauncherSettings(this);
+			CarLauncherSettings carSettings = CarLauncherSettings.getInstance(this);
 			if (carSettings.isFloatingButtonEnabled() && !android.provider.Settings.canDrawOverlays(this)) {
 				Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
 						Uri.parse("package:" + getPackageName()));

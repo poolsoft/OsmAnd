@@ -124,7 +124,7 @@ public class WeatherManager {
         boolean timeExpired = (System.currentTimeMillis() - lastUpdate) > REFRESH_INTERVAL_MS;
         boolean locationChanged = distance > LOCATION_CHANGE_THRESHOLD;
 
-        CarLauncherSettings settings = new CarLauncherSettings(context);
+        CarLauncherSettings settings = CarLauncherSettings.getInstance(context);
         if (settings.isWeatherEnabled() && (timeExpired || locationChanged)) {
             fetchWeather(location.getLatitude(), location.getLongitude());
         }

@@ -10,7 +10,7 @@
         <item>1</item>
     </string-array>
 
-    <!-- Dock Konumu -->
+    <!-- Dock Konumu (Yatay) -->
     <string-array name="dock_position_entries">
         <item>Alt (Varsayılan)</item>
         <item>Sol (Modern Auto)</item>
@@ -22,16 +22,26 @@
         <item>right</item>
     </string-array>
 
-    <!-- Büyük Panel Konumu -->
+    <!-- Dock Konumu (Dikey) -->
+    <string-array name="dock_position_portrait_entries">
+        <item>Alt (Varsayılan)</item>
+        <item>Sol</item>
+        <item>Sağ</item>
+    </string-array>
+    <string-array name="dock_position_portrait_values">
+        <item>bottom</item>
+        <item>left</item>
+        <item>right</item>
+    </string-array>
+
+    <!-- Widget Panel Konumu (Yatay - artik "Alt" secenegi yok) -->
     <string-array name="widget_panel_position_entries">
         <item>Sol (Varsayılan)</item>
-        <item>Alt</item>
         <item>Sağ</item>
     </string-array>
     <string-array name="widget_panel_position_values">
-        <item>right</item>
-        <item>bottom</item>
         <item>left</item>
+        <item>right</item>
     </string-array>
 
     <!-- Widget Kart Stili -->
@@ -72,14 +82,24 @@
         <item>space</item>
     </string-array>
 
-    <!-- Büyük Panel Açılış Stratejisi -->
-    <string-array name="expansion_behavior_entries">
-        <item>Büyük Panelde Aç (İçerik Değiştir)</item>
-        <item>Olduğu Yerde Genişlet (Boyut Değiştir)</item>
+    <!-- Yatay Ekran - Genisletme Yonu -->
+    <string-array name="landscape_expansion_entries">
+        <item>Sağda Genişlet</item>
+        <item>Solda Genişlet</item>
     </string-array>
-    <string-array name="expansion_behavior_values">
-        <item>swap</item>
-        <item>fixed</item>
+    <string-array name="landscape_expansion_values">
+        <item>expand_right</item>
+        <item>expand_left</item>
+    </string-array>
+
+    <!-- Dikey Ekran - Genisletme Yonu -->
+    <string-array name="portrait_expansion_entries">
+        <item>Yukarı Genişlet</item>
+        <item>Aşağı Genişlet</item>
+    </string-array>
+    <string-array name="portrait_expansion_values">
+        <item>expand_up</item>
+        <item>expand_down</item>
     </string-array>
 
     <!-- Müzik Görselleştirici Tipleri -->
