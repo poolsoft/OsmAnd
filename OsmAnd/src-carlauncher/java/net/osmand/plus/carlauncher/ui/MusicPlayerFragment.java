@@ -70,6 +70,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private TextView nowPlayingTitle, nowPlayingArtist;
     private SeekBar seekbar;
     private TextView timeCurrent, timeTotal;
+    private View playerProgressContainer;
     private ImageButton btnShuffle, btnPrev, btnPlay, btnNext, btnRepeat;
     private Spinner playlistSpinner;
     private EditText searchInput;
@@ -156,6 +157,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         seekbar = root.findViewById(net.osmand.plus.R.id.seekbar);
         timeCurrent = root.findViewById(net.osmand.plus.R.id.time_current);
         timeTotal = root.findViewById(net.osmand.plus.R.id.time_total);
+        playerProgressContainer = root.findViewById(net.osmand.plus.R.id.player_progress_container);
         btnShuffle = root.findViewById(net.osmand.plus.R.id.btn_shuffle);
         btnPrev = root.findViewById(net.osmand.plus.R.id.btn_prev);
         btnPlay = root.findViewById(net.osmand.plus.R.id.btn_play);
@@ -926,10 +928,12 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             if (trackListPanel != null) trackListPanel.setVisibility(View.GONE);
             if (nowPlayingCenterPanel != null) nowPlayingCenterPanel.setVisibility(View.VISIBLE);
             if (btnDockPlaylist != null) btnDockPlaylist.setColorFilter(0xFFFFFFFF);
+            if (playerProgressContainer != null) playerProgressContainer.setVisibility(View.VISIBLE);
         } else {
             if (btnPlay != null) btnPlay.setVisibility(View.VISIBLE);
             if (btnNext != null) btnNext.setVisibility(View.VISIBLE);
             if (btnPrev != null) btnPrev.setVisibility(View.VISIBLE);
+            if (playerProgressContainer != null) playerProgressContainer.setVisibility(View.GONE);
             
             if (musicManager != null && musicManager.getInternalPlayer() != null) {
                 MusicRepository.AudioTrack current = musicManager.getInternalPlayer().getCurrentTrack();
