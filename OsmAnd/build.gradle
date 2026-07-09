@@ -315,8 +315,9 @@ android.applicationVariants.all { variant ->
                 boolean isBaseMapActivity = file.absolutePath.contains("/OsmAnd/src/net/osmand/plus/activities/MapActivity.java")
                 boolean isBaseAppInitializer = file.absolutePath.contains("/OsmAnd/src/net/osmand/plus/AppInitializer.java")
                 boolean isBaseOsmandApplication = file.absolutePath.contains("/OsmAnd/src/net/osmand/plus/OsmandApplication.java")
+                boolean isBaseQuickSearchListAdapter = file.absolutePath.contains("/OsmAnd/src/net/osmand/plus/search/dialogs/QuickSearchListAdapter.java")
                 
-                if (isBaseMapActivity || isBaseAppInitializer || isBaseOsmandApplication) {
+                if (isBaseMapActivity || isBaseAppInitializer || isBaseOsmandApplication || isBaseQuickSearchListAdapter) {
                     println "   [EXCLUDED] ${file.name} from src/"
                     return false
                 }

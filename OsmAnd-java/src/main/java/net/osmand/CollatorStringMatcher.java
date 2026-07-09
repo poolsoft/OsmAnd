@@ -235,6 +235,11 @@ public class CollatorStringMatcher implements StringMatcher {
 	}
 
 	public static String alignChars(String fullText) {
+		// Turkish character normalization
+		fullText = fullText.replace('ı', 'i').replace('İ', 'i').replace('ş', 's').replace('Ş', 's')
+				.replace('ğ', 'g').replace('Ğ', 'g').replace('ü', 'u').replace('Ü', 'u')
+				.replace('ö', 'o').replace('Ö', 'o').replace('ç', 'c').replace('Ç', 'c').replace('I', 'i');
+				
 		if (ArabicNormalizer.isSpecialArabic(fullText)) {
 			String normalized = ArabicNormalizer.normalize(fullText);
 			fullText = normalized == null ? fullText : normalized;
