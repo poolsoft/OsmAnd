@@ -317,7 +317,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 
 		// Car Launcher Specific Header
-		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(
+		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(
 				this);
 		if (carSettings.isLauncherEnabled()) {
 			applyStatusBarVisibility();
@@ -663,7 +663,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		boolean isPortrait = getResources().getConfiguration().orientation 
 				== android.content.res.Configuration.ORIENTATION_PORTRAIT;
 				
-		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(this);
+		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);
 		
 		if (isPortrait) {
 			int screenHeight = getResources().getDisplayMetrics().heightPixels;
@@ -702,7 +702,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			View nightDimOverlay = findViewById(R.id.night_dim_overlay);
 			if (nightDimOverlay != null) {
 				boolean isNight = false;
-				net.osmand.plus.carlauncher.CarLauncherSettings clSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(this);
+				net.osmand.plus.carlauncher.CarLauncherSettings clSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);
 				String mode = clSettings.getNightDimMode();
 				
 				if ("osmand".equals(mode)) {
@@ -1159,7 +1159,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 
 	public void enterToFullScreen() {
-		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(this);
+		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);
 		if (carSettings.isLauncherEnabled() && carSettings.isStatusBarVisible()) {
 			// Status bar gorunur olmali, enterToFullScreen'in status bar'i gizlemesini engelle (Turkce karakter yok)
 			return;
@@ -2020,7 +2020,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 
 		// Yuzen Buton (Floating Button) Force GPS Kontrolu (Turkce karakter yok)
-		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(this);
+		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);
 		boolean shouldKeepGpsAlive = carSettings.isFloatingButtonEnabled() && carSettings.isFloatingButtonForceGpsEnabled();
 		
 		if (!shouldKeepGpsAlive) {
@@ -2682,7 +2682,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	protected void onUserLeaveHint() {
 		super.onUserLeaveHint();
 		// Ayarlarda PiP aktifse, navigasyon aciksa ve Android 8.0+ ise gir (Turkce karakter yok)
-		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(this);
+		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);
 		net.osmand.plus.routing.RoutingHelper routingHelper = app.getRoutingHelper();
 		boolean isNavigating = routingHelper != null && routingHelper.isFollowingMode() && routingHelper.isRouteCalculated();
 
@@ -2739,7 +2739,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 
 	public void applyStatusBarVisibility() {
-		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(this);
+		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);
 		boolean show = carSettings.isStatusBarVisible();
 		Window window = getWindow();
 		View mapHudLayout = findViewById(R.id.map_hud_container);

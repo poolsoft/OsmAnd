@@ -1524,7 +1524,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         final int finalColor = color;
         if (visualizerView != null) {
-            net.osmand.plus.carlauncher.CarLauncherSettings clSettings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+            net.osmand.plus.carlauncher.CarLauncherSettings clSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
             // Ambians gorsellestirici ayarina gore dinamik renk veya varsayilan (0) secimi (Turkce karakter yok)
             final int visualizerColor = (albumArt != null && clSettings.isAmbianceVisualizerEnabled()) ? finalColor : 0;
             visualizerView.post(() -> visualizerView.setDominantColor(visualizerColor));

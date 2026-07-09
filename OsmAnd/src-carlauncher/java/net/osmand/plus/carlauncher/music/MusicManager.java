@@ -78,7 +78,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 internalPlayer.restoreState();
                 
                 net.osmand.plus.carlauncher.CarLauncherSettings settings = 
-                     new net.osmand.plus.carlauncher.CarLauncherSettings(this.context);
+                     net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this.context);
                 if (settings.isAutoPlayMusicEnabled() || internalPlayer.wasPlayingBefore()) {
                      internalPlayer.resumeLastSession();
                 }

@@ -167,7 +167,7 @@ public class AppDockFragment extends Fragment
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState) {
         
-        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+        net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
         String dockPos = settings.getDockPosition();
         boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
         this.isVerticalMode = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
@@ -392,7 +392,7 @@ public class AppDockFragment extends Fragment
         super.onViewCreated(view, savedInstanceState);
         
         // Ensure orientation is correct based on global settings before creating adapter
-        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+        net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
         String dockPos = settings.getDockPosition();
         boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
         this.isVerticalMode = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
@@ -789,7 +789,7 @@ public class AppDockFragment extends Fragment
     private int getScaledIconSize() {
         if (getContext() == null) return dpToPx(48);
         int baseSize = (int) getContext().getResources().getDimension(net.osmand.plus.R.dimen.dock_icon_size);
-        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+        net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
         int dockSizePercent = settings.getDockSize();
         float scale = 0.3f + (dockSizePercent / 100.0f) * 1.4f;
         return (int) (baseSize * scale);
@@ -874,7 +874,7 @@ public class AppDockFragment extends Fragment
 
             // 3. Dynamic Scaling for Clock & Icons
             if (clockView != null) {
-                net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+                net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
                 int dockSizePercent = settings.getDockSize();
                 float scale = 0.3f + (dockSizePercent / 100.0f) * 1.4f;
                 float baseTextSize = isVertical ? 18f : 22f;
@@ -887,7 +887,7 @@ public class AppDockFragment extends Fragment
                 clockView.setText(sdf.format(new java.util.Date()));
             }
 
-            net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+            net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
             float scale = 0.3f + (settings.getDockSize() / 100.0f) * 1.4f;
             updateIconSize(btnDesktopMode, scale);
             updateIconSize(appListButton, scale);
@@ -976,7 +976,7 @@ public class AppDockFragment extends Fragment
 
     public boolean needsLayoutUpdate() {
         if (getContext() == null) return false;
-        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+        net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
         String dockPos = settings.getDockPosition();
         boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
         boolean expectedVerticalMode = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
@@ -1041,7 +1041,7 @@ public class AppDockFragment extends Fragment
         super.onConfigurationChanged(newConfig);
         if (getContext() == null || getView() == null) return;
 
-        net.osmand.plus.carlauncher.CarLauncherSettings settings = new net.osmand.plus.carlauncher.CarLauncherSettings(getContext());
+        net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
         String dockPos = settings.getDockPosition();
         boolean isPortrait = newConfig.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
         this.isVerticalMode = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
