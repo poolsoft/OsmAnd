@@ -1708,8 +1708,19 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 }
             }
 
-            // Calan sarkinin arka planini vurgula
+            // Çalan Şarkı Belirteci Mantığı
             boolean isCurrent = track.getPath().equals(currentTrackPath);
+            if (holder.trackPlayingIndicator != null) {
+                if (isCurrent && isPlaying) {
+                    holder.trackPlayingIndicator.setVisibility(View.VISIBLE);
+                    if (holder.trackArt != null) holder.trackArt.setColorFilter(0x88000000); // Darken art
+                } else {
+                    holder.trackPlayingIndicator.setVisibility(View.GONE);
+                    if (holder.trackArt != null) holder.trackArt.clearColorFilter();
+                }
+            }
+
+            // Calan sarkinin arka planini vurgula
             if (holder.icon != null) {
                 if (isCurrent) {
                     holder.icon.setVisibility(View.VISIBLE);
@@ -1773,6 +1784,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             ImageButton btnFavorite;
             ImageView icon = null;
             ImageView trackArt;
+            ImageView trackPlayingIndicator;
 
             public Holder(@NonNull View itemView) {
                 super(itemView);
@@ -1780,6 +1792,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 artist = itemView.findViewById(net.osmand.plus.R.id.music_artist);
                 btnFavorite = itemView.findViewById(net.osmand.plus.R.id.btn_favorite);
                 trackArt = itemView.findViewById(net.osmand.plus.R.id.track_art);
+                trackPlayingIndicator = itemView.findViewById(net.osmand.plus.R.id.track_playing_indicator);
             }
         }
     }

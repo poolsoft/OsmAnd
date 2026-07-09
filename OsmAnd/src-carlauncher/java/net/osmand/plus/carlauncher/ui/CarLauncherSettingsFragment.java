@@ -42,8 +42,24 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     public static final String TAG = "CarLauncherSettingsFragment";
 
     private CarLauncherSettings settings;
+    
+    private androidx.activity.result.ActivityResultLauncher<Intent> importVoiceModelLauncher;
 
-
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        importVoiceModelLauncher = registerForActivityResult(
+            new androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == android.app.Activity.RESULT_OK && result.getData() != null) {
+                    Uri uri = result.getData().getData();
+                    if (uri != null) {
+                        importVoiceModelFromUri(uri);
+                    }
+                }
+            }
+        );
+    }
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         getPreferenceManager().setSharedPreferencesName("car_launcher_prefs");
@@ -930,7 +946,11 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                     Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                     intent.addCategory(Intent.CATEGORY_OPENABLE);
                     intent.setType("application/zip");
-                    startActivityForResult(intent, RC_IMPORT_VOICE_MODEL);
+                    if (importVoiceModelLauncher != null) {
+                        importVoiceModelLauncher.launch(intent);
+                    } else {
+                        startActivityForResult(intent, RC_IMPORT_VOICE_MODEL);
+                    }
                 } catch (Exception e) {
                     Toast.makeText(getContext(), "Dosya seçici açılamadı", Toast.LENGTH_SHORT).show();
                 }
@@ -941,14 +961,15 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
 
     private void importVoiceModelFromUri(Uri uri) {
         if (getContext() == null) return;
-        Toast.makeText(getContext(), "Model dosyası kopyalanıyor, lütfen bekleyin...", Toast.LENGTH_SHORT).show();
+        Context appContext = getContext().getApplicationContext();
+        Toast.makeText(appContext, "Model dosyası kopyalanıyor, lütfen bekleyin...", Toast.LENGTH_SHORT).show();
         
         java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
-            File targetDir = new File(getContext().getExternalFilesDir(null), "vosk-model-tr");
-            File tempZip = new File(getContext().getExternalFilesDir(null), "vosk-model-tr-temp.zip");
-            File tempExtractDir = new File(getContext().getExternalFilesDir(null), "vosk-model-temp-extract");
+            File targetDir = new File(appContext.getExternalFilesDir(null), "vosk-model-tr");
+            File tempZip = new File(appContext.getExternalFilesDir(null), "vosk-model-tr-temp.zip");
+            File tempExtractDir = new File(appContext.getExternalFilesDir(null), "vosk-model-temp-extract");
             
-            try (android.os.ParcelFileDescriptor pfd = getContext().getContentResolver().openFileDescriptor(uri, "r");
+            try (android.os.ParcelFileDescriptor pfd = appContext.getContentResolver().openFileDescriptor(uri, "r");
                  java.io.FileInputStream fis = new java.io.FileInputStream(pfd.getFileDescriptor());
                  java.io.FileOutputStream fos = new java.io.FileOutputStream(tempZip)) {
                 
@@ -973,8 +994,11 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                     }
                     boolean success = actualModelDir.renameTo(targetDir);
                     android.util.Log.d("CarLauncherSettings", "Model klasoru basariyla tasindi: " + success);
+                    if (!success) {
+                        throw new java.io.IOException("Klasör taşıma başarısız oldu (renameTo false döndü)");
+                    }
                 } else {
-                    throw new java.io.IOException("Zip icerisinde gecerli bir model klasoru bulunamadi");
+                    throw new java.io.IOException("Zip icerisinde gecerli bir model klasoru (am/graph) bulunamadi");
                 }
                 
                 if (tempZip.exists()) {
@@ -984,22 +1008,19 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                     deleteRecursive(tempExtractDir);
                 }
                 
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        Toast.makeText(getContext(), "Ses modeli başarıyla kuruldu! Servis yeniden başlatılıyor...", Toast.LENGTH_LONG).show();
-                        restartVoiceService();
-                    });
-                }
+                new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                    Toast.makeText(appContext, "Ses modeli başarıyla kuruldu! Servis yeniden başlatılıyor...", Toast.LENGTH_LONG).show();
+                    restartVoiceService();
+                });
                 
             } catch (Exception e) {
                 android.util.Log.e("CarLauncherSettings", "Model kopyalama/unzip hatası", e);
                 if (tempZip.exists()) tempZip.delete();
                 if (tempExtractDir.exists()) deleteRecursive(tempExtractDir);
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        Toast.makeText(getContext(), "Ses modeli yüklenemedi!", Toast.LENGTH_LONG).show();
-                    });
-                }
+                
+                new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                    Toast.makeText(appContext, "Ses modeli yüklenemedi: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
             }
         });
     }
