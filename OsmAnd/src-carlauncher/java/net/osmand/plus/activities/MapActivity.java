@@ -380,57 +380,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				SecondSplashScreenFragment.SHOW = false;
 			}
 		}
-		mapWidgetsVisibilityHelper = new WidgetsVisibilityHelper(this);
-		dashboardOnMap.createDashboardView();
-		extendedMapActivity = new ExtendedMapActivity();
-
-		getMapActions().setMapActivity(this);
-		getMapView().setMapActivity(this);
-		getMapLayers().setMapActivity(this);
-
-		intentHelper = new IntentHelper(this);
-		intentHelper.parseLaunchIntents();
-
-		OsmandMapTileView mapView = getMapView();
-
-		mapView.setTrackBallDelegate(e -> {
-			mapView.showAndHideMapPosition();
-			return onTrackballEvent(e);
-		});
-		mapView.setAccessibilityActions(new MapAccessibilityActions(this));
-		getMapViewTrackingUtilities().setMapView(mapView);
-		getMapLayers().createAdditionalLayers(this);
-
-		createProgressBarForRouting();
-		updateStatusBarColor();
-
-		if ((app.getRoutingHelper().isRouteCalculated() || app.getRoutingHelper().isRouteBeingCalculated())
-				&& !app.getRoutingHelper().isRoutePlanningMode()
-				&& !settings.FOLLOW_THE_ROUTE.get()
-				&& app.getTargetPointsHelper().getAllPoints().size() > 0) {
-			app.getRoutingHelper().clearCurrentRoute(null, new ArrayList<>());
-			app.getTargetPointsHelper().removeAllWayPoints(false, false);
-		}
-
-		if (!settings.isLastKnownMapLocation()) {
-			// show first time when application ran
-			net.osmand.Location location = app.getLocationProvider().getFirstTimeRunDefaultLocation(loc -> {
-				if (app.getLocationProvider().getLastKnownLocation() == null) {
-					setMapInitialLatLon(getMapView(), loc);
-				}
-			});
-			getMapViewTrackingUtilities().setMapLinkedToLocation(true);
-			if (location != null) {
-				setMapInitialLatLon(mapView, location);
-			}
-		}
-		PluginsHelper.onMapActivityCreate(this);
-		importHelper = app.getImportHelper();
-		importHelper.setUiActivity(this);
-		if (System.currentTimeMillis() - time > 50) {
-			LOG.error("OnCreate for MapActivity took " + (System.currentTimeMillis() - time) + " ms");
-		}
-		mapView.refreshMap(true);
+		// Map configurations and helper initializations are moved to the lazy loading block to avoid null views from main.xml
 
 		// drawerLayout and mapViewWithLayers lookups and updateDrawerMenu are moved to the lazy loading block to avoid null views
 		checkAppInitialization();
@@ -647,7 +597,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				// status bar ve inset ayarlarini uygula (Turkce karakter yok)
 				View menuItems = findViewById(R.id.menuItems);
 				if (menuItems != null) {
-					AndroidUtils.addStatusBarPadding21v(this, menuItems);
+					AndroidUtils.addStatusBarPadding21v(MapActivity.this, menuItems);
 				}
 				View mapHudLayout = findViewById(R.id.map_hud_container);
 				if (mapHudLayout != null && InsetsUtils.isEdgeToEdgeSupported()) {
@@ -655,8 +605,59 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				}
 				View drawerLayoutView = findViewById(R.id.drawer_layout);
 				if (drawerLayoutView != null) {
-					InsetsUtils.processInsets(this, drawerLayoutView, null, false);
+					InsetsUtils.processInsets(MapActivity.this, drawerLayoutView, null, false);
 				}
+
+				// Map activity ayarlari ve view referanslarini set et (Turkce karakter yok)
+				getMapActions().setMapActivity(MapActivity.this);
+				getMapView().setMapActivity(MapActivity.this);
+				getMapLayers().setMapActivity(MapActivity.this);
+
+				// Dashboard ve widget visibility yardimcilarini baslat (Turkce karakter yok)
+				mapWidgetsVisibilityHelper = new WidgetsVisibilityHelper(MapActivity.this);
+				dashboardOnMap.createDashboardView();
+				extendedMapActivity = new ExtendedMapActivity();
+
+				intentHelper = new IntentHelper(MapActivity.this);
+				intentHelper.parseLaunchIntents();
+
+				OsmandMapTileView mapView = getMapView();
+				if (mapView != null) {
+					mapView.setTrackBallDelegate(e -> {
+						mapView.showAndHideMapPosition();
+						return onTrackballEvent(e);
+					});
+					mapView.setAccessibilityActions(new MapAccessibilityActions(MapActivity.this));
+					getMapViewTrackingUtilities().setMapView(mapView);
+					getMapLayers().createAdditionalLayers(MapActivity.this);
+				}
+
+				createProgressBarForRouting();
+				updateStatusBarColor();
+
+				if ((app.getRoutingHelper().isRouteCalculated() || app.getRoutingHelper().isRouteBeingCalculated())
+						&& !app.getRoutingHelper().isRoutePlanningMode()
+						&& !settings.FOLLOW_THE_ROUTE.get()
+						&& app.getTargetPointsHelper().getAllPoints().size() > 0) {
+					app.getRoutingHelper().clearCurrentRoute(null, new ArrayList<>());
+					app.getTargetPointsHelper().removeAllWayPoints(false, false);
+				}
+
+				if (!settings.isLastKnownMapLocation()) {
+					net.osmand.Location location = app.getLocationProvider().getFirstTimeRunDefaultLocation(loc -> {
+						if (app.getLocationProvider().getLastKnownLocation() == null) {
+							setMapInitialLatLon(getMapView(), loc);
+						}
+					});
+					getMapViewTrackingUtilities().setMapLinkedToLocation(true);
+					if (location != null) {
+						setMapInitialLatLon(mapView, location);
+					}
+				}
+
+				PluginsHelper.onMapActivityCreate(MapActivity.this);
+				importHelper = app.getImportHelper();
+				importHelper.setUiActivity(MapActivity.this);
 
 				if (mapViewWithLayers != null) {
 					mapViewWithLayers.onCreate(null);
@@ -668,9 +669,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				// Rendering view kurulumunu tetikle (Turkce karakter yok)
 				app.getOsmandMap().setupRenderingView();
 
-				OsmandMapTileView mapView = getMapView();
 				if (mapView != null) {
-					mapView.setMapActivity(this);
 					mapView.refreshMap(true);
 					if (settings.isLastKnownMapLocation()) {
 						LatLon l = settings.getLastKnownMapLocation();
