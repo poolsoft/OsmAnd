@@ -143,7 +143,7 @@ public class CarLayoutManager {
 
             cs.connect(R.id.widget_panel, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
             
-            if (isPortrait) {
+            if (isPortrait || "bottom".equals(dockPos)) {
                 cs.connect(R.id.widget_panel, ConstraintSet.BOTTOM, R.id.app_dock, ConstraintSet.TOP);
                 cs.connect(R.id.widget_panel, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
                 cs.connect(R.id.widget_panel, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
