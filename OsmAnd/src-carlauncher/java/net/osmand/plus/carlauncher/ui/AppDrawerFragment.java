@@ -477,8 +477,9 @@ public class AppDrawerFragment extends Fragment {
         ImageView iconView = dialogView.findViewById(net.osmand.plus.R.id.dialog_app_icon);
         TextView labelView = dialogView.findViewById(net.osmand.plus.R.id.dialog_app_label);
         
-        if (item.icon != null) {
-            iconView.setImageDrawable(item.icon);
+        Drawable icon = getAppIcon(getContext(), item.packageName);
+        if (icon != null) {
+            iconView.setImageDrawable(icon);
         }
         labelView.setText(item.label);
 
