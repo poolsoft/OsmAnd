@@ -162,12 +162,23 @@ public class AppDrawerFragment extends Fragment {
         @Override
         public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
         }
-
         @Override
         public void onLowMemory() {
             clearCache();
         }
     };
+
+    @Override
+    public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (recyclerView != null && recyclerView.getLayoutManager() instanceof GridLayoutManager) {
+            int spanCount = (newConfig.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) ? 6 : 4;
+            ((GridLayoutManager) recyclerView.getLayoutManager()).setSpanCount(spanCount);
+            if (adapter != null) {
+                adapter.notifyDataSetChanged();
+            }
+        }
+    }
 
     @Override
     public void onAttach(@NonNull Context context) {

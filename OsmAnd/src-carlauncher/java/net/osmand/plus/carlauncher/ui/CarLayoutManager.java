@@ -311,6 +311,8 @@ public class CarLayoutManager {
         } else {
             cs.connect(R.id.app_drawer_container, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
         }
+        cs.constrainWidth(R.id.app_drawer_container, 0);
+        cs.constrainHeight(R.id.app_drawer_container, 0);
 
         // 6. Handle constraint'lerini ayarla (visibility durumunu ConstraintSet uzerinden guvenle yonetiriz)
         updateWidgetHandleConstraints(cs, carSettings, isWidgetPanelOpen);
