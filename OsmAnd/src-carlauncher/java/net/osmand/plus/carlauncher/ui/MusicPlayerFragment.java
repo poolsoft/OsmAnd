@@ -434,6 +434,10 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 }
                 
                 btnDockPlaylist.setColorFilter(isPlaylistVisible ? 0xFFFFFFFF : 0xFF00FFFF);
+                
+                if (playerProgressContainer != null && !isExternalMode) {
+                    playerProgressContainer.setVisibility(isPlaylistVisible ? View.GONE : View.VISIBLE);
+                }
             });
         }
         
@@ -933,7 +937,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             if (btnPlay != null) btnPlay.setVisibility(View.VISIBLE);
             if (btnNext != null) btnNext.setVisibility(View.VISIBLE);
             if (btnPrev != null) btnPrev.setVisibility(View.VISIBLE);
-            if (playerProgressContainer != null) playerProgressContainer.setVisibility(View.GONE);
+            if (playerProgressContainer != null) playerProgressContainer.setVisibility(isPlaylistVisible ? View.GONE : View.VISIBLE);
             
             if (musicManager != null && musicManager.getInternalPlayer() != null) {
                 MusicRepository.AudioTrack current = musicManager.getInternalPlayer().getCurrentTrack();
