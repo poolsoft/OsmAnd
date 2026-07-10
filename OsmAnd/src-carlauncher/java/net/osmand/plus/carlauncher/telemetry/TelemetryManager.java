@@ -21,6 +21,7 @@ public class TelemetryManager implements OsmAndLocationProvider.OsmAndLocationLi
 
     private static TelemetryManager instance;
     private final OsmandApplication app;
+    private android.location.LocationManager locationManager;
 
     private final List<TelemetryListener> listeners = new ArrayList<>();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -72,9 +73,41 @@ public class TelemetryManager implements OsmAndLocationProvider.OsmAndLocationLi
         }
     };
 
+    private final android.location.LocationListener nativeLocationListener = new android.location.LocationListener() {
+        @Override
+        public void onLocationChanged(android.location.Location location) {
+            if (location != null && location.hasSpeed()) {
+                lastLocationTime = System.currentTimeMillis();
+                float speedKmh = location.getSpeed() * 3.6f;
+                if (speedKmh <= 3.0f) {
+                    locationState.speedKmh = 0f;
+                } else {
+                    locationState.speedKmh = speedKmh;
+                }
+                notifyListeners();
+            }
+        }
+        @Override
+        public void onStatusChanged(String provider, int status, android.os.Bundle extras) {}
+        @Override
+        public void onProviderEnabled(String provider) {}
+        @Override
+        public void onProviderDisabled(String provider) {}
+    };
+
     private TelemetryManager(OsmandApplication app) {
         this.app = app;
         initObdComputers();
+        
+        try {
+            locationManager = (android.location.LocationManager) app.getSystemService(android.content.Context.LOCATION_SERVICE);
+            if (locationManager != null) {
+                locationManager.requestLocationUpdates(android.location.LocationManager.GPS_PROVIDER, 1000, 0, nativeLocationListener, Looper.getMainLooper());
+            }
+        } catch (SecurityException e) {
+            // Izin yoksa devam et
+        }
+
         mainHandler.postDelayed(staleGpsRunnable, 1000);
     }
 
@@ -117,12 +150,15 @@ public class TelemetryManager implements OsmAndLocationProvider.OsmAndLocationLi
     public void updateLocation(Location location) {
         if (location == null) return;
         
-        lastLocationTime = System.currentTimeMillis();
+        // Native gps son 1 saniyede guncellemis ise OsmAnd GPS hizini yoksay 
+        // ki birbiriyle cakisip (Dalgalanma) yapmasin. 
+        // Fakat eger OsmAnd koordinat veriyorsa diger location (altitude, bearing) guncellenir.
         locationState.rawLocation = location;
-
-        if (location.hasSpeed()) {
+        long now = System.currentTimeMillis();
+        
+        if (location.hasSpeed() && (now - lastLocationTime > 1500)) {
+            lastLocationTime = now;
             float speedKmh = location.getSpeed() * 3.6f;
-            // YAZILIM FILTRESI: 3 km/h alti 0 gosterilir (Dalgalanmayi onler)
             if (speedKmh <= 3.0f) {
                 locationState.speedKmh = 0f;
             } else {
