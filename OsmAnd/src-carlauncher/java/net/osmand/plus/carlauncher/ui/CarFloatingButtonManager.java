@@ -249,7 +249,6 @@ public class CarFloatingButtonManager {
             isAdded = true;
             
             net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
-            net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(context);
             if (settings.isFloatingButtonForceGpsEnabled()) {
                 app.startNavigationService(net.osmand.plus.NavigationService.USED_BY_AIS);
             }
