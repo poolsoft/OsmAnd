@@ -249,6 +249,16 @@ public class CarFloatingButtonManager {
             isAdded = true;
             
             net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
+            net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(context);
+            if (settings.isFloatingButtonForceGpsEnabled()) {
+                Intent serviceIntent = new Intent(context, CarFloatingGpsService.class);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(serviceIntent);
+                } else {
+                    context.startService(serviceIntent);
+                }
+            }
+            
             net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app).addListener(telemetryListener);
 
             // Native GPS Speed Listener - dogrudan ekrani guncelliyor (Turkce karakter yok)
@@ -285,6 +295,8 @@ public class CarFloatingButtonManager {
             windowManager.removeView(floatingView);
             isAdded = false;
             floatingView = null;
+            
+            context.stopService(new Intent(context, CarFloatingGpsService.class));
             
             net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
             net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app).removeListener(telemetryListener);

@@ -382,6 +382,10 @@ public class CarLauncherSettings {
         prefs.edit().putBoolean(KEY_FLOATING_BUTTON_FORCE_GPS, enabled).apply();
     }
 
+    public boolean isFloatingButtonForceGpsEnabled() {
+        return cFloatingButtonForceGps;
+    }
+
     public int getFloatingButtonSize() {
         return cFloatingButtonSize;
     }

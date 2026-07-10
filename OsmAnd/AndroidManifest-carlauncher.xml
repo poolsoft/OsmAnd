@@ -119,6 +119,11 @@
         <service android:name="net.osmand.plus.carlauncher.voice.VoiceCommandService"
                  android:foregroundServiceType="microphone"
                  android:exported="false" />
+
+        <!-- Arka planda GPS'i uyanik tutmak icin Car Launcher'a ozel servis -->
+        <service android:name="net.osmand.plus.carlauncher.ui.CarFloatingGpsService"
+                 android:foregroundServiceType="location"
+                 android:exported="false" />
     </application>
 </manifest> 
 
