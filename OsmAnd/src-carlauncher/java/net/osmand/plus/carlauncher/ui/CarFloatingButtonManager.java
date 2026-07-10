@@ -251,12 +251,7 @@ public class CarFloatingButtonManager {
             net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
             net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(context);
             if (settings.isFloatingButtonForceGpsEnabled()) {
-                Intent serviceIntent = new Intent(context, CarFloatingGpsService.class);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(serviceIntent);
-                } else {
-                    context.startService(serviceIntent);
-                }
+                app.startNavigationService(net.osmand.plus.NavigationService.USED_BY_AIS);
             }
             
             net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app).addListener(telemetryListener);
@@ -296,9 +291,10 @@ public class CarFloatingButtonManager {
             isAdded = false;
             floatingView = null;
             
-            context.stopService(new Intent(context, CarFloatingGpsService.class));
-            
             net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
+            if (app.getNavigationService() != null) {
+                app.getNavigationService().stopIfNeeded(app, net.osmand.plus.NavigationService.USED_BY_AIS);
+            }
             net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app).removeListener(telemetryListener);
 
             if (locationManager != null && locationListener != null) {
