@@ -472,28 +472,54 @@ public class AppDrawerFragment extends Fragment {
     }
 
     private void showAppOptions(AppItem item) {
-        String[] options = { "Dock'a Ekle (Standart)", "Dock'a Ekle (Split-Screen)", "Dock'a Ekle (Overlay)", "Uygulama Bilgisi" };
+        View dialogView = LayoutInflater.from(getContext()).inflate(net.osmand.plus.R.layout.dialog_app_options, null);
+        
+        ImageView iconView = dialogView.findViewById(net.osmand.plus.R.id.dialog_app_icon);
+        TextView labelView = dialogView.findViewById(net.osmand.plus.R.id.dialog_app_label);
+        
+        if (item.icon != null) {
+            iconView.setImageDrawable(item.icon);
+        }
+        labelView.setText(item.label);
 
-        new AlertDialog.Builder(getContext())
-                .setTitle(item.label)
-                .setItems(options, (dialog, which) -> {
-                    switch (which) {
-                        case 0:
-                            addToDock(item, LaunchMode.FULL_SCREEN);
-                            break;
-                        case 1:
-                            addToDock(item, LaunchMode.SPLIT_SCREEN);
-                            break;
-                        case 2:
-                            addToDock(item, LaunchMode.OVERLAY);
-                            break;
-                        case 3:
-                            showAppInfo(item.packageName);
-                            break;
-                    }
-                })
-                .setNegativeButton("Iptal", null)
-                .show();
+        AlertDialog dialog = new AlertDialog.Builder(getContext())
+                .setView(dialogView)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        dialogView.findViewById(net.osmand.plus.R.id.btn_dock_standard).setOnClickListener(v -> {
+            addToDock(item, LaunchMode.FULL_SCREEN);
+            dialog.dismiss();
+        });
+
+        dialogView.findViewById(net.osmand.plus.R.id.btn_dock_split).setOnClickListener(v -> {
+            addToDock(item, LaunchMode.SPLIT_SCREEN);
+            dialog.dismiss();
+        });
+
+        dialogView.findViewById(net.osmand.plus.R.id.btn_dock_overlay).setOnClickListener(v -> {
+            addToDock(item, LaunchMode.OVERLAY);
+            dialog.dismiss();
+        });
+
+        dialogView.findViewById(net.osmand.plus.R.id.btn_app_info).setOnClickListener(v -> {
+            Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            intent.setData(android.net.Uri.parse("package:" + item.packageName));
+            startActivity(intent);
+            dialog.dismiss();
+        });
+
+        dialogView.findViewById(net.osmand.plus.R.id.btn_uninstall).setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_DELETE);
+            intent.setData(android.net.Uri.parse("package:" + item.packageName));
+            startActivity(intent);
+            dialog.dismiss();
+        });
+
+        dialog.show();
     }
 
     private void addToDock(AppItem item, LaunchMode mode) {
