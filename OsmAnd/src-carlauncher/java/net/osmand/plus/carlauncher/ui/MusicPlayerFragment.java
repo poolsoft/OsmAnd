@@ -1568,7 +1568,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 }
                 nowPlayingArtist.setText(artistText);
                 if (nowPlayingCenterArtist != null) {
-                    nowPlayingCenterArtist.setText(artistText.isEmpty() ? "Hazir" : artistText);
+                    nowPlayingCenterArtist.setText(artistText);
                 }
             }
 
@@ -1705,7 +1705,17 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         public void onBindViewHolder(@NonNull Holder holder, int position) {
             MusicRepository.AudioTrack track = tracks.get(position);
             holder.title.setText(track.getTitle());
-            holder.artist.setText(track.getArtist());
+            String trackArtist = track.getArtist();
+            if (trackArtist != null) {
+                String cleanArtist = trackArtist.trim().toLowerCase(java.util.Locale.ROOT);
+                if (cleanArtist.equals("unknown") || cleanArtist.equals("<unknown>") || cleanArtist.equals("bilinmeyen") || cleanArtist.isEmpty()) {
+                    trackArtist = "";
+                }
+            } else {
+                trackArtist = "";
+            }
+            holder.artist.setText(trackArtist);
+            holder.artist.setVisibility(trackArtist.isEmpty() ? android.view.View.GONE : android.view.View.VISIBLE);
 
             if (holder.trackArt != null) {
                 if (track.getAlbumArtUri() != null) {
