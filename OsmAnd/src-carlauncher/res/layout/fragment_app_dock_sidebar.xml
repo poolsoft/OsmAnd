@@ -63,6 +63,9 @@
             android:layout_marginBottom="4dp"
             android:requiresFadingEdge="vertical"
             android:fadingEdgeLength="30dp"
+            android:paddingTop="30dp"
+            android:paddingBottom="30dp"
+            android:clipToPadding="false"
             android:orientation="vertical" />
 
         <!-- Mini Music Player -->

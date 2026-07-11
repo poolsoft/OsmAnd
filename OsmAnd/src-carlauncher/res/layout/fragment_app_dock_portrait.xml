@@ -63,6 +63,9 @@
             android:layout_gravity="center_vertical"
             android:requiresFadingEdge="horizontal"
             android:fadingEdgeLength="30dp"
+            android:paddingStart="30dp"
+            android:paddingEnd="30dp"
+            android:clipToPadding="false"
             android:orientation="horizontal" />
 
         <!-- Mini Music Player -->
