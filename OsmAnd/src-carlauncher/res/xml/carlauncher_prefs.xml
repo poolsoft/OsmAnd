@@ -238,6 +238,13 @@
         android:iconSpaceReserved="true">
 
         <androidx.preference.SwitchPreferenceCompat
+            android:key="car_launcher_auto_start_on_boot"
+            android:title="@string/car_pref_title_auto_start_on_boot"
+            android:summary="@string/car_pref_summary_auto_start_on_boot"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
+        <androidx.preference.SwitchPreferenceCompat
             android:key="autolaunch_enable_1"
             android:title="@string/car_pref_title_app1"
             android:summary="@string/car_pref_summary_click_to_select"

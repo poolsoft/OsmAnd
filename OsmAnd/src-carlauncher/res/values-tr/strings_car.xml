@@ -57,6 +57,8 @@
 
     <!-- Auto Launch / Otomatik Başlatma -->
     <string name="car_pref_title_autolaunch">Otomatik Başlatma</string>
+    <string name="car_pref_title_auto_start_on_boot">Açılışta Otomatik Başlat (AutoStart)</string>
+    <string name="car_pref_summary_auto_start_on_boot">Cihaz açıldığında uygulamanın kendini otomatik başlatmasına izin verir. Teybiniz zaten otomatik açıyorsa çakışmayı önlemek için bunu kapatın.</string>
     <string name="car_pref_title_app1">Uygulama 1</string>
     <string name="car_pref_title_app2">Uygulama 2</string>
     <string name="car_pref_title_app3">Uygulama 3</string>

@@ -44,7 +44,7 @@ import net.osmand.plus.carlauncher.music.MusicManager;
  * >>>>>>> 32c2ee2e47809bba5011d01849fb227eaed926a9
  */
 public class AppDockFragment extends Fragment
-        implements AppDockAdapter.OnShortcutListener, MusicManager.MusicUIListener {
+        implements AppDockAdapter.OnShortcutListener, MusicManager.MusicUIListener, net.osmand.plus.carlauncher.telemetry.TelemetryManager.TelemetryListener {
 
     public static final String TAG = "AppDockFragment";
     // Sync Fix: Ensure remote matches local
@@ -83,6 +83,8 @@ public class AppDockFragment extends Fragment
     private ImageButton miniBtnNext;
     private ImageView miniMusicIcon;
     private MusicManager musicManager;
+    private net.osmand.plus.carlauncher.telemetry.TelemetryManager telemetryManager;
+    private net.osmand.plus.carlauncher.telemetry.TelemetryManager.NavigationState currentNavState;
 
     // New Containers & Assistant Button
     private LinearLayout leftContainer;
@@ -108,6 +110,9 @@ public class AppDockFragment extends Fragment
 
             // Music Manager
             musicManager = MusicManager.getInstance(getContext());
+            
+            // Telemetry Manager
+            telemetryManager = net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(getContext());
 
             // Register Dock Update Receiver
             dockUpdateReceiver = new android.content.BroadcastReceiver() {
@@ -420,7 +425,11 @@ public class AppDockFragment extends Fragment
         if (musicManager != null) {
             musicManager.addListener(this);
         }
-        updateMiniMusicUI(); // Ilk yuklemede durum guncelle (Turkce karakter yok)
+        if (telemetryManager != null) {
+            telemetryManager.addListener(this);
+            currentNavState = telemetryManager.getNavigationState();
+        }
+        updateDynamicWidgetUI(); // Ilk yuklemede durum guncelle (Turkce karakter yok)
         updateAssistantButtonUI(); // Asistan buton durumunu guncelle
     }
 
@@ -430,42 +439,85 @@ public class AppDockFragment extends Fragment
         if (musicManager != null) {
             musicManager.removeListener(this);
         }
+        if (telemetryManager != null) {
+            telemetryManager.removeListener(this);
+        }
     }
 
-    private void updateMiniMusicUI() {
+    @Override
+    public void onTelemetryUpdated(net.osmand.plus.carlauncher.telemetry.TelemetryManager.LocationState loc, 
+                                   net.osmand.plus.carlauncher.telemetry.TelemetryManager.NavigationState nav, 
+                                   net.osmand.plus.carlauncher.telemetry.TelemetryManager.ObdState obd) {
+        this.currentNavState = nav;
+        if (getActivity() != null && !getActivity().isFinishing()) {
+            getActivity().runOnUiThread(this::updateDynamicWidgetUI);
+        }
+    }
+
+    private void updateDynamicWidgetUI() {
+        if (getActivity() == null) return;
+        
+        // Eger sidebar modundaysak hic gosterme
+        if (currentOrientation == ORIENTATION_VERTICAL && miniMusicContainer != null) {
+            miniMusicContainer.post(() -> miniMusicContainer.setVisibility(View.GONE));
+            return;
+        }
+
+        // 1. Navigasyon oncelikli
+        if (currentNavState != null && currentNavState.isActive) {
+            if (miniMusicContainer != null) {
+                miniMusicContainer.post(() -> {
+                    miniMusicContainer.setVisibility(View.VISIBLE);
+                    miniMusicTitle.setText(currentNavState.distanceStr);
+                    if (currentNavState.turnIconRes != 0) {
+                        miniMusicIcon.setImageResource(currentNavState.turnIconRes);
+                    } else {
+                        miniMusicIcon.setImageResource(net.osmand.plus.R.drawable.ic_action_gdirections_dark);
+                    }
+                    if (miniBtnPlay != null) miniBtnPlay.setVisibility(View.GONE);
+                    if (miniBtnNext != null) miniBtnNext.setVisibility(View.GONE);
+                });
+            }
+            return; // Navigasyon varsa muzigi isleme
+        }
+
+        // 2. Muzik ikinci oncelikli
         if (musicManager == null) return;
         
-        // Calan sarkiyi merkezi kaynaga gore oku ve set et (Turkce karakter yok)
         boolean isExternal = musicManager.useExternal();
+        final String titleText;
+        final boolean isPlaying;
+
         if (isExternal && musicManager.getActiveExternalController() != null && musicManager.getActiveExternalController().getMetadata() != null) {
             android.media.MediaMetadata metadata = musicManager.getActiveExternalController().getMetadata();
             String title = metadata.getString(android.media.MediaMetadata.METADATA_KEY_TITLE);
-            if (miniMusicTitle != null) {
-                miniMusicTitle.post(() -> miniMusicTitle.setText(title != null ? title : "Muzik"));
-            }
+            titleText = (title != null) ? title : "Muzik";
+            isPlaying = musicManager.getActiveExternalController().getPlaybackState() != null && 
+                        musicManager.getActiveExternalController().getPlaybackState().getState() == android.media.session.PlaybackState.STATE_PLAYING;
         } else {
-            net.osmand.plus.carlauncher.music.MusicRepository.AudioTrack track = 
-                musicManager.getInternalPlayer().getCurrentTrack();
-            if (miniMusicTitle != null) {
-                miniMusicTitle.post(() -> miniMusicTitle.setText(track != null ? track.getTitle() : "Muzik Secin"));
-            }
+            net.osmand.plus.carlauncher.music.MusicRepository.AudioTrack track = musicManager.getInternalPlayer().getCurrentTrack();
+            titleText = (track != null) ? track.getTitle() : "Muzik Secin";
+            isPlaying = musicManager.getInternalPlayer().isPlaying();
         }
-        
-        // Play/Pause buton ikonunu guncelle (Turkce karakter yok)
-        if (miniBtnPlay != null) {
-            boolean isPlaying = false;
-            if (isExternal) {
-                isPlaying = musicManager.getActiveExternalController() != null && 
-                    musicManager.getActiveExternalController().getPlaybackState() != null && 
-                    musicManager.getActiveExternalController().getPlaybackState().getState() == android.media.session.PlaybackState.STATE_PLAYING;
-            } else {
-                isPlaying = musicManager.getInternalPlayer().isPlaying();
-            }
-            final boolean finalIsPlaying = isPlaying;
-            miniBtnPlay.post(() -> miniBtnPlay.setImageResource(
-                    finalIsPlaying ? net.osmand.plus.R.drawable.ic_music_pause : net.osmand.plus.R.drawable.ic_music_play));
+
+        if (miniMusicContainer != null) {
+            miniMusicContainer.post(() -> {
+                miniMusicContainer.setVisibility(View.VISIBLE);
+                miniMusicTitle.setText(titleText);
+                miniMusicIcon.setImageResource(android.R.drawable.ic_media_play);
+                if (miniBtnPlay != null) {
+                    miniBtnPlay.setVisibility(View.VISIBLE);
+                    miniBtnPlay.setImageResource(isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+                }
+                if (miniBtnNext != null) miniBtnNext.setVisibility(View.VISIBLE);
+            });
         }
     }
+
+    private void updateMiniMusicUI() {
+        updateDynamicWidgetUI();
+    }
+
 
     // --- MusicUIListener ---
 

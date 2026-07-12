@@ -57,6 +57,8 @@
 
     <!-- Auto Launch / Otomatik Başlatma -->
     <string name="car_pref_title_autolaunch">Auto Launch</string>
+    <string name="car_pref_title_auto_start_on_boot">Start App on Boot (AutoStart)</string>
+    <string name="car_pref_summary_auto_start_on_boot">Allows the app to start itself when the device boots up. If your head unit automatically starts it, turn this off to prevent conflicts.</string>
     <string name="car_pref_title_app1">App 1</string>
     <string name="car_pref_title_app2">App 2</string>
     <string name="car_pref_title_app3">App 3</string>

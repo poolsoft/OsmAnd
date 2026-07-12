@@ -82,6 +82,7 @@ public class CarLauncherSettings {
     public static final String KEY_AUTOLAUNCH_ENABLE_PREFIX = "autolaunch_enable_";
     public static final String KEY_AUTOLAUNCH_PKG_PREFIX = "autolaunch_pkg_";
     public static final String KEY_AUTOLAUNCH_NAME_PREFIX = "autolaunch_name_";
+    public static final String KEY_AUTO_START_ON_BOOT = "car_launcher_auto_start_on_boot";
 
     // Weather
     private static final String KEY_WEATHER_ENABLED = "car_launcher_weather_enabled";
@@ -119,6 +120,8 @@ public class CarLauncherSettings {
     private String cDockPositionPortrait;
     private int cDockSizePortrait;
     private int cMaxShortcuts;
+    
+    private boolean cAutoStartOnBoot;
     private String cMusicApp;
     private boolean cAmbianceVisualizer;
     private boolean cAutoPlayMusic;
@@ -222,9 +225,11 @@ public class CarLauncherSettings {
         cMaxShortcuts = prefs.getInt(KEY_MAX_SHORTCUTS, 6);
 
         // Muzik
-        cMusicApp = prefs.getString(KEY_MUSIC_APP, "internal");
-        cAmbianceVisualizer = prefs.getBoolean(KEY_AMBIANCE_VISUALIZER, true);
         cAutoPlayMusic = prefs.getBoolean(KEY_AUTO_PLAY_MUSIC, false);
+        cAmbianceVisualizer = prefs.getBoolean(KEY_AMBIANCE_VISUALIZER, true);
+        
+        cAutoStartOnBoot = prefs.getBoolean(KEY_AUTO_START_ON_BOOT, false);
+        cMusicApp = prefs.getString(KEY_MUSIC_APP, "internal");
 
         // Hava Durumu
         cWeatherEnabled = prefs.getBoolean(KEY_WEATHER_ENABLED, true);
@@ -545,6 +550,15 @@ public class CarLauncherSettings {
     // =====================================================================
     // Auto Launch Settings (Dinamik — slot bazli)
     // =====================================================================
+
+    public boolean isAutoStartOnBootEnabled() {
+        return cAutoStartOnBoot;
+    }
+
+    public void setAutoStartOnBootEnabled(boolean enabled) {
+        this.cAutoStartOnBoot = enabled;
+        prefs.edit().putBoolean(KEY_AUTO_START_ON_BOOT, enabled).apply();
+    }
 
     public boolean isAutoLaunchEnabled(int slot) {
         return prefs.getBoolean(KEY_AUTOLAUNCH_ENABLE_PREFIX + slot, false);

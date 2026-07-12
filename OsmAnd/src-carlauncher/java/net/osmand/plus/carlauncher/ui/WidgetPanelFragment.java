@@ -474,9 +474,12 @@ public class WidgetPanelFragment extends Fragment implements SharedPreferences.O
         }
         if (getContext() != null) {
             WidgetManager wm = WidgetManager.getInstance(getContext());
+            CarLauncherSettings settings = CarLauncherSettings.getInstance(getContext());
             if (!wm.isHasAutoLaunched()) {
                 wm.setHasAutoLaunched(true);
-                new AutoLaunchManager(getContext()).execute();
+                if (settings.isAutoStartOnBootEnabled()) {
+                    new AutoLaunchManager(getContext()).execute();
+                }
             }
         }
         if (widgetManager != null) {

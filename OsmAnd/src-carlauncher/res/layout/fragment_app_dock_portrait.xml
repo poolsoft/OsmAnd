@@ -44,90 +44,83 @@
 
     </LinearLayout>
 
+    <!-- DİNAMİK WIDGET ALANI (Müzik / Navigasyon) -->
+    <LinearLayout
+        android:id="@+id/mini_music_container"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_drawer_rounded" 
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:layout_marginEnd="4dp"
+        android:minWidth="110dp"
+        android:maxWidth="160dp">
+
+        <ImageView
+            android:id="@+id/mini_music_icon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@android:drawable/ic_media_play"
+            app:tint="@color/cl_accent_orange"/>
+
+        <TextView
+            android:id="@+id/mini_music_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Muzik"
+            android:textColor="@color/cl_text_primary"
+            android:textSize="12sp"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:ellipsize="marquee"
+            android:singleLine="true"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"/>
+
+        <ImageButton
+            android:id="@+id/mini_btn_play"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@android:drawable/ic_media_play"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="4dp"
+            app:tint="@color/cl_primary"/>
+
+        <ImageButton
+            android:id="@+id/mini_btn_next"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@android:drawable/ic_media_next"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="4dp"
+            android:layout_marginStart="4dp"
+            app:tint="@color/cl_text_secondary"/>
+
+    </LinearLayout>
+
     <!-- ORTA CONTAINER (Kısayollar) -->
     <LinearLayout
         android:id="@+id/center_content_container"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:orientation="horizontal"
-        android:gravity="center"
         android:layout_marginStart="2dp"
         android:layout_marginEnd="2dp">
 
         <!-- Shortcuts RecyclerView -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/dock_recycler"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
             android:requiresFadingEdge="horizontal"
-            android:fadingEdgeLength="30dp"
-            android:paddingStart="30dp"
-            android:paddingEnd="30dp"
-            android:clipToPadding="false"
+            android:fadingEdgeLength="20dp"
             android:orientation="horizontal" />
 
-        <!-- Mini Music Player -->
-        <LinearLayout
-            android:id="@+id/mini_music_container"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="@drawable/bg_drawer_rounded" 
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp"
-            android:minWidth="100dp">
-
-            <ImageView
-                android:id="@+id/mini_music_icon"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@android:drawable/ic_media_play"
-                android:layout_marginStart="2dp"
-                app:tint="@color/cl_accent_orange"/>
-
-            <TextView
-                android:id="@+id/mini_music_title"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Muzik"
-                android:textColor="@color/cl_text_primary"
-                android:textSize="12sp"
-                android:fontFamily="sans-serif-medium"
-                android:maxLines="1"
-                android:ellipsize="marquee"
-                android:singleLine="true"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"/>
-
-            <ImageButton
-                android:id="@+id/mini_btn_play"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@android:drawable/ic_media_play"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="4dp"
-                app:tint="@color/cl_primary"/>
-
-            <ImageButton
-                android:id="@+id/mini_btn_next"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@android:drawable/ic_media_next"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="4dp"
-                android:layout_marginStart="8dp"
-                app:tint="@color/cl_text_secondary"/>
-
-        </LinearLayout>
-
-    </LinearLayout>
+    </LinearLayout>>
 
     <!-- SAĞ CONTAINER (Asistan ve Saat) -->
     <LinearLayout
