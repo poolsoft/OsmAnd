@@ -7,8 +7,10 @@
     android:background="@android:color/transparent"
     android:orientation="vertical"
     android:gravity="center_horizontal|top"
-    android:paddingTop="2dp"
-    android:paddingBottom="2dp">
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp"
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp">
 
     <!-- ÜST CONTAINER (Desktop Mode ve Apps) -->
     <LinearLayout
@@ -61,11 +63,6 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="4dp"
             android:layout_marginBottom="4dp"
-            android:requiresFadingEdge="vertical"
-            android:fadingEdgeLength="30dp"
-            android:paddingTop="30dp"
-            android:paddingBottom="30dp"
-            android:clipToPadding="false"
             android:orientation="vertical" />
 
         <!-- Mini Music Player -->

@@ -93,12 +93,21 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         int iconSize = getScaledIconSize();
         int itemSize = iconSize + dpToPx(16); // Sabit dokunma alani
-        int itemWidth = itemSize;
-        int itemHeight = itemSize;
+        int itemWidth = isVerticalMode ? ViewGroup.LayoutParams.MATCH_PARENT : itemSize;
+        int itemHeight = isVerticalMode ? itemSize : ViewGroup.LayoutParams.MATCH_PARENT;
 
         LinearLayout itemView = new LinearLayout(context);
         itemView.setOrientation(LinearLayout.VERTICAL);
-        itemView.setLayoutParams(new RecyclerView.LayoutParams(itemWidth, itemHeight));
+        
+        RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(itemWidth, itemHeight);
+        int margin = dpToPx(4);
+        if (isVerticalMode) {
+            lp.setMargins(0, margin, 0, margin);
+        } else {
+            lp.setMargins(margin, 0, margin, 0);
+        }
+        itemView.setLayoutParams(lp);
+        
         itemView.setGravity(android.view.Gravity.CENTER);
         int padding = isVerticalMode ? dpToPx(6) : dpToPx(8);
         itemView.setPadding(padding, padding, padding, padding);
@@ -111,13 +120,22 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         int iconSize = getScaledIconSize();
         int itemSize = iconSize + dpToPx(16); // Sabit dokunma alani
-        int itemWidth = itemSize;
-        int itemHeight = itemSize;
+        int itemWidth = isVerticalMode ? ViewGroup.LayoutParams.MATCH_PARENT : itemSize;
+        int itemHeight = isVerticalMode ? itemSize : ViewGroup.LayoutParams.MATCH_PARENT;
         
         ViewGroup.LayoutParams lp = holder.itemView.getLayoutParams();
         if (lp != null) {
             lp.width = itemWidth;
             lp.height = itemHeight;
+            if (lp instanceof RecyclerView.LayoutParams) {
+                RecyclerView.LayoutParams rlp = (RecyclerView.LayoutParams) lp;
+                int margin = dpToPx(4);
+                if (isVerticalMode) {
+                    rlp.setMargins(0, margin, 0, margin);
+                } else {
+                    rlp.setMargins(margin, 0, margin, 0);
+                }
+            }
             holder.itemView.setLayoutParams(lp);
         }
 
