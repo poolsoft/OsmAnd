@@ -457,8 +457,9 @@ public class AppDockFragment extends Fragment
     private void updateDynamicWidgetUI() {
         if (getActivity() == null) return;
         
-        // Eger sidebar modundaysak hic gosterme
-        if (currentOrientation == ORIENTATION_VERTICAL && miniMusicContainer != null) {
+        boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        // Eger ekran dikey (portrait) ise veya sidebar (dikey dock) modundaysak hic gosterme
+        if ((isPortrait || currentOrientation == ORIENTATION_VERTICAL) && miniMusicContainer != null) {
             miniMusicContainer.post(() -> miniMusicContainer.setVisibility(View.GONE));
             return;
         }

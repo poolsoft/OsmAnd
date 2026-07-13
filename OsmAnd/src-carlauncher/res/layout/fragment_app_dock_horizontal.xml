@@ -7,6 +7,8 @@
     android:background="@android:color/transparent"
     android:orientation="horizontal"
     android:gravity="center_vertical"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
     android:paddingStart="4dp"
     android:paddingEnd="4dp">
 
@@ -116,8 +118,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
-            android:requiresFadingEdge="horizontal"
-            android:fadingEdgeLength="30dp"
             android:orientation="horizontal" />
 
     </LinearLayout>
@@ -130,19 +130,6 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:layout_marginStart="4dp">
-
-        <!-- Assistant Button -->
-        <ImageButton
-            android:id="@+id/btn_assistant"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@android:drawable/ic_btn_speak_now"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:scaleType="fitCenter"
-            android:adjustViewBounds="true"
-            android:padding="4dp"
-            android:layout_marginEnd="4dp"
-            app:tint="@color/cl_text_secondary"/>
 
         <!-- Clock -->
         <LinearLayout
@@ -167,6 +154,20 @@
                 android:fontFamily="sans-serif-medium"/>
 
         </LinearLayout>
+
+        <!-- Assistant Button -->
+        <ImageButton
+            android:id="@+id/btn_assistant"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_btn_speak_now"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:padding="4dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            app:tint="@color/cl_text_secondary"/>
 
     </LinearLayout>
 

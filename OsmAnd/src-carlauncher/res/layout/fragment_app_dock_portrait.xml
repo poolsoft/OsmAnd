@@ -5,19 +5,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/transparent"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:paddingStart="4dp"
-    android:paddingEnd="4dp">
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
 
     <!-- SOL CONTAINER (Desktop Mode ve Apps) -->
     <LinearLayout
         android:id="@+id/left_buttons_container"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:gravity="center"
-        android:layout_marginEnd="2dp">
+        android:layout_marginBottom="2dp">
 
         <ImageButton
             android:id="@+id/btn_desktop_mode"
@@ -47,16 +49,14 @@
     <!-- DİNAMİK WIDGET ALANI (Müzik / Navigasyon) -->
     <LinearLayout
         android:id="@+id/mini_music_container"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
         android:background="@drawable/bg_drawer_rounded" 
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        android:layout_marginEnd="4dp"
-        android:minWidth="110dp"
-        android:maxWidth="160dp">
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:layout_marginBottom="4dp">
 
         <ImageView
             android:id="@+id/mini_music_icon"
@@ -67,9 +67,8 @@
 
         <TextView
             android:id="@+id/mini_music_title"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:text="Muzik"
             android:textColor="@color/cl_text_primary"
             android:textSize="12sp"
@@ -77,8 +76,9 @@
             android:maxLines="1"
             android:ellipsize="marquee"
             android:singleLine="true"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"/>
+            android:gravity="center_horizontal"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"/>
 
         <ImageButton
             android:id="@+id/mini_btn_play"
@@ -96,7 +96,7 @@
             android:src="@android:drawable/ic_media_next"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="4dp"
-            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
             app:tint="@color/cl_text_secondary"/>
 
     </LinearLayout>
@@ -104,32 +104,55 @@
     <!-- ORTA CONTAINER (Kısayollar) -->
     <LinearLayout
         android:id="@+id/center_content_container"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginStart="2dp"
-        android:layout_marginEnd="2dp">
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="2dp">
 
         <!-- Shortcuts RecyclerView -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/dock_recycler"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_gravity="center_vertical"
-            android:requiresFadingEdge="horizontal"
-            android:fadingEdgeLength="20dp"
-            android:orientation="horizontal" />
+            android:layout_gravity="center_horizontal"
+            android:orientation="vertical" />
 
-    </LinearLayout>>
+    </LinearLayout>
 
     <!-- SAĞ CONTAINER (Asistan ve Saat) -->
     <LinearLayout
         android:id="@+id/right_buttons_container"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginStart="2dp">
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:layout_marginTop="2dp">
+
+        <!-- Clock -->
+        <LinearLayout
+            android:id="@+id/clock_settings_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:background="?attr/selectableItemBackground"
+            android:paddingTop="4dp"
+            android:visibility="gone"
+            android:paddingBottom="4dp">
+
+            <TextView
+                android:id="@+id/dock_clock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="12:00"
+                android:textColor="@color/cl_m3_light_blue"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:gravity="center_horizontal"
+                android:fontFamily="sans-serif-medium"/>
+
+        </LinearLayout>
 
         <!-- Assistant Button -->
         <ImageButton
@@ -141,33 +164,8 @@
             android:scaleType="fitCenter"
             android:adjustViewBounds="true"
             android:padding="4dp"
-            android:layout_marginEnd="2dp"
+            android:layout_marginTop="2dp"
             app:tint="@color/cl_text_secondary"/>
-
-        <!-- Clock -->
-        <LinearLayout
-            android:id="@+id/clock_settings_container"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="?attr/selectableItemBackground"
-            android:paddingStart="4dp"
-            android:visibility="gone"
-            android:paddingEnd="4dp">
-
-            <TextView
-                android:id="@+id/dock_clock"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="12:00"
-                android:textColor="@color/cl_m3_light_blue"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:gravity="center_vertical"
-                android:fontFamily="sans-serif-medium"/>
-
-        </LinearLayout>
 
     </LinearLayout>
 
