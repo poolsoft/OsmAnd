@@ -179,7 +179,7 @@ public class AppDockFragment extends Fragment
 
         int layoutId;
         if (isPortrait) {
-            layoutId = net.osmand.plus.R.layout.fragment_app_dock_portrait;
+            layoutId = net.osmand.plus.R.layout.fragment_app_dock_horizontal;
         } else if (isVerticalMode) {
             layoutId = net.osmand.plus.R.layout.fragment_app_dock_sidebar;
         } else {
@@ -195,7 +195,7 @@ public class AppDockFragment extends Fragment
                     lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
                 } else {
                     lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
-                    lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
                 }
                 root.setLayoutParams(lp);
             }
@@ -458,8 +458,21 @@ public class AppDockFragment extends Fragment
         if (getActivity() == null) return;
         
         boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-        // Eger ekran dikey (portrait) ise veya sidebar (dikey dock) modundaysak hic gosterme
-        if ((isPortrait || currentOrientation == ORIENTATION_VERTICAL) && miniMusicContainer != null) {
+        boolean shouldShow = false;
+        if (!isPortrait && currentOrientation != ORIENTATION_VERTICAL) {
+            boolean isDesktop = false;
+            int layoutMode = 0;
+            if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
+                net.osmand.plus.activities.MapActivity activity = (net.osmand.plus.activities.MapActivity) getActivity();
+                isDesktop = activity.isDesktopMode();
+                layoutMode = activity.getLayoutMode();
+            }
+            if (isDesktop || layoutMode == 2) {
+                shouldShow = true;
+            }
+        }
+
+        if (!shouldShow && miniMusicContainer != null) {
             miniMusicContainer.post(() -> miniMusicContainer.setVisibility(View.GONE));
             return;
         }
@@ -891,7 +904,7 @@ public class AppDockFragment extends Fragment
                     rootLp.height = ViewGroup.LayoutParams.MATCH_PARENT;
                 } else {
                     rootLp.width = ViewGroup.LayoutParams.MATCH_PARENT;
-                    rootLp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    rootLp.height = ViewGroup.LayoutParams.MATCH_PARENT;
                 }
                 root.setLayoutParams(rootLp);
             }
@@ -1042,7 +1055,7 @@ public class AppDockFragment extends Fragment
 
         int expectedLayoutId;
         if (isPortrait) {
-            expectedLayoutId = net.osmand.plus.R.layout.fragment_app_dock_portrait;
+            expectedLayoutId = net.osmand.plus.R.layout.fragment_app_dock_horizontal;
         } else if (expectedVerticalMode) {
             expectedLayoutId = net.osmand.plus.R.layout.fragment_app_dock_sidebar;
         } else {
