@@ -112,7 +112,7 @@ public class AppDockFragment extends Fragment
             musicManager = MusicManager.getInstance(getContext());
             
             // Telemetry Manager
-            telemetryManager = net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(getContext());
+            telemetryManager = net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance((net.osmand.plus.OsmandApplication) getContext().getApplicationContext());
 
             // Register Dock Update Receiver
             dockUpdateReceiver = new android.content.BroadcastReceiver() {
