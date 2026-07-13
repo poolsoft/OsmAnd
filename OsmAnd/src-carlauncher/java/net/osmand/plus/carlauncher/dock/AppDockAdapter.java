@@ -109,7 +109,7 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
         itemView.setLayoutParams(lp);
         
         itemView.setGravity(android.view.Gravity.CENTER);
-        int padding = isVerticalMode ? dpToPx(6) : dpToPx(8);
+        int padding = dpToPx(2);
         itemView.setPadding(padding, padding, padding, padding);
         itemView.setBackgroundResource(net.osmand.plus.R.drawable.bg_dock_item_ripple);
 

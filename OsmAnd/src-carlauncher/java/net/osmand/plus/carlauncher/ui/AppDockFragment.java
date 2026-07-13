@@ -966,15 +966,15 @@ public class AppDockFragment extends Fragment
             
             // Layout ve Apps butonlarının aralık/boşluk ayarı
             if (leftContainer != null) {
-                leftContainer.setPadding(isVertical ? 0 : dpToPx(16), isVertical ? dpToPx(16) : 0, isVertical ? 0 : dpToPx(8), isVertical ? dpToPx(8) : 0);
+                leftContainer.setPadding(isVertical ? 0 : dpToPx(4), isVertical ? dpToPx(4) : 0, isVertical ? 0 : dpToPx(4), isVertical ? dpToPx(4) : 0);
             }
             if (appListButton != null && appListButton.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
                 ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) appListButton.getLayoutParams();
                 if (isVertical) {
-                    mlp.topMargin = dpToPx(12);
+                    mlp.topMargin = dpToPx(4);
                     mlp.leftMargin = 0;
                 } else {
-                    mlp.leftMargin = dpToPx(12);
+                    mlp.leftMargin = dpToPx(4);
                     mlp.topMargin = 0;
                 }
                 appListButton.setLayoutParams(mlp);
