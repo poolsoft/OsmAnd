@@ -13,6 +13,8 @@ import net.osmand.router.TurnType;
 import net.osmand.plus.plugins.PluginsHelper;
 import net.osmand.plus.plugins.odb.VehicleMetricsPlugin;
 import net.osmand.shared.obd.OBDDataComputer;
+import net.osmand.plus.carlauncher.headunit.HeadUnitManager;
+import net.osmand.plus.carlauncher.headunit.HeadUnitListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,12 +62,45 @@ public class TelemetryManager implements OsmAndLocationProvider.OsmAndLocationLi
     private OBDDataComputer.OBDComputerWidget compVolt;
     private OBDDataComputer.OBDComputerWidget compLoad;
 
+    private boolean isCanBusSpeedAvailable = false;
+    private final HeadUnitListener headUnitListener = new HeadUnitListener() {
+        @Override
+        public void onSpeedUpdated(float speedKmh) {
+            isCanBusSpeedAvailable = true;
+            locationState.speedKmh = speedKmh;
+            notifyListeners();
+        }
+
+        @Override
+        public void onBatteryVoltageUpdated(float voltage) {
+            obdState.isActive = true;
+            // Genelde teypler 12.0V degeri icin 120 gonderir (10 ile carpilmis hali)
+            // Ya da 12 gonderir, bunu kontrol altina alalim.
+            float realVoltage = voltage > 50 ? voltage / 10.0f : voltage;
+            obdState.volt = String.format(java.util.Locale.US, "%.1f", realVoltage);
+            notifyListeners();
+        }
+
+        @Override
+        public void onHeadlightStateChanged(boolean isLightOn) {
+            // Far durumuna gore Isik temasini otomatize edebiliriz.
+            // Bu kisim OsmandSettings üzerinden de yapilabilir, fakat simdilik sadece dinliyoruz.
+        }
+
+        @Override
+        public void onPlaybackStateChanged(boolean isPlaying) {}
+        @Override
+        public void onTrackInfoChanged(String title, String artist, String albumArtPath) {}
+        @Override
+        public void onRadioFrequencyChanged(String band, float freqMHz) {}
+    };
+
     private long lastLocationTime = 0;
     private final Runnable staleGpsRunnable = new Runnable() {
         @Override
         public void run() {
             long now = System.currentTimeMillis();
-            if (now - lastLocationTime >= 3000 && locationState.speedKmh > 0) {
+            if (now - lastLocationTime >= 3000 && locationState.speedKmh > 0 && !isCanBusSpeedAvailable) {
                 locationState.speedKmh = 0f;
                 notifyListeners();
             }
@@ -79,12 +114,14 @@ public class TelemetryManager implements OsmAndLocationProvider.OsmAndLocationLi
             if (location != null && location.hasSpeed()) {
                 lastLocationTime = System.currentTimeMillis();
                 float speedKmh = location.getSpeed() * 3.6f;
-                if (speedKmh <= 3.0f) {
-                    locationState.speedKmh = 0f;
-                } else {
-                    locationState.speedKmh = speedKmh;
+                if (!isCanBusSpeedAvailable) {
+                    if (speedKmh <= 3.0f) {
+                        locationState.speedKmh = 0f;
+                    } else {
+                        locationState.speedKmh = speedKmh;
+                    }
+                    notifyListeners();
                 }
-                notifyListeners();
             }
         }
         @Override
@@ -99,6 +136,8 @@ public class TelemetryManager implements OsmAndLocationProvider.OsmAndLocationLi
         this.app = app;
         initObdComputers();
         
+        HeadUnitManager.getInstance(app).addListener(headUnitListener);
+
         try {
             locationManager = (android.location.LocationManager) app.getSystemService(android.content.Context.LOCATION_SERVICE);
             if (locationManager != null) {
