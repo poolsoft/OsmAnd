@@ -106,7 +106,7 @@
     </LinearLayout>
 
     <!-- ORTA CONTAINER (Kısayollar) -->
-    <LinearLayout
+    <FrameLayout
         android:id="@+id/center_content_container"
         android:layout_width="0dp"
         android:layout_height="match_parent"
@@ -120,12 +120,18 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
-            android:requiresFadingEdge="horizontal"
-            android:fadingEdgeLength="12dp"
-            android:clipToPadding="true"
             android:orientation="horizontal" />
 
-    </LinearLayout>
+        <!-- Sag Gradient Overlay: Devami oldugunda gorulur -->
+        <View
+            android:id="@+id/dock_end_fade"
+            android:layout_width="32dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="end"
+            android:background="@drawable/bg_dock_end_fade_horizontal"
+            android:visibility="gone" />
+
+    </FrameLayout>
 
     <!-- SAĞ CONTAINER (Asistan ve Saat) -->
     <LinearLayout

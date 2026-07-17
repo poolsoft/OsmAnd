@@ -54,19 +54,32 @@
         android:orientation="vertical"
         android:gravity="center">
 
-        <!-- Shortcuts RecyclerView -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/dock_recycler"
-            android:layout_width="wrap_content"
+        <!-- Shortcuts RecyclerView + overlay wrapper -->
+        <FrameLayout
+            android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="4dp"
-            android:requiresFadingEdge="vertical"
-            android:fadingEdgeLength="12dp"
-            android:clipToPadding="true"
-            android:orientation="vertical" />
+            android:layout_weight="1">
+
+            <!-- Shortcuts RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/dock_recycler"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="4dp"
+                android:orientation="vertical" />
+
+            <!-- Alt Gradient Overlay: Devami oldugunda gorulur -->
+            <View
+                android:id="@+id/dock_end_fade"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:layout_gravity="bottom"
+                android:background="@drawable/bg_dock_end_fade_vertical"
+                android:visibility="gone" />
+
+        </FrameLayout>
 
         <!-- Mini Music Player -->
         <LinearLayout

@@ -92,6 +92,9 @@ public class AppDockFragment extends Fragment
     private LinearLayout centerContainer;
     private ImageButton btnAssistant;
 
+    // Gradient fade overlay: listenin sonu karartmasi (basi degil)
+    private View dockEndFade;
+
     public interface OnAppDockListener {
         void onLayoutModeToggle();
         void onAppDrawerOpen();
@@ -146,6 +149,10 @@ public class AppDockFragment extends Fragment
             getActivity().runOnUiThread(() -> {
                 adapter.setShortcuts(dockManager.getShortcuts());
                 adapter.notifyDataSetChanged();
+                // Kisayollar guncellendikten sonra fade durumunu yeniden kontrol et
+                if (recyclerView != null) {
+                    recyclerView.post(this::updateDockEndFadeVisibility);
+                }
             });
         }
     }
@@ -211,6 +218,9 @@ public class AppDockFragment extends Fragment
         rightContainer = root.findViewById(net.osmand.plus.R.id.right_buttons_container);
         centerContainer = root.findViewById(net.osmand.plus.R.id.center_content_container);
         btnAssistant = root.findViewById(net.osmand.plus.R.id.btn_assistant);
+
+        // Gradient fade overlay
+        dockEndFade = root.findViewById(net.osmand.plus.R.id.dock_end_fade);
 
         // Setup New Views
         clockView = root.findViewById(net.osmand.plus.R.id.dock_clock);
@@ -412,6 +422,9 @@ public class AppDockFragment extends Fragment
         
         // Force apply UI constraints
         applyOrientationState(view, isVerticalMode);
+        
+        // Scroll listener: sadece sona dogru tasinan elemanlari karartan overlay
+        setupDockEndFade();
         
         // Sync Desktop Mode color filter on launch
         if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
@@ -770,6 +783,45 @@ public class AppDockFragment extends Fragment
         };
         clockHandler.post(clockRunnable);
     }
+
+    /**
+     * Sadece listenin SONUNDA kararma efekti uygular.
+     * Listenin BASI hicbir zaman karartilmaz.
+     * Devami olan (scroll edilebilir) son tarafi karartir.
+     */
+    private void setupDockEndFade() {
+        if (recyclerView == null || dockEndFade == null) return;
+
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
+                updateDockEndFadeVisibility();
+            }
+        });
+
+        // Adapter verileri geldikten sonra da kontrol et
+        recyclerView.post(this::updateDockEndFadeVisibility);
+    }
+
+    /**
+     * Listenin sonuna ulasilip ulasilmadigini kontrol ederek overlay'i goster/gizle.
+     * canScrollForward == true ise sondan daha fazla icerik var demektir -> overlay goster.
+     */
+    private void updateDockEndFadeVisibility() {
+        if (recyclerView == null || dockEndFade == null) return;
+
+        boolean canScrollMore;
+        if (isVerticalMode) {
+            // Asagi dogru daha icerik var mi?
+            canScrollMore = recyclerView.canScrollVertically(1);
+        } else {
+            // Saga dogru daha icerik var mi?
+            canScrollMore = recyclerView.canScrollHorizontally(1);
+        }
+
+        dockEndFade.setVisibility(canScrollMore ? View.VISIBLE : View.GONE);
+    }
+
 
     @Override
     public void onDestroy() {
