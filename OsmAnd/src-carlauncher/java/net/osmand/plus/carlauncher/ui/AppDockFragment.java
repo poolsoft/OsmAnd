@@ -89,7 +89,7 @@ public class AppDockFragment extends Fragment
     // New Containers & Assistant Button
     private LinearLayout leftContainer;
     private LinearLayout rightContainer;
-    private LinearLayout centerContainer;
+    private ViewGroup centerContainer; // FrameLayout (yatay) veya LinearLayout (dikey) olabilir
     private ImageButton btnAssistant;
 
     // Gradient fade overlay: listenin sonu karartmasi (basi degil)
