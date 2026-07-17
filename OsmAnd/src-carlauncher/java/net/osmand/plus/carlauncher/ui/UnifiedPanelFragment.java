@@ -275,41 +275,52 @@ public class UnifiedPanelFragment extends Fragment
 
     @Override
     public void onTrackChanged(String title, String artist, Bitmap albumArt, String packageName) {
-        if (musicTrackTitle != null) musicTrackTitle.setText(title != null ? title : "Parca Secin");
-        if (musicTrackArtist != null) musicTrackArtist.setText(artist != null ? artist : "");
+        // MusicManager background thread'den callback yapabilir. UI islemleri main thread'de olmali.
+        if (getActivity() == null) return;
+        getActivity().runOnUiThread(() -> {
+            if (getActivity() == null || getView() == null) return;
 
-        if (albumArt != null) {
-            if (albumArtBg != null) albumArtBg.setImageBitmap(albumArt);
-            if (musicMiniArt != null) {
-                musicMiniArt.setBackground(null);
-                musicMiniArt.setPadding(0, 0, 0, 0);
-                musicMiniArt.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                musicMiniArt.setImageBitmap(albumArt);
-                musicMiniArt.setVisibility(View.GONE);
-            }
-        } else {
-            if (albumArtBg != null) albumArtBg.setImageResource(R.drawable.bg_default_music_art);
-            if (musicMiniArt != null) {
-                musicMiniArt.setBackgroundResource(R.drawable.bg_track_art_placeholder);
-                if (getContext() != null) {
-                    int padding = (int) (12 * getContext().getResources().getDisplayMetrics().density);
-                    musicMiniArt.setPadding(padding, padding, padding, padding);
+            if (musicTrackTitle != null) musicTrackTitle.setText(title != null ? title : "Parca Secin");
+            if (musicTrackArtist != null) musicTrackArtist.setText(artist != null ? artist : "");
+
+            if (albumArt != null) {
+                if (albumArtBg != null) albumArtBg.setImageBitmap(albumArt);
+                if (musicMiniArt != null) {
+                    musicMiniArt.setBackground(null);
+                    musicMiniArt.setPadding(0, 0, 0, 0);
+                    musicMiniArt.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    musicMiniArt.setImageBitmap(albumArt);
+                    musicMiniArt.setVisibility(View.GONE);
                 }
-                musicMiniArt.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                musicMiniArt.setImageResource(R.drawable.ic_default_album_art);
-                musicMiniArt.setVisibility(View.GONE);
+            } else {
+                if (albumArtBg != null) albumArtBg.setImageResource(R.drawable.bg_default_music_art);
+                if (musicMiniArt != null) {
+                    musicMiniArt.setBackgroundResource(R.drawable.bg_track_art_placeholder);
+                    if (getContext() != null) {
+                        int padding = (int) (12 * getContext().getResources().getDisplayMetrics().density);
+                        musicMiniArt.setPadding(padding, padding, padding, padding);
+                    }
+                    musicMiniArt.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    musicMiniArt.setImageResource(R.drawable.ic_default_album_art);
+                    musicMiniArt.setVisibility(View.GONE);
+                }
             }
-        }
+        });
     }
+
 
     @Override
     public void onPlaybackStateChanged(boolean isPlaying) {
-        if (musicBtnPlay != null) {
-            musicBtnPlay.setImageResource(isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
-        }
-        if (!isPlaying && musicVisualizer != null) {
-            musicVisualizer.clear();
-        }
+        if (getActivity() == null) return;
+        getActivity().runOnUiThread(() -> {
+            if (getActivity() == null || getView() == null) return;
+            if (musicBtnPlay != null) {
+                musicBtnPlay.setImageResource(isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+            }
+            if (!isPlaying && musicVisualizer != null) {
+                musicVisualizer.clear();
+            }
+        });
     }
 
     @Override

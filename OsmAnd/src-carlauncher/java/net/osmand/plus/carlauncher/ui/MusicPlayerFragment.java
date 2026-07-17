@@ -1538,15 +1538,26 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             net.osmand.plus.carlauncher.CarLauncherSettings clSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
             // Ambians gorsellestirici ayarina gore dinamik renk veya varsayilan (0) secimi (Turkce karakter yok)
             final int visualizerColor = (albumArt != null && clSettings.isAmbianceVisualizerEnabled()) ? finalColor : 0;
-            visualizerView.post(() -> visualizerView.setDominantColor(visualizerColor));
+            // Lambda gecikmeli calisir, bu surede view detach/null olabilir. Null kontrolu zorunlu.
+            visualizerView.post(() -> {
+                if (visualizerView != null) {
+                    visualizerView.setDominantColor(visualizerColor);
+                }
+            });
             if (ambianceGlowLayer != null) {
                 // Sadece RGB kısmını al, Alpha kısmını arkaplan için tamamen kapat
                 int glowColor = (0xFFFFFF & visualizerColor) | 0xFF000000;
                 if (visualizerColor == 0) glowColor = 0xFF000000; // Eger ambians kapaliysa siyah yap
                 final int fglow = glowColor;
-                ambianceGlowLayer.post(() -> ambianceGlowLayer.setBackgroundColor(fglow));
+                // Post gecikmeli calisir, lambda tetiklendiginde view null olabilir. Null kontrolu zorunlu.
+                ambianceGlowLayer.post(() -> {
+                    if (ambianceGlowLayer != null) {
+                        ambianceGlowLayer.setBackgroundColor(fglow);
+                    }
+                });
             }
         }
+
         
         if (getActivity() == null)
             return;
