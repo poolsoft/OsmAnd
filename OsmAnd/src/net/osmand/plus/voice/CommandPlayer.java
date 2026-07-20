@@ -239,4 +239,40 @@ public abstract class CommandPlayer {
 	public static String getBluetoothScoStatus() {
 		return bluetoothScoStatus;
 	}
+
+	/**
+	 * TTS baslayinca MusicManager'a bildir (muzigi kis).
+	 * Reflection ile erisim: CommandPlayer, carlauncher modulu ile dogrudan
+	 * bagimli olmamali. Eger MusicManager bulunamazsa sessizce devam edilir.
+	 */
+	protected void tryStartTtsDucking() {
+		try {
+			Class<?> mmClass = Class.forName("net.osmand.plus.carlauncher.music.MusicManager");
+			java.lang.reflect.Method getInstance = mmClass.getMethod("getInstance", android.content.Context.class);
+			Object mm = getInstance.invoke(null, app);
+			if (mm != null) {
+				java.lang.reflect.Method m = mmClass.getMethod("ttsStarted");
+				m.invoke(mm);
+			}
+		} catch (Exception e) {
+			// MusicManager mevcut degil veya erisilemedi, ducking atla
+		}
+	}
+
+	/**
+	 * TTS bitince MusicManager'a bildir (muzigi normale dondur).
+	 */
+	protected void tryStopTtsDucking() {
+		try {
+			Class<?> mmClass = Class.forName("net.osmand.plus.carlauncher.music.MusicManager");
+			java.lang.reflect.Method getInstance = mmClass.getMethod("getInstance", android.content.Context.class);
+			Object mm = getInstance.invoke(null, app);
+			if (mm != null) {
+				java.lang.reflect.Method m = mmClass.getMethod("ttsStopped");
+				m.invoke(mm);
+			}
+		} catch (Exception e) {
+			// MusicManager mevcut degil veya erisilemedi, ducking atla
+		}
+	}
 }

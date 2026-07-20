@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
 import android.media.session.MediaSessionManager;
@@ -48,6 +49,13 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     }
     
     private MusicSource lastActiveSource = MusicSource.INTERNAL;
+
+    // TTS Ducking: navigasyon sesi baslarken muzigi kisip, bitince normale dondurme
+    private int savedMusicVolume = -1;          // Kismadan onceki ses seviyesi
+    private boolean isDucking = false;          // Su an ducking aktif mi
+    private static final float DUCK_RATIO = 0.2f; // TTS sirasinda muzik sesinin %20'ye dusurulmesi
+    private final Handler duckHandler = new Handler(Looper.getMainLooper());
+    private Runnable duckRestoreRunnable = null; // Gecikme ile geri yukleme icin
 
     public interface MusicUIListener {
         void onTrackChanged(String title, String artist, android.graphics.Bitmap albumArt, String packageName);
@@ -973,6 +981,70 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             updateActiveController(controllers);
         }
     }
+
+    // ---------------------------------------------------------------------------
+    // TTS Ducking API
+    // XYAuto gibi harici adaptorler Android AudioFocus'u dinlemedigi icin
+    // STREAM_MUSIC kanal sesi manuel olarak dusurulup geri yuklenir.
+    // ---------------------------------------------------------------------------
+
+    /**
+     * TTS (navigasyon sesi) basladiginda cagrilis.
+     * Muzigi DUCK_RATIO oraniyla gecici olarak kistiginda etkisi hissedilir.
+     */
+    public void ttsStarted() {
+        // Gecikme ile restore planlanmissa iptal et (onceki tts bitmeden yenisi basladi)
+        if (duckRestoreRunnable != null) {
+            duckHandler.removeCallbacks(duckRestoreRunnable);
+            duckRestoreRunnable = null;
+        }
+
+        AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        if (am == null) return;
+
+        int maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int currentVol = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+
+        if (!isDucking) {
+            savedMusicVolume = currentVol; // Sadece ilk ducking'de kaydet
+        }
+        isDucking = true;
+
+        int duckVol = Math.max(1, (int) (maxVol * DUCK_RATIO));
+        if (currentVol > duckVol) {
+            am.setStreamVolume(AudioManager.STREAM_MUSIC, duckVol, 0);
+            Log.d(TAG, "TTS ducking: ses " + currentVol + " -> " + duckVol);
+        }
+    }
+
+    /**
+     * TTS (navigasyon sesi) bittiginde cagrilis.
+     * Muzigi kaydedilen seviyeye geri yukler.
+     * Kisa bir gecikme ile yukleme yapilir: TTS motoru bazi sistemlerde
+     * utteranceCompleted'dan hemen sonra kisa sureli ses birakmaya devam edebilir.
+     */
+    public void ttsStopped() {
+        if (!isDucking) return;
+
+        if (duckRestoreRunnable != null) {
+            duckHandler.removeCallbacks(duckRestoreRunnable);
+        }
+        duckRestoreRunnable = () -> {
+            isDucking = false;
+            if (savedMusicVolume < 0) return;
+            AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+            if (am == null) return;
+            int maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+            int restoreVol = Math.min(savedMusicVolume, maxVol);
+            am.setStreamVolume(AudioManager.STREAM_MUSIC, restoreVol, 0);
+            Log.d(TAG, "TTS ducking bitti: ses " + restoreVol + "'e geri yuklendi");
+            savedMusicVolume = -1;
+        };
+        // 600ms gecikme: TTS motoru son utterance'i bitirir, sonra sesi ac
+        duckHandler.postDelayed(duckRestoreRunnable, 600);
+    }
+
+    // ---------------------------------------------------------------------------
 
     private String getAppName(String packageName) {
         try {

@@ -112,6 +112,8 @@ public class JsTtsCommandPlayer extends CommandPlayer {
 				@Override
 				public synchronized void onUtteranceCompleted(String utteranceId) {
 					if (--ttsRequests <= 0) {
+						// TTS bitti: muzik sesini normale dondur
+						tryStopTtsDucking();
 						abandonAudioFocus();
 					}
 					log.debug("ttsRequests=" + ttsRequests);
@@ -190,8 +192,11 @@ public class JsTtsCommandPlayer extends CommandPlayer {
 		if (mTts != null && !voiceRouter.isMute() && speechAllowed) {
 			if (ttsRequests++ == 0) {
 				requestAudioFocus();
+				// TTS basladi: muzigi kis (XYAuto gibi harici adaptorler AudioFocus'u dinlemiyor)
+				tryStartTtsDucking();
 				mTts.setAudioAttributes(new AudioAttributes.Builder()
-						.setUsage(settings.AUDIO_USAGE[settings.AUDIO_MANAGER_STREAM.getModeValue(app.getRoutingHelper().getAppMode())].get())
+						// USAGE_ASSISTANCE_NAVIGATION_GUIDANCE: sistem on hoparloru tercih eder
+						.setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
 						.setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
 						.build());
 				// Delay first prompt of each batch to allow BT SCO link being established, or when VOICE_PROMPT_DELAY is set >0 for the other stream types
