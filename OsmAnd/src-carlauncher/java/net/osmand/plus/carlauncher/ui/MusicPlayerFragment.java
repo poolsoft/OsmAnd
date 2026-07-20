@@ -61,7 +61,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private LinearLayout trackListPanel;
     private View playerPanel;
     private View musicSideDock;
-    private ImageButton btnDockPlaylist, btnScanMusic;
+    private ImageButton btnDockPlaylist, btnScanMusic, btnTabScan;
     private ImageView appIcon;
     private View appSelectorLaunch;
     private ImageButton btnPlaylist, btnClose, btnEqualizer;
@@ -140,6 +140,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         musicSideDock = root.findViewById(net.osmand.plus.R.id.music_side_dock);
         btnDockPlaylist = root.findViewById(net.osmand.plus.R.id.btn_dock_playlist);
         btnScanMusic = root.findViewById(net.osmand.plus.R.id.btn_scan_music);
+        btnTabScan = root.findViewById(net.osmand.plus.R.id.tab_btn_scan);
         appIcon = root.findViewById(net.osmand.plus.R.id.app_icon);
         appSelectorLaunch = root.findViewById(net.osmand.plus.R.id.app_selector_launch);
         // btnPlaylist = root.findViewById(net.osmand.plus.R.id.btn_playlist);
@@ -338,6 +339,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         if (btnScanMusic != null) {
             btnScanMusic.setOnClickListener(v -> rescanMusic());
+        }
+        if (btnTabScan != null) {
+            btnTabScan.setOnClickListener(v -> rescanMusic());
         }
 
         // Yeni Klasor ve Sanatci tab listenerlari

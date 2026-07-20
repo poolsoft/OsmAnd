@@ -251,6 +251,19 @@
 
                     <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
 
+                    <ImageButton
+                        android:id="@+id/tab_btn_scan"
+                        android:layout_width="40dp"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/ic_action_refresh_dark"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:tint="#888888"
+                        android:padding="12dp"
+                        android:scaleType="centerInside"
+                        android:contentDescription="@string/car_music_scan" />
+
+                    <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
+
                     <TextView
                         android:id="@+id/tab_all_tracks"
                         android:layout_width="wrap_content"
