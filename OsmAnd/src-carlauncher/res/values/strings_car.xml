@@ -49,6 +49,9 @@
     <string name="car_pref_summary_equalizer">Open system audio settings</string>
     <string name="car_pref_title_scan_music">Rescan Music</string>
     <string name="car_pref_summary_scan_music">Scan internal storage and USB drives</string>
+    <string name="car_music_scan">Scan music</string>
+    <string name="car_music_scan_started">Scanning internal storage and USB drives…</string>
+    <string name="car_music_scan_completed">Scan completed: %1$d tracks found</string>
 
     <!-- Weather / Hava Durumu -->
     <string name="car_pref_title_weather">Weather</string>

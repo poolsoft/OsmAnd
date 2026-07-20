@@ -40,8 +40,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+            <!-- Uygulama simgesi; HOME secimi ile multiwindow davranisini karistirma. -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
             </intent-filter>
             
             <!-- Ana manifest'teki onemli intent-filter'lari da eklemeliyiz -->

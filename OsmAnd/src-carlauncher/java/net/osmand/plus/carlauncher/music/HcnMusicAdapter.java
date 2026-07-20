@@ -32,13 +32,11 @@ public class HcnMusicAdapter implements BaseMediaAdapter {
     @Override
     public void play() {
         sendCommand("com.auto.apimediaplayer.notification.PLAY");
-        sendCommand("com.auto.apimediaplayer.notification.PLAYPAUSE");
     }
 
     @Override
     public void pause() {
         sendCommand("com.auto.apimediaplayer.notification.PAUSE");
-        sendCommand("com.auto.apimediaplayer.notification.PLAYPAUSE");
     }
 
     @Override

@@ -229,6 +229,8 @@ public class XyAutoMusicAdapter implements BaseMediaAdapter {
         if (!done) {
             sendServiceCommand("xy.cdwidget.play");
         }
+        // XYAuto local music requires both the service command and widget broadcast.
+        // forceplay/forcepause belong to the Bluetooth source, not local music.
         sendBroadcastCommand("xy.android.playpause");
     }
 

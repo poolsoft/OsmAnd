@@ -30,6 +30,11 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     }
 
     public static void init(Context context) {
+        // MapActivity can be recreated. Do not build a chain of CrashHandlers where
+        // every old instance writes and forwards the same crash again.
+        if (Thread.getDefaultUncaughtExceptionHandler() instanceof CrashHandler) {
+            return;
+        }
         Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(context));
     }
 

@@ -453,7 +453,11 @@ public class CarFloatingButtonManager {
 
     private void bringAppToForeground() {
         Intent intent = new Intent(context, net.osmand.plus.activities.MapActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.setAction(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_HOME);
+        // REORDER_TO_FRONT can revive an obsolete launcher task on some head units.
+        // CLEAR_TOP routes this request to the existing singleTask MapActivity instead.
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         context.startActivity(intent);
     }
 

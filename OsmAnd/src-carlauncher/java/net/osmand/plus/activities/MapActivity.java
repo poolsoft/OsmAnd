@@ -1440,15 +1440,20 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				android.widget.Toast.makeText(this, "Yuzen buton icin diger uygulamalarin uzerinde gorunme izni vermelisiniz.", android.widget.Toast.LENGTH_LONG).show();
 			}
 		}
-		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).setAppInForeground(true);
-		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).updateButtonState();
 		MapActivity mapViewMapActivity = getMapView().getMapActivity();
-		if (activityRestartNeeded || !getMapLayers().hasMapActivity()
-				|| (mapViewMapActivity != null && mapViewMapActivity != this)) {
+		if (mapViewMapActivity != null && mapViewMapActivity != this) {
+			// A newer MapActivity owns the shared map. Recreating this stale instance
+			// causes two launcher tasks to continuously replace each other.
+			finish();
+			return;
+		}
+		if (activityRestartNeeded || !getMapLayers().hasMapActivity()) {
 			activityRestartNeeded = false;
 			recreate();
 			return;
 		}
+		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).setAppInForeground(true);
+		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).updateButtonState();
 		importHelper.setUiActivity(this);
 		app.getLocationProvider().ensureLatestLocation();
 
@@ -1890,12 +1895,15 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			} catch (Exception e) {}
 		}
 		destroyProgressBarForRouting();
-		getMapActions().setMapActivity(null);
-		getMapLayers().setMapActivity(null);
-		getMapView().setMapActivity(null);
-		mapContextMenu.setMapActivity(null);
-		mapRouteInfoMenu.setMapActivity(null);
-		trackDetailsMenu.setMapActivity(null);
+		boolean ownsSharedMap = getMapView().getMapActivity() == this;
+		if (ownsSharedMap) {
+			getMapActions().setMapActivity(null);
+			getMapLayers().setMapActivity(null);
+			getMapView().setMapActivity(null);
+			mapContextMenu.setMapActivity(null);
+			mapRouteInfoMenu.setMapActivity(null);
+			trackDetailsMenu.setMapActivity(null);
+		}
 		unregisterReceiver(screenOffReceiver);
 		if (carFloatingButtonReceiver != null) {
 			unregisterReceiver(carFloatingButtonReceiver);
@@ -1919,7 +1927,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this)
 					.unregisterReceiver(antennaPanelReceiver);
 		}
-		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).hideButton();
+		if (ownsSharedMap) {
+			net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).hideButton();
+		}
 		app.getAidlApi().onDestroyMapActivity(this);
 		app.getImportHelper().resetUIActivity(this);
 		PluginsHelper.onMapActivityDestroy(this);
@@ -1931,8 +1941,10 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		if (mapViewWithLayers != null) {
 			mapViewWithLayers.onDestroy();
 		}
-		lockHelper.setLockUIAdapter(null);
-		keyEventHelper.setMapActivity(null);
+		if (ownsSharedMap) {
+			lockHelper.setLockUIAdapter(null);
+			keyEventHelper.setMapActivity(null);
+		}
 		extendedMapActivity.onDestroy(this);
 
 		mIsDestroyed = true;
@@ -1976,7 +1988,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	protected void onPause() {
 		super.onPause();
-		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).setAppInForeground(false);
+		if (getMapView().getMapActivity() == this) {
+			net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this).setAppInForeground(false);
+		}
 		settings.LAST_MAP_ACTIVITY_PAUSED_TIME.set(System.currentTimeMillis());
 		
 		boolean isInPip = false;

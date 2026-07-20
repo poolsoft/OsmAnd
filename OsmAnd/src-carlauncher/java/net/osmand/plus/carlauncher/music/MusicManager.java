@@ -16,7 +16,9 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -204,14 +206,49 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             }
         }
 
-        // 2. Diger tum adaptorleri duraklat (null packageName ile guvenli karsilastir)
-        for (BaseMediaAdapter adapter : adapters) {
-            if (adapter == null) continue;
-            String adapterPkg = adapter.getPackageName();
-            if (adapterPkg != null && !adapterPkg.equals(activePackageName) && adapter.isPlaying()) {
-                adapter.pause();
+        // 2. A physical player can be visible through both MediaSession and a
+        // head-unit adapter. Pause every package only once; duplicate toggle
+        // commands can otherwise start the old source again.
+        Set<String> pausedPackages = new HashSet<>();
+
+        if (activeExternalController != null) {
+            PlaybackState state = activeExternalController.getPlaybackState();
+            String controllerPackage = activeExternalController.getPackageName();
+            if (state != null && state.getState() == PlaybackState.STATE_PLAYING
+                    && controllerPackage != null
+                    && !controllerPackage.equals(activePackageName)) {
+                BaseMediaAdapter dedicatedAdapter = findDedicatedAdapter(controllerPackage);
+                if (dedicatedAdapter != null) {
+                    dedicatedAdapter.pause();
+                } else {
+                    activeExternalController.getTransportControls().pause();
+                }
+                pausedPackages.add(controllerPackage);
             }
         }
+
+        for (BaseMediaAdapter adapter : adapters) {
+            if (adapter == null || adapter instanceof InternalPlayerAdapter
+                    || adapter instanceof AndroidMediaSessionAdapter) continue;
+            String adapterPkg = adapter.getPackageName();
+            if (adapterPkg != null && !adapterPkg.equals(activePackageName)
+                    && !pausedPackages.contains(adapterPkg) && adapter.isPlaying()) {
+                adapter.pause();
+                pausedPackages.add(adapterPkg);
+            }
+        }
+    }
+
+    @Nullable
+    private BaseMediaAdapter findDedicatedAdapter(String packageName) {
+        for (BaseMediaAdapter adapter : adapters) {
+            if (adapter instanceof InternalPlayerAdapter
+                    || adapter instanceof AndroidMediaSessionAdapter) continue;
+            if (packageName.equals(adapter.getPackageName())) {
+                return adapter;
+            }
+        }
+        return null;
     }
 
     public void onExternalPlayerStarted(String packageName) {

@@ -61,7 +61,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private LinearLayout trackListPanel;
     private View playerPanel;
     private View musicSideDock;
-    private ImageButton btnDockPlaylist;
+    private ImageButton btnDockPlaylist, btnScanMusic;
     private ImageView appIcon;
     private View appSelectorLaunch;
     private ImageButton btnPlaylist, btnClose, btnEqualizer;
@@ -139,6 +139,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         playerPanel = root.findViewById(net.osmand.plus.R.id.player_panel);
         musicSideDock = root.findViewById(net.osmand.plus.R.id.music_side_dock);
         btnDockPlaylist = root.findViewById(net.osmand.plus.R.id.btn_dock_playlist);
+        btnScanMusic = root.findViewById(net.osmand.plus.R.id.btn_scan_music);
         appIcon = root.findViewById(net.osmand.plus.R.id.app_icon);
         appSelectorLaunch = root.findViewById(net.osmand.plus.R.id.app_selector_launch);
         // btnPlaylist = root.findViewById(net.osmand.plus.R.id.btn_playlist);
@@ -333,6 +334,10 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 updateDockButtonsUI();
                 updateShuffleAndRepeatVisibility();
             });
+        }
+
+        if (btnScanMusic != null) {
+            btnScanMusic.setOnClickListener(v -> rescanMusic());
         }
 
         // Yeni Klasor ve Sanatci tab listenerlari
@@ -1044,6 +1049,37 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 showTracks(allTracks);
             }
         }
+    }
+
+    private void rescanMusic() {
+        if (musicManager == null || musicManager.getRepository() == null || btnScanMusic == null) return;
+
+        btnScanMusic.setEnabled(false);
+        btnScanMusic.setAlpha(0.45f);
+        Toast.makeText(getContext(), net.osmand.plus.R.string.car_music_scan_started, Toast.LENGTH_SHORT).show();
+
+        musicManager.getRepository().scanMusic((tracks, folders, artists) -> {
+            android.app.Activity activity = getActivity();
+            if (activity == null) return;
+            activity.runOnUiThread(() -> {
+                if (!isAdded()) return;
+
+                allTracks.clear();
+                allTracks.addAll(tracks);
+                showTracks(allTracks);
+
+                if (!tracks.isEmpty() && musicManager.getInternalPlayer() != null
+                        && musicManager.getInternalPlayer().getCurrentTrack() == null) {
+                    musicManager.getInternalPlayer().setPlaylist(tracks, -1, false);
+                }
+
+                btnScanMusic.setEnabled(true);
+                btnScanMusic.setAlpha(1.0f);
+                Toast.makeText(requireContext(),
+                        getString(net.osmand.plus.R.string.car_music_scan_completed, tracks.size()),
+                        Toast.LENGTH_LONG).show();
+            });
+        });
     }
 
     private void showTracks(List<MusicRepository.AudioTrack> tracks) {

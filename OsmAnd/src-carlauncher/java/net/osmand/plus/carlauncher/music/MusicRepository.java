@@ -150,7 +150,9 @@ public class MusicRepository {
                         }
                     }
 
-                    Uri contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
+                    // Keep the volume used by the query. USB ids from VOLUME_EXTERNAL
+                    // are not guaranteed to resolve through EXTERNAL_CONTENT_URI.
+                    Uri contentUri = ContentUris.withAppendedId(collection, id);
 
                     // Album art uri
                     Uri albumArtUri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"),
