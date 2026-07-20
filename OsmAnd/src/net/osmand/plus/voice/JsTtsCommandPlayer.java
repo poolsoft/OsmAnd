@@ -112,8 +112,6 @@ public class JsTtsCommandPlayer extends CommandPlayer {
 				@Override
 				public synchronized void onUtteranceCompleted(String utteranceId) {
 					if (--ttsRequests <= 0) {
-						// TTS bitti: muzik sesini normale dondur
-						tryStopTtsDucking();
 						abandonAudioFocus();
 					}
 					log.debug("ttsRequests=" + ttsRequests);
@@ -192,8 +190,6 @@ public class JsTtsCommandPlayer extends CommandPlayer {
 		if (mTts != null && !voiceRouter.isMute() && speechAllowed) {
 			if (ttsRequests++ == 0) {
 				requestAudioFocus();
-				// TTS basladi: muzigi kis (XYAuto gibi harici adaptorler AudioFocus'u dinlemiyor)
-				tryStartTtsDucking();
 				mTts.setAudioAttributes(new AudioAttributes.Builder()
 						// USAGE_ASSISTANCE_NAVIGATION_GUIDANCE: sistem on hoparloru tercih eder
 						.setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)

@@ -94,6 +94,9 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 }
             }
         });
+
+        // Core kodlara dokunmadan, sistemdeki ses calim durumlarini (TTS/Navigasyon) dinleme
+        setupAudioPlaybackCallback();
     }
 
     public static synchronized MusicManager getInstance(Context context) {
@@ -1042,6 +1045,38 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         };
         // 600ms gecikme: TTS motoru son utterance'i bitirir, sonra sesi ac
         duckHandler.postDelayed(duckRestoreRunnable, 600);
+    }
+
+    private void setupAudioPlaybackCallback() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+            if (am != null) {
+                am.registerAudioPlaybackCallback(new AudioManager.AudioPlaybackCallback() {
+                    @Override
+                    public void onPlaybackConfigChanged(java.util.List<android.media.AudioPlaybackConfiguration> configs) {
+                        if (configs == null) return;
+                        boolean isSpeechOrNavActive = false;
+                        for (android.media.AudioPlaybackConfiguration config : configs) {
+                            if (config.getAudioAttributes() != null) {
+                                int usage = config.getAudioAttributes().getUsage();
+                                int contentType = config.getAudioAttributes().getContentType();
+                                if (usage == android.media.AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE
+                                        || contentType == android.media.AudioAttributes.CONTENT_TYPE_SPEECH) {
+                                    isSpeechOrNavActive = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (isSpeechOrNavActive) {
+                            ttsStarted();
+                        } else {
+                            ttsStopped();
+                        }
+                    }
+                }, new Handler(Looper.getMainLooper()));
+            }
+        }
     }
 
     // ---------------------------------------------------------------------------
