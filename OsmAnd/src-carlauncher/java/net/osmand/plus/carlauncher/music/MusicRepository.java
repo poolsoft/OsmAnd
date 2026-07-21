@@ -281,6 +281,148 @@ public class MusicRepository {
                     if (!exists) {
                         AudioTrack track = new AudioTrack(id, title, artist, album, duration, path, contentUri, albumArtUri);
                         tracks.add(track);
+
+                    // Album art uri
+                    Uri albumArtUri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"),
+                            albumId);
+
+                    // Storage Type Detection (USB vs Internal)
+                    StorageType storageType = StorageType.INTERNAL;
+                    boolean isAvailable = true;
+
+                    if (path != null) {
+                        File file = new File(path);
+                        isAvailable = file.exists();
+                        String lowerPath = path.toLowerCase(java.util.Locale.ROOT);
+                        if (!lowerPath.startsWith("/storage/emulated/") && !lowerPath.startsWith("/data/")) {
+                            storageType = StorageType.USB;
+                        }
+                    }
+
+                    AudioTrack track = new AudioTrack(id, title, artist, album, duration, path,
+                            contentUri, albumArtUri, storageType, isAvailable);
+                    tracks.add(track);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error scanning audio", e);
+        }
+
+        // MediaStore taramasindan sonra dogrudan harici USB disk yollarini da tara (Turkce karakter yok)
+        try {
+            List<AudioTrack> directTracks = scanDeviceForAudioDirectly();
+            for (AudioTrack dt : directTracks) {
+                boolean exists = false;
+                for (AudioTrack t : tracks) {
+                    if (dt.getPath() != null && dt.getPath().equals(t.getPath())) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    tracks.add(dt);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Direct storage scan error: " + e.getMessage());
+        }
+
+        return tracks;
+    }
+
+    private List<AudioTrack> scanDeviceForAudioDirectly() {
+        List<AudioTrack> tracks = new ArrayList<>();
+        File storageDir = new File("/storage");
+        if (storageDir.exists() && storageDir.isDirectory()) {
+            File[] volumes = storageDir.listFiles();
+            if (volumes != null) {
+                for (File vol : volumes) {
+                    if (vol.isDirectory()) {
+                        String name = vol.getName();
+                        // Dahili hafizayi ve gizli klasorleri atla (Turkce karakter yok)
+                        if (!name.equals("emulated") && !name.equals("self") && !name.startsWith(".")) {
+                            Log.d(TAG, "Taranan harici USB birimi: " + vol.getAbsolutePath());
+                            scanDirectoryDirectly(vol, tracks);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Alps teyp yedek USB mount yollarini ve dahili hafiza Müzik/Download klasorlerini de tarayalim
+        String[] fallbackPaths = {
+            "/storage/emulated/0/Music", "/sdcard/Music", 
+            "/storage/emulated/0/Download", "/sdcard/Download",
+            "/storage/udisk", "/storage/udisk2", "/storage/usb_storage", 
+            "/mnt/media_rw", "/mnt/usb", "/mnt/usb_storage",
+            "/storage/usb0", "/storage/usb1", "/storage/usb2", "/storage/usb3", "/storage/usbotg"
+        };
+        for (String path : fallbackPaths) {
+            File fallbackDir = new File(path);
+            if (fallbackDir.exists() && fallbackDir.isDirectory()) {
+                scanDirectoryDirectly(fallbackDir, tracks);
+            }
+        }
+
+        return tracks;
+    }
+
+    private void scanDirectoryDirectly(File dir, List<AudioTrack> tracks) {
+        if (dir == null || !dir.exists() || !dir.isDirectory()) return;
+
+        File[] files = dir.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                String name = file.getName().toLowerCase(java.util.Locale.ROOT);
+                if (name.equals("android") || name.equals("lost.dir") || name.startsWith(".")) {
+                    continue;
+                }
+                scanDirectoryDirectly(file, tracks);
+            } else {
+                String path = file.getAbsolutePath();
+                String lowerPath = path.toLowerCase(java.util.Locale.ROOT);
+
+                if (lowerPath.endsWith(".mp3") || 
+                        lowerPath.endsWith(".flac") || 
+                        lowerPath.endsWith(".wav") || 
+                        lowerPath.endsWith(".m4a") || 
+                        lowerPath.endsWith(".wma") || 
+                        lowerPath.endsWith(".aac") || 
+                        lowerPath.endsWith(".ogg")) {
+
+                    // Durationsuz taramada bildirim seslerini elemek icin boyut filtresi (>500KB) (Turkce karakter yok)
+                    if (file.length() < 500 * 1024) {
+                        continue;
+                    }
+
+                    long id = path.hashCode();
+                    String title = file.getName();
+                    int dotIndex = title.lastIndexOf('.');
+                    if (dotIndex > 0) {
+                        title = title.substring(0, dotIndex);
+                    }
+
+                    String artist = "Bilinmeyen";
+                    String album = "USB Muzik";
+                    long duration = 180000; // Varsayilan 3 dk
+
+                    Uri contentUri = Uri.fromFile(file);
+                    Uri albumArtUri = Uri.EMPTY;
+
+                    boolean exists = false;
+                    for (AudioTrack t : tracks) {
+                        if (path.equals(t.getPath())) {
+                            exists = true;
+                            break;
+                        }
+                    }
+
+                    if (!exists) {
+                        StorageType storageType = (!lowerPath.startsWith("/storage/emulated/") && !lowerPath.startsWith("/data/")) ? StorageType.USB : StorageType.INTERNAL;
+                        AudioTrack track = new AudioTrack(id, title, artist, album, duration, path, contentUri, albumArtUri, storageType, true);
+                        tracks.add(track);
                     }
                 }
             }
@@ -291,16 +433,12 @@ public class MusicRepository {
         Map<String, List<AudioTrack>> folderMap = new HashMap<>();
 
         for (AudioTrack track : tracks) {
-            if (track.getPath() == null)
-                continue;
-
+            if (track.getPath() == null) continue;
             File file = new File(track.getPath());
             File parent = file.getParentFile();
             if (parent != null) {
-                String folderName = parent.getName();
                 String folderPath = parent.getAbsolutePath();
 
-                // Use path as key to handle duplicate names in different locations
                 if (!folderMap.containsKey(folderPath)) {
                     folderMap.put(folderPath, new ArrayList<>());
                 }
@@ -311,7 +449,12 @@ public class MusicRepository {
         List<AudioFolder> folders = new ArrayList<>();
         for (Map.Entry<String, List<AudioTrack>> entry : folderMap.entrySet()) {
             File f = new File(entry.getKey());
-            folders.add(new AudioFolder(f.getName(), entry.getKey(), entry.getValue()));
+            StorageType folderStorage = StorageType.INTERNAL;
+            String lowerPath = entry.getKey().toLowerCase(java.util.Locale.ROOT);
+            if (!lowerPath.startsWith("/storage/emulated/") && !lowerPath.startsWith("/data/")) {
+                folderStorage = StorageType.USB;
+            }
+            folders.add(new AudioFolder(f.getName(), entry.getKey(), entry.getValue(), folderStorage));
         }
 
         // Sort folders by name
@@ -356,6 +499,11 @@ public class MusicRepository {
 
     // --- Data Models ---
 
+    public enum StorageType {
+        INTERNAL,
+        USB
+    }
+
     public static class AudioTrack {
         private final long id;
         private final String title;
@@ -365,9 +513,16 @@ public class MusicRepository {
         private final String path;
         private final Uri contentUri;
         private final Uri albumArtUri;
+        private final StorageType storageType;
+        private final boolean isAvailable;
 
         public AudioTrack(long id, String title, String artist, String album, long duration, String path,
                 Uri contentUri, Uri albumArtUri) {
+            this(id, title, artist, album, duration, path, contentUri, albumArtUri, StorageType.INTERNAL, true);
+        }
+
+        public AudioTrack(long id, String title, String artist, String album, long duration, String path,
+                Uri contentUri, Uri albumArtUri, StorageType storageType, boolean isAvailable) {
             this.id = id;
             this.title = title;
             this.artist = artist;
@@ -376,6 +531,12 @@ public class MusicRepository {
             this.path = path;
             this.contentUri = contentUri;
             this.albumArtUri = albumArtUri;
+            this.storageType = storageType;
+            this.isAvailable = isAvailable;
+        }
+
+        public long getId() {
+            return id;
         }
 
         public String getTitle() {
@@ -384,6 +545,14 @@ public class MusicRepository {
 
         public String getArtist() {
             return artist;
+        }
+
+        public String getAlbum() {
+            return album;
+        }
+
+        public long getDuration() {
+            return duration;
         }
 
         public Uri getContentUri() {
@@ -397,25 +566,55 @@ public class MusicRepository {
         public Uri getAlbumArtUri() {
             return albumArtUri;
         }
+
+        public StorageType getStorageType() {
+            return storageType;
+        }
+
+        public boolean isAvailable() {
+            return isAvailable;
+        }
+
+        public boolean isUsb() {
+            return storageType == StorageType.USB;
+        }
     }
 
     public static class AudioFolder {
         private final String name;
         private final String path;
         private final List<AudioTrack> tracks;
+        private final StorageType storageType;
 
         public AudioFolder(String name, String path, List<AudioTrack> tracks) {
+            this(name, path, tracks, StorageType.INTERNAL);
+        }
+
+        public AudioFolder(String name, String path, List<AudioTrack> tracks, StorageType storageType) {
             this.name = name;
             this.path = path;
             this.tracks = tracks;
+            this.storageType = storageType;
         }
 
         public String getName() {
             return name;
         }
 
+        public String getPath() {
+            return path;
+        }
+
         public List<AudioTrack> getTracks() {
             return tracks;
+        }
+
+        public StorageType getStorageType() {
+            return storageType;
+        }
+
+        public boolean isUsb() {
+            return storageType == StorageType.USB;
         }
     }
 

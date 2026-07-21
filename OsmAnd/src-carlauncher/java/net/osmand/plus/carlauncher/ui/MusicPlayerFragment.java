@@ -752,14 +752,16 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         @Override
         public void onBindViewHolder(@NonNull FolderViewHolder holder, int position) {
             MusicRepository.AudioFolder folder = folders.get(position);
-            holder.text1.setText(folder.getName());
-            holder.text1.setTextColor(android.graphics.Color.WHITE);
+            String prefix = folder.isUsb() ? "🔌 [USB Bellek] " : "📱 [Dahili Hafıza] ";
+            holder.text1.setText(prefix + folder.getName());
+            holder.text1.setTextColor(folder.isUsb() ? 0xFF00E5FF : android.graphics.Color.WHITE);
             holder.text1.setTextSize(18);
-            holder.text2.setText(folder.getTracks().size() + " Parca");
+            holder.text2.setText(folder.getTracks().size() + " Parça • " + folder.getPath());
             holder.text2.setTextColor(android.graphics.Color.GRAY);
             holder.itemView.setOnClickListener(v -> listener.onFolderClick(folder));
             holder.itemView.setPadding(32, 24, 32, 24);
         }
+
 
         @Override
         public int getItemCount() {
@@ -1858,6 +1860,15 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 holder.itemView.setBackgroundResource(android.R.drawable.list_selector_background);
             }
 
+            // Kayıp/Pasif Dosya (Ghost File) veya USB Görselleştirmesi
+            boolean isAvailable = track.isAvailable();
+            if (!isAvailable) {
+                holder.itemView.setAlpha(0.40f); // Soluk/Gri gösterim
+                holder.title.setText("[USB Takılı Değil] " + track.getTitle());
+            } else {
+                holder.itemView.setAlpha(1.0f);
+            }
+
             // Favori ve Oynatma Listesi Mantigi
             if (holder.btnFavorite != null && playlistManager != null) {
                 boolean isFav = playlistManager.isFavorite(track.getPath());
@@ -1887,11 +1898,18 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 });
             }
 
-            holder.itemView.setOnClickListener(v -> listener.onClick(track));
+            holder.itemView.setOnClickListener(v -> {
+                if (!track.isAvailable()) {
+                    Toast.makeText(v.getContext(), "USB Bellek takılı değil! Lütfen USB sürücüsünü bağlayın.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                listener.onClick(track);
+            });
             if (holder.btnAdd != null) {
                 holder.btnAdd.setOnClickListener(v -> listener.onAddClick(track));
             }
         }
+
 
         @Override
         public int getItemCount() {
