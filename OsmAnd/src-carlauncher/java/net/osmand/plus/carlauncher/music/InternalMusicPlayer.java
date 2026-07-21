@@ -154,6 +154,40 @@ public class InternalMusicPlayer {
         }
     }
 
+    /**
+     * Sarkiyi mevcut oynatma listesinde bir sonraki siraya ekler (Play Next).
+     */
+    public boolean playNextInQueue(MusicRepository.AudioTrack track) {
+        if (track == null) return false;
+        if (playlist.isEmpty()) {
+            List<MusicRepository.AudioTrack> single = new ArrayList<>();
+            single.add(track);
+            setPlaylist(single, 0, true);
+            return true;
+        }
+        int insertIndex = currentIndex + 1;
+        if (insertIndex > playlist.size()) {
+            insertIndex = playlist.size();
+        }
+        playlist.add(insertIndex, track);
+        return true;
+    }
+
+    /**
+     * Sarkiyi mevcut oynatma listesinin en sonuna ekler (Add to Queue).
+     */
+    public boolean addToQueue(MusicRepository.AudioTrack track) {
+        if (track == null) return false;
+        if (playlist.isEmpty()) {
+            List<MusicRepository.AudioTrack> single = new ArrayList<>();
+            single.add(track);
+            setPlaylist(single, 0, true);
+            return true;
+        }
+        playlist.add(track);
+        return true;
+    }
+
     private void playTrack(int index) {
         playTrack(index, true, 0);
     }

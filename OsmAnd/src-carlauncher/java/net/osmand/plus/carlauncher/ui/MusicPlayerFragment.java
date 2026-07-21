@@ -1136,7 +1136,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
             @Override
             public void onAddClick(MusicRepository.AudioTrack track) {
-                showAddTrackToPlaylistDialog(track);
+                showTrackOptionsMenu(track);
             }
         }, playlistManager);
         
@@ -1178,7 +1178,55 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         }
     }
 
-    // --- Playlist & Dialog Logic (Kısaltıldı, orijinal mantık korundu) ---
+    // --- Track Options Menu ---
+
+    private void showTrackOptionsMenu(MusicRepository.AudioTrack track) {
+        if (getContext() == null || track == null) return;
+
+        boolean isFav = playlistManager.getFavorites().contains(track.getPath());
+        String favOption = isFav ? "♥ Favorilerden Çıkar" : "♡ Favorilere Ekle";
+        String[] options = { "⏭ Sonraki Çal (Play Next)", "➕ Kuyruğa Ekle (Add to Queue)", "📑 Playliste Ekle", favOption };
+
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle(track.getTitle() + (track.getArtist() != null && !track.getArtist().isEmpty() ? " - " + track.getArtist() : ""))
+                .setItems(options, (dialog, which) -> {
+                    switch (which) {
+                        case 0: // Sonraki Çal
+                            if (musicManager != null && musicManager.getInternalPlayer() != null) {
+                                boolean added = musicManager.getInternalPlayer().playNextInQueue(track);
+                                if (added) {
+                                    Toast.makeText(getContext(), "Sonraki şarkı olarak eklendi: " + track.getTitle(), Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                            break;
+                        case 1: // Kuyruğa Ekle
+                            if (musicManager != null && musicManager.getInternalPlayer() != null) {
+                                boolean added = musicManager.getInternalPlayer().addToQueue(track);
+                                if (added) {
+                                    Toast.makeText(getContext(), "Kuyruğun sonuna eklendi: " + track.getTitle(), Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                            break;
+                        case 2: // Playliste Ekle
+                            showAddTrackToPlaylistDialog(track);
+                            break;
+                        case 3: // Favori Toggle
+                            if (isFav) {
+                                playlistManager.removeFromFavorites(track.getPath());
+                                Toast.makeText(getContext(), "Favorilerden çıkarıldı", Toast.LENGTH_SHORT).show();
+                            } else {
+                                playlistManager.addToFavorites(track.getPath());
+                                Toast.makeText(getContext(), "Favorilere eklendi", Toast.LENGTH_SHORT).show();
+                            }
+                            if (adapter != null) {
+                                adapter.notifyDataSetChanged();
+                            }
+                            break;
+                    }
+                })
+                .setNegativeButton("İptal", null)
+                .show();
+    }
 
     private void showAddTrackToPlaylistDialog(MusicRepository.AudioTrack track) {
         if (getContext() == null)
