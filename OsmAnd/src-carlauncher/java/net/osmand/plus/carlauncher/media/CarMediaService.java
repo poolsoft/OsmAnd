@@ -1,14 +1,13 @@
 package net.osmand.plus.carlauncher.media;
 
 import android.content.Intent;
+import android.media.browse.MediaBrowser;
+import android.media.session.MediaSession;
+import android.media.session.PlaybackState;
 import android.os.Bundle;
+import android.service.media.MediaBrowserService;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.media.MediaBrowserServiceCompat;
-import androidx.media.session.MediaButtonReceiver;
-import android.support.v4.media.MediaBrowserCompat;
-import android.support.v4.media.session.MediaSessionCompat;
-import android.support.v4.media.session.PlaybackStateCompat;
 
 import java.util.Collections;
 import java.util.List;
@@ -17,12 +16,12 @@ import net.osmand.plus.carlauncher.music.MusicManager;
 import net.osmand.plus.carlauncher.music.InternalMusicPlayer;
 
 /**
- * MediaBrowserServiceCompat that bridges Android Auto / Steering wheel media controls
+ * Standard MediaBrowserService that bridges Android Auto / Steering wheel media controls
  * with OsmAnd CarLauncher internal music playback (MusicManager / InternalMusicPlayer).
  */
-public class CarMediaService extends MediaBrowserServiceCompat {
+public class CarMediaService extends MediaBrowserService {
 
-    private MediaSessionCompat mediaSession;
+    private MediaSession mediaSession;
     private MusicManager musicManager;
 
     @Override
@@ -30,9 +29,9 @@ public class CarMediaService extends MediaBrowserServiceCompat {
         super.onCreate();
         musicManager = MusicManager.getInstance(getApplicationContext());
 
-        mediaSession = new MediaSessionCompat(this, "CarMediaService");
-        mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
-                MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        mediaSession = new MediaSession(this, "CarMediaService");
+        mediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS |
+                MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
         mediaSession.setCallback(new MediaSessionCallback());
         setSessionToken(mediaSession.getSessionToken());
     }
@@ -52,7 +51,7 @@ public class CarMediaService extends MediaBrowserServiceCompat {
     }
 
     @Override
-    public void onLoadChildren(@NonNull String parentId, @NonNull Result<List<MediaBrowserCompat.MediaItem>> result) {
+    public void onLoadChildren(@NonNull String parentId, @NonNull Result<List<MediaBrowser.MediaItem>> result) {
         result.sendResult(Collections.emptyList());
     }
 
@@ -62,7 +61,7 @@ public class CarMediaService extends MediaBrowserServiceCompat {
         return activeAdapter instanceof net.osmand.plus.carlauncher.music.InternalPlayerAdapter;
     }
 
-    private class MediaSessionCallback extends MediaSessionCompat.Callback {
+    private class MediaSessionCallback extends MediaSession.Callback {
         @Override
         public void onPlay() {
             if (!isInternalPlayerActive()) return;
@@ -72,10 +71,10 @@ public class CarMediaService extends MediaBrowserServiceCompat {
                 player.play();
             }
             if (mediaSession != null) {
-                mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
-                        .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE |
-                                PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
-                        .setState(PlaybackStateCompat.STATE_PLAYING, PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f)
+                mediaSession.setPlaybackState(new PlaybackState.Builder()
+                        .setActions(PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE |
+                                PlaybackState.ACTION_SKIP_TO_NEXT | PlaybackState.ACTION_SKIP_TO_PREVIOUS)
+                        .setState(PlaybackState.STATE_PLAYING, PlaybackState.PLAYBACK_POSITION_UNKNOWN, 1.0f)
                         .build());
             }
         }
@@ -89,10 +88,10 @@ public class CarMediaService extends MediaBrowserServiceCompat {
                 player.pause();
             }
             if (mediaSession != null) {
-                mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
-                        .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE |
-                                PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
-                        .setState(PlaybackStateCompat.STATE_PAUSED, PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 0.0f)
+                mediaSession.setPlaybackState(new PlaybackState.Builder()
+                        .setActions(PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE |
+                                PlaybackState.ACTION_SKIP_TO_NEXT | PlaybackState.ACTION_SKIP_TO_PREVIOUS)
+                        .setState(PlaybackState.STATE_PAUSED, PlaybackState.PLAYBACK_POSITION_UNKNOWN, 0.0f)
                         .build());
             }
         }
@@ -120,7 +119,7 @@ public class CarMediaService extends MediaBrowserServiceCompat {
         @Override
         public boolean onMediaButtonEvent(@NonNull Intent mediaButtonIntent) {
             if (!isInternalPlayerActive()) return false;
-            return MediaButtonReceiver.handleIntent(CarMediaService.this, mediaButtonIntent);
+            return super.onMediaButtonEvent(mediaButtonIntent);
         }
     }
 }
