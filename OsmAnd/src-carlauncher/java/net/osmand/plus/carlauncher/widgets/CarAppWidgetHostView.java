@@ -63,6 +63,11 @@ public class CarAppWidgetHostView extends AppWidgetHostView {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
+        if (net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter.isEditMode) {
+            isLongClickPending = false;
+            handler.removeCallbacks(longClickRunnable);
+            return false;
+        }
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 downX = ev.getX();
@@ -84,6 +89,7 @@ public class CarAppWidgetHostView extends AppWidgetHostView {
         }
         return super.onInterceptTouchEvent(ev);
     }
+
 
     /**
      * Android Framework bu metodu iki durumda cagirabilir:

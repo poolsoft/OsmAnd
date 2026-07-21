@@ -88,13 +88,13 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         overlayContainer.setClickable(true); // Dokunmalari asil widget'a gecirmeyip yutar
         overlayContainer.setFocusable(true);
 
-        int handleSize = dpToPx(32); // 32dp dokunma alani
+        int handleSize = dpToPx(36); // Ergonomik 36dp dokunma alani
 
         // Sol Tutamac
         leftHandle = new WhiteDotHandleView(context);
         LayoutParams leftParams = new LayoutParams(handleSize, handleSize);
         leftParams.gravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
-        leftParams.leftMargin = -dpToPx(16); // Tam sınır çizgisine ortala
+        leftParams.leftMargin = -dpToPx(18); // Tam sınır çizgisine ortala
         leftHandle.setLayoutParams(leftParams);
         leftHandle.setOnTouchListener(new OnTouchListener() {
             private float initialX;
@@ -108,9 +108,10 @@ public class WorkspaceWidgetFrame extends FrameLayout {
                         initialX = event.getRawX();
                         initialCellX = widget.getCellX();
                         initialSpanX = widget.getSpanX();
-                        getParent().requestDisallowInterceptTouchEvent(true);
+                        disallowParentsIntercept(v);
                         return true;
                     case MotionEvent.ACTION_MOVE:
+                        disallowParentsIntercept(v);
                         float deltaX = event.getRawX() - initialX;
                         int cellSize = getCellSize();
                         if (cellSize > 0) {
@@ -124,6 +125,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
                         }
                         return true;
                     case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
                         onResizeCompleted();
                         return true;
                 }
@@ -136,7 +138,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         rightHandle = new WhiteDotHandleView(context);
         LayoutParams rightParams = new LayoutParams(handleSize, handleSize);
         rightParams.gravity = Gravity.RIGHT | Gravity.CENTER_VERTICAL;
-        rightParams.rightMargin = -dpToPx(16);
+        rightParams.rightMargin = -dpToPx(18);
         rightHandle.setLayoutParams(rightParams);
         rightHandle.setOnTouchListener(new OnTouchListener() {
             private float initialX;
@@ -148,9 +150,10 @@ public class WorkspaceWidgetFrame extends FrameLayout {
                     case MotionEvent.ACTION_DOWN:
                         initialX = event.getRawX();
                         initialSpanX = widget.getSpanX();
-                        getParent().requestDisallowInterceptTouchEvent(true);
+                        disallowParentsIntercept(v);
                         return true;
                     case MotionEvent.ACTION_MOVE:
+                        disallowParentsIntercept(v);
                         float deltaX = event.getRawX() - initialX;
                         int cellSize = getCellSize();
                         int colCount = getColCount();
@@ -163,6 +166,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
                         }
                         return true;
                     case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
                         onResizeCompleted();
                         return true;
                 }
@@ -175,7 +179,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         topHandle = new WhiteDotHandleView(context);
         LayoutParams topParams = new LayoutParams(handleSize, handleSize);
         topParams.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-        topParams.topMargin = -dpToPx(16);
+        topParams.topMargin = -dpToPx(18);
         topHandle.setLayoutParams(topParams);
         topHandle.setOnTouchListener(new OnTouchListener() {
             private float initialY;
@@ -189,9 +193,10 @@ public class WorkspaceWidgetFrame extends FrameLayout {
                         initialY = event.getRawY();
                         initialCellY = widget.getCellY();
                         initialSpanY = widget.getSpanY();
-                        getParent().requestDisallowInterceptTouchEvent(true);
+                        disallowParentsIntercept(v);
                         return true;
                     case MotionEvent.ACTION_MOVE:
+                        disallowParentsIntercept(v);
                         float deltaY = event.getRawY() - initialY;
                         int cellSize = getCellSize();
                         if (cellSize > 0) {
@@ -205,6 +210,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
                         }
                         return true;
                     case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
                         onResizeCompleted();
                         return true;
                 }
@@ -217,7 +223,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         bottomHandle = new WhiteDotHandleView(context);
         LayoutParams bottomParams = new LayoutParams(handleSize, handleSize);
         bottomParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        bottomParams.bottomMargin = -dpToPx(16);
+        bottomParams.bottomMargin = -dpToPx(18);
         bottomHandle.setLayoutParams(bottomParams);
         bottomHandle.setOnTouchListener(new OnTouchListener() {
             private float initialY;
@@ -229,9 +235,10 @@ public class WorkspaceWidgetFrame extends FrameLayout {
                     case MotionEvent.ACTION_DOWN:
                         initialY = event.getRawY();
                         initialSpanY = widget.getSpanY();
-                        getParent().requestDisallowInterceptTouchEvent(true);
+                        disallowParentsIntercept(v);
                         return true;
                     case MotionEvent.ACTION_MOVE:
+                        disallowParentsIntercept(v);
                         float deltaY = event.getRawY() - initialY;
                         int cellSize = getCellSize();
                         int rowCount = getRowCount();
@@ -244,6 +251,7 @@ public class WorkspaceWidgetFrame extends FrameLayout {
                         }
                         return true;
                     case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
                         onResizeCompleted();
                         return true;
                 }
@@ -340,31 +348,28 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         overlayContainer.setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                float x = event.getX();
+                float y = event.getY();
+                
+                // Butonlarin sinirlari icinde mi kontrol et.
+                boolean inTopControls = x >= (getWidth() - topControls.getWidth() - dpToPx(8)) 
+                        && y <= (topControls.getHeight() + dpToPx(8));
+                        
+                boolean inDoneBtn = x <= (doneBtn.getWidth() + dpToPx(8)) 
+                        && y >= (getHeight() - doneBtn.getHeight() - dpToPx(8));
+                        
+                // Tutamaclari kontrol et (hit size 32dp)
+                int handleHitSize = dpToPx(32);
+                boolean inLeftHandle = (leftHandle != null && leftHandle.getVisibility() == VISIBLE)
+                        && (x <= handleHitSize && Math.abs(y - getHeight() / 2f) <= handleHitSize);
+                boolean inRightHandle = (rightHandle != null && rightHandle.getVisibility() == VISIBLE)
+                        && (x >= (getWidth() - handleHitSize) && Math.abs(y - getHeight() / 2f) <= handleHitSize);
+                boolean inTopHandle = (topHandle != null && topHandle.getVisibility() == VISIBLE)
+                        && (y <= handleHitSize && Math.abs(x - getWidth() / 2f) <= handleHitSize);
+                boolean inBottomHandle = (bottomHandle != null && bottomHandle.getVisibility() == VISIBLE)
+                        && (y >= (getHeight() - handleHitSize) && Math.abs(x - getWidth() / 2f) <= handleHitSize);
+                        
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    float x = event.getX();
-                    float y = event.getY();
-                    
-                    // Butonlarin sinirlari icinde mi kontrol et. Eger butonlara dokunulduysa dokunmayi yutma.
-                    boolean inTopControls = x >= (getWidth() - topControls.getWidth() - dpToPx(8)) 
-                            && y <= (topControls.getHeight() + dpToPx(8));
-                            
-                    boolean inDoneBtn = x <= (doneBtn.getWidth() + dpToPx(8)) 
-                            && y >= (getHeight() - doneBtn.getHeight() - dpToPx(8));
-                            
-                    // Yeni tutamaclarin alanlari
-                    boolean inLeftHandle = false;
-                    boolean inRightHandle = false;
-                    boolean inTopHandle = false;
-                    boolean inBottomHandle = false;
-                    
-                    int handleHitSize = dpToPx(24); // Dokunma hassasiyet alani (24dp)
-                    if (leftHandle != null && leftHandle.getVisibility() == VISIBLE) {
-                        inLeftHandle = x <= handleHitSize && Math.abs(y - getHeight() / 2f) <= handleHitSize;
-                        inRightHandle = x >= (getWidth() - handleHitSize) && Math.abs(y - getHeight() / 2f) <= handleHitSize;
-                        inTopHandle = y <= handleHitSize && Math.abs(x - getWidth() / 2f) <= handleHitSize;
-                        inBottomHandle = y >= (getHeight() - handleHitSize) && Math.abs(x - getWidth() / 2f) <= handleHitSize;
-                    }
-                    
                     if (!inTopControls && !inDoneBtn && !inLeftHandle && !inRightHandle && !inTopHandle && !inBottomHandle) {
                         ClipData data = ClipData.newPlainText("widget_id", widget.getId());
                         DragShadowBuilder shadowBuilder = new DragShadowBuilder(WorkspaceWidgetFrame.this);
@@ -373,9 +378,15 @@ public class WorkspaceWidgetFrame extends FrameLayout {
                         return true;
                     }
                 }
-                return false;
+
+                if (inLeftHandle || inRightHandle || inTopHandle || inBottomHandle || inTopControls || inDoneBtn) {
+                    return false; // Kontrol butonlari / tutamaclar alacak
+                }
+                
+                return true; // Edit modundayken overlayContainer bos alandaki dokunmalari da YUTAR, alt layouta gecirmez!
             }
         });
+
         addView(overlayContainer, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
@@ -504,10 +515,20 @@ public class WorkspaceWidgetFrame extends FrameLayout {
         return true;
     }
 
+    private void disallowParentsIntercept(View v) {
+        if (v == null) return;
+        android.view.ViewParent parent = v.getParent();
+        while (parent != null) {
+            parent.requestDisallowInterceptTouchEvent(true);
+            parent = parent.getParent();
+        }
+    }
+
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
     }
+
 
     private int dpToPx(float dp) {
         float density = getResources().getDisplayMetrics().density;

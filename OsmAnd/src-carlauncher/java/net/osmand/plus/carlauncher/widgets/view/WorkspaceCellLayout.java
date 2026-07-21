@@ -110,6 +110,33 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
         this.onWidgetsChangedListener = listener;
     }
 
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
+        if (net.osmand.plus.carlauncher.widgets.WorkspacePageAdapter.isEditMode && ev.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+            float x = ev.getX();
+            float y = ev.getY();
+            int count = getChildCount();
+            int hitExpand = dpToPx(24); // Handle dokunma tolerans alani
+            for (int i = count - 1; i >= 0; i--) {
+                View child = getChildAt(i);
+                if (child.getVisibility() == VISIBLE) {
+                    if (x >= child.getLeft() - hitExpand && x <= child.getRight() + hitExpand &&
+                        y >= child.getTop() - hitExpand && y <= child.getBottom() + hitExpand) {
+                        setPressed(false);
+                        cancelLongPress();
+                    }
+                }
+            }
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);

@@ -203,6 +203,9 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
             cellLayout.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
+                    if (isEditMode) {
+                        return true; // Edit modundayken popup menuyu acma
+                    }
                     if (workspaceLongClickListener != null) {
                         workspaceLongClickListener.onWorkspaceLongClick(v);
                         return true;
@@ -210,6 +213,7 @@ public class WorkspacePageAdapter extends RecyclerView.Adapter<WorkspacePageAdap
                     return false;
                 }
             });
+
             
             // Bu sayfadaki gorunur widget'lari bul
             List<BaseWidget> pageWidgets = new ArrayList<>();
