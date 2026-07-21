@@ -123,6 +123,16 @@
         <service android:name="net.osmand.plus.carlauncher.voice.VoiceCommandService"
                  android:foregroundServiceType="microphone"
                  android:exported="false" />
+        <!-- MediaBrowserService for Android Auto media integration -->
+        <service
+            android:name="net.osmand.plus.carlauncher.media.CarMediaService"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
     </application>
 </manifest> 
+
 
