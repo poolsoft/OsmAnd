@@ -56,12 +56,20 @@ public class CarMediaService extends MediaBrowserServiceCompat {
         result.sendResult(Collections.emptyList());
     }
 
+    private boolean isInternalPlayerActive() {
+        if (musicManager == null) return false;
+        net.osmand.plus.carlauncher.music.BaseMediaAdapter activeAdapter = musicManager.getActiveAdapter();
+        return activeAdapter instanceof net.osmand.plus.carlauncher.music.InternalPlayerAdapter;
+    }
+
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
         @Override
         public void onPlay() {
-            net.osmand.plus.carlauncher.music.BaseMediaAdapter adapter = musicManager != null ? musicManager.getActiveAdapter() : null;
-            if (adapter != null) {
-                adapter.play();
+            if (!isInternalPlayerActive()) return;
+
+            InternalMusicPlayer player = musicManager.getInternalPlayer();
+            if (player != null) {
+                player.play();
             }
             if (mediaSession != null) {
                 mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
@@ -74,9 +82,11 @@ public class CarMediaService extends MediaBrowserServiceCompat {
 
         @Override
         public void onPause() {
-            net.osmand.plus.carlauncher.music.BaseMediaAdapter adapter = musicManager != null ? musicManager.getActiveAdapter() : null;
-            if (adapter != null) {
-                adapter.pause();
+            if (!isInternalPlayerActive()) return;
+
+            InternalMusicPlayer player = musicManager.getInternalPlayer();
+            if (player != null) {
+                player.pause();
             }
             if (mediaSession != null) {
                 mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
@@ -89,22 +99,27 @@ public class CarMediaService extends MediaBrowserServiceCompat {
 
         @Override
         public void onSkipToNext() {
-            net.osmand.plus.carlauncher.music.BaseMediaAdapter adapter = musicManager != null ? musicManager.getActiveAdapter() : null;
-            if (adapter != null) {
-                adapter.next();
+            if (!isInternalPlayerActive()) return;
+
+            InternalMusicPlayer player = musicManager.getInternalPlayer();
+            if (player != null) {
+                player.next();
             }
         }
 
         @Override
         public void onSkipToPrevious() {
-            net.osmand.plus.carlauncher.music.BaseMediaAdapter adapter = musicManager != null ? musicManager.getActiveAdapter() : null;
-            if (adapter != null) {
-                adapter.prev();
+            if (!isInternalPlayerActive()) return;
+
+            InternalMusicPlayer player = musicManager.getInternalPlayer();
+            if (player != null) {
+                player.previous();
             }
         }
 
         @Override
         public boolean onMediaButtonEvent(@NonNull Intent mediaButtonIntent) {
+            if (!isInternalPlayerActive()) return false;
             return MediaButtonReceiver.handleIntent(CarMediaService.this, mediaButtonIntent);
         }
     }
