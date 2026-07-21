@@ -102,7 +102,7 @@ public class CarMediaService extends MediaBrowserService {
 
             InternalMusicPlayer player = musicManager.getInternalPlayer();
             if (player != null) {
-                player.next();
+                player.playNext();
             }
         }
 
@@ -112,9 +112,10 @@ public class CarMediaService extends MediaBrowserService {
 
             InternalMusicPlayer player = musicManager.getInternalPlayer();
             if (player != null) {
-                player.previous();
+                player.playPrevious();
             }
         }
+
 
         @Override
         public boolean onMediaButtonEvent(@NonNull Intent mediaButtonIntent) {
