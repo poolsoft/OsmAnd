@@ -32,6 +32,46 @@ public class MusicRepository {
         this.context = context;
     }
 
+    public interface OnCopyCompletedListener {
+        void onCopyCompleted(boolean success, String messageOrPath);
+    }
+
+    /**
+     * Copy a USB track to device internal storage (/Music/OsmAndLocal/) asynchronously.
+     */
+    public void copyTrackToInternalStorage(AudioTrack track, OnCopyCompletedListener listener) {
+        new Thread(() -> {
+            if (track == null || track.getPath() == null) {
+                if (listener != null) listener.onCopyCompleted(false, "Geçersiz şarkı yolu.");
+                return;
+            }
+            File srcFile = new File(track.getPath());
+            if (!srcFile.exists()) {
+                if (listener != null) listener.onCopyCompleted(false, "Kaynak dosya bulunamadı veya USB takılı değil.");
+                return;
+            }
+
+            File destDir = new File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_MUSIC), "OsmAndLocal");
+            if (!destDir.exists()) {
+                destDir.mkdirs();
+            }
+
+            File destFile = new File(destDir, srcFile.getName());
+            try (java.io.InputStream in = new java.io.FileInputStream(srcFile);
+                 java.io.OutputStream out = new java.io.FileOutputStream(destFile)) {
+                byte[] buf = new byte[8192];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+                if (listener != null) listener.onCopyCompleted(true, destFile.getAbsolutePath());
+            } catch (Exception e) {
+                Log.e(TAG, "Copy track failed", e);
+                if (listener != null) listener.onCopyCompleted(false, e.getMessage());
+            }
+        }).start();
+    }
+
     public interface OnScanCompletedListener {
         void onScanCompleted(List<AudioTrack> tracks, List<AudioFolder> folders, List<AudioArtist> artists);
     }

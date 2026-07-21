@@ -86,6 +86,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     // YENI CAR RADIO UIs
     private TextView tabFolders;
     private TextView tabArtists;
+    private TextView tabQuickMix;
+    private TextView tabForgotten;
     private View folderHeaderContainer;
     private ImageButton btnBackFolder;
     private TextView folderHeaderTitle;
@@ -195,6 +197,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         
         tabFolders = root.findViewById(net.osmand.plus.R.id.tab_folders);
         tabArtists = root.findViewById(net.osmand.plus.R.id.tab_artists);
+        tabQuickMix = root.findViewById(net.osmand.plus.R.id.tab_quick_mix);
+        tabForgotten = root.findViewById(net.osmand.plus.R.id.tab_forgotten);
         folderHeaderContainer = root.findViewById(net.osmand.plus.R.id.folder_header_container);
         btnBackFolder = root.findViewById(net.osmand.plus.R.id.btn_back_folder);
         folderHeaderTitle = root.findViewById(net.osmand.plus.R.id.folder_header_title);
@@ -557,6 +561,12 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 selectTab(2);
                 loadFavorites();
             });
+
+        if (tabQuickMix != null)
+            tabQuickMix.setOnClickListener(v -> playQuickMix());
+
+        if (tabForgotten != null)
+            tabForgotten.setOnClickListener(v -> loadForgottenTracks());
 
         if (tabPlaylistsContainer != null)
             tabPlaylistsContainer.setOnClickListener(v -> {
@@ -1187,7 +1197,18 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         boolean isFav = playlistManager.getFavorites().contains(track.getPath());
         String favOption = isFav ? "♥ Favorilerden Çıkar" : "♡ Favorilere Ekle";
-        String[] options = { "⏭ Sonraki Çal (Play Next)", "➕ Kuyruğa Ekle (Add to Queue)", "📑 Playliste Ekle", favOption };
+        
+        List<String> optionsList = new ArrayList<>();
+        optionsList.add("⏭ Sonraki Çal (Play Next)");
+        optionsList.add("➕ Kuyruğa Ekle (Add to Queue)");
+        optionsList.add("📑 Playliste Ekle");
+        optionsList.add(favOption);
+
+        if (track.isUsb()) {
+            optionsList.add("📥 Cihaza Kopyala (Offline Yap)");
+        }
+
+        String[] options = optionsList.toArray(new String[0]);
 
         new android.app.AlertDialog.Builder(getContext())
                 .setTitle(track.getTitle() + (track.getArtist() != null && !track.getArtist().isEmpty() ? " - " + track.getArtist() : ""))
@@ -1224,11 +1245,61 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                                 adapter.notifyDataSetChanged();
                             }
                             break;
+                        case 4: // Cihaza Kopyala (USB parçaları için)
+                            if (musicManager != null && musicManager.getRepository() != null) {
+                                Toast.makeText(getContext(), "Cihaz hafızasına kopyalanıyor...", Toast.LENGTH_SHORT).show();
+                                musicManager.getRepository().copyTrackToInternalStorage(track, (success, messageOrPath) -> {
+                                    if (getActivity() == null) return;
+                                    getActivity().runOnUiThread(() -> {
+                                        if (success) {
+                                            Toast.makeText(requireContext(), "Kopyalandı: " + track.getTitle(), Toast.LENGTH_LONG).show();
+                                            rescanMusic();
+                                        } else {
+                                            Toast.makeText(requireContext(), "Kopyalama başarısız: " + messageOrPath, Toast.LENGTH_LONG).show();
+                                        }
+                                    });
+                                });
+                            }
+                            break;
                     }
                 })
                 .setNegativeButton("İptal", null)
                 .show();
     }
+
+    // --- Faz 2: Akıllı Karıştır (Quick Mix) ---
+    private void playQuickMix() {
+        if (allTracks == null || allTracks.isEmpty() || musicManager == null || musicManager.getInternalPlayer() == null) {
+            Toast.makeText(getContext(), "Çalınacak müzik bulunamadı!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        List<MusicRepository.AudioTrack> mix = new ArrayList<>(allTracks);
+        Collections.shuffle(mix);
+        musicManager.getInternalPlayer().setPlaylist(mix, 0);
+        Toast.makeText(getContext(), "⚡ Akıllı Karıştır Başlatıldı (" + mix.size() + " Parça)", Toast.LENGTH_SHORT).show();
+    }
+
+    // --- Faz 2: Kıyıda Kalanlar (Unplayed Tracks) ---
+    private void loadForgottenTracks() {
+        if (allTracks == null || playlistManager == null) return;
+        List<String> recentPaths = playlistManager.getRecentlyPlayed();
+        List<MusicRepository.AudioTrack> forgotten = new ArrayList<>();
+
+        for (MusicRepository.AudioTrack t : allTracks) {
+            if (!recentPaths.contains(t.getPath())) {
+                forgotten.add(t);
+            }
+        }
+
+        if (forgotten.isEmpty()) {
+            Toast.makeText(getContext(), "Tüm şarkılar dinlenmiş!", Toast.LENGTH_SHORT).show();
+            showTracks(allTracks);
+        } else {
+            Toast.makeText(getContext(), "📻 Kıyıda Kalanlar: " + forgotten.size() + " Parça", Toast.LENGTH_SHORT).show();
+            showTracks(forgotten);
+        }
+    }
+
 
     private void showAddTrackToPlaylistDialog(MusicRepository.AudioTrack track) {
         if (getContext() == null)
