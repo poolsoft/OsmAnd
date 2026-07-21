@@ -870,11 +870,13 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     List<String> favPaths = playlistManager.getFavorites();
                     List<MusicRepository.AudioTrack> favTracks = new ArrayList<>();
                     for (String path : favPaths) {
-                        for (MusicRepository.AudioTrack t : allTracks) {
-                            if (t.getPath().equals(path)) {
-                                favTracks.add(t);
-                                break;
-                            }
+                        MusicRepository.AudioTrack t = musicManager != null && musicManager.getRepository() != null
+                                ? musicManager.getRepository().findTrackPortAgnostic(path) : null;
+                        if (t != null) {
+                            favTracks.add(t);
+                        } else {
+                            // Ghost track (Port degismis veya USB sökülmüs)
+                            favTracks.add(new MusicRepository.AudioTrack(-1, new java.io.File(path).getName(), "Bilinmeyen", "USB", 0, path, android.net.Uri.EMPTY, android.net.Uri.EMPTY, MusicRepository.StorageType.USB, false));
                         }
                     }
                     if (favTracks.isEmpty()) {
@@ -885,11 +887,22 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     // Playlists
                     int playlistIndex = position - 2;
                     if (playlistIndex >= 0 && playlistIndex < playlists.size()) {
-                        List<MusicRepository.AudioTrack> playlistTracks = getPlaylistTracks(
-                                playlists.get(playlistIndex));
+                        PlaylistManager.Playlist pl = playlists.get(playlistIndex);
+                        List<MusicRepository.AudioTrack> playlistTracks = new ArrayList<>();
+                        for (String path : pl.tracks) {
+                            MusicRepository.AudioTrack t = musicManager != null && musicManager.getRepository() != null
+                                    ? musicManager.getRepository().findTrackPortAgnostic(path) : null;
+                            if (t != null) {
+                                playlistTracks.add(t);
+                            } else {
+                                // Ghost track (Port degismis veya USB sökülmüs)
+                                playlistTracks.add(new MusicRepository.AudioTrack(-1, new java.io.File(path).getName(), "Bilinmeyen", "USB", 0, path, android.net.Uri.EMPTY, android.net.Uri.EMPTY, MusicRepository.StorageType.USB, false));
+                            }
+                        }
                         showTracks(playlistTracks);
                     }
                 }
+
             }
 
             @Override

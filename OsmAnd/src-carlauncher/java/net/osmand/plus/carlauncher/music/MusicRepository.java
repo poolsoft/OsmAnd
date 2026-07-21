@@ -537,6 +537,64 @@ public class MusicRepository {
         return artists;
     }
 
+    /**
+     * Port farketmeksizin (usb0, usb1, udisk2 vb.) bir kayitli dosya yolunu
+     * o an taranan disklerdeki gercek fiziksel yolla eslestirir (Port-Agnostic Re-linking).
+     */
+    public AudioTrack findTrackPortAgnostic(String savedPath) {
+        if (savedPath == null) return null;
+
+        // 1. Önce doğrudan eşleşme dene
+        for (AudioTrack track : cachedTracks) {
+            if (savedPath.equals(track.getPath())) {
+                return track;
+            }
+        }
+
+        // 2. Doğrudan bulunamadıysa (Port değişmiş olabilir), bağıl dosya yolu ile eşleştir
+        String targetRelative = extractRelativePath(savedPath);
+        if (targetRelative != null && !targetRelative.isEmpty()) {
+            for (AudioTrack track : cachedTracks) {
+                if (track.getRelativePath() != null && track.getRelativePath().equalsIgnoreCase(targetRelative)) {
+                    return track;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static String extractVolumeId(String path) {
+        if (path == null) return "INTERNAL";
+        String lower = path.toLowerCase(java.util.Locale.ROOT);
+        if (lower.startsWith("/storage/emulated/") || lower.startsWith("/data/")) {
+            return "INTERNAL";
+        }
+        String[] parts = path.split("/");
+        if (parts.length >= 3) {
+            return parts[2]; // Örn: 1A2B-3C4D veya usb0
+        }
+        return "USB_GENERIC";
+    }
+
+    public static String extractRelativePath(String path) {
+        if (path == null) return "";
+        String lower = path.toLowerCase(java.util.Locale.ROOT);
+        if (lower.startsWith("/storage/emulated/0/")) {
+            return path.substring("/storage/emulated/0/".length());
+        }
+        String[] parts = path.split("/");
+        if (parts.length >= 4) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 3; i < parts.length; i++) {
+                if (i > 3) sb.append("/");
+                sb.append(parts[i]);
+            }
+            return sb.toString();
+        }
+        return path;
+    }
+
     // --- Data Models ---
 
     public enum StorageType {
@@ -555,6 +613,8 @@ public class MusicRepository {
         private final Uri albumArtUri;
         private final StorageType storageType;
         private final boolean isAvailable;
+        private final String volumeId;
+        private final String relativePath;
 
         public AudioTrack(long id, String title, String artist, String album, long duration, String path,
                 Uri contentUri, Uri albumArtUri) {
@@ -573,6 +633,8 @@ public class MusicRepository {
             this.albumArtUri = albumArtUri;
             this.storageType = storageType;
             this.isAvailable = isAvailable;
+            this.volumeId = extractVolumeId(path);
+            this.relativePath = extractRelativePath(path);
         }
 
         public long getId() {
@@ -618,7 +680,16 @@ public class MusicRepository {
         public boolean isUsb() {
             return storageType == StorageType.USB;
         }
+
+        public String getVolumeId() {
+            return volumeId;
+        }
+
+        public String getRelativePath() {
+            return relativePath;
+        }
     }
+
 
     public static class AudioFolder {
         private final String name;
