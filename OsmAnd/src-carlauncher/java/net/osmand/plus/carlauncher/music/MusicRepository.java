@@ -178,14 +178,8 @@ public class MusicRepository {
                             continue;
                         }
 
-                        // Exclude unwanted folders (App Data, Social Media Audio, System Sounds)
-                        if (lowerPath.contains("/android/data/") ||
-                                lowerPath.contains("/whatsapp/") ||
-                                lowerPath.contains("/telegram/") ||
-                                lowerPath.contains("/notifications/") ||
-                                lowerPath.contains("/ringtones/") ||
-                                lowerPath.contains("/alarms/") ||
-                                lowerPath.contains("/samsung/music/")) { // Example generic exclusion if needed
+                        // Strict Exclusion Filter (WhatsApp, Telegram, Voice Notes, System Sounds, App Data)
+                        if (isUnwantedPath(path)) {
                             continue;
                         }
                     }
@@ -277,8 +271,84 @@ public class MusicRepository {
         return tracks;
     }
 
+    /**
+     * Checks if a file path belongs to unwanted directories like WhatsApp, Telegram, Voice Notes,
+     * System Ringtones/Notifications, App Data or folders containing .nomedia.
+     */
+    private boolean isUnwantedPath(String path) {
+        if (path == null) return true;
+
+        String lower = path.toLowerCase(java.util.Locale.ROOT);
+
+        // Social Media & Messaging App Voice Notes / Audio Filters
+        if (lower.contains("/whatsapp/") || 
+                lower.contains("whatsapp audio") || 
+                lower.contains("whatsapp voice") || 
+                lower.contains("whatsapp documents") || 
+                lower.contains("/telegram/") || 
+                lower.contains("/viber/") || 
+                lower.contains("/line/") || 
+                lower.contains("/wechat/") || 
+                lower.contains("voice_notes") || 
+                lower.contains("voice notes") || 
+                lower.contains("/voice_") || 
+                lower.contains("call_rec") || 
+                lower.contains("call_recording") || 
+                lower.contains("/recordings/") || 
+                lower.contains("/audiorecordings/")) {
+            return true;
+        }
+
+        // System Sounds & App Data Filters
+        if (lower.contains("/android/data/") || 
+                lower.contains("/android/media/") || 
+                lower.contains("/notifications/") || 
+                lower.contains("/notification/") || 
+                lower.contains("/ringtones/") || 
+                lower.contains("/ringtone/") || 
+                lower.contains("/alarms/") || 
+                lower.contains("/alarm/") || 
+                lower.contains("/ui/") || 
+                lower.contains("/podcasts/")) {
+            return true;
+        }
+
+        // Check if any parent folder contains a .nomedia file
+        File file = new File(path);
+        if (hasNoMediaInHierarchy(file.getParentFile())) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Recursively checks if a directory or any of its parent directories contain a .nomedia file.
+     */
+    private boolean hasNoMediaInHierarchy(File dir) {
+        File current = dir;
+        while (current != null && current.exists()) {
+            File noMedia = new File(current, ".nomedia");
+            if (noMedia.exists()) {
+                return true;
+            }
+            // Stop at storage root level to avoid unneeded disk traversals
+            String path = current.getAbsolutePath();
+            if (path.equals("/storage") || path.equals("/storage/emulated") || path.equals("/mnt") || path.equals("/")) {
+                break;
+            }
+            current = current.getParentFile();
+        }
+        return false;
+    }
+
     private void scanDirectoryDirectly(File dir, List<AudioTrack> tracks) {
         if (dir == null || !dir.exists() || !dir.isDirectory()) return;
+
+        // Skip folders containing .nomedia
+        if (hasNoMediaInHierarchy(dir)) {
+            return;
+        }
 
         File[] files = dir.listFiles();
         if (files == null) return;
@@ -292,6 +362,10 @@ public class MusicRepository {
                 scanDirectoryDirectly(file, tracks);
             } else {
                 String path = file.getAbsolutePath();
+                if (isUnwantedPath(path)) {
+                    continue;
+                }
+
                 String lowerPath = path.toLowerCase(java.util.Locale.ROOT);
 
                 if (lowerPath.endsWith(".mp3") || 
@@ -306,6 +380,7 @@ public class MusicRepository {
                     if (file.length() < 500 * 1024) {
                         continue;
                     }
+
 
                     long id = path.hashCode();
                     String title = file.getName();
