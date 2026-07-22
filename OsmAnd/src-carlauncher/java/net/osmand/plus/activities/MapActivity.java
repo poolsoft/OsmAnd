@@ -655,6 +655,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 		// Gece karartma overlay kontrolu (Turkce karakter yok)
 		applyNightDimMode();
+
+		// Status Bar gorunurluk ayarini uygula (Turkce karakter yok)
+		applyStatusBarVisibility();
 	}
 
 	private void updateCarWidgetPanelSize(float rawX, float rawY) {
@@ -2754,22 +2757,32 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	public void applyStatusBarVisibility() {
 		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);
+		if (!carSettings.isLauncherEnabled()) return;
+
 		boolean show = carSettings.isStatusBarVisible();
 		Window window = getWindow();
+		if (window == null) return;
+
 		View mapHudLayout = findViewById(R.id.map_hud_container);
+		androidx.core.view.WindowInsetsControllerCompat controller =
+				androidx.core.view.WindowCompat.getInsetsController(window, window.getDecorView());
 
 		if (show) {
-			// Status bar acik ise pencereyi fitsSystemWindows=true yaparak status bar altina guvenli yerlestir (Turkce karakter yok)
 			androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true);
 			window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-			// Sistem fitsSystemWindows ile boslugu ayarladigi icin padding'i sifirliyoruz (Turkce karakter yok)
+			if (controller != null) {
+				controller.show(androidx.core.view.WindowInsetsCompat.Type.statusBars());
+			}
 			if (mapHudLayout != null) {
 				mapHudLayout.setPadding(mapHudLayout.getPaddingLeft(), 0, mapHudLayout.getPaddingRight(), mapHudLayout.getPaddingBottom());
 			}
 		} else {
-			// Status bar kapali ise edge-to-edge ve full screen yaparak haritayi en uste sifirla (Turkce karakter yok)
 			androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false);
 			window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			if (controller != null) {
+				controller.hide(androidx.core.view.WindowInsetsCompat.Type.statusBars());
+				controller.setSystemBarsBehavior(androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+			}
 			if (mapHudLayout != null) {
 				mapHudLayout.setPadding(mapHudLayout.getPaddingLeft(), 0, mapHudLayout.getPaddingRight(), mapHudLayout.getPaddingBottom());
 			}

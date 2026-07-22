@@ -373,10 +373,12 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         if (statusBarPref != null) {
             statusBarPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 boolean show = (Boolean) newValue;
+                CarLauncherSettings.getInstance(requireContext()).setStatusBarVisible(show);
                 applyStatusBarVisibility(show);
                 return true;
             });
         }
+
 
         // Dark Theme
         SwitchPreferenceCompat themePref = findPreference(CarLauncherSettings.KEY_DARK_THEME);
