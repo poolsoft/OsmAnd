@@ -198,16 +198,14 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         appName = root.findViewById(net.osmand.plus.R.id.app_name);
         tabBtnSearch = root.findViewById(net.osmand.plus.R.id.tab_btn_search);
         tabBtnScan = root.findViewById(net.osmand.plus.R.id.tab_btn_scan);
-        tabFavorites = root.findViewById(net.osmand.plus.R.id.tab_favorites);
 
-        
         tabFolders = root.findViewById(net.osmand.plus.R.id.tab_folders);
         tabArtists = root.findViewById(net.osmand.plus.R.id.tab_artists);
         tabQuickMix = root.findViewById(net.osmand.plus.R.id.tab_quick_mix);
-        tabForgotten = root.findViewById(net.osmand.plus.R.id.tab_forgotten);
         folderHeaderContainer = root.findViewById(net.osmand.plus.R.id.folder_header_container);
         btnBackFolder = root.findViewById(net.osmand.plus.R.id.btn_back_folder);
         folderHeaderTitle = root.findViewById(net.osmand.plus.R.id.folder_header_title);
+
 
         // Marquee
         if (nowPlayingTitle != null)
@@ -726,11 +724,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             tabRecent.setTextColor(mode == ViewMode.RECENT ? selectedColor : unselectedColor);
             tabRecent.setBackgroundResource(mode == ViewMode.RECENT ? activeBg : 0);
         }
-        if (tabFavorites != null) {
-            tabFavorites.setTextColor(mode == ViewMode.FAVORITES ? selectedColor : unselectedColor);
-            tabFavorites.setBackgroundResource(mode == ViewMode.FAVORITES ? activeBg : 0);
-        }
     }
+
 
     private List<MusicRepository.AudioTrack> getRecentTracks() {
         return allTracks; // TODO: Implement real recent logic
