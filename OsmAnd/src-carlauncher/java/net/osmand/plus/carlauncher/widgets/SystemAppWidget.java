@@ -207,19 +207,24 @@ public class SystemAppWidget extends BaseWidget {
     }
 
     private View createErrorView(Context ctx, String errorMessage) {
-        TextView errView = new TextView(ctx);
+        Context safeCtx = ctx != null ? ctx : net.osmand.plus.OsmandApplication.getAppContext();
+        if (safeCtx == null) {
+            return new View(ctx);
+        }
+        TextView errView = new TextView(safeCtx);
         errView.setText(errorMessage);
         errView.setTextColor(0xFFFF3333);
         errView.setPadding(16, 16, 16, 16);
         errView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
 
-        FrameLayout container = new FrameLayout(ctx);
+        FrameLayout container = new FrameLayout(safeCtx);
         container.setBackgroundColor(0x33FF0000);
         container.addView(errView);
 
         rootView = container;
         return container;
     }
+
 
     @Override
     public void update() {

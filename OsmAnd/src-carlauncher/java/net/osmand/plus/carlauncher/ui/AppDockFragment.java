@@ -862,7 +862,9 @@ public class AppDockFragment extends Fragment
         if (btnDesktopMode == null) return;
         
         btnDesktopMode.post(() -> {
+            if (!isAdded() || getContext() == null) return;
             if (active) {
+
                 // Aktifken premium primary brand rengiyle vurgula
                 if (getContext() != null) {
                     btnDesktopMode.setColorFilter(androidx.core.content.ContextCompat.getColor(getContext(), net.osmand.plus.R.color.cl_primary));
