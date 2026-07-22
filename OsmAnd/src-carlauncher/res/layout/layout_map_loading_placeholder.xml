@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/map_loading_placeholder_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1E1E28"
+    android:clickable="true"
+    android:focusable="true">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp">
+
+        <ProgressBar
+            android:id="@+id/map_loading_spinner"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:indeterminate="true"
+            android:indeterminateTint="#00E5FF" />
+
+        <TextView
+            android:id="@+id/map_loading_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="⏳ Harita Motoru Yükleniyor..."
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/map_loading_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Navigasyon ve harita servisleri hazırlanıyor"
+            android:textColor="#888888"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+</FrameLayout>

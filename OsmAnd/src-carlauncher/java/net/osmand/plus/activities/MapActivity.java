@@ -641,10 +641,31 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		// 4. main.xml'i map_container'a ekle
 		mapContainer.addView(mainLayoutRoot);
 
+		// Instant Shell: Harita yukleme placeholder'ini ekle
+		final View mapLoadingPlaceholder = getLayoutInflater().inflate(R.layout.layout_map_loading_placeholder, mapContainer, false);
+		if (mapContainer != null) {
+			mapContainer.addView(mapLoadingPlaceholder);
+		}
+
+		if (net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().isCoreReady()) {
+			if (mapLoadingPlaceholder != null) mapLoadingPlaceholder.setVisibility(View.GONE);
+		} else {
+			net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().addListener(() -> {
+				if (mapLoadingPlaceholder != null) {
+					mapLoadingPlaceholder.animate()
+							.alpha(0f)
+							.setDuration(500)
+							.withEndAction(() -> mapLoadingPlaceholder.setVisibility(View.GONE))
+							.start();
+				}
+			});
+		}
+
 		// Harita kucuk paneldeyken dokunmalari engellemek ve tiklayinca buyutmek icin
 		if (mapContainer != null && carLayoutManager != null) {
 			mapContainer.setInterceptTouch(carLayoutManager.isContentFullScreen(), () -> closeAppDrawer());
 		}
+
 
 		// 5. CarLauncher bileşenlerini başlat
 		embedWidgetPanel();
@@ -1185,19 +1206,26 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	private void checkAppInitialization() {
 		if (app.isApplicationInitializing()) {
-			// Yukleme gorunumunun null olma ihtimaline karsi null-safe kontrol eklendi
 			View initProgress = findViewById(R.id.init_progress);
 			if (initProgress != null) {
-				initProgress.setVisibility(View.VISIBLE);
+				initProgress.setVisibility(View.GONE);
 			}
 
-			initListener = new MapAppInitializeListener(this);
+			initListener = new MapAppInitializeListener(this) {
+				@Override
+				public void onFinish(@NonNull AppInitializer init) {
+					super.onFinish(init);
+					net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().markCoreReady();
+				}
+			};
 			app.checkApplicationIsBeingInitialized(initListener);
 		} else {
+			net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().markCoreReady();
 			app.getOsmandMap().setupRenderingView();
 			restoreNavigationHelper.checkRestoreRoutingMode();
 		}
 	}
+
 
 	private void createProgressBarForRouting() {
 		routeCalculationProgressCallback = new MapRouteCalculationProgressListener(this);
