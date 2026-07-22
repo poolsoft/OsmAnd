@@ -80,7 +80,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     // New Tab Views
     private TextView tabAllTracks, tabRecent, tabPlaylistLabel, appName;
     private View tabPlaylistsContainer;
-    private ImageButton tabBtnSearch;
+    private ImageButton tabBtnSearch, tabBtnScan;
     private TextView tabFavorites;
     
     // YENI CAR RADIO UIs
@@ -91,6 +91,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private View folderHeaderContainer;
     private ImageButton btnBackFolder;
     private TextView folderHeaderTitle;
+
+
 
     // View Modes
     private enum ViewMode {
@@ -193,7 +195,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         tabPlaylistLabel = root.findViewById(net.osmand.plus.R.id.tab_playlist_label);
         appName = root.findViewById(net.osmand.plus.R.id.app_name);
         tabBtnSearch = root.findViewById(net.osmand.plus.R.id.tab_btn_search);
+        tabBtnScan = root.findViewById(net.osmand.plus.R.id.tab_btn_scan);
         tabFavorites = root.findViewById(net.osmand.plus.R.id.tab_favorites);
+
         
         tabFolders = root.findViewById(net.osmand.plus.R.id.tab_folders);
         tabArtists = root.findViewById(net.osmand.plus.R.id.tab_artists);
@@ -575,6 +579,13 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     playlistSpinner.performClick();
             });
 
+        if (tabBtnScan != null) {
+            tabBtnScan.setOnClickListener(v -> {
+                Toast.makeText(getContext(), "Müzik kütüphanesi taranıyor...", Toast.LENGTH_SHORT).show();
+                rescanMusic();
+            });
+        }
+
         if (tabBtnSearch != null) {
             tabBtnSearch.setOnClickListener(v -> {
                 if (searchBarContainer != null) {
@@ -604,6 +615,22 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             });
         }
     }
+
+    private void rescanMusic() {
+        if (musicManager != null && musicManager.getRepository() != null) {
+            musicManager.getRepository().scanMusic((tracks, folders, artists) -> {
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> {
+                    this.allTracks = tracks;
+                    if (adapter != null) {
+                        adapter.setTracks(tracks);
+                    }
+                    Toast.makeText(getContext(), "Kütüphane güncellendi: " + (tracks != null ? tracks.size() : 0) + " Şarkı", Toast.LENGTH_SHORT).show();
+                });
+            });
+        }
+    }
+
 
     private void selectTab(int index) {
         // 0: All, 1: Recent, 2: Favorites, 3: Playlist (Listeler)
