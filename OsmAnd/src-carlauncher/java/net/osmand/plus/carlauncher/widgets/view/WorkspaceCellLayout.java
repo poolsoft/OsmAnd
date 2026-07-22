@@ -486,13 +486,9 @@ public class WorkspaceCellLayout extends ViewGroup implements View.OnDragListene
         return true;
     }
 
-    private int dpToPx(int dp) {
-        float density = getResources().getDisplayMetrics().density;
-        return Math.round(dp * density);
-    }
-
     @Override
     public ViewGroup.LayoutParams generateLayoutParams(AttributeSet attrs) {
+
         return new LayoutParams(getContext(), attrs);
     }
 
