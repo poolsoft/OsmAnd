@@ -81,26 +81,28 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private TextView tabAllTracks, tabRecent, tabPlaylistLabel, appName;
     private View tabPlaylistsContainer;
     private ImageButton tabBtnSearch, tabBtnScan;
-    private TextView tabFavorites;
     
     // YENI CAR RADIO UIs
     private TextView tabFolders;
     private TextView tabArtists;
     private TextView tabQuickMix;
-    private TextView tabForgotten;
     private View folderHeaderContainer;
     private ImageButton btnBackFolder;
     private TextView folderHeaderTitle;
 
-
-
-    // View Modes
+    // View Modes & Klasor Hiyerarsisi
     private enum ViewMode {
-        ALL_TRACKS, FOLDERS, ARTISTS, RECENT, FAVORITES, PLAYLIST, FOLDER_DETAIL, ARTIST_DETAIL
+        ALL_TRACKS, FOLDERS, ARTISTS, RECENT, PLAYLIST, FOLDER_DETAIL, ARTIST_DETAIL
+    }
+    private enum FolderViewLevel {
+        STORAGE_ROOT, FOLDER_LIST, TRACK_LIST
     }
     private ViewMode currentViewMode = ViewMode.ALL_TRACKS;
+    private FolderViewLevel currentFolderLevel = FolderViewLevel.STORAGE_ROOT;
+    private MusicRepository.StorageType selectedStorageType = MusicRepository.StorageType.INTERNAL;
     private MusicRepository.AudioFolder currentFolder = null;
     private MusicRepository.AudioArtist currentArtist = null;
+
 
     // State
     private boolean isExternalMode = true; // Default: external app control
@@ -364,13 +366,24 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         }
         if (btnBackFolder != null) {
             btnBackFolder.setOnClickListener(v -> {
-                if (currentViewMode == ViewMode.FOLDER_DETAIL) {
-                    switchViewMode(ViewMode.FOLDERS);
+                if (currentViewMode == ViewMode.FOLDER_DETAIL || currentFolderLevel == FolderViewLevel.TRACK_LIST) {
+                    currentFolderLevel = FolderViewLevel.FOLDER_LIST;
+                    if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
+                    if (folderHeaderTitle != null) {
+                        folderHeaderTitle.setText(selectedStorageType == MusicRepository.StorageType.USB ? "💾 USB Depolama" : "📱 Dahili Hafıza");
+                    }
+                    showFolders(musicManager.getRepository().getFoldersByStorage(selectedStorageType));
+                } else if (currentFolderLevel == FolderViewLevel.FOLDER_LIST) {
+                    currentFolderLevel = FolderViewLevel.STORAGE_ROOT;
+                    showStorageRoots();
                 } else if (currentViewMode == ViewMode.ARTIST_DETAIL) {
                     switchViewMode(ViewMode.ARTISTS);
+                } else {
+                    switchViewMode(ViewMode.ALL_TRACKS);
                 }
             });
         }
+
 
         // Close
         if (btnClose != null)
@@ -560,24 +573,16 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 loadRecentlyPlayed();
             });
 
-        if (tabFavorites != null)
-            tabFavorites.setOnClickListener(v -> {
-                selectTab(2);
-                loadFavorites();
-            });
-
         if (tabQuickMix != null)
             tabQuickMix.setOnClickListener(v -> playQuickMix());
 
-        if (tabForgotten != null)
-            tabForgotten.setOnClickListener(v -> loadForgottenTracks());
-
         if (tabPlaylistsContainer != null)
             tabPlaylistsContainer.setOnClickListener(v -> {
-                selectTab(3);
+                selectTab(2);
                 if (playlistSpinner != null)
                     playlistSpinner.performClick();
             });
+
 
         if (tabBtnScan != null) {
             tabBtnScan.setOnClickListener(v -> {
@@ -617,8 +622,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     }
 
     private void selectTab(int index) {
-
-        // 0: All, 1: Recent, 2: Favorites, 3: Playlist (Listeler)
+        // 0: All, 1: Recent, 2: Playlist (Listeler)
         int selectedColor = 0xFFFFFFFF;
         int unselectedColor = 0xFF888888;
 
@@ -630,15 +634,11 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             tabRecent.setTextColor(index == 1 ? selectedColor : unselectedColor);
             tabRecent.setBackgroundResource(index == 1 ? net.osmand.plus.R.drawable.bg_tab_active : 0);
         }
-        if (tabFavorites != null) {
-            tabFavorites.setTextColor(index == 2 ? selectedColor : unselectedColor);
-            tabFavorites.setBackgroundResource(index == 2 ? net.osmand.plus.R.drawable.bg_tab_active : 0);
-        }
         if (tabPlaylistsContainer != null) {
-            tabPlaylistsContainer.setBackgroundResource(index == 3 ? net.osmand.plus.R.drawable.bg_tab_active : 0);
+            tabPlaylistsContainer.setBackgroundResource(index == 2 ? net.osmand.plus.R.drawable.bg_tab_active : 0);
         }
         if (tabPlaylistLabel != null) {
-            tabPlaylistLabel.setTextColor(index == 3 ? selectedColor : unselectedColor);
+            tabPlaylistLabel.setTextColor(index == 2 ? selectedColor : unselectedColor);
         }
     }
 
@@ -664,30 +664,46 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             case RECENT:
                 showTracks(getRecentTracks());
                 break;
-            case FAVORITES:
-                showTracks(getFavoriteTracks());
-                break;
             case FOLDERS:
-                showFolders(musicManager.getRepository().getCachedFolders());
+                // Son klasoru kontrol et ve hatırla
+                String lastPath = getContext() != null ? getContext().getSharedPreferences("music_prefs", Context.MODE_PRIVATE).getString("key_last_folder_path", null) : null;
+                MusicRepository.AudioFolder lastFolder = null;
+                if (lastPath != null && musicManager != null && musicManager.getRepository() != null) {
+                    for (MusicRepository.AudioFolder f : musicManager.getRepository().getCachedFolders()) {
+                        if (f.getPath().equals(lastPath)) {
+                            lastFolder = f;
+                            break;
+                        }
+                    }
+                }
+                if (lastFolder != null && !lastFolder.getTracks().isEmpty()) {
+                    currentFolder = lastFolder;
+                    currentFolderLevel = FolderViewLevel.TRACK_LIST;
+                    if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
+                    if (folderHeaderTitle != null) folderHeaderTitle.setText("📁 " + currentFolder.getName());
+                    showTracks(currentFolder.getTracks());
+                } else {
+                    showStorageRoots();
+                }
                 break;
             case ARTISTS:
                 showArtists(musicManager.getRepository().getCachedArtists());
                 break;
             case FOLDER_DETAIL:
                 if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
-                if (folderHeaderTitle != null && currentFolder != null) folderHeaderTitle.setText(currentFolder.getName());
+                if (folderHeaderTitle != null && currentFolder != null) folderHeaderTitle.setText("📁 " + currentFolder.getName());
                 if (currentFolder != null) showTracks(currentFolder.getTracks());
                 break;
             case ARTIST_DETAIL:
                 if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
-                if (folderHeaderTitle != null && currentArtist != null) folderHeaderTitle.setText(currentArtist.getName());
+                if (folderHeaderTitle != null && currentArtist != null) folderHeaderTitle.setText("🎙️ " + currentArtist.getName());
                 if (currentArtist != null) showTracks(currentArtist.getTracks());
                 break;
             case PLAYLIST:
-                // Spinner yonetiyor
                 break;
         }
     }
+
 
     private void updateTabUIForMode(ViewMode mode) {
         int selectedColor = 0xFFFFFFFF;
@@ -734,15 +750,111 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         return favTracks;
     }
 
+    private void showStorageRoots() {
+        if (recyclerView == null) return;
+        if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
+        if (folderHeaderTitle != null) folderHeaderTitle.setText("Klasör Kaynağı Seçin");
+        currentFolderLevel = FolderViewLevel.STORAGE_ROOT;
+
+        List<StorageRootItem> roots = new ArrayList<>();
+        roots.add(new StorageRootItem(MusicRepository.StorageType.INTERNAL, "📱 Dahili Hafıza", "Cihaz üzerindeki müzik klasörleri"));
+
+        List<MusicRepository.AudioFolder> usbFolders = musicManager != null && musicManager.getRepository() != null ?
+                musicManager.getRepository().getFoldersByStorage(MusicRepository.StorageType.USB) : new ArrayList<>();
+        if (!usbFolders.isEmpty()) {
+            roots.add(new StorageRootItem(MusicRepository.StorageType.USB, "💾 USB Depolama", usbFolders.size() + " Klasör Bulundu"));
+        } else {
+            roots.add(new StorageRootItem(MusicRepository.StorageType.USB, "💾 USB Depolama (Takılı Değil)", "Takılı USB bellek bulunamadı"));
+        }
+
+        StorageRootAdapter rootAdapter = new StorageRootAdapter(roots, item -> {
+            if (item.type == MusicRepository.StorageType.USB && usbFolders.isEmpty()) {
+                Toast.makeText(getContext(), "Takılı USB bellek bulunamadı!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            selectedStorageType = item.type;
+            currentFolderLevel = FolderViewLevel.FOLDER_LIST;
+            if (folderHeaderTitle != null) {
+                folderHeaderTitle.setText(item.type == MusicRepository.StorageType.USB ? "💾 USB Depolama Klasörleri" : "📱 Dahili Hafıza Klasörleri");
+            }
+            showFolders(musicManager.getRepository().getFoldersByStorage(item.type));
+        });
+        recyclerView.setAdapter(rootAdapter);
+    }
+
+    private static class StorageRootItem {
+        MusicRepository.StorageType type;
+        String title;
+        String subtitle;
+        StorageRootItem(MusicRepository.StorageType type, String title, String subtitle) {
+            this.type = type;
+            this.title = title;
+            this.subtitle = subtitle;
+        }
+    }
+
+    private class StorageRootAdapter extends RecyclerView.Adapter<StorageRootAdapter.ViewHolder> {
+        private final List<StorageRootItem> items;
+        private final StorageRootClickListener listener;
+
+        interface StorageRootClickListener {
+            void onClick(StorageRootItem item);
+        }
+
+        public StorageRootAdapter(List<StorageRootItem> items, StorageRootClickListener listener) {
+            this.items = items;
+            this.listener = listener;
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(android.R.layout.simple_list_item_2, parent, false);
+            return new ViewHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            StorageRootItem item = items.get(position);
+            holder.text1.setText(item.title);
+            holder.text1.setTextColor(0xFFFFFFFF);
+            holder.text1.setTextSize(18);
+            holder.text1.setTypeface(null, android.graphics.Typeface.BOLD);
+            holder.text2.setText(item.subtitle);
+            holder.text2.setTextColor(0xFF888888);
+            holder.itemView.setPadding(32, 28, 32, 28);
+            holder.itemView.setOnClickListener(v -> listener.onClick(item));
+        }
+
+        @Override
+        public int getItemCount() {
+            return items != null ? items.size() : 0;
+        }
+
+        class ViewHolder extends RecyclerView.ViewHolder {
+            TextView text1, text2;
+            ViewHolder(@NonNull View itemView) {
+                super(itemView);
+                text1 = itemView.findViewById(android.R.id.text1);
+                text2 = itemView.findViewById(android.R.id.text2);
+            }
+        }
+    }
+
     private void showFolders(List<MusicRepository.AudioFolder> folders) {
         if (recyclerView != null) {
             FolderAdapter folderAdapter = new FolderAdapter(folders, folder -> {
                 currentFolder = folder;
+                currentFolderLevel = FolderViewLevel.TRACK_LIST;
+                if (getContext() != null) {
+                    getContext().getSharedPreferences("music_prefs", Context.MODE_PRIVATE).edit().putString("key_last_folder_path", folder.getPath()).apply();
+                }
                 switchViewMode(ViewMode.FOLDER_DETAIL);
             });
             recyclerView.setAdapter(folderAdapter);
         }
     }
+
 
     private void showArtists(List<MusicRepository.AudioArtist> artists) {
         if (recyclerView != null) {
@@ -1304,17 +1416,24 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 .show();
     }
 
-    // --- Faz 2: Akıllı Karıştır (Quick Mix) ---
+    // --- Akıllı Karıştır (Quick Mix) ---
     private void playQuickMix() {
-        if (allTracks == null || allTracks.isEmpty() || musicManager == null || musicManager.getInternalPlayer() == null) {
+        List<MusicRepository.AudioTrack> physicalTracks = musicManager != null && musicManager.getRepository() != null ?
+                musicManager.getRepository().getCachedTracks() : allTracks;
+        if (physicalTracks == null || physicalTracks.isEmpty() || musicManager == null || musicManager.getInternalPlayer() == null) {
             Toast.makeText(getContext(), "Çalınacak müzik bulunamadı!", Toast.LENGTH_SHORT).show();
             return;
         }
-        List<MusicRepository.AudioTrack> mix = new ArrayList<>(allTracks);
+        List<MusicRepository.AudioTrack> mix = new ArrayList<>(physicalTracks);
         Collections.shuffle(mix);
+        
+        // Karıştırılan listeyi doğrudan ekrandaki RecyclerView üzerinde göster!
+        showTracks(mix);
+        
         musicManager.getInternalPlayer().setPlaylist(mix, 0);
-        Toast.makeText(getContext(), "⚡ Akıllı Karıştır Başlatıldı (" + mix.size() + " Parça)", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), "⚡ Akıllı Karıştır: " + mix.size() + " Parça Listelendi", Toast.LENGTH_SHORT).show();
     }
+
 
     // --- Faz 2: Kıyıda Kalanlar (Unplayed Tracks) ---
     private void loadForgottenTracks() {
@@ -1821,15 +1940,25 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 }
             }
 
-            // Update Adapter Highlight
-            if (!isExternalMode && musicManager.getInternalPlayer() != null) {
+            // Update Adapter Highlight & Auto-scroll
+            if (!isExternalMode && musicManager != null && musicManager.getInternalPlayer() != null) {
                 MusicRepository.AudioTrack current = musicManager.getInternalPlayer().getCurrentTrack();
                 String path = current != null ? current.getPath() : null;
                 boolean isPlaying = musicManager.getInternalPlayer().isPlaying();
                 if (adapter != null) {
                     adapter.updateCurrentTrack(path, isPlaying);
+                    if (path != null && filteredTracks != null && recyclerView != null) {
+                        for (int i = 0; i < filteredTracks.size(); i++) {
+                            if (path.equals(filteredTracks.get(i).getPath())) {
+                                final int targetIndex = i;
+                                recyclerView.post(() -> recyclerView.smoothScrollToPosition(targetIndex));
+                                break;
+                            }
+                        }
+                    }
                 }
             }
+
 
 
         });

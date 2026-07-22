@@ -99,16 +99,51 @@ public class MusicRepository {
     }
 
     public List<AudioTrack> getCachedTracks() {
-        return cachedTracks;
+        return getPhysicalTracks(cachedTracks);
+    }
+
+    public List<AudioTrack> getPhysicalTracks(List<AudioTrack> tracks) {
+        List<AudioTrack> physical = new ArrayList<>();
+        if (tracks == null) return physical;
+        for (AudioTrack track : tracks) {
+            if (track.getPath() != null) {
+                File f = new File(track.getPath());
+                if (f.exists() && f.length() > 0) {
+                    physical.add(track);
+                }
+            }
+        }
+        return physical;
+    }
+
+    public List<AudioFolder> getFoldersByStorage(StorageType storageType) {
+        List<AudioFolder> result = new ArrayList<>();
+        for (AudioFolder folder : getCachedFolders()) {
+            if (folder.getStorageType() == storageType) {
+                List<AudioTrack> validTracks = getPhysicalTracks(folder.getTracks());
+                if (!validTracks.isEmpty()) {
+                    result.add(new AudioFolder(folder.getName(), folder.getPath(), validTracks, folder.getStorageType()));
+                }
+            }
+        }
+        return result;
     }
 
     public List<AudioFolder> getCachedFolders() {
-        return cachedFolders;
+        List<AudioFolder> result = new ArrayList<>();
+        for (AudioFolder folder : cachedFolders) {
+            List<AudioTrack> validTracks = getPhysicalTracks(folder.getTracks());
+            if (!validTracks.isEmpty()) {
+                result.add(new AudioFolder(folder.getName(), folder.getPath(), validTracks, folder.getStorageType()));
+            }
+        }
+        return result;
     }
 
     public List<AudioArtist> getCachedArtists() {
         return cachedArtists;
     }
+
 
     private List<AudioTrack> scanDeviceForAudio() {
         List<AudioTrack> tracks = new ArrayList<>();

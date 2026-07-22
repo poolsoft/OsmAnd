@@ -288,22 +288,6 @@
                         android:paddingHorizontal="16dp"
                         android:background="?android:attr/selectableItemBackground"/>
 
-                    <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
-
-                    <TextView
-                        android:id="@+id/tab_favorites"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="Favoriler"
-                        android:textColor="#888888"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:paddingHorizontal="16dp"
-                        android:background="?android:attr/selectableItemBackground"/>
-
-                    <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
-
                     <TextView
                         android:id="@+id/tab_quick_mix"
                         android:layout_width="wrap_content"
@@ -318,19 +302,6 @@
 
                     <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
 
-                    <TextView
-                        android:id="@+id/tab_forgotten"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="📻 Kıyıda Kalanlar"
-                        android:textColor="#888888"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:paddingHorizontal="16dp"
-                        android:background="?android:attr/selectableItemBackground"/>
-
-                    <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
 
                     <LinearLayout
                         android:id="@+id/tab_playlists_container"
