@@ -616,23 +616,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         }
     }
 
-    private void rescanMusic() {
-        if (musicManager != null && musicManager.getRepository() != null) {
-            musicManager.getRepository().scanMusic((tracks, folders, artists) -> {
-                if (getActivity() == null) return;
-                getActivity().runOnUiThread(() -> {
-                    this.allTracks = tracks;
-                    if (adapter != null) {
-                        adapter.setTracks(tracks);
-                    }
-                    Toast.makeText(getContext(), "Kütüphane güncellendi: " + (tracks != null ? tracks.size() : 0) + " Şarkı", Toast.LENGTH_SHORT).show();
-                });
-            });
-        }
-    }
-
-
     private void selectTab(int index) {
+
         // 0: All, 1: Recent, 2: Favorites, 3: Playlist (Listeler)
         int selectedColor = 0xFFFFFFFF;
         int unselectedColor = 0xFF888888;
@@ -1108,10 +1093,16 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     }
 
     private void rescanMusic() {
-        if (musicManager == null || musicManager.getRepository() == null || btnScanMusic == null) return;
+        if (musicManager == null || musicManager.getRepository() == null) return;
 
-        btnScanMusic.setEnabled(false);
-        btnScanMusic.setAlpha(0.45f);
+        if (btnScanMusic != null) {
+            btnScanMusic.setEnabled(false);
+            btnScanMusic.setAlpha(0.45f);
+        }
+        if (tabBtnScan != null) {
+            tabBtnScan.setEnabled(false);
+            tabBtnScan.setAlpha(0.45f);
+        }
         Toast.makeText(getContext(), net.osmand.plus.R.string.car_music_scan_started, Toast.LENGTH_SHORT).show();
 
         musicManager.getRepository().scanMusic((tracks, folders, artists) -> {
@@ -1129,8 +1120,14 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     musicManager.getInternalPlayer().setPlaylist(tracks, -1, false);
                 }
 
-                btnScanMusic.setEnabled(true);
-                btnScanMusic.setAlpha(1.0f);
+                if (btnScanMusic != null) {
+                    btnScanMusic.setEnabled(true);
+                    btnScanMusic.setAlpha(1.0f);
+                }
+                if (tabBtnScan != null) {
+                    tabBtnScan.setEnabled(true);
+                    tabBtnScan.setAlpha(1.0f);
+                }
                 Toast.makeText(requireContext(),
                         getString(net.osmand.plus.R.string.car_music_scan_completed, tracks.size()),
                         Toast.LENGTH_LONG).show();
