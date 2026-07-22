@@ -207,10 +207,11 @@ public class SystemAppWidget extends BaseWidget {
     }
 
     private View createErrorView(Context ctx, String errorMessage) {
-        Context safeCtx = ctx != null ? ctx : net.osmand.plus.OsmandApplication.getAppContext();
+        Context safeCtx = ctx != null ? ctx : (getContext() != null ? getContext() : this.context);
         if (safeCtx == null) {
             return new View(ctx);
         }
+
         TextView errView = new TextView(safeCtx);
         errView.setText(errorMessage);
         errView.setTextColor(0xFFFF3333);
