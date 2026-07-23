@@ -262,6 +262,19 @@
                         android:scaleType="centerInside"
                         android:contentDescription="@string/car_music_scan" />
 
+                    <!-- YENİ: ÇALMA SIRASI (QUEUE) -->
+                    <TextView
+                        android:id="@+id/tab_queue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="▶ Çalma Sırası"
+                        android:textColor="#888888"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:paddingHorizontal="16dp"
+                        android:background="?android:attr/selectableItemBackground"/>
+                    
                     <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
 
                     <TextView

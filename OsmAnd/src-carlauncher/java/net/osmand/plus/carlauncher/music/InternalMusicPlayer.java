@@ -32,6 +32,7 @@ public class InternalMusicPlayer {
     private final AudioManager audioManager;
     private MediaPlayer mediaPlayer;
     private List<MusicRepository.AudioTrack> playlist = new ArrayList<>();
+    private List<MusicRepository.AudioTrack> playingQueue = new ArrayList<>();
     private int currentIndex = -1;
     private boolean isPrepared = false;
     private boolean playOnFocusGain = false; // Focus geri geldiginde calmaya devam etsin mi (Turkce karakter yok)
@@ -57,7 +58,11 @@ public class InternalMusicPlayer {
     }
 
     public void setShuffleOn(boolean shuffleOn) {
-        this.isShuffleOn = shuffleOn;
+        if (this.isShuffleOn != shuffleOn) {
+            this.isShuffleOn = shuffleOn;
+            rebuildQueue();
+            saveState();
+        }
     }
 
     public int getRepeatMode() {
@@ -65,7 +70,42 @@ public class InternalMusicPlayer {
     }
 
     public void setRepeatMode(int repeatMode) {
-        this.repeatMode = repeatMode;
+        if (this.repeatMode != repeatMode) {
+            this.repeatMode = repeatMode;
+            saveState();
+        }
+    }
+
+    public List<MusicRepository.AudioTrack> getPlayingQueue() {
+        return playingQueue.isEmpty() ? playlist : playingQueue;
+    }
+
+    private void rebuildQueue() {
+        if (playlist.isEmpty()) {
+            playingQueue.clear();
+            return;
+        }
+        if (isShuffleOn) {
+            MusicRepository.AudioTrack currentTrack = getCurrentTrack();
+            List<MusicRepository.AudioTrack> rest = new ArrayList<>(playlist);
+            if (currentTrack != null) {
+                rest.remove(currentTrack);
+            }
+            java.util.Collections.shuffle(rest);
+            playingQueue.clear();
+            if (currentTrack != null) {
+                playingQueue.add(currentTrack);
+            }
+            playingQueue.addAll(rest);
+            currentIndex = 0;
+        } else {
+            MusicRepository.AudioTrack currentTrack = getCurrentTrack();
+            playingQueue = new ArrayList<>(playlist);
+            if (currentTrack != null) {
+                int idx = playingQueue.indexOf(currentTrack);
+                if (idx != -1) currentIndex = idx;
+            }
+        }
     }
 
     // --- Audio Focus Listener (Navigasyon ve Aramalar için) ---
@@ -149,7 +189,8 @@ public class InternalMusicPlayer {
         if (tracks == null || tracks.isEmpty())
             return;
         this.playlist = new ArrayList<>(tracks);
-        if (startIndex >= 0 && startIndex < playlist.size()) {
+        rebuildQueue();
+        if (startIndex >= 0 && startIndex < playingQueue.size()) {
             playTrack(startIndex, autoPlay);
         }
     }
@@ -159,17 +200,18 @@ public class InternalMusicPlayer {
      */
     public boolean playNextInQueue(MusicRepository.AudioTrack track) {
         if (track == null) return false;
-        if (playlist.isEmpty()) {
+        List<MusicRepository.AudioTrack> queue = getPlayingQueue();
+        if (queue.isEmpty()) {
             List<MusicRepository.AudioTrack> single = new ArrayList<>();
             single.add(track);
             setPlaylist(single, 0, true);
             return true;
         }
         int insertIndex = currentIndex + 1;
-        if (insertIndex > playlist.size()) {
-            insertIndex = playlist.size();
+        if (insertIndex > queue.size()) {
+            insertIndex = queue.size();
         }
-        playlist.add(insertIndex, track);
+        queue.add(insertIndex, track);
         return true;
     }
 
@@ -178,13 +220,14 @@ public class InternalMusicPlayer {
      */
     public boolean addToQueue(MusicRepository.AudioTrack track) {
         if (track == null) return false;
-        if (playlist.isEmpty()) {
+        List<MusicRepository.AudioTrack> queue = getPlayingQueue();
+        if (queue.isEmpty()) {
             List<MusicRepository.AudioTrack> single = new ArrayList<>();
             single.add(track);
             setPlaylist(single, 0, true);
             return true;
         }
-        playlist.add(track);
+        queue.add(track);
         return true;
     }
 
@@ -197,7 +240,8 @@ public class InternalMusicPlayer {
     }
 
     private void playTrack(int index, boolean autoPlay, int seekPosition) {
-        if (index < 0 || index >= playlist.size())
+        List<MusicRepository.AudioTrack> queue = getPlayingQueue();
+        if (index < 0 || index >= queue.size())
             return;
 
         // Onceki durdur (Turkce karakter yok)
@@ -206,7 +250,7 @@ public class InternalMusicPlayer {
         }
 
         currentIndex = index;
-        MusicRepository.AudioTrack track = playlist.get(index);
+        MusicRepository.AudioTrack track = queue.get(index);
         this.autoPlayOnPrepared = autoPlay;
         this.pendingSeekPosition = seekPosition;
 
@@ -276,7 +320,8 @@ public class InternalMusicPlayer {
     }
 
     public void playNext(boolean forceSkip) {
-        if (playlist.isEmpty())
+        List<MusicRepository.AudioTrack> queue = getPlayingQueue();
+        if (queue.isEmpty())
             return;
 
         if (!forceSkip && repeatMode == 1) { // Repeat One (Tek parca tekrar - Turkce karakter yok)
@@ -284,22 +329,13 @@ public class InternalMusicPlayer {
             return;
         }
 
-        int nextIndex;
-        if (isShuffleOn) {
-            if (playlist.size() > 1) {
-                nextIndex = currentIndex;
-                while (nextIndex == currentIndex) {
-                    nextIndex = (int) (Math.random() * playlist.size());
-                }
-            } else {
-                nextIndex = 0;
-            }
-        } else {
-            nextIndex = currentIndex + 1;
-        }
+        int nextIndex = currentIndex + 1;
 
-        if (nextIndex >= playlist.size()) {
+        if (nextIndex >= queue.size()) {
             if (repeatMode == 2) { // Repeat All (Tum liste tekrar - Turkce karakter yok)
+                if (isShuffleOn) {
+                    rebuildQueue();
+                }
                 nextIndex = 0;
                 playTrack(nextIndex);
             } else {
@@ -314,7 +350,8 @@ public class InternalMusicPlayer {
     }
 
     public void playPrevious() {
-        if (playlist.isEmpty())
+        List<MusicRepository.AudioTrack> queue = getPlayingQueue();
+        if (queue.isEmpty())
             return;
 
         // Eger sarki 3 saniyeden fazla caldiysa basa sar (Turkce karakter yok)
@@ -328,27 +365,15 @@ public class InternalMusicPlayer {
             return;
         }
 
-        int prevIndex;
-        if (isShuffleOn) {
-            if (playlist.size() > 1) {
-                prevIndex = currentIndex;
-                while (prevIndex == currentIndex) {
-                    prevIndex = (int) (Math.random() * playlist.size());
-                }
-            } else {
-                prevIndex = 0;
-            }
-        } else {
-            prevIndex = currentIndex - 1;
-        }
+        int prevIndex = currentIndex - 1;
 
         if (prevIndex < 0) {
             if (repeatMode == 2) { // Repeat All (Turkce karakter yok)
-                prevIndex = playlist.size() - 1;
+                prevIndex = queue.size() - 1;
                 playTrack(prevIndex);
             } else {
                 // Repeat Off (Turkce karakter yok)
-                prevIndex = playlist.size() - 1;
+                prevIndex = queue.size() - 1;
                 playTrack(prevIndex);
             }
         } else {
@@ -361,8 +386,9 @@ public class InternalMusicPlayer {
     }
 
     public MusicRepository.AudioTrack getCurrentTrack() {
-        if (currentIndex >= 0 && currentIndex < playlist.size()) {
-            return playlist.get(currentIndex);
+        List<MusicRepository.AudioTrack> queue = getPlayingQueue();
+        if (currentIndex >= 0 && currentIndex < queue.size()) {
+            return queue.get(currentIndex);
         }
         return null;
     }
@@ -416,11 +442,15 @@ public class InternalMusicPlayer {
     private static final String PREF_KEY_INDEX = "last_index";
     private static final String PREF_KEY_POS = "last_position";
     private static final String PREF_KEY_WAS_PLAYING = "last_was_playing";
+    private static final String PREF_KEY_SHUFFLE = "is_shuffle";
+    private static final String PREF_KEY_REPEAT = "repeat_mode";
 
     private void saveState() {
         android.content.SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         android.content.SharedPreferences.Editor editor = prefs.edit();
         editor.putInt(PREF_KEY_INDEX, currentIndex);
+        editor.putBoolean(PREF_KEY_SHUFFLE, isShuffleOn);
+        editor.putInt(PREF_KEY_REPEAT, repeatMode);
         
         // Eger parca hazirsa (isPrepared), o anki saniyesini ve calip calmadigini kaydet (Turkce karakter yok)
         if (mediaPlayer != null && isPrepared) {
@@ -434,11 +464,16 @@ public class InternalMusicPlayer {
         android.content.SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         int savedIndex = prefs.getInt(PREF_KEY_INDEX, -1);
         int savedPos = prefs.getInt(PREF_KEY_POS, 0);
+        this.isShuffleOn = prefs.getBoolean(PREF_KEY_SHUFFLE, false);
+        this.repeatMode = prefs.getInt(PREF_KEY_REPEAT, 0);
         this.wasPlayingBefore = prefs.getBoolean(PREF_KEY_WAS_PLAYING, false);
 
-        if (savedIndex >= 0 && savedIndex < playlist.size()) {
-            // Son sarkiyi o anki saniyesinden geri yukle, hemen baslatma mantigi MusicManager'da belirlenecek (Turkce karakter yok)
-            playTrack(savedIndex, false, savedPos);
+        if (!playlist.isEmpty()) {
+            rebuildQueue();
+            if (savedIndex >= 0 && savedIndex < playingQueue.size()) {
+                // Son sarkiyi o anki saniyesinden geri yukle, hemen baslatma mantigi MusicManager'da belirlenecek (Turkce karakter yok)
+                playTrack(savedIndex, false, savedPos);
+            }
         }
     }
 

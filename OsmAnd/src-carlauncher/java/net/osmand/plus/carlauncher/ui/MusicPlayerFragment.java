@@ -78,7 +78,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private View searchClearBtn;
 
     // New Tab Views
-    private TextView tabAllTracks, tabRecent, tabPlaylistLabel, appName;
+    private TextView tabQueue, tabAllTracks, tabRecent, tabPlaylistLabel, appName;
     private View tabPlaylistsContainer;
     private ImageButton tabBtnSearch, tabBtnScan;
     
@@ -92,7 +92,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
     // View Modes & Klasor Hiyerarsisi
     private enum ViewMode {
-        ALL_TRACKS, FOLDERS, ARTISTS, RECENT, PLAYLIST, FOLDER_DETAIL, ARTIST_DETAIL
+        QUEUE, ALL_TRACKS, FOLDERS, ARTISTS, RECENT, PLAYLIST, FOLDER_DETAIL, ARTIST_DETAIL
     }
     private enum FolderViewLevel {
         STORAGE_ROOT, FOLDER_LIST, TRACK_LIST
@@ -191,6 +191,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         recyclerView = root.findViewById(net.osmand.plus.R.id.music_recycler);
 
+        tabQueue = root.findViewById(net.osmand.plus.R.id.tab_queue);
         tabAllTracks = root.findViewById(net.osmand.plus.R.id.tab_all_tracks);
         tabRecent = root.findViewById(net.osmand.plus.R.id.tab_recent);
         tabPlaylistsContainer = root.findViewById(net.osmand.plus.R.id.tab_playlists_container);
@@ -352,7 +353,10 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             btnTabScan.setOnClickListener(v -> rescanMusic());
         }
 
-        // Yeni Klasor ve Sanatci tab listenerlari
+        // Yeni Calma Sirasi, Klasor ve Sanatci tab listenerlari
+        if (tabQueue != null) {
+            tabQueue.setOnClickListener(v -> switchViewMode(ViewMode.QUEUE));
+        }
         if (tabFolders != null) {
             tabFolders.setOnClickListener(v -> switchViewMode(ViewMode.FOLDERS));
         }
@@ -413,6 +417,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     musicManager.setShuffleOn(isShuffleOn);
                 }
                 updateShuffleUI();
+                if (currentViewMode == ViewMode.QUEUE) {
+                    switchViewMode(ViewMode.QUEUE);
+                }
             });
 
         // Repeat (Turkce karakter yok)
@@ -655,6 +662,11 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         if (searchBarContainer != null) searchBarContainer.setVisibility(View.GONE);
 
         switch (mode) {
+            case QUEUE:
+                if (musicManager != null && musicManager.getInternalPlayer() != null) {
+                    showTracks(musicManager.getInternalPlayer().getPlayingQueue());
+                }
+                break;
             case ALL_TRACKS:
                 if (searchBarContainer != null) searchBarContainer.setVisibility(View.VISIBLE);
                 showTracks(allTracks);
@@ -708,6 +720,10 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         int unselectedColor = 0xFF888888;
         int activeBg = net.osmand.plus.R.drawable.bg_tab_active;
         
+        if (tabQueue != null) {
+            tabQueue.setTextColor(mode == ViewMode.QUEUE ? selectedColor : unselectedColor);
+            tabQueue.setBackgroundResource(mode == ViewMode.QUEUE ? activeBg : 0);
+        }
         if (tabAllTracks != null) {
             tabAllTracks.setTextColor(mode == ViewMode.ALL_TRACKS ? selectedColor : unselectedColor);
             tabAllTracks.setBackgroundResource(mode == ViewMode.ALL_TRACKS ? activeBg : 0);
@@ -1720,13 +1736,11 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         }
     }
 
-    // Calma listesi acikken shuffle ve repeat butonlarini gizle, kapaliyken goster (Turkce karakter yok)
+    // Shuffle ve repeat butonlarinin her zaman gorunur olmasi saglanir
     private void updateShuffleAndRepeatVisibility() {
         if (btnShuffle == null || btnRepeat == null) return;
-        boolean isListVisible = trackListPanel != null && trackListPanel.getVisibility() == View.VISIBLE;
-        int visibility = isListVisible ? View.GONE : View.VISIBLE;
-        btnShuffle.setVisibility(visibility);
-        btnRepeat.setVisibility(visibility);
+        btnShuffle.setVisibility(View.VISIBLE);
+        btnRepeat.setVisibility(View.VISIBLE);
     }
 
     private void closeFragment() {
