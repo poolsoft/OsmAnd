@@ -1077,8 +1077,10 @@ public class AppDockFragment extends Fragment
                 
                 recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), desiredOrientation, false));
                 
-                // LinearSnapHelper ortalama zorlamasi ilk elemani yarim kirptigi icin kaldirildi
+                // StartSnapHelper: Görünürdeki ilk ikonun (üstte veya solda) yarım kalmasını engeller, hizalama başlangıcına tam oturtur
                 recyclerView.setOnFlingListener(null);
+                StartSnapHelper startSnapHelper = new StartSnapHelper();
+                startSnapHelper.attachToRecyclerView(recyclerView);
                 
                 if (adapter != null) {
                     adapter.setVerticalMode(isVerticalMode);
