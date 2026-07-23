@@ -2793,18 +2793,17 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		Window window = getWindow();
 		if (window == null) return;
 
-		View mapHudLayout = findViewById(R.id.map_hud_container);
+		View rootLayout = findViewById(R.id.root_layout);
 		androidx.core.view.WindowInsetsControllerCompat controller =
 				androidx.core.view.WindowCompat.getInsetsController(window, window.getDecorView());
+
+		int topPadding = show ? getStatusBarHeight() : 0;
 
 		if (show) {
 			androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true);
 			window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 			if (controller != null) {
 				controller.show(androidx.core.view.WindowInsetsCompat.Type.statusBars());
-			}
-			if (mapHudLayout != null) {
-				mapHudLayout.setPadding(mapHudLayout.getPaddingLeft(), 0, mapHudLayout.getPaddingRight(), mapHudLayout.getPaddingBottom());
 			}
 		} else {
 			androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false);
@@ -2813,9 +2812,29 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				controller.hide(androidx.core.view.WindowInsetsCompat.Type.statusBars());
 				controller.setSystemBarsBehavior(androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
 			}
-			if (mapHudLayout != null) {
-				mapHudLayout.setPadding(mapHudLayout.getPaddingLeft(), 0, mapHudLayout.getPaddingRight(), mapHudLayout.getPaddingBottom());
-			}
+		}
+
+		if (rootLayout != null) {
+			rootLayout.setPadding(rootLayout.getPaddingLeft(), topPadding, rootLayout.getPaddingRight(), rootLayout.getPaddingBottom());
+			rootLayout.requestLayout();
 		}
 	}
+
+	private int getStatusBarHeight() {
+		int height = 0;
+		if (getWindow() != null) {
+			androidx.core.view.WindowInsetsCompat insets = androidx.core.view.ViewCompat.getRootWindowInsets(getWindow().getDecorView());
+			if (insets != null) {
+				height = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars()).top;
+			}
+		}
+		if (height <= 0) {
+			int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+			if (resourceId > 0) {
+				height = getResources().getDimensionPixelSize(resourceId);
+			}
+		}
+		return height;
+	}
 }
+
