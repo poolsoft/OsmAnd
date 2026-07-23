@@ -11,7 +11,7 @@
     <dimen name="dock_music_min_width">140dp</dimen>
 
     <!-- ANA EKRAN (activity_car_launcher) -->
-    <dimen name="map_margin_top">32dp</dimen>
+    <dimen name="map_margin_top">8dp</dimen>
     <dimen name="map_margin_side">8dp</dimen>
     <dimen name="widget_panel_width">350dp</dimen>
 

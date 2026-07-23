@@ -120,6 +120,9 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
+            android:clipToPadding="false"
+            android:paddingLeft="6dp"
+            android:paddingRight="6dp"
             android:orientation="horizontal" />
 
         <!-- Sag Gradient Overlay: Devami oldugunda gorulur -->

@@ -111,7 +111,8 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
         itemView.setGravity(android.view.Gravity.CENTER);
         int padding = dpToPx(2);
         itemView.setPadding(padding, padding, padding, padding);
-        itemView.setBackgroundResource(net.osmand.plus.R.drawable.bg_dock_item_ripple);
+        // Arka plan oval olmasin diye itemView'dan kaldirildi (iconView karesel alanina verilecek)
+        itemView.setBackground(null);
 
         return new ViewHolder(itemView);
     }
@@ -173,14 +174,17 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
             removeButton.setVisibility(View.GONE);
             container.addView(removeButton);
 
-            // Icon — boyut dockSize ayarina gore olceklendirilir
+            // Icon — 1:1 karesel alan ve kusursuz yuvarlak arka plan
             int iconSize = AppDockAdapter.this.getScaledIconSize();
+            int circleContainerSize = iconSize + dpToPx(12);
             iconView = new ImageView(context);
-            iconView.setLayoutParams(new LinearLayout.LayoutParams(iconSize, iconSize));
+            iconView.setLayoutParams(new LinearLayout.LayoutParams(circleContainerSize, circleContainerSize));
             iconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            iconView.setBackgroundResource(net.osmand.plus.R.drawable.bg_dock_item_ripple);
+            int iconPadding = dpToPx(6);
+            iconView.setPadding(iconPadding, iconPadding, iconPadding, iconPadding);
             container.addView(iconView);
 
-            // itemView'ın kendi ripple'ı var, animate kodunu dokunma hissiyatı (basılma) olarak koruyabiliriz ama onClickListener çalışmasını bozmaması için dönüş değerini false tutuyoruz.
             itemView.setOnTouchListener((v, event) -> {
                 switch (event.getAction()) {
                     case android.view.MotionEvent.ACTION_DOWN:
@@ -196,18 +200,20 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
         }
 
         public void bind(AppShortcut shortcut) {
-            // Dinamik olarak guncel ikon boyutunu ata (ViewHolder yeniden kullanildiginda boyutun guncellenmesi icin)
+            // Dinamik olarak guncel 1:1 karesel ikon boyutunu ata
             int iconSize = getScaledIconSize();
+            int circleContainerSize = iconSize + dpToPx(12);
             ViewGroup.LayoutParams lp = iconView.getLayoutParams();
             if (lp != null) {
-                lp.width = iconSize;
-                lp.height = iconSize;
+                lp.width = circleContainerSize;
+                lp.height = circleContainerSize;
                 iconView.setLayoutParams(lp);
             } else {
-                iconView.setLayoutParams(new LinearLayout.LayoutParams(iconSize, iconSize));
+                iconView.setLayoutParams(new LinearLayout.LayoutParams(circleContainerSize, circleContainerSize));
             }
 
             iconView.setImageDrawable(shortcut.getIcon());
+
 
             // Edit mode kontrolu
             removeButton.setVisibility(isEditMode ? View.VISIBLE : View.GONE);

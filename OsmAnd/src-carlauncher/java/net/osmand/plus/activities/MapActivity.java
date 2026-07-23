@@ -2799,14 +2799,15 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 		int topPadding = show ? getStatusBarHeight() : 0;
 
+		// Her zaman edge-to-edge (decorFits = false) tutarak dolguyu kendimiz yonetiyoruz
+		androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false);
+
 		if (show) {
-			androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true);
 			window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 			if (controller != null) {
 				controller.show(androidx.core.view.WindowInsetsCompat.Type.statusBars());
 			}
 		} else {
-			androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false);
 			window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 			if (controller != null) {
 				controller.hide(androidx.core.view.WindowInsetsCompat.Type.statusBars());
