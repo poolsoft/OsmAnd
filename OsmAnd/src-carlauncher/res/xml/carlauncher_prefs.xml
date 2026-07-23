@@ -20,6 +20,13 @@
             app:iconSpaceReserved="false" />
 
         <androidx.preference.SwitchPreferenceCompat
+            android:key="car_launcher_fast_boot"
+            android:title="@string/car_pref_title_fast_boot"
+            android:summary="@string/car_pref_summary_fast_boot"
+            android:defaultValue="true"
+            app:iconSpaceReserved="false" />
+
+        <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_dark_theme"
             android:title="@string/car_pref_title_dark_theme"
             android:summary="@string/car_pref_summary_dark_theme"

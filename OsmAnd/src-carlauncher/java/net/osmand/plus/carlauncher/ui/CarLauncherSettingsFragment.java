@@ -379,6 +379,16 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             });
         }
 
+        // Fast Boot
+        SwitchPreferenceCompat fastBootPref = findPreference(CarLauncherSettings.KEY_FAST_BOOT);
+        if (fastBootPref != null) {
+            fastBootPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                boolean fast = (Boolean) newValue;
+                CarLauncherSettings.getInstance(requireContext()).setFastBootEnabled(fast);
+                return true;
+            });
+        }
+
 
         // Dark Theme
         SwitchPreferenceCompat themePref = findPreference(CarLauncherSettings.KEY_DARK_THEME);

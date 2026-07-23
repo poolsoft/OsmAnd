@@ -15,7 +15,9 @@
     <string name="car_pref_title_appearance_portrait">Görünüm - Dikey Ekran</string>
     <string name="car_pref_title_appearance_landscape">Görünüm - Yatay Ekran</string>
     <string name="car_pref_title_status_bar">Status Bar Göster</string>
-    <string name="car_pref_summary_status_bar">Sistem çubuğunu açıp kapatır</string>
+    <string name="car_pref_summary_status_bar">Sistem durum çubuğunu gösterir veya gizler</string>
+    <string name="car_pref_title_fast_boot">Hızlı Başlatma (Arka Planda Yükleme)</string>
+    <string name="car_pref_summary_fast_boot">Açılışta OsmAnd harita motorunu arka planda yükler, arayüz anında açılır</string>
     <string name="car_pref_title_dark_theme">Koyu Tema</string>
     <string name="car_pref_summary_dark_theme">Karanlık arka plan kullan</string>
     <string name="car_pref_title_portrait_map_only">Dikey Ekranda Sadece Harita Göster</string>

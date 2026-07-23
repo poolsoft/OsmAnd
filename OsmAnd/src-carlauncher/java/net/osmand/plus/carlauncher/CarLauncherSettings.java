@@ -37,6 +37,7 @@ public class CarLauncherSettings {
 
     // Appearance Keys - Genel
     public static final String KEY_STATUS_BAR = "car_launcher_status_bar";
+    public static final String KEY_FAST_BOOT = "car_launcher_fast_boot";
 
     public static final String KEY_DARK_THEME = "car_launcher_dark_theme";
     public static final String KEY_FLOATING_BUTTON = "car_launcher_floating_button";
@@ -101,6 +102,7 @@ public class CarLauncherSettings {
 
     // --- Bellekte tutulan cache alanlari ---
     private boolean cStatusBarVisible;
+    private boolean cFastBoot;
     private boolean cDarkTheme;
     private boolean cPortraitMapOnly;
     private boolean cFloatingButton;
@@ -197,6 +199,7 @@ public class CarLauncherSettings {
      */
     private void loadAll() {
         cStatusBarVisible = prefs.getBoolean(KEY_STATUS_BAR, true);
+        cFastBoot = prefs.getBoolean(KEY_FAST_BOOT, true);
         cDarkTheme = prefs.getBoolean(KEY_DARK_THEME, true);
         cPortraitMapOnly = prefs.getBoolean(KEY_PORTRAIT_MAP_ONLY, false);
         cFloatingButton = prefs.getBoolean(KEY_FLOATING_BUTTON, false);
@@ -358,6 +361,15 @@ public class CarLauncherSettings {
     public void setStatusBarVisible(boolean visible) {
         this.cStatusBarVisible = visible;
         prefs.edit().putBoolean(KEY_STATUS_BAR, visible).apply();
+    }
+
+    public boolean isFastBootEnabled() {
+        return cFastBoot;
+    }
+
+    public void setFastBootEnabled(boolean enabled) {
+        this.cFastBoot = enabled;
+        prefs.edit().putBoolean(KEY_FAST_BOOT, enabled).apply();
     }
 
     public boolean isDarkTheme() {

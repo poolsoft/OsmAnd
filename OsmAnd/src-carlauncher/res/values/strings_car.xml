@@ -16,6 +16,8 @@
     <string name="car_pref_title_appearance_landscape">Appearance - Landscape Screen</string>
     <string name="car_pref_title_status_bar">Show Status Bar</string>
     <string name="car_pref_summary_status_bar">Toggles the system status bar</string>
+    <string name="car_pref_title_fast_boot">Fast Boot (Background Core Loading)</string>
+    <string name="car_pref_summary_fast_boot">Loads OsmAnd map engine in the background on startup, opening the UI instantly</string>
     <string name="car_pref_title_dark_theme">Dark Theme</string>
     <string name="car_pref_summary_dark_theme">Use dark background</string>
     <string name="car_pref_title_portrait_map_only">Show Map Only in Portrait Screen</string>

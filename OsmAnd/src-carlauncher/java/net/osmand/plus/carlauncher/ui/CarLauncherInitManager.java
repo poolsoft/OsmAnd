@@ -21,6 +21,7 @@ public class CarLauncherInitManager {
     private static CarLauncherInitManager instance;
     private boolean isCoreReady = false;
     private boolean isInitializing = false;
+    private long initStartTimeMs = 0;
     private final CopyOnWriteArrayList<OnInitStateListener> listeners = new CopyOnWriteArrayList<>();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final ExecutorService initExecutor = Executors.newSingleThreadExecutor();
@@ -34,6 +35,12 @@ public class CarLauncherInitManager {
             instance = new CarLauncherInitManager();
         }
         return instance;
+    }
+
+    public void startInitTimer() {
+        if (initStartTimeMs == 0) {
+            initStartTimeMs = System.currentTimeMillis();
+        }
     }
 
     public boolean isCoreReady() {
@@ -59,6 +66,7 @@ public class CarLauncherInitManager {
     public void startAsyncCoreInit(Context context) {
         if (isCoreReady || isInitializing) return;
         isInitializing = true;
+        startInitTimer();
 
         initExecutor.execute(() -> {
             try {
@@ -69,18 +77,30 @@ public class CarLauncherInitManager {
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
-                isCoreReady = true;
-                isInitializing = false;
-                mainHandler.post(this::notifyCoreReady);
+                mainHandler.post(() -> markCoreReady(context));
             }
         });
     }
 
     public void markCoreReady() {
+        markCoreReady(OsmandApplication.getAppContext());
+    }
+
+    public void markCoreReady(Context context) {
         if (!isCoreReady) {
             isCoreReady = true;
             isInitializing = false;
-            mainHandler.post(this::notifyCoreReady);
+            
+            long elapsedTimeMs = initStartTimeMs > 0 ? (System.currentTimeMillis() - initStartTimeMs) : 0;
+            double elapsedTimeSec = elapsedTimeMs / 1000.0;
+
+            mainHandler.post(() -> {
+                if (context != null && elapsedTimeMs > 0) {
+                    String timeMsg = String.format(java.util.Locale.US, "⏱️ OsmAnd Harita Motoru Yüklendi!\nYükleme Süresi: %d ms (%.2f saniye)", elapsedTimeMs, elapsedTimeSec);
+                    android.widget.Toast.makeText(context, timeMsg, android.widget.Toast.LENGTH_LONG).show();
+                }
+                notifyCoreReady();
+            });
         }
     }
 

@@ -1207,22 +1207,27 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 
 	private void checkAppInitialization() {
+		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);
+		boolean fastBoot = !carSettings.isLauncherEnabled() || carSettings.isFastBootEnabled();
+
+		net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().startInitTimer();
+
 		if (app.isApplicationInitializing()) {
 			View initProgress = findViewById(R.id.init_progress);
 			if (initProgress != null) {
-				initProgress.setVisibility(View.GONE);
+				initProgress.setVisibility(fastBoot ? View.GONE : View.VISIBLE);
 			}
 
 			initListener = new MapAppInitializeListener(this) {
 				@Override
 				public void onFinish(@NonNull AppInitializer init) {
 					super.onFinish(init);
-					net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().markCoreReady();
+					net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().markCoreReady(MapActivity.this);
 				}
 			};
 			app.checkApplicationIsBeingInitialized(initListener);
 		} else {
-			net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().markCoreReady();
+			net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().markCoreReady(MapActivity.this);
 			app.getOsmandMap().setupRenderingView();
 			restoreNavigationHelper.checkRestoreRoutingMode();
 		}
