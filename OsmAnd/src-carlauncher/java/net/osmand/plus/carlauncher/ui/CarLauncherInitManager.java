@@ -83,7 +83,7 @@ public class CarLauncherInitManager {
     }
 
     public void markCoreReady() {
-        markCoreReady(OsmandApplication.getAppContext());
+        markCoreReady((Context) null);
     }
 
     public void markCoreReady(Context context) {
