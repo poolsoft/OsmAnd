@@ -1364,6 +1364,10 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         optionsList.add("📑 Playliste Ekle");
         optionsList.add(favOption);
 
+        if (currentViewMode == ViewMode.QUEUE) {
+            optionsList.add("🗑️ Sıradan Çıkar");
+        }
+
         if (track.isUsb()) {
             optionsList.add("📥 Cihaza Kopyala (Offline Yap)");
         }
@@ -1373,54 +1377,56 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         new android.app.AlertDialog.Builder(getContext())
                 .setTitle(track.getTitle() + (track.getArtist() != null && !track.getArtist().isEmpty() ? " - " + track.getArtist() : ""))
                 .setItems(options, (dialog, which) -> {
-                    switch (which) {
-                        case 0: // Sonraki Çal
-                            if (musicManager != null && musicManager.getInternalPlayer() != null) {
-                                boolean added = musicManager.getInternalPlayer().playNextInQueue(track);
-                                if (added) {
-                                    Toast.makeText(getContext(), "Sonraki şarkı olarak eklendi: " + track.getTitle(), Toast.LENGTH_SHORT).show();
-                                }
+                    String selected = options[which];
+                    if (selected.contains("Sonraki Çal")) {
+                        if (musicManager != null && musicManager.getInternalPlayer() != null) {
+                            boolean added = musicManager.getInternalPlayer().playNextInQueue(track);
+                            if (added) {
+                                Toast.makeText(getContext(), "Sonraki şarkı olarak eklendi: " + track.getTitle(), Toast.LENGTH_SHORT).show();
                             }
-                            break;
-                        case 1: // Kuyruğa Ekle
-                            if (musicManager != null && musicManager.getInternalPlayer() != null) {
-                                boolean added = musicManager.getInternalPlayer().addToQueue(track);
-                                if (added) {
-                                    Toast.makeText(getContext(), "Kuyruğun sonuna eklendi: " + track.getTitle(), Toast.LENGTH_SHORT).show();
-                                }
+                        }
+                    } else if (selected.contains("Kuyruğa Ekle")) {
+                        if (musicManager != null && musicManager.getInternalPlayer() != null) {
+                            boolean added = musicManager.getInternalPlayer().addToQueue(track);
+                            if (added) {
+                                Toast.makeText(getContext(), "Kuyruğun sonuna eklendi: " + track.getTitle(), Toast.LENGTH_SHORT).show();
                             }
-                            break;
-                        case 2: // Playliste Ekle
-                            showAddTrackToPlaylistDialog(track);
-                            break;
-                        case 3: // Favori Toggle
-                            if (isFav) {
-                                playlistManager.removeFromFavorites(track.getPath());
-                                Toast.makeText(getContext(), "Favorilerden çıkarıldı", Toast.LENGTH_SHORT).show();
-                            } else {
-                                playlistManager.addToFavorites(track.getPath());
-                                Toast.makeText(getContext(), "Favorilere eklendi", Toast.LENGTH_SHORT).show();
+                        }
+                    } else if (selected.contains("Playliste Ekle")) {
+                        showAddTrackToPlaylistDialog(track);
+                    } else if (selected.contains("Favori")) {
+                        if (isFav) {
+                            playlistManager.removeFromFavorites(track.getPath());
+                            Toast.makeText(getContext(), "Favorilerden çıkarıldı", Toast.LENGTH_SHORT).show();
+                        } else {
+                            playlistManager.addToFavorites(track.getPath());
+                            Toast.makeText(getContext(), "Favorilere eklendi", Toast.LENGTH_SHORT).show();
+                        }
+                        if (adapter != null) {
+                            adapter.notifyDataSetChanged();
+                        }
+                    } else if (selected.contains("Sıradan Çıkar")) {
+                        if (musicManager != null && musicManager.getInternalPlayer() != null) {
+                            musicManager.getInternalPlayer().removeFromQueue(track);
+                            if (currentViewMode == ViewMode.QUEUE) {
+                                switchViewMode(ViewMode.QUEUE);
                             }
-                            if (adapter != null) {
-                                adapter.notifyDataSetChanged();
-                            }
-                            break;
-                        case 4: // Cihaza Kopyala (USB parçaları için)
-                            if (musicManager != null && musicManager.getRepository() != null) {
-                                Toast.makeText(getContext(), "Cihaz hafızasına kopyalanıyor...", Toast.LENGTH_SHORT).show();
-                                musicManager.getRepository().copyTrackToInternalStorage(track, (success, messageOrPath) -> {
-                                    if (getActivity() == null) return;
-                                    getActivity().runOnUiThread(() -> {
-                                        if (success) {
-                                            Toast.makeText(requireContext(), "Kopyalandı: " + track.getTitle(), Toast.LENGTH_LONG).show();
-                                            rescanMusic();
-                                        } else {
-                                            Toast.makeText(requireContext(), "Kopyalama başarısız: " + messageOrPath, Toast.LENGTH_LONG).show();
-                                        }
-                                    });
+                        }
+                    } else if (selected.contains("Cihaza Kopyala")) {
+                        if (musicManager != null && musicManager.getRepository() != null) {
+                            Toast.makeText(getContext(), "Cihaz hafızasına kopyalanıyor...", Toast.LENGTH_SHORT).show();
+                            musicManager.getRepository().copyTrackToInternalStorage(track, (success, messageOrPath) -> {
+                                if (getActivity() == null) return;
+                                getActivity().runOnUiThread(() -> {
+                                    if (success) {
+                                        Toast.makeText(requireContext(), "Kopyalandı: " + track.getTitle(), Toast.LENGTH_LONG).show();
+                                        rescanMusic();
+                                    } else {
+                                        Toast.makeText(requireContext(), "Kopyalama başarısız: " + messageOrPath, Toast.LENGTH_LONG).show();
+                                    }
                                 });
-                            }
-                            break;
+                            });
+                        }
                     }
                 })
                 .setNegativeButton("İptal", null)
@@ -2137,7 +2143,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     notifyItemChanged(position);
                 });
 
-                // Yildiza uzun basildiginda calma listesi ekleme dialogunu ac
+                // Yildiza uzun basildiginda veya öğeye uzun basıldığında menüyü aç
                 holder.btnFavorite.setOnLongClickListener(v -> {
                     listener.onAddClick(track);
                     return true;
@@ -2151,9 +2157,11 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 }
                 listener.onClick(track);
             });
-            if (holder.btnAdd != null) {
-                holder.btnAdd.setOnClickListener(v -> listener.onAddClick(track));
-            }
+
+            holder.itemView.setOnLongClickListener(v -> {
+                listener.onAddClick(track);
+                return true;
+            });
         }
 
 

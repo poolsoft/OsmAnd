@@ -813,6 +813,17 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         Toast.makeText(getContext(), "Dock sıfırlandı", Toast.LENGTH_SHORT).show();
     }
 
+    private void setupMusicPrefs() {
+        SwitchPreferenceCompat autoPlayPref = findPreference(CarLauncherSettings.KEY_AUTO_PLAY_MUSIC);
+        if (autoPlayPref != null) {
+            autoPlayPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                boolean enable = (Boolean) newValue;
+                CarLauncherSettings.getInstance(requireContext()).setAutoPlayMusicEnabled(enable);
+                return true;
+            });
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // OTOMATİK BAŞLATMA
     // ═══════════════════════════════════════════════════════════════
