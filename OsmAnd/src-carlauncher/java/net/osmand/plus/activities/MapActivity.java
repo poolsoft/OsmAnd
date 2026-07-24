@@ -1548,6 +1548,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         }
 
         checkAndRefreshDockFragmentIfNeeded();
+        applyStatusBarVisibility();
 
 		// for voice navigation. Lags behind routingAppMode changes, hence repeated
 		// under onCalculationFinish()
@@ -2790,6 +2791,14 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 	}
 
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+		if (hasFocus) {
+			applyStatusBarVisibility();
+		}
+	}
+
 	public void applyStatusBarVisibility() {
 		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);
 		if (!carSettings.isLauncherEnabled()) return;
@@ -2802,17 +2811,17 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		androidx.core.view.WindowInsetsControllerCompat controller =
 				androidx.core.view.WindowCompat.getInsetsController(window, window.getDecorView());
 
-		int topPadding = show ? getStatusBarHeight() : 0;
-
-		// Her zaman edge-to-edge (decorFits = false) tutarak dolguyu kendimiz yonetiyoruz
+		// Edge-to-edge
 		androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false);
 
 		if (show) {
 			window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			window.addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
 			if (controller != null) {
 				controller.show(androidx.core.view.WindowInsetsCompat.Type.statusBars());
 			}
 		} else {
+			window.clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
 			window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 			if (controller != null) {
 				controller.hide(androidx.core.view.WindowInsetsCompat.Type.statusBars());
@@ -2821,14 +2830,17 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 
 		if (rootLayout != null) {
-			rootLayout.setPadding(rootLayout.getPaddingLeft(), topPadding, rootLayout.getPaddingRight(), rootLayout.getPaddingBottom());
-			rootLayout.requestLayout();
+			rootLayout.post(() -> {
+				int topPadding = show ? getStatusBarHeight() : 0;
+				rootLayout.setPadding(rootLayout.getPaddingLeft(), topPadding, rootLayout.getPaddingRight(), rootLayout.getPaddingBottom());
+				rootLayout.requestLayout();
+			});
 		}
 	}
 
 	private int getStatusBarHeight() {
 		int height = 0;
-		if (getWindow() != null) {
+		if (getWindow() != null && getWindow().getDecorView() != null) {
 			androidx.core.view.WindowInsetsCompat insets = androidx.core.view.ViewCompat.getRootWindowInsets(getWindow().getDecorView());
 			if (insets != null) {
 				height = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars()).top;
