@@ -514,70 +514,88 @@
                         android:marqueeRepeatLimit="marquee_forever"/>
                 </LinearLayout>
 
-                <!-- Butonlar -->
+                <!-- Butonlar (2 Satirli Yapı) -->
                 <LinearLayout
                     android:id="@+id/playback_controls_layout"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:layout_marginTop="4dp">
                     
-                    <ImageButton
-                        android:id="@+id/btn_shuffle"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:src="@drawable/ic_music_shuffle"
-                        android:background="?android:attr/selectableItemBackgroundBorderless"
-                        android:tint="#FFFFFF"
-                        android:scaleType="centerInside"
-                        android:padding="8dp"
-                        android:layout_marginEnd="4dp"/>
+                    <!-- Üst Satır: Shuffle ve Repeat -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:layout_marginBottom="4dp">
 
-                    <ImageButton
-                        android:id="@+id/btn_prev"
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
-                        android:src="@drawable/ic_music_prev"
-                        android:background="?android:attr/selectableItemBackgroundBorderless"
-                        android:tint="#FFFFFF"
-                        android:padding="16dp"
-                        android:scaleType="centerInside"/>
-
-                    <FrameLayout
-                        android:layout_width="84dp"
-                        android:layout_height="84dp"
-                        android:layout_marginHorizontal="16dp">
                         <ImageButton
-                            android:id="@+id/btn_play"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:src="@drawable/ic_music_play"
-                            android:background="@drawable/bg_circle_cyan"
-                            android:tint="#000000"
-                            android:padding="20dp"
+                            android:id="@+id/btn_shuffle"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:src="@drawable/ic_music_shuffle"
+                            android:background="?android:attr/selectableItemBackgroundBorderless"
+                            android:tint="#FFFFFF"
+                            android:scaleType="centerInside"
+                            android:padding="10dp"
+                            android:layout_marginEnd="40dp"/>
+
+                        <ImageButton
+                            android:id="@+id/btn_repeat"
+                            android:layout_width="44dp"
+                            android:layout_height="44dp"
+                            android:src="@drawable/ic_music_repeat"
+                            android:background="?android:attr/selectableItemBackgroundBorderless"
+                            android:tint="#FFFFFF"
+                            android:scaleType="centerInside"
+                            android:padding="10dp"
+                            android:layout_marginStart="40dp"/>
+                    </LinearLayout>
+
+                    <!-- Alt Satır: Prev, Play/Pause, Next -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center">
+
+                        <ImageButton
+                            android:id="@+id/btn_prev"
+                            android:layout_width="64dp"
+                            android:layout_height="64dp"
+                            android:src="@drawable/ic_music_prev"
+                            android:background="?android:attr/selectableItemBackgroundBorderless"
+                            android:tint="#FFFFFF"
+                            android:padding="16dp"
                             android:scaleType="centerInside"/>
-                    </FrameLayout>
 
-                    <ImageButton
-                        android:id="@+id/btn_next"
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
-                        android:src="@drawable/ic_music_next"
-                        android:background="?android:attr/selectableItemBackgroundBorderless"
-                        android:tint="#FFFFFF"
-                        android:padding="16dp"
-                        android:scaleType="centerInside"/>
+                        <FrameLayout
+                            android:layout_width="76dp"
+                            android:layout_height="76dp"
+                            android:layout_marginHorizontal="16dp">
+                            <ImageButton
+                                android:id="@+id/btn_play"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:src="@drawable/ic_music_play"
+                                android:background="@drawable/bg_circle_cyan"
+                                android:tint="#000000"
+                                android:padding="18dp"
+                                android:scaleType="centerInside"/>
+                        </FrameLayout>
 
-                    <ImageButton
-                        android:id="@+id/btn_repeat"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:src="@drawable/ic_music_repeat"
-                        android:background="?android:attr/selectableItemBackgroundBorderless"
-                        android:tint="#FFFFFF"
-                        android:scaleType="centerInside"
-                        android:padding="8dp"
-                        android:layout_marginStart="4dp"/>
+                        <ImageButton
+                            android:id="@+id/btn_next"
+                            android:layout_width="64dp"
+                            android:layout_height="64dp"
+                            android:src="@drawable/ic_music_next"
+                            android:background="?android:attr/selectableItemBackgroundBorderless"
+                            android:tint="#FFFFFF"
+                            android:padding="16dp"
+                            android:scaleType="centerInside"/>
+                    </LinearLayout>
                 </LinearLayout>
 
             </LinearLayout>

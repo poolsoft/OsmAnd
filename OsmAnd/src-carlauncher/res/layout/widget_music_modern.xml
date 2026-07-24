@@ -91,9 +91,20 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <ImageButton
+            android:id="@+id/widget_btn_shuffle"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_music_shuffle"
+            android:padding="6dp"
+            android:scaleType="centerInside"
+            app:tint="#88FFFFFF" />
+
+        <ImageButton
             android:id="@+id/widget_btn_prev"
             android:layout_width="40dp"
             android:layout_height="40dp"
+            android:layout_marginStart="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_media_previous"
             app:tint="#FFFFFF" />
@@ -102,7 +113,7 @@
             android:id="@+id/widget_btn_play"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginHorizontal="16dp"
+            android:layout_marginHorizontal="12dp"
             android:background="@drawable/bg_circle_button"
             android:backgroundTint="@color/cl_primary"
             android:src="@android:drawable/ic_media_play"
@@ -112,9 +123,20 @@
             android:id="@+id/widget_btn_next"
             android:layout_width="40dp"
             android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_media_next"
             app:tint="#FFFFFF" />
+
+        <ImageButton
+            android:id="@+id/widget_btn_repeat"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_music_repeat"
+            android:padding="6dp"
+            android:scaleType="centerInside"
+            app:tint="#88FFFFFF" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
