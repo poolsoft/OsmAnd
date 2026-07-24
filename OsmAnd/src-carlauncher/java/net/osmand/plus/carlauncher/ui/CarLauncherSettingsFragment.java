@@ -668,6 +668,16 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+
+        // Otomatik Muzik Oynat
+        SwitchPreferenceCompat autoPlayPref = findPreference(CarLauncherSettings.KEY_AUTO_PLAY_MUSIC);
+        if (autoPlayPref != null) {
+            autoPlayPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                boolean enable = (Boolean) newValue;
+                CarLauncherSettings.getInstance(requireContext()).setAutoPlayMusicEnabled(enable);
+                return true;
+            });
+        }
     }
 
     private void updateMusicAppSummary(Preference pref) {
@@ -811,17 +821,6 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         Intent intent = new Intent("net.osmand.carlauncher.DOCK_UPDATED");
         getContext().sendBroadcast(intent);
         Toast.makeText(getContext(), "Dock sıfırlandı", Toast.LENGTH_SHORT).show();
-    }
-
-    private void setupMusicPrefs() {
-        SwitchPreferenceCompat autoPlayPref = findPreference(CarLauncherSettings.KEY_AUTO_PLAY_MUSIC);
-        if (autoPlayPref != null) {
-            autoPlayPref.setOnPreferenceChangeListener((preference, newValue) -> {
-                boolean enable = (Boolean) newValue;
-                CarLauncherSettings.getInstance(requireContext()).setAutoPlayMusicEnabled(enable);
-                return true;
-            });
-        }
     }
 
     // ═══════════════════════════════════════════════════════════════

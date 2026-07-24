@@ -2116,7 +2116,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	public void onWindowFocusChanged(boolean hasFocus) {
 		super.onWindowFocusChanged(hasFocus);
 		if (hasFocus) {
-			hideSystemUI();
+			net.osmand.plus.carlauncher.CarLauncherSettings carSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);
+			if (carSettings.isLauncherEnabled() && carSettings.isStatusBarVisible()) {
+				applyStatusBarVisibility();
+			} else {
+				hideSystemUI();
+			}
 		}
 	}
 
@@ -2791,13 +2796,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 	}
 
-	@Override
-	public void onWindowFocusChanged(boolean hasFocus) {
-		super.onWindowFocusChanged(hasFocus);
-		if (hasFocus) {
-			applyStatusBarVisibility();
-		}
-	}
+
 
 	public void applyStatusBarVisibility() {
 		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);

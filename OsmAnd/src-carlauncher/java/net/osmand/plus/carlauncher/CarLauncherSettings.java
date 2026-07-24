@@ -89,7 +89,7 @@ public class CarLauncherSettings {
     private static final String KEY_WEATHER_ENABLED = "car_launcher_weather_enabled";
 
     // Auto Play Music
-    private static final String KEY_AUTO_PLAY_MUSIC = "car_launcher_auto_play_music";
+    public static final String KEY_AUTO_PLAY_MUSIC = "car_launcher_auto_play_music";
 
     // Widget Handle
     public static final String KEY_WIDGET_HANDLE_VERTICAL_BIAS = "widget_handle_vertical_bias";

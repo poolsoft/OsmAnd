@@ -80,24 +80,6 @@ public class InternalMusicPlayer {
         return playingQueue.isEmpty() ? playlist : playingQueue;
     }
 
-    public boolean playNextInQueue(MusicRepository.AudioTrack track) {
-        if (track == null) return false;
-        List<MusicRepository.AudioTrack> queue = getPlayingQueue();
-        queue.remove(track);
-        int insertPos = (currentIndex >= 0 && currentIndex < queue.size()) ? currentIndex + 1 : 0;
-        queue.add(insertPos, track);
-        return true;
-    }
-
-    public boolean addToQueue(MusicRepository.AudioTrack track) {
-        if (track == null) return false;
-        List<MusicRepository.AudioTrack> queue = getPlayingQueue();
-        if (!queue.contains(track)) {
-            queue.add(track);
-        }
-        return true;
-    }
-
     public void playNext(MusicRepository.AudioTrack track) {
         playNextInQueue(track);
     }
@@ -115,7 +97,7 @@ public class InternalMusicPlayer {
                     if (currentIndex >= queue.size()) currentIndex = 0;
                     playTrack(currentIndex, true, 0);
                 } else {
-                    stop();
+                    pause();
                 }
             }
         }
