@@ -406,6 +406,12 @@
             app:iconSpaceReserved="false" />
 
         <androidx.preference.Preference
+            android:key="car_launcher_boot_stats"
+            android:title="@string/car_pref_title_boot_stats"
+            android:summary="@string/car_pref_summary_boot_stats"
+            app:iconSpaceReserved="false" />
+
+        <androidx.preference.Preference
             android:key="car_launcher_check_updates"
             android:title="@string/car_pref_title_check_updates"
             android:summary="@string/car_pref_summary_check_updates"

@@ -96,6 +96,9 @@
     <!-- About / Hakkında -->
     <string name="car_pref_title_about">Hakkında</string>
     <string name="car_pref_title_version">Versiyon</string>
+    <string name="car_pref_title_boot_stats">Açılış ve Performans İstatistikleri</string>
+    <string name="car_pref_summary_boot_stats">Arayüz açılış süresini, harita yüklenme süresini ve RAM kullanımını hesaplar</string>
+    <string name="car_dialog_boot_stats_title">Açılış İstatistikleri ve Bellek Analizi</string>
     <string name="car_pref_title_check_updates">Güncellemeleri Denetle</string>
     <string name="car_pref_summary_check_updates">Yeni bir sürüm olup olmadığını kontrol et</string>
     <string name="car_pref_title_github">GitHub</string>

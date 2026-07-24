@@ -926,6 +926,16 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             }
         }
 
+        Preference bootStatsPref = findPreference("car_launcher_boot_stats");
+        if (bootStatsPref != null && getContext() != null) {
+            String summary = CarLauncherInitManager.getInstance().getFormattedStatsSummary(getContext());
+            bootStatsPref.setSummary(summary);
+            bootStatsPref.setOnPreferenceClickListener(preference -> {
+                showBootStatsDialog();
+                return true;
+            });
+        }
+
         Preference githubPref = findPreference("car_launcher_github");
         if (githubPref != null) {
             githubPref.setOnPreferenceClickListener(preference -> {
@@ -949,6 +959,16 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 return true;
             });
         }
+    }
+
+    private void showBootStatsDialog() {
+        if (getContext() == null) return;
+        String details = CarLauncherInitManager.getInstance().getFormattedStatsDetails(getContext());
+        new androidx.appcompat.app.AlertDialog.Builder(getContext())
+                .setTitle(getString(net.osmand.plus.R.string.car_dialog_boot_stats_title))
+                .setMessage(details)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
     }
 
     private void setupAssistantPrefs() {

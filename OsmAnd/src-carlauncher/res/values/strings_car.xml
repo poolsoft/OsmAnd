@@ -96,6 +96,9 @@
     <!-- About / Hakkında -->
     <string name="car_pref_title_about">About</string>
     <string name="car_pref_title_version">Version</string>
+    <string name="car_pref_title_boot_stats">Startup &amp; Performance Statistics</string>
+    <string name="car_pref_summary_boot_stats">Calculates UI launch duration, map engine load time, and RAM usage</string>
+    <string name="car_dialog_boot_stats_title">Startup Statistics &amp; Memory Benchmark</string>
     <string name="car_pref_title_check_updates">Check for Updates</string>
     <string name="car_pref_summary_check_updates">Check if there is a new version</string>
     <string name="car_pref_title_github">GitHub</string>
