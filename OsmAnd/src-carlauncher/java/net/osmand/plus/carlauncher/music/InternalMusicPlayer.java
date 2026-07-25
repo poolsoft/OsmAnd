@@ -377,12 +377,6 @@ public class InternalMusicPlayer {
         if (queue.isEmpty())
             return;
 
-        // Eger sarki 3 saniyeden fazla caldiysa basa sar (Turkce karakter yok)
-        if (isPrepared && mediaPlayer.isPlaying() && mediaPlayer.getCurrentPosition() > 3000) {
-            mediaPlayer.seekTo(0);
-            return;
-        }
-
         if (repeatMode == 1) { // Repeat One (Turkce karakter yok)
             playTrack(currentIndex);
             return;
@@ -391,17 +385,33 @@ public class InternalMusicPlayer {
         int prevIndex = currentIndex - 1;
 
         if (prevIndex < 0) {
-            if (repeatMode == 2) { // Repeat All (Turkce karakter yok)
-                prevIndex = queue.size() - 1;
-                playTrack(prevIndex);
-            } else {
-                // Repeat Off (Turkce karakter yok)
-                prevIndex = queue.size() - 1;
-                playTrack(prevIndex);
-            }
-        } else {
-            playTrack(prevIndex);
+            prevIndex = queue.size() - 1;
         }
+        playTrack(prevIndex);
+    }
+
+    public boolean isShuffleOn() {
+        return isShuffleOn;
+    }
+
+    public void setShuffleOn(boolean shuffleOn) {
+        this.isShuffleOn = shuffleOn;
+        rebuildQueue();
+        saveState();
+    }
+
+    public int getRepeatMode() {
+        return repeatMode;
+    }
+
+    public void setRepeatMode(int repeatMode) {
+        this.repeatMode = repeatMode;
+        saveState();
+    }
+
+    public void toggleRepeat() {
+        this.repeatMode = (this.repeatMode + 1) % 3; // 0: Off, 1: Repeat One, 2: Repeat All
+        saveState();
     }
 
     public boolean isPlaying() {

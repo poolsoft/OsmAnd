@@ -654,6 +654,32 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         }
     }
 
+    public boolean isShuffleOn() {
+        return internalPlayer != null && internalPlayer.isShuffleOn();
+    }
+
+    public void setShuffleOn(boolean shuffleOn) {
+        if (internalPlayer != null) {
+            internalPlayer.setShuffleOn(shuffleOn);
+            notifyStateChanged();
+        }
+    }
+
+    public void toggleShuffle() {
+        setShuffleOn(!isShuffleOn());
+    }
+
+    public int getRepeatMode() {
+        return internalPlayer != null ? internalPlayer.getRepeatMode() : 0;
+    }
+
+    public void toggleRepeat() {
+        if (internalPlayer != null) {
+            internalPlayer.toggleRepeat();
+            notifyStateChanged();
+        }
+    }
+
     private String sanitizeEncoding(String text) {
         if (text == null) return null;
         try {

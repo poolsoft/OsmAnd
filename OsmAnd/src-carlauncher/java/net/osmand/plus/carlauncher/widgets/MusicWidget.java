@@ -31,6 +31,8 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
     private TextView statusText;
     private TextView artistText;
     private ImageButton btnPlay;
+    private ImageButton btnShuffle;
+    private ImageButton btnRepeat;
     private ImageView albumArtView;
     private ImageView appIconView;
     private MusicVisualizerView visualizerView;
@@ -60,6 +62,21 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         ImageButton btnPrev = view.findViewById(net.osmand.plus.R.id.widget_btn_prev);
         ImageButton btnNext = view.findViewById(net.osmand.plus.R.id.widget_btn_next);
         btnPlay = view.findViewById(net.osmand.plus.R.id.widget_btn_play);
+        btnShuffle = view.findViewById(net.osmand.plus.R.id.widget_btn_shuffle);
+        btnRepeat = view.findViewById(net.osmand.plus.R.id.widget_btn_repeat);
+
+        if (btnShuffle != null) {
+            btnShuffle.setOnClickListener(v -> {
+                musicManager.toggleShuffle();
+                updateShuffleRepeatUI();
+            });
+        }
+        if (btnRepeat != null) {
+            btnRepeat.setOnClickListener(v -> {
+                musicManager.toggleRepeat();
+                updateShuffleRepeatUI();
+            });
+        }
 
         // --- Listeners ---
         appIconView.setOnClickListener(v -> {
@@ -238,6 +255,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         musicManager.addListener(this);
         musicManager.addVisualizerListener(this);
         updateAppIcon(null);
+        updateShuffleRepeatUI();
     }
 
     @Override
@@ -257,8 +275,18 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
             rootView.post(() -> {
                 if (statusText != null)
                     statusText.setText(title != null ? title : "Müzik Seçin");
-                if (artistText != null)
-                    artistText.setText(artist != null ? artist : "");
+                if (artistText != null) {
+                    String cleanArtist = artist;
+                    if (cleanArtist != null) {
+                        String lower = cleanArtist.trim().toLowerCase(java.util.Locale.ROOT);
+                        if (lower.equals("unknown") || lower.equals("<unknown>") || lower.equals("bilinmeyen")) {
+                            cleanArtist = "";
+                        }
+                    } else {
+                        cleanArtist = "";
+                    }
+                    artistText.setText(cleanArtist);
+                }
 
                 if (albumArtView != null) {
                     if (albumArt != null) {
@@ -280,6 +308,7 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
                 }
 
                 updateAppIcon(packageName);
+                updateShuffleRepeatUI();
             });
         }
     }
@@ -307,6 +336,22 @@ public class MusicWidget extends BaseWidget implements MusicManager.MusicUIListe
         if (!isPlaying && visualizerView != null) {
             visualizerView.clear();
         }
+        updateShuffleRepeatUI();
+    }
+
+    public void updateShuffleRepeatUI() {
+        if (rootView == null) return;
+        rootView.post(() -> {
+            boolean shuffleOn = musicManager.isShuffleOn();
+            int repeatMode = musicManager.getRepeatMode();
+
+            if (btnShuffle != null) {
+                btnShuffle.setColorFilter(shuffleOn ? 0xFF00FFFF : 0x88FFFFFF);
+            }
+            if (btnRepeat != null) {
+                btnRepeat.setColorFilter(repeatMode > 0 ? 0xFF00FFFF : 0x88FFFFFF);
+            }
+        });
     }
 
     @Override

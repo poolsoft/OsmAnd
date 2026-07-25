@@ -386,6 +386,29 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             });
         }
 
+        View btnFolderPlayAll = root.findViewById(net.osmand.plus.R.id.btn_folder_play_all);
+        View btnFolderShuffleAll = root.findViewById(net.osmand.plus.R.id.btn_folder_shuffle_all);
+
+        if (btnFolderPlayAll != null) {
+            btnFolderPlayAll.setOnClickListener(v -> {
+                if (filteredTracks != null && !filteredTracks.isEmpty() && musicManager != null && musicManager.getInternalPlayer() != null) {
+                    musicManager.setShuffleOn(false);
+                    musicManager.getInternalPlayer().setPlaylist(filteredTracks, 0, true);
+                    Toast.makeText(getContext(), "▶ " + filteredTracks.size() + " Şarkı Çalınıyor", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        if (btnFolderShuffleAll != null) {
+            btnFolderShuffleAll.setOnClickListener(v -> {
+                if (filteredTracks != null && !filteredTracks.isEmpty() && musicManager != null && musicManager.getInternalPlayer() != null) {
+                    musicManager.setShuffleOn(true);
+                    musicManager.getInternalPlayer().setPlaylist(filteredTracks, 0, true);
+                    Toast.makeText(getContext(), "🔀 " + filteredTracks.size() + " Şarkı Karıştırılıyor", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
 
         // Close
         if (btnClose != null)
