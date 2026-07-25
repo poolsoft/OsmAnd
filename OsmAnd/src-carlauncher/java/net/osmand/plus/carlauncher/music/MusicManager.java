@@ -701,24 +701,6 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         }
     }
 
-    public boolean isShuffleOn() {
-        return internalPlayer.isShuffleOn();
-    }
-
-    public void setShuffleOn(boolean shuffleOn) {
-        internalPlayer.setShuffleOn(shuffleOn);
-        notifyStateChanged();
-    }
-
-    public int getRepeatMode() {
-        return internalPlayer.getRepeatMode();
-    }
-
-    public void setRepeatMode(int repeatMode) {
-        internalPlayer.setRepeatMode(repeatMode);
-        notifyStateChanged();
-    }
-
     public boolean useExternal() {
         BaseMediaAdapter activeAdapter = getActiveAdapter();
         return activeAdapter != null && !(activeAdapter instanceof InternalPlayerAdapter);

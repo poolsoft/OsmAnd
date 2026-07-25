@@ -386,8 +386,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             });
         }
 
-        View btnFolderPlayAll = root.findViewById(net.osmand.plus.R.id.btn_folder_play_all);
-        View btnFolderShuffleAll = root.findViewById(net.osmand.plus.R.id.btn_folder_shuffle_all);
+        View fragmentView = getView();
+        View btnFolderPlayAll = fragmentView != null ? fragmentView.findViewById(net.osmand.plus.R.id.btn_folder_play_all) : null;
+        View btnFolderShuffleAll = fragmentView != null ? fragmentView.findViewById(net.osmand.plus.R.id.btn_folder_shuffle_all) : null;
 
         if (btnFolderPlayAll != null) {
             btnFolderPlayAll.setOnClickListener(v -> {

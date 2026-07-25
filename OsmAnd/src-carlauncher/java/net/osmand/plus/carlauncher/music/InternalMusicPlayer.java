@@ -390,25 +390,6 @@ public class InternalMusicPlayer {
         playTrack(prevIndex);
     }
 
-    public boolean isShuffleOn() {
-        return isShuffleOn;
-    }
-
-    public void setShuffleOn(boolean shuffleOn) {
-        this.isShuffleOn = shuffleOn;
-        rebuildQueue();
-        saveState();
-    }
-
-    public int getRepeatMode() {
-        return repeatMode;
-    }
-
-    public void setRepeatMode(int repeatMode) {
-        this.repeatMode = repeatMode;
-        saveState();
-    }
-
     public void toggleRepeat() {
         this.repeatMode = (this.repeatMode + 1) % 3; // 0: Off, 1: Repeat One, 2: Repeat All
         saveState();
