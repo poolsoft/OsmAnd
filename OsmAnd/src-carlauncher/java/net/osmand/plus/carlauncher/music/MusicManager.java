@@ -673,6 +673,13 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         return internalPlayer != null ? internalPlayer.getRepeatMode() : 0;
     }
 
+    public void setRepeatMode(int repeatMode) {
+        if (internalPlayer != null) {
+            internalPlayer.setRepeatMode(repeatMode);
+            notifyStateChanged();
+        }
+    }
+
     public void toggleRepeat() {
         if (internalPlayer != null) {
             internalPlayer.toggleRepeat();
