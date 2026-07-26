@@ -392,9 +392,11 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         if (btnFolderPlayAll != null) {
             btnFolderPlayAll.setOnClickListener(v -> {
+                Log.d("MusicPlayer", "Folder Play All clicked. Folder: " + (currentFolder != null ? currentFolder.getName() : "null") + ", Track Count: " + (filteredTracks != null ? filteredTracks.size() : 0));
                 if (filteredTracks != null && !filteredTracks.isEmpty() && musicManager != null && musicManager.getInternalPlayer() != null) {
-                    musicManager.setShuffleOn(false);
-                    musicManager.getInternalPlayer().setPlaylist(filteredTracks, 0, true);
+                    isShuffleOn = false;
+                    if (musicManager != null) musicManager.setShuffleOn(false);
+                    playTrackFromCollection(filteredTracks, filteredTracks.get(0));
                     Toast.makeText(getContext(), "▶ " + filteredTracks.size() + " Şarkı Çalınıyor", Toast.LENGTH_SHORT).show();
                 }
             });
@@ -402,9 +404,11 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         if (btnFolderShuffleAll != null) {
             btnFolderShuffleAll.setOnClickListener(v -> {
+                Log.d("MusicPlayer", "Folder Shuffle clicked. Folder: " + (currentFolder != null ? currentFolder.getName() : "null") + ", Track Count: " + (filteredTracks != null ? filteredTracks.size() : 0));
                 if (filteredTracks != null && !filteredTracks.isEmpty() && musicManager != null && musicManager.getInternalPlayer() != null) {
-                    musicManager.setShuffleOn(true);
-                    musicManager.getInternalPlayer().setPlaylist(filteredTracks, 0, true);
+                    isShuffleOn = true;
+                    if (musicManager != null) musicManager.setShuffleOn(true);
+                    playTrackFromCollection(filteredTracks, filteredTracks.get(0));
                     Toast.makeText(getContext(), "🔀 " + filteredTracks.size() + " Şarkı Karıştırılıyor", Toast.LENGTH_SHORT).show();
                 }
             });
@@ -768,7 +772,17 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
 
     private List<MusicRepository.AudioTrack> getRecentTracks() {
-        return allTracks; // TODO: Implement real recent logic
+        if (playlistManager == null) return new ArrayList<>();
+        List<String> recentPaths = playlistManager.getRecentlyPlayed();
+        List<MusicRepository.AudioTrack> recentTracks = new ArrayList<>();
+        for (String path : recentPaths) {
+            MusicRepository.AudioTrack t = musicManager != null && musicManager.getRepository() != null
+                    ? musicManager.getRepository().findTrackPortAgnostic(path) : null;
+            if (t != null) {
+                recentTracks.add(t);
+            }
+        }
+        return recentTracks;
     }
 
     private List<MusicRepository.AudioTrack> getFavoriteTracks() {
@@ -790,6 +804,12 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
         if (folderHeaderTitle != null) folderHeaderTitle.setText("Klasör Kaynağı Seçin");
         currentFolderLevel = FolderViewLevel.STORAGE_ROOT;
+
+        View fragmentView = getView();
+        View btnFolderPlayAll = fragmentView != null ? fragmentView.findViewById(net.osmand.plus.R.id.btn_folder_play_all) : null;
+        View btnFolderShuffleAll = fragmentView != null ? fragmentView.findViewById(net.osmand.plus.R.id.btn_folder_shuffle_all) : null;
+        if (btnFolderPlayAll != null) btnFolderPlayAll.setVisibility(View.GONE);
+        if (btnFolderShuffleAll != null) btnFolderShuffleAll.setVisibility(View.GONE);
 
         List<StorageRootItem> roots = new ArrayList<>();
         roots.add(new StorageRootItem(MusicRepository.StorageType.INTERNAL, "📱 Dahili Hafıza", "Cihaz üzerindeki müzik klasörleri"));
@@ -877,6 +897,12 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     }
 
     private void showFolders(List<MusicRepository.AudioFolder> folders) {
+        View fragmentView = getView();
+        View btnFolderPlayAll = fragmentView != null ? fragmentView.findViewById(net.osmand.plus.R.id.btn_folder_play_all) : null;
+        View btnFolderShuffleAll = fragmentView != null ? fragmentView.findViewById(net.osmand.plus.R.id.btn_folder_shuffle_all) : null;
+        if (btnFolderPlayAll != null) btnFolderPlayAll.setVisibility(View.VISIBLE);
+        if (btnFolderShuffleAll != null) btnFolderShuffleAll.setVisibility(View.VISIBLE);
+
         if (recyclerView != null) {
             FolderAdapter folderAdapter = new FolderAdapter(folders, folder -> {
                 currentFolder = folder;
@@ -1320,14 +1346,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     return;
                 }
 
-                // Use current list (filteredTracks) as queue!
-                int index = filteredTracks.indexOf(track);
-                List<MusicRepository.AudioTrack> queue = isShuffleOn ? shuffleWithFirst(filteredTracks, track)
-                        : filteredTracks;
-                musicManager.getInternalPlayer().setPlaylist(queue, isShuffleOn ? 0 : index);
-
-                // Add to recently played
-                playlistManager.addToRecentlyPlayed(track.getPath());
+                // Centralized track playback call
+                playTrackFromCollection(filteredTracks, track);
             }
 
             @Override
@@ -1346,6 +1366,63 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         if (recyclerView != null) {
             recyclerView.setAdapter(adapter);
+        }
+    }
+
+    private void playTrackFromCollection(List<MusicRepository.AudioTrack> collection, MusicRepository.AudioTrack selectedTrack) {
+        if (musicManager == null || musicManager.getInternalPlayer() == null || selectedTrack == null) return;
+
+        if (isExternalMode) {
+            isExternalMode = false;
+            if (musicManager.getActiveExternalController() != null) {
+                try {
+                    musicManager.getActiveExternalController().getTransportControls().pause();
+                } catch (Exception e) {}
+            }
+            musicManager.setPreferredPackage("usage.internal.player");
+            updateModeUI();
+        }
+
+        // Special case: If user is in QUEUE view mode, navigate inside existing queue
+        if (currentViewMode == ViewMode.QUEUE) {
+            int qIndex = -1;
+            List<MusicRepository.AudioTrack> queue = musicManager.getInternalPlayer().getPlayingQueue();
+            for (int i = 0; i < queue.size(); i++) {
+                if (queue.get(i).getPath().equals(selectedTrack.getPath())) {
+                    qIndex = i;
+                    break;
+                }
+            }
+            if (qIndex != -1) {
+                musicManager.getInternalPlayer().playTrackInQueue(qIndex);
+            } else {
+                musicManager.getInternalPlayer().playTrackFromCollection(collection, selectedTrack, true);
+            }
+        } else {
+            // Any other list (Tüm Parçalar, Klasörler, Sanatçılar, Favoriler, Son Çalınanlar, Playlistler)
+            musicManager.getInternalPlayer().playTrackFromCollection(collection, selectedTrack, true);
+        }
+
+        if (playlistManager != null) {
+            playlistManager.addToRecentlyPlayed(selectedTrack.getPath());
+        }
+        updateAdapterHighlightAndScroll(selectedTrack.getPath());
+    }
+
+    private void updateAdapterHighlightAndScroll(String playingTrackPath) {
+        if (adapter != null && filteredTracks != null) {
+            boolean isPlaying = musicManager != null && musicManager.getInternalPlayer() != null && musicManager.getInternalPlayer().isPlaying();
+            adapter.updateCurrentTrack(playingTrackPath, isPlaying);
+
+            if (playingTrackPath != null && recyclerView != null) {
+                for (int i = 0; i < filteredTracks.size(); i++) {
+                    if (filteredTracks.get(i).getPath().equals(playingTrackPath)) {
+                        final int pos = i;
+                        recyclerView.post(() -> recyclerView.smoothScrollToPosition(pos));
+                        break;
+                    }
+                }
+            }
         }
     }
 

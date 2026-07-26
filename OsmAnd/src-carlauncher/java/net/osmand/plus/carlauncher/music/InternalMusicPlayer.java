@@ -211,10 +211,48 @@ public class InternalMusicPlayer {
     public void setPlaylist(List<MusicRepository.AudioTrack> tracks, int startIndex, boolean autoPlay) {
         if (tracks == null || tracks.isEmpty())
             return;
-        this.playlist = new ArrayList<>(tracks);
-        rebuildQueue();
-        if (startIndex >= 0 && startIndex < playingQueue.size()) {
-            playTrack(startIndex, autoPlay);
+        MusicRepository.AudioTrack targetTrack = (startIndex >= 0 && startIndex < tracks.size()) ? tracks.get(startIndex) : tracks.get(0);
+        playTrackFromCollection(tracks, targetTrack, autoPlay);
+    }
+
+    public synchronized void playTrackFromCollection(List<MusicRepository.AudioTrack> collection, MusicRepository.AudioTrack selectedTrack, boolean autoPlay) {
+        if (collection == null || collection.isEmpty()) return;
+
+        this.playlist = new ArrayList<>(collection);
+
+        int selectedIndex = -1;
+        if (selectedTrack != null) {
+            for (int i = 0; i < collection.size(); i++) {
+                if (collection.get(i).getPath().equals(selectedTrack.getPath())) {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        if (selectedIndex == -1) {
+            selectedIndex = 0;
+        }
+
+        if (isShuffleOn) {
+            List<MusicRepository.AudioTrack> rest = new ArrayList<>(collection);
+            rest.remove(selectedIndex);
+            java.util.Collections.shuffle(rest);
+            playingQueue.clear();
+            playingQueue.add(collection.get(selectedIndex)); // Always position 0 in shuffle
+            playingQueue.addAll(rest);
+            currentIndex = 0;
+        } else {
+            playingQueue = new ArrayList<>(collection); // Full collection as Queue!
+            currentIndex = selectedIndex; // Active track index
+        }
+
+        playTrack(currentIndex, autoPlay, 0);
+    }
+
+    public synchronized void playTrackInQueue(int queueIndex) {
+        List<MusicRepository.AudioTrack> queue = getPlayingQueue();
+        if (queueIndex >= 0 && queueIndex < queue.size()) {
+            playTrack(queueIndex, true, 0);
         }
     }
 
