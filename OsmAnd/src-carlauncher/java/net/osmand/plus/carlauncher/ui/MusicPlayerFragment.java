@@ -103,6 +103,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private MusicRepository.StorageType selectedStorageType = MusicRepository.StorageType.INTERNAL;
     private MusicRepository.AudioFolder currentFolder = null;
     private MusicRepository.AudioArtist currentArtist = null;
+    private PlaylistManager.Playlist currentPlaylist = null;
 
 
     // State
