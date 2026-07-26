@@ -657,22 +657,10 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
     private void selectTab(int index) {
         // 0: All, 1: Recent, 2: Playlist (Listeler)
-        int selectedColor = 0xFFFFFFFF;
-        int unselectedColor = 0xFF888888;
-
-        if (tabAllTracks != null) {
-            tabAllTracks.setTextColor(index == 0 ? selectedColor : unselectedColor);
-            tabAllTracks.setBackgroundResource(index == 0 ? net.osmand.plus.R.drawable.bg_tab_active : 0);
-        }
-        if (tabRecent != null) {
-            tabRecent.setTextColor(index == 1 ? selectedColor : unselectedColor);
-            tabRecent.setBackgroundResource(index == 1 ? net.osmand.plus.R.drawable.bg_tab_active : 0);
-        }
-        if (tabPlaylistsContainer != null) {
-            tabPlaylistsContainer.setBackgroundResource(index == 2 ? net.osmand.plus.R.drawable.bg_tab_active : 0);
-        }
-        if (tabPlaylistLabel != null) {
-            tabPlaylistLabel.setTextColor(index == 2 ? selectedColor : unselectedColor);
+        switch (index) {
+            case 0: switchViewMode(ViewMode.ALL_TRACKS); break;
+            case 1: switchViewMode(ViewMode.RECENT); break;
+            case 2: switchViewMode(ViewMode.PLAYLIST); break;
         }
     }
 
@@ -749,25 +737,38 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         int unselectedColor = 0xFF888888;
         int activeBg = net.osmand.plus.R.drawable.bg_tab_active;
         
-        if (tabQueue != null) {
-            tabQueue.setTextColor(mode == ViewMode.QUEUE ? selectedColor : unselectedColor);
-            tabQueue.setBackgroundResource(mode == ViewMode.QUEUE ? activeBg : 0);
-        }
-        if (tabAllTracks != null) {
-            tabAllTracks.setTextColor(mode == ViewMode.ALL_TRACKS ? selectedColor : unselectedColor);
-            tabAllTracks.setBackgroundResource(mode == ViewMode.ALL_TRACKS ? activeBg : 0);
-        }
-        if (tabFolders != null) {
-            tabFolders.setTextColor((mode == ViewMode.FOLDERS || mode == ViewMode.FOLDER_DETAIL) ? selectedColor : unselectedColor);
-            tabFolders.setBackgroundResource((mode == ViewMode.FOLDERS || mode == ViewMode.FOLDER_DETAIL) ? activeBg : 0);
-        }
-        if (tabArtists != null) {
-            tabArtists.setTextColor((mode == ViewMode.ARTISTS || mode == ViewMode.ARTIST_DETAIL) ? selectedColor : unselectedColor);
-            tabArtists.setBackgroundResource((mode == ViewMode.ARTISTS || mode == ViewMode.ARTIST_DETAIL) ? activeBg : 0);
-        }
-        if (tabRecent != null) {
-            tabRecent.setTextColor(mode == ViewMode.RECENT ? selectedColor : unselectedColor);
-            tabRecent.setBackgroundResource(mode == ViewMode.RECENT ? activeBg : 0);
+        // 1. Reset ALL tabs first to prevent double-highlighting
+        if (tabQueue != null) { tabQueue.setTextColor(unselectedColor); tabQueue.setBackgroundResource(0); }
+        if (tabAllTracks != null) { tabAllTracks.setTextColor(unselectedColor); tabAllTracks.setBackgroundResource(0); }
+        if (tabFolders != null) { tabFolders.setTextColor(unselectedColor); tabFolders.setBackgroundResource(0); }
+        if (tabArtists != null) { tabArtists.setTextColor(unselectedColor); tabArtists.setBackgroundResource(0); }
+        if (tabRecent != null) { tabRecent.setTextColor(unselectedColor); tabRecent.setBackgroundResource(0); }
+        if (tabPlaylistsContainer != null) { tabPlaylistsContainer.setBackgroundResource(0); }
+        if (tabPlaylistLabel != null) { tabPlaylistLabel.setTextColor(unselectedColor); }
+
+        // 2. Highlight ONLY active tab
+        switch (mode) {
+            case QUEUE:
+                if (tabQueue != null) { tabQueue.setTextColor(selectedColor); tabQueue.setBackgroundResource(activeBg); }
+                break;
+            case ALL_TRACKS:
+                if (tabAllTracks != null) { tabAllTracks.setTextColor(selectedColor); tabAllTracks.setBackgroundResource(activeBg); }
+                break;
+            case FOLDERS:
+            case FOLDER_DETAIL:
+                if (tabFolders != null) { tabFolders.setTextColor(selectedColor); tabFolders.setBackgroundResource(activeBg); }
+                break;
+            case ARTISTS:
+            case ARTIST_DETAIL:
+                if (tabArtists != null) { tabArtists.setTextColor(selectedColor); tabArtists.setBackgroundResource(activeBg); }
+                break;
+            case RECENT:
+                if (tabRecent != null) { tabRecent.setTextColor(selectedColor); tabRecent.setBackgroundResource(activeBg); }
+                break;
+            case PLAYLIST:
+                if (tabPlaylistsContainer != null) { tabPlaylistsContainer.setBackgroundResource(activeBg); }
+                if (tabPlaylistLabel != null) { tabPlaylistLabel.setTextColor(selectedColor); }
+                break;
         }
     }
 
@@ -1049,10 +1050,19 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 if (position == 0)
                     return;
 
-                selectTab(3);
+                switchViewMode(ViewMode.PLAYLIST);
+                if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
+
+                View fragmentView = getView();
+                View btnFolderPlayAll = fragmentView != null ? fragmentView.findViewById(net.osmand.plus.R.id.btn_folder_play_all) : null;
+                View btnFolderShuffleAll = fragmentView != null ? fragmentView.findViewById(net.osmand.plus.R.id.btn_folder_shuffle_all) : null;
+                if (btnFolderPlayAll != null) btnFolderPlayAll.setVisibility(View.VISIBLE);
+                if (btnFolderShuffleAll != null) btnFolderShuffleAll.setVisibility(View.VISIBLE);
 
                 if (position == 1) {
                     // Favorites
+                    currentPlaylist = null;
+                    if (folderHeaderTitle != null) folderHeaderTitle.setText("⭐ Favoriler");
                     List<String> favPaths = playlistManager.getFavorites();
                     List<MusicRepository.AudioTrack> favTracks = new ArrayList<>();
                     for (String path : favPaths) {
@@ -1066,14 +1076,16 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                         }
                     }
                     if (favTracks.isEmpty()) {
-                        Toast.makeText(getContext(), "Favori listeniz bos", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Favori listeniz boş", Toast.LENGTH_SHORT).show();
                     }
                     showTracks(favTracks);
                 } else {
-                    // Playlists
+                    // User Playlists
                     int playlistIndex = position - 2;
                     if (playlistIndex >= 0 && playlistIndex < playlists.size()) {
                         PlaylistManager.Playlist pl = playlists.get(playlistIndex);
+                        currentPlaylist = pl;
+                        if (folderHeaderTitle != null) folderHeaderTitle.setText("📜 Playlist: " + pl.name);
                         List<MusicRepository.AudioTrack> playlistTracks = new ArrayList<>();
                         for (String path : pl.tracks) {
                             MusicRepository.AudioTrack t = musicManager != null && musicManager.getRepository() != null
@@ -1468,6 +1480,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         if (currentViewMode == ViewMode.QUEUE) {
             optionsList.add("🗑️ Sıradan Çıkar");
+        } else if (currentViewMode == ViewMode.PLAYLIST) {
+            optionsList.add("🗑️ Listeden Çıkar");
         }
 
         if (track.isUsb()) {
@@ -1513,6 +1527,25 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                             if (currentViewMode == ViewMode.QUEUE) {
                                 switchViewMode(ViewMode.QUEUE);
                             }
+                        }
+                    } else if (selected.contains("Listeden Çıkar")) {
+                        if (currentPlaylist != null) {
+                            currentPlaylist.tracks.remove(track.getPath());
+                            playlistManager.savePlaylist(currentPlaylist);
+                            Toast.makeText(getContext(), "Listeden çıkarıldı: " + track.getTitle(), Toast.LENGTH_SHORT).show();
+                            // Refresh playlist view
+                            List<MusicRepository.AudioTrack> playlistTracks = new ArrayList<>();
+                            for (String path : currentPlaylist.tracks) {
+                                MusicRepository.AudioTrack t = musicManager != null && musicManager.getRepository() != null
+                                        ? musicManager.getRepository().findTrackPortAgnostic(path) : null;
+                                if (t != null) playlistTracks.add(t);
+                            }
+                            showTracks(playlistTracks);
+                        } else {
+                            // Favorites view
+                            playlistManager.removeFromFavorites(track.getPath());
+                            Toast.makeText(getContext(), "Favorilerden çıkarıldı", Toast.LENGTH_SHORT).show();
+                            showTracks(getFavoriteTracks());
                         }
                     } else if (selected.contains("Cihaza Kopyala")) {
                         if (musicManager != null && musicManager.getRepository() != null) {
