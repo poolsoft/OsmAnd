@@ -133,7 +133,7 @@ public final class HardwareEventRecorder {
         }
         InputDevice device = InputDevice.getDevice(event.getDeviceId());
         String deviceName = device != null ? device.getName() : "unknown";
-        String message = "action=" + KeyEvent.actionToString(event.getAction())
+        String message = "action=" + keyActionToString(event.getAction())
                 + " keyCode=" + event.getKeyCode()
                 + " keyName=" + KeyEvent.keyCodeToString(event.getKeyCode())
                 + " scanCode=" + event.getScanCode()
@@ -143,6 +143,17 @@ public final class HardwareEventRecorder {
                 + " repeat=" + event.getRepeatCount()
                 + " flags=0x" + Integer.toHexString(event.getFlags());
         record(source, message);
+    }
+
+    private String keyActionToString(int action) {
+        if (action == KeyEvent.ACTION_DOWN) {
+            return "ACTION_DOWN";
+        } else if (action == KeyEvent.ACTION_UP) {
+            return "ACTION_UP";
+        } else if (action == KeyEvent.ACTION_MULTIPLE) {
+            return "ACTION_MULTIPLE";
+        }
+        return Integer.toString(action);
     }
 
     public void recordIntent(@NonNull String source, @Nullable Intent intent) {
