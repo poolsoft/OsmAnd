@@ -78,22 +78,19 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private View searchBarContainer;
     private View searchClearBtn;
 
-    // New Tab Views
-    private TextView tabQueue, tabAllTracks, tabRecent, tabPlaylistLabel, appName;
-    private View tabPlaylistsContainer;
-    private ImageButton tabBtnSearch, tabBtnScan;
-    
-    // YENI CAR RADIO UIs
-    private TextView tabFolders;
-    private TextView tabArtists;
-    private TextView tabQuickMix;
+    // New 4-Tab Views
+    private TextView tabQueue, tabAllTracks, tabFolders, tabPlaylists;
+    private ImageButton tabBtnSearch, tabBtnMenu;
     private View folderHeaderContainer;
     private ImageButton btnBackFolder;
     private TextView folderHeaderTitle;
 
     // View Modes & Klasor Hiyerarsisi
-    private enum ViewMode {
-        QUEUE, ALL_TRACKS, FOLDERS, ARTISTS, RECENT, PLAYLIST, FOLDER_DETAIL, ARTIST_DETAIL
+    public enum ViewMode {
+        QUEUE, ALL_TRACKS, FOLDERS, PLAYLIST, FOLDER_DETAIL
+    }
+    public enum SortOrder {
+        TITLE, ARTIST, ALBUM, RECENTLY_ADDED, MOST_PLAYED
     }
     private enum FolderViewLevel {
         STORAGE_ROOT, FOLDER_LIST, TRACK_LIST
@@ -102,7 +99,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private FolderViewLevel currentFolderLevel = FolderViewLevel.STORAGE_ROOT;
     private MusicRepository.StorageType selectedStorageType = MusicRepository.StorageType.INTERNAL;
     private MusicRepository.AudioFolder currentFolder = null;
-    private MusicRepository.AudioArtist currentArtist = null;
     private PlaylistManager.Playlist currentPlaylist = null;
 
 
@@ -195,16 +191,11 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         tabQueue = root.findViewById(net.osmand.plus.R.id.tab_queue);
         tabAllTracks = root.findViewById(net.osmand.plus.R.id.tab_all_tracks);
-        tabRecent = root.findViewById(net.osmand.plus.R.id.tab_recent);
-        tabPlaylistsContainer = root.findViewById(net.osmand.plus.R.id.tab_playlists_container);
-        tabPlaylistLabel = root.findViewById(net.osmand.plus.R.id.tab_playlist_label);
-        appName = root.findViewById(net.osmand.plus.R.id.app_name);
-        tabBtnSearch = root.findViewById(net.osmand.plus.R.id.tab_btn_search);
-        tabBtnScan = root.findViewById(net.osmand.plus.R.id.tab_btn_scan);
-
         tabFolders = root.findViewById(net.osmand.plus.R.id.tab_folders);
-        tabArtists = root.findViewById(net.osmand.plus.R.id.tab_artists);
-        tabQuickMix = root.findViewById(net.osmand.plus.R.id.tab_quick_mix);
+        tabPlaylists = root.findViewById(net.osmand.plus.R.id.tab_playlists);
+        tabBtnSearch = root.findViewById(net.osmand.plus.R.id.tab_btn_search);
+        tabBtnMenu = root.findViewById(net.osmand.plus.R.id.tab_btn_menu);
+
         folderHeaderContainer = root.findViewById(net.osmand.plus.R.id.folder_header_container);
         btnBackFolder = root.findViewById(net.osmand.plus.R.id.btn_back_folder);
         folderHeaderTitle = root.findViewById(net.osmand.plus.R.id.folder_header_title);
@@ -355,18 +346,21 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             btnTabScan.setOnClickListener(v -> rescanMusic());
         }
 
-        // Yeni Calma Sirasi, Klasor ve Sanatci tab listenerlari
+        // 4 Ana Sekme Listener'ları (Sıra, Parçalar, Klasörler, Listeler)
         if (tabQueue != null) {
             tabQueue.setOnClickListener(v -> switchViewMode(ViewMode.QUEUE));
+        }
+        if (tabAllTracks != null) {
+            tabAllTracks.setOnClickListener(v -> switchViewMode(ViewMode.ALL_TRACKS));
         }
         if (tabFolders != null) {
             tabFolders.setOnClickListener(v -> switchViewMode(ViewMode.FOLDERS));
         }
-        if (tabArtists != null) {
-            tabArtists.setOnClickListener(v -> switchViewMode(ViewMode.ARTISTS));
+        if (tabPlaylists != null) {
+            tabPlaylists.setOnClickListener(v -> switchViewMode(ViewMode.PLAYLIST));
         }
-        if (tabAllTracks != null) {
-            tabAllTracks.setOnClickListener(v -> switchViewMode(ViewMode.ALL_TRACKS));
+        if (tabBtnMenu != null) {
+            tabBtnMenu.setOnClickListener(this::showTopOverflowMenu);
         }
         if (btnBackFolder != null) {
             btnBackFolder.setOnClickListener(v -> {
@@ -380,9 +374,11 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 } else if (currentFolderLevel == FolderViewLevel.FOLDER_LIST) {
                     currentFolderLevel = FolderViewLevel.STORAGE_ROOT;
                     showStorageRoots();
-                } else if (currentViewMode == ViewMode.ARTIST_DETAIL) {
-                    switchViewMode(ViewMode.ARTISTS);
                 } else {
+                    switchViewMode(ViewMode.FOLDERS);
+                }
+            });
+        }
                     switchViewMode(ViewMode.ALL_TRACKS);
                 }
             });
@@ -592,31 +588,18 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             });
         }
 
-        // Playlist Spinner
-        setupPlaylistSpinner();
-
         // Tab Listeners
         if (tabAllTracks != null)
-            tabAllTracks.setOnClickListener(v -> {
-                selectTab(0);
-                checkPermissionsAndLoadTracks();
-            });
+            tabAllTracks.setOnClickListener(v -> switchViewMode(ViewMode.ALL_TRACKS));
 
-        if (tabRecent != null)
-            tabRecent.setOnClickListener(v -> {
-                selectTab(1);
-                loadRecentlyPlayed();
-            });
+        if (tabQueue != null)
+            tabQueue.setOnClickListener(v -> switchViewMode(ViewMode.QUEUE));
 
-        if (tabQuickMix != null)
-            tabQuickMix.setOnClickListener(v -> playQuickMix());
+        if (tabFolders != null)
+            tabFolders.setOnClickListener(v -> switchViewMode(ViewMode.FOLDERS));
 
-        if (tabPlaylistsContainer != null)
-            tabPlaylistsContainer.setOnClickListener(v -> {
-                selectTab(2);
-                if (playlistSpinner != null)
-                    playlistSpinner.performClick();
-            });
+        if (tabPlaylists != null)
+            tabPlaylists.setOnClickListener(v -> switchViewMode(ViewMode.PLAYLIST));
 
 
         if (tabBtnScan != null) {
@@ -689,52 +672,23 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 if (searchBarContainer != null) searchBarContainer.setVisibility(View.VISIBLE);
                 showTracks(allTracks);
                 break;
-            case RECENT:
-                showTracks(getRecentTracks());
-                break;
             case FOLDERS:
-                // Son klasoru kontrol et ve hatırla
-                String lastPath = getContext() != null ? getContext().getSharedPreferences("music_prefs", Context.MODE_PRIVATE).getString("key_last_folder_path", null) : null;
-                MusicRepository.AudioFolder lastFolder = null;
-                if (lastPath != null && musicManager != null && musicManager.getRepository() != null) {
-                    for (MusicRepository.AudioFolder f : musicManager.getRepository().getCachedFolders()) {
-                        if (f.getPath().equals(lastPath)) {
-                            lastFolder = f;
-                            break;
-                        }
-                    }
-                }
-                if (lastFolder != null && !lastFolder.getTracks().isEmpty()) {
-                    currentFolder = lastFolder;
-                    currentFolderLevel = FolderViewLevel.TRACK_LIST;
-                    if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
-                    if (folderHeaderTitle != null) folderHeaderTitle.setText("📁 " + currentFolder.getName());
-                    showTracks(currentFolder.getTracks());
-                } else {
-                    showStorageRoots();
-                }
-                break;
-            case ARTISTS:
-                showArtists(musicManager.getRepository().getCachedArtists());
+                showStorageRoots();
                 break;
             case FOLDER_DETAIL:
                 if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
                 if (folderHeaderTitle != null && currentFolder != null) folderHeaderTitle.setText("📁 " + currentFolder.getName());
                 if (currentFolder != null) showTracks(currentFolder.getTracks());
                 break;
-            case ARTIST_DETAIL:
-                if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
-                if (folderHeaderTitle != null && currentArtist != null) folderHeaderTitle.setText("🎙️ " + currentArtist.getName());
-                if (currentArtist != null) showTracks(currentArtist.getTracks());
-                break;
             case PLAYLIST:
+                showPlaylistsList();
                 break;
         }
     }
 
 
     private void updateTabUIForMode(ViewMode mode) {
-        int selectedColor = 0xFFFFFFFF;
+        int selectedColor = 0xFF00FFFF; // Turkuaz ana vurgu rengi
         int unselectedColor = 0xFF888888;
         int activeBg = net.osmand.plus.R.drawable.bg_tab_active;
         
@@ -742,10 +696,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         if (tabQueue != null) { tabQueue.setTextColor(unselectedColor); tabQueue.setBackgroundResource(0); }
         if (tabAllTracks != null) { tabAllTracks.setTextColor(unselectedColor); tabAllTracks.setBackgroundResource(0); }
         if (tabFolders != null) { tabFolders.setTextColor(unselectedColor); tabFolders.setBackgroundResource(0); }
-        if (tabArtists != null) { tabArtists.setTextColor(unselectedColor); tabArtists.setBackgroundResource(0); }
-        if (tabRecent != null) { tabRecent.setTextColor(unselectedColor); tabRecent.setBackgroundResource(0); }
-        if (tabPlaylistsContainer != null) { tabPlaylistsContainer.setBackgroundResource(0); }
-        if (tabPlaylistLabel != null) { tabPlaylistLabel.setTextColor(unselectedColor); }
+        if (tabPlaylists != null) { tabPlaylists.setTextColor(unselectedColor); tabPlaylists.setBackgroundResource(0); }
 
         // 2. Highlight ONLY active tab
         switch (mode) {
@@ -759,16 +710,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             case FOLDER_DETAIL:
                 if (tabFolders != null) { tabFolders.setTextColor(selectedColor); tabFolders.setBackgroundResource(activeBg); }
                 break;
-            case ARTISTS:
-            case ARTIST_DETAIL:
-                if (tabArtists != null) { tabArtists.setTextColor(selectedColor); tabArtists.setBackgroundResource(activeBg); }
-                break;
-            case RECENT:
-                if (tabRecent != null) { tabRecent.setTextColor(selectedColor); tabRecent.setBackgroundResource(activeBg); }
-                break;
             case PLAYLIST:
-                if (tabPlaylistsContainer != null) { tabPlaylistsContainer.setBackgroundResource(activeBg); }
-                if (tabPlaylistLabel != null) { tabPlaylistLabel.setTextColor(selectedColor); }
+                if (tabPlaylists != null) { tabPlaylists.setTextColor(selectedColor); tabPlaylists.setBackgroundResource(activeBg); }
                 break;
         }
     }
@@ -920,13 +863,256 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     }
 
 
-    private void showArtists(List<MusicRepository.AudioArtist> artists) {
-        if (recyclerView != null) {
-            ArtistAdapter artistAdapter = new ArtistAdapter(artists, artist -> {
-                currentArtist = artist;
-                switchViewMode(ViewMode.ARTIST_DETAIL);
+    private void showTopOverflowMenu(View anchor) {
+        if (getContext() == null) return;
+        List<String> optionsList = new ArrayList<>();
+        optionsList.add("🔀 Akıllı Karıştır (Smart Shuffle)");
+        optionsList.add("🔄 Müzikleri Yeniden Tara");
+        optionsList.add("🔀 Sıralama: Parça Adına Göre");
+        optionsList.add("🎙️ Sıralama: Sanatçıya Göre");
+        optionsList.add("💿 Sıralama: Albüme Göre");
+        optionsList.add("📅 Sıralama: Son Eklenenler");
+        optionsList.add("🔥 Sıralama: En Çok Çalınanlar");
+
+        String[] options = optionsList.toArray(new String[0]);
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle("Müzik Çalar Seçenekleri")
+                .setItems(options, (dialog, which) -> {
+                    String selected = options[which];
+                    if (selected.contains("Akıllı Karıştır")) {
+                        playQuickMix();
+                    } else if (selected.contains("Yeniden Tara")) {
+                        Toast.makeText(getContext(), "Müzik kütüphanesi taranıyor...", Toast.LENGTH_SHORT).show();
+                        rescanMusic();
+                    } else if (selected.contains("Parça Adına Göre")) {
+                        sortFilteredTracks(SortOrder.TITLE);
+                    } else if (selected.contains("Sanatçıya Göre")) {
+                        sortFilteredTracks(SortOrder.ARTIST);
+                    } else if (selected.contains("Albüme Göre")) {
+                        sortFilteredTracks(SortOrder.ALBUM);
+                    } else if (selected.contains("Son Eklenenler")) {
+                        sortFilteredTracks(SortOrder.RECENTLY_ADDED);
+                    } else if (selected.contains("En Çok Çalınanlar")) {
+                        sortFilteredTracks(SortOrder.MOST_PLAYED);
+                    }
+                })
+                .setNegativeButton("Kapat", null)
+                .show();
+    }
+
+    private void sortFilteredTracks(SortOrder order) {
+        if (filteredTracks == null || filteredTracks.isEmpty()) return;
+        switch (order) {
+            case TITLE:
+                filteredTracks.sort((t1, t2) -> t1.getTitle().compareToIgnoreCase(t2.getTitle()));
+                break;
+            case ARTIST:
+                filteredTracks.sort((t1, t2) -> (t1.getArtist() != null ? t1.getArtist() : "").compareToIgnoreCase(t2.getArtist() != null ? t2.getArtist() : ""));
+                break;
+            case ALBUM:
+                filteredTracks.sort((t1, t2) -> (t1.getAlbum() != null ? t1.getAlbum() : "").compareToIgnoreCase(t2.getAlbum() != null ? t2.getAlbum() : ""));
+                break;
+            case RECENTLY_ADDED:
+                filteredTracks.sort((t1, t2) -> Long.compare(t2.getId(), t1.getId()));
+                break;
+            case MOST_PLAYED:
+                break;
+        }
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    private static class PlaylistItem {
+        String id;
+        String title;
+        String subtitle;
+        boolean isAction;
+        PlaylistManager.Playlist playlist;
+
+        PlaylistItem(String id, String title, String subtitle, boolean isAction) {
+            this.id = id;
+            this.title = title;
+            this.subtitle = subtitle;
+            this.isAction = isAction;
+        }
+
+        PlaylistItem(String id, String title, String subtitle, boolean isAction, PlaylistManager.Playlist playlist) {
+            this(id, title, subtitle, isAction);
+            this.playlist = playlist;
+        }
+    }
+
+    private void showPlaylistsList() {
+        if (recyclerView == null) return;
+        if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.GONE);
+
+        List<PlaylistItem> items = new ArrayList<>();
+        items.add(new PlaylistItem("create_new", "➕ Yeni Çalma Listesi Oluştur", "Yeni liste eklemek için dokunun", true));
+        items.add(new PlaylistItem("favorites", "⭐ Favoriler", getFavoriteTracks().size() + " Parça", false));
+        items.add(new PlaylistItem("recent", "🕒 Son Çalınanlar", getRecentTracks().size() + " Parça", false));
+        items.add(new PlaylistItem("most_played", "🔥 En Çok Çalınanlar", allTracks.size() + " Parça", false));
+        items.add(new PlaylistItem("recently_added", "📅 Son Eklenenler", allTracks.size() + " Parça", false));
+
+        if (playlistManager != null) {
+            List<PlaylistManager.Playlist> userPlaylists = playlistManager.getAllPlaylists();
+            for (PlaylistManager.Playlist p : userPlaylists) {
+                items.add(new PlaylistItem("user_playlist:" + p.id, "📜 " + p.name, p.tracks.size() + " Parça", false, p));
+            }
+        }
+
+        PlaylistsAdapter playlistsAdapter = new PlaylistsAdapter(items, new PlaylistsAdapter.PlaylistClickListener() {
+            @Override
+            public void onClick(PlaylistItem item) {
+                if ("create_new".equals(item.id)) {
+                    showCreatePlaylistDialog();
+                } else if ("favorites".equals(item.id)) {
+                    currentPlaylist = null;
+                    if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
+                    if (folderHeaderTitle != null) folderHeaderTitle.setText("⭐ Favoriler");
+                    showTracks(getFavoriteTracks());
+                } else if ("recent".equals(item.id)) {
+                    currentPlaylist = null;
+                    if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
+                    if (folderHeaderTitle != null) folderHeaderTitle.setText("🕒 Son Çalınanlar");
+                    showTracks(getRecentTracks());
+                } else if ("most_played".equals(item.id)) {
+                    currentPlaylist = null;
+                    if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
+                    if (folderHeaderTitle != null) folderHeaderTitle.setText("🔥 En Çok Çalınanlar");
+                    showTracks(allTracks);
+                } else if ("recently_added".equals(item.id)) {
+                    currentPlaylist = null;
+                    if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
+                    if (folderHeaderTitle != null) folderHeaderTitle.setText("📅 Son Eklenenler");
+                    showTracks(allTracks);
+                } else if (item.id.startsWith("user_playlist:") && item.playlist != null) {
+                    currentPlaylist = item.playlist;
+                    if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
+                    if (folderHeaderTitle != null) folderHeaderTitle.setText("📜 " + item.playlist.name);
+                    
+                    List<MusicRepository.AudioTrack> playlistTracks = new ArrayList<>();
+                    for (String path : item.playlist.tracks) {
+                        MusicRepository.AudioTrack t = musicManager != null && musicManager.getRepository() != null
+                                ? musicManager.getRepository().findTrackPortAgnostic(path) : null;
+                        if (t != null) playlistTracks.add(t);
+                    }
+                    showTracks(playlistTracks);
+                }
+            }
+
+            @Override
+            public void onLongClick(PlaylistItem item) {
+                if (item.playlist != null) {
+                    showUserPlaylistOptionsMenu(item.playlist);
+                }
+            }
+        });
+        recyclerView.setAdapter(playlistsAdapter);
+    }
+
+    private void showCreatePlaylistDialog() {
+        if (getContext() == null || playlistManager == null) return;
+        final EditText input = new EditText(getContext());
+        input.setHint("Liste Adı (Örn: Yolculuk)");
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle("Yeni Çalma Listesi")
+                .setView(input)
+                .setPositiveButton("Oluştur", (dialog, which) -> {
+                    String name = input.getText().toString().trim();
+                    if (!name.isEmpty()) {
+                        PlaylistManager.Playlist p = new PlaylistManager.Playlist(name);
+                        playlistManager.savePlaylist(p);
+                        Toast.makeText(getContext(), "Liste oluşturuldu: " + name, Toast.LENGTH_SHORT).show();
+                        showPlaylistsList();
+                    }
+                })
+                .setNegativeButton("İptal", null)
+                .show();
+    }
+
+    private void showUserPlaylistOptionsMenu(PlaylistManager.Playlist playlist) {
+        if (getContext() == null || playlist == null) return;
+        String[] options = {"✏️ Adını Değiştir", "🗑️ Listeyi Sil"};
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle(playlist.name)
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        final EditText input = new EditText(getContext());
+                        input.setText(playlist.name);
+                        new android.app.AlertDialog.Builder(getContext())
+                                .setTitle("Liste Adını Değiştir")
+                                .setView(input)
+                                .setPositiveButton("Kaydet", (d, w) -> {
+                                    String name = input.getText().toString().trim();
+                                    if (!name.isEmpty()) {
+                                        playlist.name = name;
+                                        playlistManager.savePlaylist(playlist);
+                                        showPlaylistsList();
+                                    }
+                                })
+                                .setNegativeButton("İptal", null)
+                                .show();
+                    } else if (which == 1) {
+                        playlistManager.deletePlaylist(playlist.id);
+                        Toast.makeText(getContext(), "Liste silindi: " + playlist.name, Toast.LENGTH_SHORT).show();
+                        showPlaylistsList();
+                    }
+                })
+                .setNegativeButton("İptal", null)
+                .show();
+    }
+
+    private class PlaylistsAdapter extends RecyclerView.Adapter<PlaylistsAdapter.ViewHolder> {
+        private final List<PlaylistItem> items;
+        private final PlaylistClickListener listener;
+
+        interface PlaylistClickListener {
+            void onClick(PlaylistItem item);
+            void onLongClick(PlaylistItem item);
+        }
+
+        PlaylistsAdapter(List<PlaylistItem> items, PlaylistClickListener listener) {
+            this.items = items;
+            this.listener = listener;
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View v = LayoutInflater.from(parent.getContext()).inflate(android.R.layout.simple_list_item_2, parent, false);
+            return new ViewHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            PlaylistItem item = items.get(position);
+            holder.text1.setText(item.title);
+            holder.text1.setTextColor(item.isAction ? 0xFF00FFFF : 0xFFFFFFFF);
+            holder.text1.setTextSize(18);
+            holder.text1.setTypeface(null, item.isAction ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+            holder.text2.setText(item.subtitle);
+            holder.text2.setTextColor(0xFF888888);
+            holder.itemView.setPadding(32, 24, 32, 24);
+            holder.itemView.setOnClickListener(v -> listener.onClick(item));
+            holder.itemView.setOnLongClickListener(v -> {
+                listener.onLongClick(item);
+                return true;
             });
-            recyclerView.setAdapter(artistAdapter);
+        }
+
+        @Override
+        public int getItemCount() {
+            return items != null ? items.size() : 0;
+        }
+
+        class ViewHolder extends RecyclerView.ViewHolder {
+            TextView text1, text2;
+            ViewHolder(@NonNull View itemView) {
+                super(itemView);
+                text1 = itemView.findViewById(android.R.id.text1);
+                text2 = itemView.findViewById(android.R.id.text2);
+            }
         }
     }
 
@@ -1485,6 +1671,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             optionsList.add("🗑️ Listeden Çıkar");
         }
 
+        optionsList.add("ℹ️ Şarkı Bilgisi");
+
         if (track.isUsb()) {
             optionsList.add("📥 Cihaza Kopyala (Offline Yap)");
         }
@@ -1495,7 +1683,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 .setTitle(track.getTitle() + (track.getArtist() != null && !track.getArtist().isEmpty() ? " - " + track.getArtist() : ""))
                 .setItems(options, (dialog, which) -> {
                     String selected = options[which];
-                    if (selected.contains("Sonraki Çal")) {
+                    if (selected.contains("Şarkı Bilgisi")) {
+                        showTrackInfoDialog(track);
+                    } else if (selected.contains("Sonraki Çal")) {
                         if (musicManager != null && musicManager.getInternalPlayer() != null) {
                             boolean added = musicManager.getInternalPlayer().playNextInQueue(track);
                             if (added) {
@@ -1566,6 +1756,23 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     }
                 })
                 .setNegativeButton("İptal", null)
+                .show();
+    }
+
+    private void showTrackInfoDialog(MusicRepository.AudioTrack track) {
+        if (getContext() == null || track == null) return;
+        StringBuilder info = new StringBuilder();
+        info.append("🎵 Başlık: ").append(track.getTitle()).append("\n");
+        info.append("🎙️ Sanatçı: ").append(track.getArtist() != null ? track.getArtist() : "Bilinmiyor").append("\n");
+        info.append("💿 Albüm: ").append(track.getAlbum() != null ? track.getAlbum() : "Bilinmiyor").append("\n");
+        info.append("⏱️ Süre: ").append(formatTime(track.getDurationMs())).append("\n");
+        info.append("💾 Kaynak: ").append(track.isUsb() ? "USB Depolama" : "Dahili Hafıza").append("\n");
+        info.append("📁 Yol: ").append(track.getPath());
+
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle("Şarkı Bilgisi")
+                .setMessage(info.toString())
+                .setPositiveButton("Tamam", null)
                 .show();
     }
 
