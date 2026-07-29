@@ -7,6 +7,9 @@ import android.media.MediaPlayer;
 import android.os.PowerManager;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -100,6 +103,7 @@ public class InternalMusicPlayer {
                     pause();
                 }
             }
+            saveState();
         }
     }
 
@@ -208,45 +212,52 @@ public class InternalMusicPlayer {
         setPlaylist(tracks, startIndex, true); // Default: auto play
     }
 
-    public void setPlaylist(List<MusicRepository.AudioTrack> tracks, int startIndex, boolean autoPlay) {
-        if (tracks == null || tracks.isEmpty())
+    /**
+     * Supplies the scanned library before {@link #restoreState()} without
+     * preparing a different track or overwriting the saved session.
+     */
+    public synchronized void setLibraryForRestore(List<MusicRepository.AudioTrack> tracks) {
+        if (tracks == null || tracks.isEmpty()) {
             return;
-        MusicRepository.AudioTrack targetTrack = (startIndex >= 0 && startIndex < tracks.size()) ? tracks.get(startIndex) : tracks.get(0);
+        }
+        playlist = new ArrayList<>(tracks);
+        playingQueue = new ArrayList<>(tracks);
+        currentIndex = -1;
+    }
+
+    public void setPlaylist(List<MusicRepository.AudioTrack> tracks, int startIndex, boolean autoPlay) {
+        if (tracks == null || tracks.isEmpty() || startIndex < 0 || startIndex >= tracks.size())
+            return;
+        MusicRepository.AudioTrack targetTrack = tracks.get(startIndex);
         playTrackFromCollection(tracks, targetTrack, autoPlay);
     }
 
-    public synchronized void playTrackFromCollection(List<MusicRepository.AudioTrack> collection, MusicRepository.AudioTrack selectedTrack, boolean autoPlay) {
-        if (collection == null || collection.isEmpty()) return;
-
-        this.playlist = new ArrayList<>(collection);
-
-        int selectedIndex = -1;
-        if (selectedTrack != null) {
-            for (int i = 0; i < collection.size(); i++) {
-                if (collection.get(i).getPath().equals(selectedTrack.getPath())) {
-                    selectedIndex = i;
-                    break;
-                }
-            }
+    public synchronized boolean playTrackFromCollection(List<MusicRepository.AudioTrack> collection,
+            MusicRepository.AudioTrack selectedTrack, boolean autoPlay) {
+        PlaybackQueueBuilder.Selection selection = PlaybackQueueBuilder.select(collection, selectedTrack);
+        if (selection == null) {
+            Log.w(TAG, "Selected track is not present in the source list; queue was not changed");
+            return false;
         }
-        if (selectedIndex == -1) {
-            selectedIndex = 0;
-        }
+
+        this.playlist = new ArrayList<>(selection.getQueue());
+        int selectedIndex = selection.getSelectedIndex();
 
         if (isShuffleOn) {
-            List<MusicRepository.AudioTrack> rest = new ArrayList<>(collection);
+            List<MusicRepository.AudioTrack> rest = new ArrayList<>(selection.getQueue());
             rest.remove(selectedIndex);
             java.util.Collections.shuffle(rest);
             playingQueue.clear();
-            playingQueue.add(collection.get(selectedIndex)); // Always position 0 in shuffle
+            playingQueue.add(selection.getSelectedTrack()); // Always position 0 in shuffle
             playingQueue.addAll(rest);
             currentIndex = 0;
         } else {
-            playingQueue = new ArrayList<>(collection); // Full collection as Queue!
+            playingQueue = new ArrayList<>(selection.getQueue()); // Full source snapshot as Queue
             currentIndex = selectedIndex; // Active track index
         }
 
         playTrack(currentIndex, autoPlay, 0);
+        return true;
     }
 
     public synchronized void playTrackInQueue(int queueIndex) {
@@ -273,6 +284,7 @@ public class InternalMusicPlayer {
             insertIndex = queue.size();
         }
         queue.add(insertIndex, track);
+        saveState();
         return true;
     }
 
@@ -289,6 +301,7 @@ public class InternalMusicPlayer {
             return true;
         }
         queue.add(track);
+        saveState();
         return true;
     }
 
@@ -496,6 +509,8 @@ public class InternalMusicPlayer {
     private static final String PREF_KEY_WAS_PLAYING = "last_was_playing";
     private static final String PREF_KEY_SHUFFLE = "is_shuffle";
     private static final String PREF_KEY_REPEAT = "repeat_mode";
+    private static final String PREF_KEY_MEDIA_ID = "last_media_id";
+    private static final String PREF_KEY_QUEUE = "last_queue";
 
     private void saveState() {
         android.content.SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
@@ -503,6 +518,15 @@ public class InternalMusicPlayer {
         editor.putInt(PREF_KEY_INDEX, currentIndex);
         editor.putBoolean(PREF_KEY_SHUFFLE, isShuffleOn);
         editor.putInt(PREF_KEY_REPEAT, repeatMode);
+        MusicRepository.AudioTrack currentTrack = getCurrentTrack();
+        if (currentTrack != null) {
+            editor.putString(PREF_KEY_MEDIA_ID, currentTrack.getMediaId());
+        }
+        JSONArray savedQueue = new JSONArray();
+        for (MusicRepository.AudioTrack track : getPlayingQueue()) {
+            savedQueue.put(track.getMediaId());
+        }
+        editor.putString(PREF_KEY_QUEUE, savedQueue.toString());
         
         // Eger parca hazirsa (isPrepared), o anki saniyesini ve calip calmadigini kaydet (Turkce karakter yok)
         if (mediaPlayer != null && isPrepared) {
@@ -515,18 +539,61 @@ public class InternalMusicPlayer {
     public void restoreState() {
         android.content.SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         int savedIndex = prefs.getInt(PREF_KEY_INDEX, -1);
+        String savedMediaId = prefs.getString(PREF_KEY_MEDIA_ID, null);
         int savedPos = prefs.getInt(PREF_KEY_POS, 0);
         this.isShuffleOn = prefs.getBoolean(PREF_KEY_SHUFFLE, false);
         this.repeatMode = prefs.getInt(PREF_KEY_REPEAT, 0);
         this.wasPlayingBefore = prefs.getBoolean(PREF_KEY_WAS_PLAYING, false);
 
         if (!playlist.isEmpty()) {
-            rebuildQueue();
-            if (savedIndex >= 0 && savedIndex < playingQueue.size()) {
+            List<MusicRepository.AudioTrack> restoredQueue =
+                    restoreQueue(prefs.getString(PREF_KEY_QUEUE, "[]"));
+            if (!restoredQueue.isEmpty()) {
+                playlist = new ArrayList<>(restoredQueue);
+                playingQueue = new ArrayList<>(restoredQueue);
+            } else {
+                rebuildQueue();
+            }
+            int restoredIndex = findQueueIndex(savedMediaId);
+            if (restoredIndex < 0) {
+                restoredIndex = savedIndex;
+            }
+            if (restoredIndex >= 0 && restoredIndex < playingQueue.size()) {
                 // Son sarkiyi o anki saniyesinden geri yukle, hemen baslatma mantigi MusicManager'da belirlenecek (Turkce karakter yok)
-                playTrack(savedIndex, false, savedPos);
+                playTrack(restoredIndex, false, savedPos);
             }
         }
+    }
+
+    private List<MusicRepository.AudioTrack> restoreQueue(String savedQueueJson) {
+        List<MusicRepository.AudioTrack> restored = new ArrayList<>();
+        try {
+            JSONArray references = new JSONArray(savedQueueJson);
+            for (int i = 0; i < references.length(); i++) {
+                String mediaId = references.optString(i, null);
+                if (mediaId == null) continue;
+                for (MusicRepository.AudioTrack track : playlist) {
+                    if (MusicTrackIdentity.matchesReference(mediaId, track)) {
+                        restored.add(track);
+                        break;
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            Log.w(TAG, "Unable to restore saved playback queue", e);
+        }
+        return restored;
+    }
+
+    private int findQueueIndex(String mediaId) {
+        if (mediaId == null) return -1;
+        List<MusicRepository.AudioTrack> queue = getPlayingQueue();
+        for (int i = 0; i < queue.size(); i++) {
+            if (MusicTrackIdentity.matchesReference(mediaId, queue.get(i))) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     // Helper to resume

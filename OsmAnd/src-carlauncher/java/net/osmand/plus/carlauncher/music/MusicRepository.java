@@ -4,6 +4,8 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Log;
 
@@ -14,6 +16,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Repository for scanning and managing local music files.
@@ -23,6 +28,9 @@ public class MusicRepository {
 
     private static final String TAG = "MusicRepository";
     private final Context context;
+    private final ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final AtomicInteger scanGeneration = new AtomicInteger();
     private List<AudioTrack> cachedTracks = new ArrayList<>();
     private List<AudioFolder> cachedFolders = new ArrayList<>();
     private List<AudioArtist> cachedArtists = new ArrayList<>();
@@ -40,14 +48,14 @@ public class MusicRepository {
      * Copy a USB track to device internal storage (/Music/OsmAndLocal/) asynchronously.
      */
     public void copyTrackToInternalStorage(AudioTrack track, OnCopyCompletedListener listener) {
-        new Thread(() -> {
+        ioExecutor.execute(() -> {
             if (track == null || track.getPath() == null) {
-                if (listener != null) listener.onCopyCompleted(false, "Geçersiz şarkı yolu.");
+                notifyCopyCompleted(listener, false, "Geçersiz şarkı yolu.");
                 return;
             }
             File srcFile = new File(track.getPath());
             if (!srcFile.exists()) {
-                if (listener != null) listener.onCopyCompleted(false, "Kaynak dosya bulunamadı veya USB takılı değil.");
+                notifyCopyCompleted(listener, false, "Kaynak dosya bulunamadı veya USB takılı değil.");
                 return;
             }
 
@@ -64,12 +72,12 @@ public class MusicRepository {
                 while ((len = in.read(buf)) > 0) {
                     out.write(buf, 0, len);
                 }
-                if (listener != null) listener.onCopyCompleted(true, destFile.getAbsolutePath());
+                notifyCopyCompleted(listener, true, destFile.getAbsolutePath());
             } catch (Exception e) {
                 Log.e(TAG, "Copy track failed", e);
-                if (listener != null) listener.onCopyCompleted(false, e.getMessage());
+                notifyCopyCompleted(listener, false, e.getMessage());
             }
-        }).start();
+        });
     }
 
     public interface OnScanCompletedListener {
@@ -80,11 +88,15 @@ public class MusicRepository {
      * Scan device for music files asynchronously.
      */
     public void scanMusic(final OnScanCompletedListener listener) {
-        new Thread(() -> {
+        final int generation = scanGeneration.incrementAndGet();
+        ioExecutor.execute(() -> {
             List<AudioTrack> tracks = scanDeviceForAudio();
             List<AudioFolder> folders = organizeIntoFolders(tracks);
             List<AudioArtist> artists = organizeIntoArtists(tracks);
 
+            if (generation != scanGeneration.get()) {
+                return;
+            }
             synchronized (this) {
                 cachedTracks = tracks;
                 cachedFolders = folders;
@@ -92,21 +104,30 @@ public class MusicRepository {
             }
 
             if (listener != null) {
-                // Return on main thread if possible, but caller usually handles threading
-                listener.onScanCompleted(tracks, folders, artists);
+                mainHandler.post(() -> listener.onScanCompleted(
+                        new ArrayList<>(tracks), new ArrayList<>(folders), new ArrayList<>(artists)));
             }
-        }).start();
+        });
     }
 
-    public List<AudioTrack> getCachedTracks() {
-        return getPhysicalTracks(cachedTracks);
+    private void notifyCopyCompleted(OnCopyCompletedListener listener, boolean success, String messageOrPath) {
+        if (listener != null) {
+            mainHandler.post(() -> listener.onCopyCompleted(success, messageOrPath));
+        }
+    }
+
+    public synchronized List<AudioTrack> getCachedTracks() {
+        return getPhysicalTracks(new ArrayList<>(cachedTracks));
     }
 
     public List<AudioTrack> getPhysicalTracks(List<AudioTrack> tracks) {
         List<AudioTrack> physical = new ArrayList<>();
         if (tracks == null) return physical;
         for (AudioTrack track : tracks) {
-            if (track.getPath() != null) {
+            if (track.getContentUri() != null
+                    && "content".equalsIgnoreCase(track.getContentUri().getScheme())) {
+                physical.add(track);
+            } else if (track.getPath() != null) {
                 File f = new File(track.getPath());
                 if (f.exists() && f.length() > 0) {
                     physical.add(track);
@@ -129,9 +150,9 @@ public class MusicRepository {
         return result;
     }
 
-    public List<AudioFolder> getCachedFolders() {
+    public synchronized List<AudioFolder> getCachedFolders() {
         List<AudioFolder> result = new ArrayList<>();
-        for (AudioFolder folder : cachedFolders) {
+        for (AudioFolder folder : new ArrayList<>(cachedFolders)) {
             List<AudioTrack> validTracks = getPhysicalTracks(folder.getTracks());
             if (!validTracks.isEmpty()) {
                 result.add(new AudioFolder(folder.getName(), folder.getPath(), validTracks, folder.getStorageType()));
@@ -140,8 +161,8 @@ public class MusicRepository {
         return result;
     }
 
-    public List<AudioArtist> getCachedArtists() {
-        return cachedArtists;
+    public synchronized List<AudioArtist> getCachedArtists() {
+        return new ArrayList<>(cachedArtists);
     }
 
 
@@ -162,7 +183,8 @@ public class MusicRepository {
                 MediaStore.Audio.Media.ALBUM,
                 MediaStore.Audio.Media.DURATION,
                 MediaStore.Audio.Media.DATA, // Path
-                MediaStore.Audio.Media.ALBUM_ID
+                MediaStore.Audio.Media.ALBUM_ID,
+                MediaStore.Audio.Media.DATE_ADDED
         };
 
         // Filter for music only (USB muzikleri elememek icin secim filtresi kaldirildi)
@@ -182,6 +204,7 @@ public class MusicRepository {
                 int durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION);
                 int dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
                 int albumIdColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID);
+                int dateAddedColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED);
 
                 while (cursor.moveToNext()) {
                     long id = cursor.getLong(idColumn);
@@ -191,6 +214,7 @@ public class MusicRepository {
                     long duration = cursor.getLong(durationColumn);
                     String path = cursor.getString(dataColumn);
                     long albumId = cursor.getLong(albumIdColumn);
+                    long dateAdded = cursor.getLong(dateAddedColumn);
 
                     // Strict Filter: Duration > 15s (Avoids SFX/Notification sounds)
                     if (duration < 15000) {
@@ -236,7 +260,7 @@ public class MusicRepository {
                     }
 
                     AudioTrack track = new AudioTrack(id, title, artist, album, duration, path,
-                            contentUri, albumArtUri, storageType, isAvailable);
+                            contentUri, albumArtUri, storageType, isAvailable, dateAdded);
                     tracks.add(track);
                 }
             }
@@ -441,7 +465,8 @@ public class MusicRepository {
 
                     if (!exists) {
                         StorageType storageType = (!lowerPath.startsWith("/storage/emulated/") && !lowerPath.startsWith("/data/")) ? StorageType.USB : StorageType.INTERNAL;
-                        AudioTrack track = new AudioTrack(id, title, artist, album, duration, path, contentUri, albumArtUri, storageType, true);
+                        AudioTrack track = new AudioTrack(id, title, artist, album, duration, path,
+                                contentUri, albumArtUri, storageType, true, file.lastModified() / 1000L);
                         tracks.add(track);
                     }
                 }
@@ -522,17 +547,23 @@ public class MusicRepository {
      * o an taranan disklerdeki gercek fiziksel yolla eslestirir (Port-Agnostic Re-linking).
      */
     public AudioTrack findTrackPortAgnostic(String savedPath) {
-        if (savedPath == null) return null;
+        return findTrackByReference(savedPath);
+    }
 
-        // 1. Önce doğrudan eşleşme dene
+    /**
+     * Resolves both current stable media IDs and legacy absolute-path records.
+     */
+    public synchronized AudioTrack findTrackByReference(String reference) {
+        if (reference == null) return null;
+
         for (AudioTrack track : cachedTracks) {
-            if (savedPath.equals(track.getPath())) {
+            if (MusicTrackIdentity.matchesReference(reference, track)) {
                 return track;
             }
         }
 
-        // 2. Doğrudan bulunamadıysa (Port değişmiş olabilir), bağıl dosya yolu ile eşleştir
-        String targetRelative = extractRelativePath(savedPath);
+        // A legacy removable-storage path may be mounted under another port.
+        String targetRelative = extractRelativePath(reference);
         if (targetRelative != null && !targetRelative.isEmpty()) {
             for (AudioTrack track : cachedTracks) {
                 if (track.getRelativePath() != null && track.getRelativePath().equalsIgnoreCase(targetRelative)) {
@@ -595,6 +626,8 @@ public class MusicRepository {
         private final boolean isAvailable;
         private final String volumeId;
         private final String relativePath;
+        private final String mediaId;
+        private final long dateAdded;
 
         public AudioTrack(long id, String title, String artist, String album, long duration, String path,
                 Uri contentUri, Uri albumArtUri) {
@@ -603,6 +636,13 @@ public class MusicRepository {
 
         public AudioTrack(long id, String title, String artist, String album, long duration, String path,
                 Uri contentUri, Uri albumArtUri, StorageType storageType, boolean isAvailable) {
+            this(id, title, artist, album, duration, path, contentUri, albumArtUri,
+                    storageType, isAvailable, 0L);
+        }
+
+        public AudioTrack(long id, String title, String artist, String album, long duration, String path,
+                Uri contentUri, Uri albumArtUri, StorageType storageType, boolean isAvailable,
+                long dateAdded) {
             this.id = id;
             this.title = title;
             this.artist = artist;
@@ -615,10 +655,16 @@ public class MusicRepository {
             this.isAvailable = isAvailable;
             this.volumeId = extractVolumeId(path);
             this.relativePath = extractRelativePath(path);
+            this.mediaId = MusicTrackIdentity.create(id, contentUri, volumeId, relativePath, path);
+            this.dateAdded = dateAdded;
         }
 
         public long getId() {
             return id;
+        }
+
+        public String getMediaId() {
+            return mediaId;
         }
 
         public String getTitle() {
@@ -635,6 +681,10 @@ public class MusicRepository {
 
         public long getDuration() {
             return duration;
+        }
+
+        public long getDateAdded() {
+            return dateAdded;
         }
 
         public Uri getContentUri() {
@@ -667,6 +717,10 @@ public class MusicRepository {
 
         public String getRelativePath() {
             return relativePath;
+        }
+
+        public boolean isSameMedia(AudioTrack other) {
+            return MusicTrackIdentity.matches(this, other);
         }
     }
 

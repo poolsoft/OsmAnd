@@ -33,11 +33,13 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
     private final Context context;
     private final MusicRepository repository;
+    private final PlaylistManager playlistManager;
     private final InternalMusicPlayer internalPlayer;
     private MediaSessionManager mediaSessionManager;
     private MediaController activeExternalController;
 
     private boolean isInternalPlaying = false;
+    private String lastCountedMediaId;
     private String preferredPackage;
 
     private final List<BaseMediaAdapter> adapters = new ArrayList<>();
@@ -66,6 +68,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     private MusicManager(Context context) {
         this.context = context.getApplicationContext();
         this.repository = new MusicRepository(this.context);
+        this.playlistManager = new PlaylistManager(this.context);
         this.internalPlayer = new InternalMusicPlayer(this.context);
         this.internalPlayer.setListener(this);
 
@@ -84,7 +87,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         repository.scanMusic((tracks, folders, artists) -> {
             Log.d(TAG, "Scan complete: " + tracks.size() + " tracks");
             if (!tracks.isEmpty()) {
-                internalPlayer.setPlaylist(tracks, -1, false);
+                internalPlayer.setLibraryForRestore(tracks);
                 internalPlayer.restoreState();
                 
                 net.osmand.plus.carlauncher.CarLauncherSettings settings = 
@@ -715,6 +718,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
     @Override
     public void onTrackChanged(MusicRepository.AudioTrack track) {
+        lastCountedMediaId = null;
         if (!useExternal()) {
             notifyTrackChanged();
             updateNotificationService();
@@ -725,6 +729,11 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     public void onPlaybackStateChanged(boolean isPlaying) {
         isInternalPlaying = isPlaying;
         if (isPlaying) {
+             MusicRepository.AudioTrack currentTrack = internalPlayer.getCurrentTrack();
+             if (currentTrack != null && !currentTrack.getMediaId().equals(lastCountedMediaId)) {
+                 playlistManager.addToRecentlyPlayed(currentTrack);
+                 lastCountedMediaId = currentTrack.getMediaId();
+             }
              lastActiveSource = MusicSource.INTERNAL;
              preferredPackage = "usage.internal.player";
              
@@ -752,20 +761,15 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     
     private void updateNotificationService() {
         Intent intent = new Intent(context, MusicPlaybackService.class);
-        if (internalPlayer.isPlaying() || (internalPlayer.getCurrentTrack() != null && isInternalPlaying)) {
-             intent.setAction(MusicPlaybackService.ACTION_UPDATE);
-             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                 context.startForegroundService(intent);
-             } else {
-                 context.startService(intent);
-             }
+        if (internalPlayer.getCurrentTrack() == null) {
+            context.stopService(intent);
+            return;
+        }
+        intent.setAction(MusicPlaybackService.ACTION_UPDATE);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
         } else {
-             intent.setAction(MusicPlaybackService.ACTION_UPDATE);
-             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                 context.startForegroundService(intent);
-             } else {
-                 context.startService(intent);
-             }
+            context.startService(intent);
         }
     }
 

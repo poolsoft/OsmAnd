@@ -1950,11 +1950,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		if (voiceStateReceiver != null) {
-			try {
-				unregisterReceiver(voiceStateReceiver);
-			} catch (Exception e) {}
-		}
+		safeUnregisterReceiver(voiceStateReceiver);
 		destroyProgressBarForRouting();
 		boolean ownsSharedMap = getMapView().getMapActivity() == this;
 		if (ownsSharedMap) {
@@ -1965,13 +1961,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			mapRouteInfoMenu.setMapActivity(null);
 			trackDetailsMenu.setMapActivity(null);
 		}
-		unregisterReceiver(screenOffReceiver);
-		if (carFloatingButtonReceiver != null) {
-			unregisterReceiver(carFloatingButtonReceiver);
-		}
-		if (globalPackageReceiver != null) {
-			unregisterReceiver(globalPackageReceiver);
-		}
+		safeUnregisterReceiver(screenOffReceiver);
+		safeUnregisterReceiver(carFloatingButtonReceiver);
+		safeUnregisterReceiver(globalPackageReceiver);
 		
 		// Unregister musicDrawerReceiver (Turkce karakter yok)
 		if (musicDrawerReceiver != null) {
@@ -2011,6 +2003,17 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		mIsDestroyed = true;
 
 		removeActivityResultListener(importHelper.getSaveFileResultListener());
+	}
+
+	private void safeUnregisterReceiver(@Nullable BroadcastReceiver receiver) {
+		if (receiver == null) {
+			return;
+		}
+		try {
+			unregisterReceiver(receiver);
+		} catch (IllegalArgumentException e) {
+			LOG.warn("Receiver was not registered or was already unregistered", e);
+		}
 	}
 
 	public LatLon getMapLocation() {
