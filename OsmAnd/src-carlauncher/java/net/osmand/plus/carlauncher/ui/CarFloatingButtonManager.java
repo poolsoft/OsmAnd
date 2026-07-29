@@ -3,6 +3,8 @@ package net.osmand.plus.carlauncher.ui;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.provider.Settings;
@@ -10,6 +12,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -52,6 +55,8 @@ public class CarFloatingButtonManager {
     private final android.os.Handler gestureHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private Runnable longClickRunnable;
     private boolean isLongClickTriggered = false;
+    private final int touchSlop;
+    private final Runnable configurationUpdateRunnable = this::applyConfigurationChange;
 
     // Custom Menu Overlay
     private FrameLayout menuOverlayView;
@@ -81,6 +86,7 @@ public class CarFloatingButtonManager {
     private CarFloatingButtonManager(Context context) {
         this.context = context.getApplicationContext();
         this.windowManager = (WindowManager) this.context.getSystemService(Context.WINDOW_SERVICE);
+        this.touchSlop = ViewConfiguration.get(this.context).getScaledTouchSlop();
 
         // Alıcı kaydı (Türkçe karakter yok)
         android.content.IntentFilter filter = new android.content.IntentFilter();
@@ -93,8 +99,6 @@ public class CarFloatingButtonManager {
             this.context.registerReceiver(assistantReceiver, filter);
         }
 
-        androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(this.context)
-                .registerReceiver(assistantReceiver, filter);
     }
 
     public static synchronized CarFloatingButtonManager getInstance(Context context) {
@@ -163,27 +167,7 @@ public class CarFloatingButtonManager {
             // Ekranin sag orta kisminda baslat
             params.gravity = Gravity.TOP | Gravity.START;
             
-            boolean isLandscape = context.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
-            String prefix = isLandscape ? "land_" : "port_";
-            android.content.SharedPreferences prefs = context.getSharedPreferences("floating_button_prefs", Context.MODE_PRIVATE);
-            
-            if (prefs.getBoolean(prefix + "saved", false)) {
-                params.x = prefs.getInt(prefix + "x", 0);
-                params.y = prefs.getInt(prefix + "y", 0);
-            } else {
-                int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
-                int screenHeight = context.getResources().getDisplayMetrics().heightPixels;
-                
-                if (isLandscape) {
-                    // Yatay modda sol altta (Dock'un hemen ustu veya Harita kosesi)
-                    params.x = dpToPx(20);
-                    params.y = screenHeight - dpToPx(140);
-                } else {
-                    // Dikey modda sag ortalar
-                    params.x = screenWidth - dpToPx(90);
-                    params.y = screenHeight / 2 - dpToPx(26);
-                }
-            }
+            restoreButtonPosition(size);
 
             floatingView.setOnTouchListener(new View.OnTouchListener() {
                 @Override
@@ -214,19 +198,16 @@ public class CarFloatingButtonManager {
                         case MotionEvent.ACTION_MOVE:
                             float deltaX = event.getRawX() - initialTouchX;
                             float deltaY = event.getRawY() - initialTouchY;
-                            if (Math.abs(deltaX) > 15 || Math.abs(deltaY) > 15) {
+                            if (Math.abs(deltaX) > touchSlop || Math.abs(deltaY) > touchSlop) {
                                 isDragging = true;
                                 gestureHandler.removeCallbacks(longClickRunnable);
                             }
                             params.x = (int) (initialX + deltaX);
                             params.y = (int) (initialY + deltaY);
-                            
-                            // Ekran sinirlarindan tasmasini onle
-                            if (params.x < 0) params.x = 0;
-                            if (params.y < 0) params.y = 0;
+                            clampButtonPosition();
 
                             if (isAdded) {
-                                windowManager.updateViewLayout(floatingView, params);
+                                safelyUpdateFloatingView();
                             }
                             return true;
 
@@ -239,6 +220,14 @@ public class CarFloatingButtonManager {
                                     onButtonClicked();
                                 }
                             }
+                            return true;
+                        case MotionEvent.ACTION_CANCEL:
+                            gestureHandler.removeCallbacks(longClickRunnable);
+                            if (isDragging) {
+                                clampButtonPosition();
+                                saveButtonPosition(params.x, params.y);
+                            }
+                            isDragging = false;
                             return true;
                     }
                     return false;
@@ -284,27 +273,37 @@ public class CarFloatingButtonManager {
 
     public void hideButton() {
         hideCustomOverlayMenu();
-        if (!isAdded) return;
-        try {
-            windowManager.removeView(floatingView);
-            isAdded = false;
-            floatingView = null;
-            
-            net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
-            if (app.getNavigationService() != null) {
-                app.getNavigationService().stopIfNeeded(app, net.osmand.plus.NavigationService.USED_BY_AIS);
+        if (longClickRunnable != null) {
+            gestureHandler.removeCallbacks(longClickRunnable);
+        }
+        gestureHandler.removeCallbacks(configurationUpdateRunnable);
+        if (isAdded && floatingView != null) {
+            try {
+                windowManager.removeView(floatingView);
+            } catch (IllegalArgumentException e) {
+                // View was already detached by the system.
             }
-            net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app).removeListener(telemetryListener);
+        }
+        isAdded = false;
+        floatingView = null;
+        params = null;
+        speedText = null;
 
-            if (locationManager != null && locationListener != null) {
-                try {
-                    locationManager.removeUpdates(locationListener);
-                } catch (SecurityException e) {
-                    // ignore
-                }
+        net.osmand.plus.OsmandApplication app =
+                (net.osmand.plus.OsmandApplication) context.getApplicationContext();
+        if (app.getNavigationService() != null) {
+            app.getNavigationService().stopIfNeeded(
+                    app, net.osmand.plus.NavigationService.USED_BY_AIS);
+        }
+        net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app)
+                .removeListener(telemetryListener);
+
+        if (locationManager != null && locationListener != null) {
+            try {
+                locationManager.removeUpdates(locationListener);
+            } catch (SecurityException e) {
+                // ignore
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -436,9 +435,6 @@ public class CarFloatingButtonManager {
             Intent intent = new Intent("net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE");
             intent.setPackage(context.getPackageName());
             context.sendBroadcast(intent);
-            
-            androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(context)
-                    .sendBroadcast(new Intent("net.osmand.carlauncher.ACTION_DESKTOP_TOGGLE"));
         }
     }
 
@@ -513,8 +509,9 @@ public class CarFloatingButtonManager {
         menuParams.gravity = Gravity.TOP | Gravity.START;
 
         // Butonun yaninda konumlandir
-        int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
-        if (params.x > screenWidth / 2) {
+        Point displaySize = getDisplaySize();
+        int menuWidth = dpToPx(240);
+        if (params.x > displaySize.x / 2) {
             // Buton sagda ise: menuyu sola ac
             menuParams.x = params.x - dpToPx(250);
         } else {
@@ -522,6 +519,10 @@ public class CarFloatingButtonManager {
             menuParams.x = params.x + dpToPx(60);
         }
         menuParams.y = params.y;
+        menuParams.x = Math.max(0, Math.min(menuParams.x, displaySize.x - menuWidth));
+        int estimatedMenuHeight = dpToPx(190);
+        menuParams.y = Math.max(0,
+                Math.min(menuParams.y, Math.max(0, displaySize.y - estimatedMenuHeight)));
 
         // Disari dokunuldugunda kapanmasi icin touch listener
         menuOverlayView.setOnTouchListener(new View.OnTouchListener() {
@@ -644,9 +645,6 @@ public class CarFloatingButtonManager {
                         Intent intent = new Intent(action);
                         intent.setPackage(context.getPackageName());
                         context.sendBroadcast(intent);
-                        
-                        androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(context)
-                                .sendBroadcast(new Intent(action));
 
                         hideCustomOverlayMenu();
                         break;
@@ -681,12 +679,101 @@ public class CarFloatingButtonManager {
     private void saveButtonPosition(int x, int y) {
         boolean isLandscape = context.getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
         String prefix = isLandscape ? "land_" : "port_";
+        Point displaySize = getDisplaySize();
+        int buttonWidth = params != null && params.width > 0 ? params.width : dpToPx(64);
+        int buttonHeight = params != null && params.height > 0 ? params.height : dpToPx(64);
+        int maxX = Math.max(0, displaySize.x - buttonWidth);
+        int maxY = Math.max(0, displaySize.y - buttonHeight);
+        float normalizedX = maxX == 0 ? 0f : Math.max(0f, Math.min(1f, x / (float) maxX));
+        float normalizedY = maxY == 0 ? 0f : Math.max(0f, Math.min(1f, y / (float) maxY));
         context.getSharedPreferences("floating_button_prefs", Context.MODE_PRIVATE)
                 .edit()
                 .putInt(prefix + "x", x)
                 .putInt(prefix + "y", y)
+                .putFloat(prefix + "x_ratio", normalizedX)
+                .putFloat(prefix + "y_ratio", normalizedY)
                 .putBoolean(prefix + "saved", true)
                 .apply();
+    }
+
+    public void onConfigurationChanged() {
+        gestureHandler.removeCallbacks(configurationUpdateRunnable);
+        gestureHandler.postDelayed(configurationUpdateRunnable, 120);
+    }
+
+    private void applyConfigurationChange() {
+        if (!isAdded || floatingView == null || params == null) {
+            return;
+        }
+        if (longClickRunnable != null) {
+            gestureHandler.removeCallbacks(longClickRunnable);
+        }
+        isDragging = false;
+        int size = dpToPx(CarLauncherSettings.getInstance(context).getFloatingButtonSize());
+        params.width = size;
+        params.height = size;
+        restoreButtonPosition(size);
+        safelyUpdateFloatingView();
+    }
+
+    private void restoreButtonPosition(int buttonSize) {
+        boolean isLandscape = context.getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        String prefix = isLandscape ? "land_" : "port_";
+        android.content.SharedPreferences prefs =
+                context.getSharedPreferences("floating_button_prefs", Context.MODE_PRIVATE);
+        Point displaySize = getDisplaySize();
+        int maxX = Math.max(0, displaySize.x - buttonSize);
+        int maxY = Math.max(0, displaySize.y - buttonSize);
+
+        if (prefs.getBoolean(prefix + "saved", false)) {
+            if (prefs.contains(prefix + "x_ratio") && prefs.contains(prefix + "y_ratio")) {
+                params.x = Math.round(maxX * prefs.getFloat(prefix + "x_ratio", 0f));
+                params.y = Math.round(maxY * prefs.getFloat(prefix + "y_ratio", 0f));
+            } else {
+                params.x = prefs.getInt(prefix + "x", 0);
+                params.y = prefs.getInt(prefix + "y", 0);
+            }
+        } else if (isLandscape) {
+            params.x = dpToPx(20);
+            params.y = displaySize.y - dpToPx(140);
+        } else {
+            params.x = displaySize.x - dpToPx(90);
+            params.y = displaySize.y / 2 - buttonSize / 2;
+        }
+        clampButtonPosition();
+    }
+
+    private void clampButtonPosition() {
+        if (params == null) {
+            return;
+        }
+        Point displaySize = getDisplaySize();
+        int width = params.width > 0 ? params.width : dpToPx(64);
+        int height = params.height > 0 ? params.height : dpToPx(64);
+        params.x = Math.max(0, Math.min(params.x, Math.max(0, displaySize.x - width)));
+        params.y = Math.max(0, Math.min(params.y, Math.max(0, displaySize.y - height)));
+    }
+
+    private Point getDisplaySize() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Rect bounds = windowManager.getCurrentWindowMetrics().getBounds();
+            return new Point(bounds.width(), bounds.height());
+        }
+        Point size = new Point();
+        windowManager.getDefaultDisplay().getSize(size);
+        return size;
+    }
+
+    private void safelyUpdateFloatingView() {
+        if (!isAdded || floatingView == null || params == null) {
+            return;
+        }
+        try {
+            windowManager.updateViewLayout(floatingView, params);
+        } catch (IllegalArgumentException e) {
+            hideButton();
+        }
     }
 
     private int dpToPx(int dp) {

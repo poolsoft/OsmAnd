@@ -7,8 +7,9 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,7 +36,13 @@ import net.osmand.plus.carlauncher.dock.LaunchMode;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class AppDrawerFragment extends Fragment {
 
@@ -44,16 +51,24 @@ public class AppDrawerFragment extends Fragment {
     private RecyclerView recyclerView;
     private AppDrawerAdapter adapter;
     private View loadingView;
-    private static List<AppItem> cachedApps; // Static Cache to prevent reloading
+    private static volatile List<AppItem> cachedApps; // Static Cache to prevent reloading
     private BroadcastReceiver packageReceiver; // Paket degisikliklerini izlemek icin alici (Turkce karakter yok)
     private final android.os.Handler searchHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private Runnable searchRunnable;
+    private Context callbackContext;
+    private Future<?> loadAppsFuture;
+    private int loadGeneration;
     
     // Asynchronous LruCache for holding app icons (Turkce karakter yok)
     private static android.util.LruCache<String, Drawable> iconCache;
+    private static final ExecutorService ICON_EXECUTOR = Executors.newFixedThreadPool(2);
+    private static final ExecutorService APP_LIST_EXECUTOR = Executors.newSingleThreadExecutor();
+    private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
+    private static int iconCacheGeneration;
 
-    public static void clearCache() {
+    public static synchronized void clearCache() {
         cachedApps = null;
+        iconCacheGeneration++;
         if (iconCache != null) {
             iconCache.evictAll();
         }
@@ -90,9 +105,9 @@ public class AppDrawerFragment extends Fragment {
             }
         }
 
-        // Eger ikon AdaptiveIcon degilse veya dahili uygulama ise, daire zemin ile sarmala (Turkce karakter yok)
-        if (net.osmand.plus.carlauncher.dock.InternalApp.isInternalApp(packageName) 
-                || (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O 
+        // Internal icons already contain their own automotive tile background.
+        if (!net.osmand.plus.carlauncher.dock.InternalApp.isInternalApp(packageName)
+                && (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O
                     && !(icon instanceof android.graphics.drawable.AdaptiveIconDrawable))) {
             return createCircularIcon(context, icon);
         }
@@ -119,36 +134,31 @@ public class AppDrawerFragment extends Fragment {
         return layerDrawable;
     }
 
-    // Arka planda ikon yukleyen asenkron gorev sinifi (Turkce karakter yok)
-    private static class LoadIconTask extends AsyncTask<Void, Void, Drawable> {
-        private final java.lang.ref.WeakReference<ImageView> imageViewReference;
-        private final Context context;
-        private final String packageName;
-
-        LoadIconTask(ImageView imageView, Context context, String packageName) {
-            this.imageViewReference = new java.lang.ref.WeakReference<>(imageView);
-            this.context = context.getApplicationContext();
-            this.packageName = packageName;
+    private static void loadIconAsync(ImageView imageView, Context context, String packageName) {
+        java.lang.ref.WeakReference<ImageView> imageRef =
+                new java.lang.ref.WeakReference<>(imageView);
+        Context appContext = context.getApplicationContext();
+        final int generation;
+        synchronized (AppDrawerFragment.class) {
+            generation = iconCacheGeneration;
         }
-
-        @Override
-        protected Drawable doInBackground(Void... voids) {
-            return getAppIcon(context, packageName);
-        }
-
-        @Override
-        protected void onPostExecute(Drawable drawable) {
-            if (drawable != null && iconCache != null) {
-                iconCache.put(packageName, drawable);
-            }
-            ImageView imageView = imageViewReference.get();
-            if (imageView != null) {
-                String tag = (String) imageView.getTag();
-                if (tag != null && tag.equals(packageName)) {
-                    imageView.setImageDrawable(drawable);
+        ICON_EXECUTOR.execute(() -> {
+            Drawable drawable = getAppIcon(appContext, packageName);
+            MAIN_HANDLER.post(() -> {
+                synchronized (AppDrawerFragment.class) {
+                    if (generation != iconCacheGeneration) {
+                        return;
+                    }
+                    if (drawable != null && iconCache != null) {
+                        iconCache.put(packageName, drawable);
+                    }
                 }
-            }
-        }
+                ImageView target = imageRef.get();
+                if (target != null && packageName.equals(target.getTag())) {
+                    target.setImageDrawable(drawable);
+                }
+            });
+        });
     }
 
     private final android.content.ComponentCallbacks2 componentCallbacks = new android.content.ComponentCallbacks2() {
@@ -183,8 +193,9 @@ public class AppDrawerFragment extends Fragment {
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
+        callbackContext = context.getApplicationContext();
         try {
-            context.registerComponentCallbacks(componentCallbacks);
+            callbackContext.registerComponentCallbacks(componentCallbacks);
         } catch (Exception e) {
             // ignore
         }
@@ -192,14 +203,14 @@ public class AppDrawerFragment extends Fragment {
 
     @Override
     public void onDetach() {
-        super.onDetach();
         try {
-            if (getContext() != null) {
-                getContext().unregisterComponentCallbacks(componentCallbacks);
+            if (callbackContext != null) {
+                callbackContext.unregisterComponentCallbacks(componentCallbacks);
             }
         } catch (Exception e) {
             // ignore
         }
+        super.onDetach();
     }
 
     @Override
@@ -208,17 +219,32 @@ public class AppDrawerFragment extends Fragment {
         
         // Initialize Icon Cache dynamically if not exists (Turkce karakter yok)
         if (iconCache == null) {
-            int cacheSize = 60; // Dusuk RAM durumlarinda guvenli varsayilan
+            int cacheSizeBytes = 4 * 1024 * 1024;
             try {
                 android.app.ActivityManager am = (android.app.ActivityManager) requireContext().getSystemService(Context.ACTIVITY_SERVICE);
                 if (am != null) {
                     int memoryClass = am.getMemoryClass();
-                    cacheSize = Math.max(40, Math.min(150, memoryClass / 2));
+                    cacheSizeBytes = Math.max(4, Math.min(16, memoryClass / 32))
+                            * 1024 * 1024;
                 }
             } catch (Exception e) {
                 // fallback
             }
-            iconCache = new android.util.LruCache<>(cacheSize);
+            iconCache = new android.util.LruCache<String, Drawable>(cacheSizeBytes) {
+                @Override
+                protected int sizeOf(String key, Drawable drawable) {
+                    if (drawable instanceof android.graphics.drawable.BitmapDrawable) {
+                        android.graphics.Bitmap bitmap =
+                                ((android.graphics.drawable.BitmapDrawable) drawable).getBitmap();
+                        if (bitmap != null) {
+                            return Math.max(1, bitmap.getAllocationByteCount());
+                        }
+                    }
+                    int width = Math.max(48, drawable.getIntrinsicWidth());
+                    int height = Math.max(48, drawable.getIntrinsicHeight());
+                    return Math.max(1, width * height * 4);
+                }
+            };
         }
 
         // Paket degisikliklerini dinlemek icin alici (Turkce karakter yok)
@@ -226,6 +252,11 @@ public class AppDrawerFragment extends Fragment {
             @Override
             public void onReceive(Context context, Intent intent) {
                 clearCache();
+                if (loadAppsFuture != null) {
+                    loadAppsFuture.cancel(true);
+                    loadAppsFuture = null;
+                }
+                loadGeneration++;
                 if (isAdded() && !isDetached()) {
                     loadApps();
                 }
@@ -236,31 +267,37 @@ public class AppDrawerFragment extends Fragment {
         filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
         filter.addAction(Intent.ACTION_PACKAGE_CHANGED);
         filter.addDataScheme("package");
-        if (getContext() != null) {
-            getContext().registerReceiver(packageReceiver, filter);
+        if (callbackContext != null) {
+            callbackContext.registerReceiver(packageReceiver, filter);
         }
     }
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         if (searchRunnable != null) {
             searchHandler.removeCallbacks(searchRunnable);
         }
-        if (packageReceiver != null && getContext() != null) {
+        if (loadAppsFuture != null) {
+            loadAppsFuture.cancel(true);
+            loadAppsFuture = null;
+        }
+        loadGeneration++;
+        if (packageReceiver != null && callbackContext != null) {
             try {
-                getContext().unregisterReceiver(packageReceiver);
+                callbackContext.unregisterReceiver(packageReceiver);
             } catch (Exception e) {
                 // ignore
             }
         }
         try {
-            if (getContext() != null) {
-                getContext().unregisterComponentCallbacks(componentCallbacks);
+            if (callbackContext != null) {
+                callbackContext.unregisterComponentCallbacks(componentCallbacks);
             }
         } catch (Exception e) {
             // ignore
         }
+        callbackContext = null;
+        super.onDestroy();
     }
 
     @Nullable
@@ -284,7 +321,9 @@ public class AppDrawerFragment extends Fragment {
         // Logic
         closeBtn.setOnClickListener(v -> closeDrawer());
 
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 4));
+        boolean isLandscape = getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), isLandscape ? 6 : 4));
 
         // Search Filter (Debounced)
         searchInput.addTextChangedListener(new android.text.TextWatcher() {
@@ -294,12 +333,13 @@ public class AppDrawerFragment extends Fragment {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String query = s == null ? "" : s.toString();
                 if (searchRunnable != null) {
                     searchHandler.removeCallbacks(searchRunnable);
                 }
                 searchRunnable = () -> {
                     if (adapter != null) {
-                        adapter.filter(s.toString());
+                        adapter.filter(query);
                     }
                 };
                 searchHandler.postDelayed(searchRunnable, 200); // 200ms gecikme (Debounce)
@@ -313,6 +353,18 @@ public class AppDrawerFragment extends Fragment {
         loadApps();
     }
 
+    @Override
+    public void onDestroyView() {
+        if (searchRunnable != null) {
+            searchHandler.removeCallbacks(searchRunnable);
+            searchRunnable = null;
+        }
+        recyclerView = null;
+        adapter = null;
+        loadingView = null;
+        super.onDestroyView();
+    }
+
     private void closeDrawer() {
         if (getActivity() instanceof CarLauncherInterface) {
             ((CarLauncherInterface) getActivity()).closeAppDrawer();
@@ -324,77 +376,89 @@ public class AppDrawerFragment extends Fragment {
         if (cachedApps != null && !cachedApps.isEmpty()) {
             if (loadingView != null)
                 loadingView.setVisibility(View.GONE);
-            if (adapter == null) {
+            if (adapter == null && recyclerView != null) {
                 adapter = new AppDrawerAdapter(cachedApps);
                 recyclerView.setAdapter(adapter);
             }
             return;
         }
+        if (loadAppsFuture != null) {
+            return;
+        }
 
-        // Cache yoksa yukle
         // Cache yoksa yukle
         if (loadingView != null)
             loadingView.setVisibility(View.VISIBLE);
         if (getContext() != null) {
-            new LoadAppsTask(getContext()).execute();
+            Context appContext = getContext().getApplicationContext();
+            int generation = ++loadGeneration;
+            loadAppsFuture = APP_LIST_EXECUTOR.submit(() -> {
+                List<AppItem> appItems;
+                try {
+                    appItems = queryApps(appContext);
+                } catch (RuntimeException e) {
+                    // Some vendor PackageManager implementations can fail while
+                    // their launcher database is rebuilding. Keep internal apps
+                    // available and allow the next package event to retry.
+                    appItems = getInternalApps();
+                }
+                final List<AppItem> loadedApps = appItems;
+                MAIN_HANDLER.post(() -> applyLoadedApps(generation, loadedApps));
+            });
         }
     }
 
-    // Broadcast Receiver for App Updates
-    private class LoadAppsTask extends AsyncTask<Void, Void, List<AppItem>> {
-        private final Context context;
+    private List<AppItem> queryApps(Context context) {
+        List<AppItem> apps = new ArrayList<>();
+        PackageManager pm = context.getPackageManager();
+        Intent intent = new Intent(Intent.ACTION_MAIN, null);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        List<ResolveInfo> activities = pm.queryIntentActivities(intent, 0);
+        Set<String> seenPackages = new HashSet<>();
 
-        public LoadAppsTask(Context context) {
-            this.context = context.getApplicationContext(); // Use application context
-        }
-
-        @Override
-        protected List<AppItem> doInBackground(Void... voids) {
-            List<AppItem> apps = new ArrayList<>();
-            if (context == null)
-                return apps;
-            PackageManager pm = context.getPackageManager();
-
-            Intent intent = new Intent(Intent.ACTION_MAIN, null);
-            intent.addCategory(Intent.CATEGORY_LAUNCHER);
-
-            List<ResolveInfo> activities = pm.queryIntentActivities(intent, 0);
-
-            for (ResolveInfo info : activities) {
-                AppItem item = new AppItem();
-                item.label = info.loadLabel(pm).toString();
-                item.packageName = info.activityInfo.packageName;
-                apps.add(item);
+        for (ResolveInfo info : activities) {
+            if (Thread.currentThread().isInterrupted()) {
+                return Collections.emptyList();
             }
-
-            Collections.sort(apps, (a, b) -> a.label.compareToIgnoreCase(b.label));
-
-            // Add internal apps at the beginning
-            List<AppItem> internalApps = getInternalApps();
-            apps.addAll(0, internalApps);
-
-            return apps;
-        }
-
-        private List<AppItem> getInternalApps() {
-            List<AppItem> internal = new ArrayList<>();
-            for (net.osmand.plus.carlauncher.dock.InternalApp app : net.osmand.plus.carlauncher.dock.InternalApp.values()) {
-                AppItem item = new AppItem();
-                item.label = app.getDefaultName();
-                item.packageName = app.getPackageName();
-                internal.add(item);
+            if (info.activityInfo == null || !seenPackages.add(info.activityInfo.packageName)) {
+                continue;
             }
-            return internal;
+            AppItem item = new AppItem();
+            CharSequence label = info.loadLabel(pm);
+            item.label = label == null ? info.activityInfo.packageName : label.toString();
+            item.packageName = info.activityInfo.packageName;
+            apps.add(item);
         }
+        java.text.Collator collator = java.text.Collator.getInstance();
+        Collections.sort(apps, (a, b) -> collator.compare(a.label, b.label));
+        apps.addAll(0, getInternalApps());
+        return apps;
+    }
 
-        @Override
-        protected void onPostExecute(List<AppItem> appItems) {
-            cachedApps = appItems; // Cache'e kaydet
-            if (loadingView != null)
-                loadingView.setVisibility(View.GONE);
+    private List<AppItem> getInternalApps() {
+        List<AppItem> internal = new ArrayList<>();
+        for (net.osmand.plus.carlauncher.dock.InternalApp app
+                : net.osmand.plus.carlauncher.dock.InternalApp.values()) {
+            AppItem item = new AppItem();
+            item.label = app.getDefaultName();
+            item.packageName = app.getPackageName();
+            internal.add(item);
+        }
+        return internal;
+    }
+
+    private void applyLoadedApps(int generation, List<AppItem> appItems) {
+        if (generation != loadGeneration) {
+            return;
+        }
+        loadAppsFuture = null;
+        cachedApps = appItems;
+        if (loadingView != null) {
+            loadingView.setVisibility(View.GONE);
+        }
+        if (recyclerView != null) {
             adapter = new AppDrawerAdapter(appItems);
-            if (recyclerView != null)
-                recyclerView.setAdapter(adapter);
+            recyclerView.setAdapter(adapter);
         }
     }
 
@@ -408,6 +472,7 @@ public class AppDrawerFragment extends Fragment {
         AppDrawerAdapter(List<AppItem> apps) {
             this.originalApps = new ArrayList<>(apps);
             this.displayedApps = new ArrayList<>(apps);
+            setHasStableIds(true);
         }
 
         void filter(String query) {
@@ -415,9 +480,9 @@ public class AppDrawerFragment extends Fragment {
             if (android.text.TextUtils.isEmpty(query)) {
                 displayedApps.addAll(originalApps);
             } else {
-                String q = query.toLowerCase();
+                String q = query.toLowerCase(Locale.getDefault());
                 for (AppItem item : originalApps) {
-                    if (item.label.toLowerCase().contains(q)) {
+                    if (item.label.toLowerCase(Locale.getDefault()).contains(q)) {
                         displayedApps.add(item);
                     }
                 }
@@ -450,7 +515,7 @@ public class AppDrawerFragment extends Fragment {
                 // Varsayilan bos/placeholder ikon set et (Turkce karakter yok)
                 holder.iconView.setImageDrawable(null);
                 if (holder.iconView.getContext() != null) {
-                    new LoadIconTask(holder.iconView, holder.iconView.getContext(), item.packageName).execute();
+                    loadIconAsync(holder.iconView, holder.iconView.getContext(), item.packageName);
                 }
             }
 
@@ -470,6 +535,11 @@ public class AppDrawerFragment extends Fragment {
             return displayedApps.size();
         }
 
+        @Override
+        public long getItemId(int position) {
+            return displayedApps.get(position).packageName.hashCode();
+        }
+
         class ViewHolder extends RecyclerView.ViewHolder {
             ImageView iconView;
             TextView textView;
@@ -487,10 +557,13 @@ public class AppDrawerFragment extends Fragment {
         
         ImageView iconView = dialogView.findViewById(net.osmand.plus.R.id.dialog_app_icon);
         TextView labelView = dialogView.findViewById(net.osmand.plus.R.id.dialog_app_label);
+        iconView.setTag(item.packageName);
         
-        Drawable icon = getAppIcon(getContext(), item.packageName);
+        Drawable icon = iconCache != null ? iconCache.get(item.packageName) : null;
         if (icon != null) {
             iconView.setImageDrawable(icon);
+        } else if (getContext() != null) {
+            loadIconAsync(iconView, getContext(), item.packageName);
         }
         labelView.setText(item.label);
 
@@ -507,29 +580,40 @@ public class AppDrawerFragment extends Fragment {
             dialog.dismiss();
         });
 
-        dialogView.findViewById(net.osmand.plus.R.id.btn_dock_split).setOnClickListener(v -> {
+        View splitButton = dialogView.findViewById(net.osmand.plus.R.id.btn_dock_split);
+        splitButton.setOnClickListener(v -> {
             addToDock(item, LaunchMode.SPLIT_SCREEN);
             dialog.dismiss();
         });
 
-        dialogView.findViewById(net.osmand.plus.R.id.btn_dock_overlay).setOnClickListener(v -> {
+        View overlayButton = dialogView.findViewById(net.osmand.plus.R.id.btn_dock_overlay);
+        overlayButton.setOnClickListener(v -> {
             addToDock(item, LaunchMode.OVERLAY);
             dialog.dismiss();
         });
 
-        dialogView.findViewById(net.osmand.plus.R.id.btn_app_info).setOnClickListener(v -> {
+        View appInfoButton = dialogView.findViewById(net.osmand.plus.R.id.btn_app_info);
+        appInfoButton.setOnClickListener(v -> {
             Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
             intent.setData(android.net.Uri.parse("package:" + item.packageName));
             startActivity(intent);
             dialog.dismiss();
         });
 
-        dialogView.findViewById(net.osmand.plus.R.id.btn_uninstall).setOnClickListener(v -> {
+        View uninstallButton = dialogView.findViewById(net.osmand.plus.R.id.btn_uninstall);
+        uninstallButton.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_DELETE);
             intent.setData(android.net.Uri.parse("package:" + item.packageName));
             startActivity(intent);
             dialog.dismiss();
         });
+
+        if (net.osmand.plus.carlauncher.dock.InternalApp.isInternalApp(item.packageName)) {
+            splitButton.setVisibility(View.GONE);
+            overlayButton.setVisibility(View.GONE);
+            appInfoButton.setVisibility(View.GONE);
+            uninstallButton.setVisibility(View.GONE);
+        }
 
         dialog.show();
     }
@@ -557,11 +641,10 @@ public class AppDrawerFragment extends Fragment {
         if (dockManager.addShortcut(shortcut)) {
             Toast.makeText(getContext(), item.label + " dock'a eklendi.", Toast.LENGTH_SHORT).show();
 
-            // Send broadcast to refresh Dock (Both Local and Global for safety)
+            // Package-scoped broadcast is sufficient for the dock receiver.
             Intent updateIntent = new Intent("net.osmand.carlauncher.DOCK_UPDATED");
             updateIntent.setPackage(getContext().getPackageName()); // Security
             getContext().sendBroadcast(updateIntent);
-            androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(getContext()).sendBroadcast(updateIntent);
         }
         closeDrawer();
     }

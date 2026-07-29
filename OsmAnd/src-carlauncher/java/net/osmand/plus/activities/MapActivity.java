@@ -2851,6 +2851,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	public void onConfigurationChanged(@NonNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
 		applyNightDimMode(); // Gece modu karartma overlay guncellemesi (Turkce karakter yok)
+		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this)
+				.onConfigurationChanged();
 
 		app.getLocaleHelper().setLanguage(this);
 		app.runInUIThread(fragmentsHelper::updateFragments);
