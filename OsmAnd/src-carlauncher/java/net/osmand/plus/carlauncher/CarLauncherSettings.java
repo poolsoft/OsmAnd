@@ -314,8 +314,14 @@ public class CarLauncherSettings {
     }
 
     public void setWidgetPanelWidthPercent(float percent) {
+        setWidgetPanelWidthPercent(percent, true);
+    }
+
+    public void setWidgetPanelWidthPercent(float percent, boolean persist) {
         this.cWidgetPanelWidthPercent = percent;
-        prefs.edit().putFloat(KEY_WIDGET_PANEL_WIDTH_PERCENT, percent).apply();
+        if (persist) {
+            prefs.edit().putFloat(KEY_WIDGET_PANEL_WIDTH_PERCENT, percent).apply();
+        }
     }
 
     // =====================================================================
@@ -327,9 +333,15 @@ public class CarLauncherSettings {
     }
 
     public void setWidgetPanelHeightPortrait(float percent) {
+        setWidgetPanelHeightPortrait(percent, true);
+    }
+
+    public void setWidgetPanelHeightPortrait(float percent, boolean persist) {
         float clamped = Math.max(0.1f, Math.min(0.7f, percent));
         this.cWidgetPanelHeightPortrait = clamped;
-        prefs.edit().putFloat(KEY_WIDGET_PANEL_HEIGHT_PORTRAIT, clamped).apply();
+        if (persist) {
+            prefs.edit().putFloat(KEY_WIDGET_PANEL_HEIGHT_PORTRAIT, clamped).apply();
+        }
     }
 
     public float getWidgetHandleVerticalBias() {

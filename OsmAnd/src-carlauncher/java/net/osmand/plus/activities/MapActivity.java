@@ -605,6 +605,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		    widgetHandle.setOnTouchListener(new View.OnTouchListener() {
 		        private float initialTouchX;
 		        private float initialTouchY;
+		        private float initialPanelPercent;
+		        private boolean portraitDrag;
 		        private boolean isDragging = false;
 		        private static final int TOUCH_SLOP = 10; // Surukleme esigi
 
@@ -614,21 +616,30 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		                case MotionEvent.ACTION_DOWN:
 		                    initialTouchX = event.getRawX();
 		                    initialTouchY = event.getRawY();
+		                    portraitDrag = getResources().getConfiguration().orientation
+		                            == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+		                    net.osmand.plus.carlauncher.CarLauncherSettings settings =
+		                            net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(MapActivity.this);
+		                    initialPanelPercent = portraitDrag
+		                            ? settings.getWidgetPanelHeightPortrait()
+		                            : settings.getWidgetPanelWidthPercent();
 		                    isDragging = false;
 		                    break;
 		                case MotionEvent.ACTION_MOVE:
 		                    float dx = event.getRawX() - initialTouchX;
 		                    float dy = event.getRawY() - initialTouchY;
-		                    if (!isDragging && (Math.abs(dx) > TOUCH_SLOP || Math.abs(dy) > TOUCH_SLOP)) {
+		                    float primaryDelta = portraitDrag ? dy : dx;
+		                    if (!isDragging && Math.abs(primaryDelta) > TOUCH_SLOP) {
 		                        isDragging = true;
 		                    }
 		                    if (isDragging) {
-		                        updateCarWidgetPanelSize(event.getRawX(), event.getRawY());
+		                        updateCarWidgetPanelSize(dx, dy, initialPanelPercent);
 		                    }
 		                    break;
 		                case MotionEvent.ACTION_UP:
 		                case MotionEvent.ACTION_CANCEL:
 		                    if (isDragging) {
+		                        persistCarWidgetPanelSize();
 		                        applyWidgetPanelState(true);
 		                    }
 		                    break;
@@ -707,7 +718,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}));
 	}
 
-	private void updateCarWidgetPanelSize(float rawX, float rawY) {
+	private void updateCarWidgetPanelSize(float deltaX, float deltaY, float initialPercent) {
 		if (carLayoutManager == null) return;
 		
 		boolean isPortrait = getResources().getConfiguration().orientation 
@@ -716,35 +727,51 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		net.osmand.plus.carlauncher.CarLauncherSettings carSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);
 		
 		if (isPortrait) {
-			int screenHeight = getResources().getDisplayMetrics().heightPixels;
-			if (screenHeight <= 0) return;
+			int availableHeight = carLayoutManager.getAvailablePanelHeight();
+			if (availableHeight <= 0) return;
 			
 			boolean expandUp = "expand_up".equals(carSettings.getPortraitExpansion());
-			float rawPercent = expandUp ? ((screenHeight - rawY) / (float) screenHeight) : (rawY / (float) screenHeight);
+			boolean smallViewOnTop = !expandUp;
+			if (carLayoutManager.isContentFullScreen()) {
+				smallViewOnTop = !smallViewOnTop;
+			}
+			float direction = smallViewOnTop ? 1.0f : -1.0f;
+			float rawPercent = initialPercent + direction * (deltaY / availableHeight);
 			// %15 ile %65 arasinda sinirla, pürüzsüz kaydir (Turkce karakter yok)
 			float percent = Math.max(0.15f, Math.min(0.65f, rawPercent));
 			
-			carSettings.setWidgetPanelHeightPortrait(percent);
+			carSettings.setWidgetPanelHeightPortrait(percent, false);
 		} else {
-			int screenWidth = getResources().getDisplayMetrics().widthPixels;
-			if (screenWidth <= 0) return;
+			int availableWidth = carLayoutManager.getAvailablePanelWidth();
+			if (availableWidth <= 0) return;
 			
 			boolean expandRight = "expand_right".equals(carSettings.getLandscapeExpansion());
-			
-			float rawPercent;
-			if (expandRight) {
-				rawPercent = rawX / (float) screenWidth;
-			} else {
-				rawPercent = (screenWidth - rawX) / (float) screenWidth;
+			boolean smallViewOnLeft = expandRight;
+			if (carLayoutManager.isContentFullScreen()) {
+				smallViewOnLeft = !smallViewOnLeft;
 			}
-			
+			float direction = smallViewOnLeft ? 1.0f : -1.0f;
+			float rawPercent = initialPercent + direction * (deltaX / availableWidth);
+
 			// %15 ile %65 arasinda sinirla, pürüzsüz kaydir (Turkce karakter yok)
 			float percent = Math.max(0.15f, Math.min(0.65f, rawPercent));
 			
-			carSettings.setWidgetPanelWidthPercent(percent);
+			carSettings.setWidgetPanelWidthPercent(percent, false);
 		}
 		
 		applyWidgetPanelState(false);
+	}
+
+	private void persistCarWidgetPanelSize() {
+		net.osmand.plus.carlauncher.CarLauncherSettings settings =
+				net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);
+		boolean isPortrait = getResources().getConfiguration().orientation
+				== android.content.res.Configuration.ORIENTATION_PORTRAIT;
+		if (isPortrait) {
+			settings.setWidgetPanelHeightPortrait(settings.getWidgetPanelHeightPortrait());
+		} else {
+			settings.setWidgetPanelWidthPercent(settings.getWidgetPanelWidthPercent());
+		}
 	}
 
 	public void applyNightDimMode() {

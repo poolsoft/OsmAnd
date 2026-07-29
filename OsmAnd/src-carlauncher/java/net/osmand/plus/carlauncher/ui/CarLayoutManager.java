@@ -44,6 +44,38 @@ public class CarLayoutManager {
         return isContentFullScreen;
     }
 
+    public int getAvailablePanelWidth() {
+        int width = rootLayout != null && rootLayout.getWidth() > 0
+                ? rootLayout.getWidth() - rootLayout.getPaddingLeft() - rootLayout.getPaddingRight()
+                : activity.getResources().getDisplayMetrics().widthPixels;
+        if (appDock == null || appDock.getVisibility() != View.VISIBLE) {
+            return width;
+        }
+        boolean isPortrait = activity.getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_PORTRAIT;
+        String dockPos = isPortrait ? "bottom" : CarLauncherSettings.getInstance(activity).getDockPosition();
+        if ("left".equals(dockPos) || "right".equals(dockPos)) {
+            width -= appDock.getWidth();
+        }
+        return Math.max(0, width);
+    }
+
+    public int getAvailablePanelHeight() {
+        int height = rootLayout != null && rootLayout.getHeight() > 0
+                ? rootLayout.getHeight() - rootLayout.getPaddingTop() - rootLayout.getPaddingBottom()
+                : activity.getResources().getDisplayMetrics().heightPixels;
+        if (appDock == null || appDock.getVisibility() != View.VISIBLE) {
+            return height;
+        }
+        boolean isPortrait = activity.getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_PORTRAIT;
+        String dockPos = isPortrait ? "bottom" : CarLauncherSettings.getInstance(activity).getDockPosition();
+        if ("bottom".equals(dockPos)) {
+            height -= appDock.getHeight();
+        }
+        return Math.max(0, height);
+    }
+
     public void applyLayout(boolean isWidgetPanelOpen, int layoutMode) {
         if (rootLayout == null || widgetPanel == null || appDock == null) return;
 
@@ -133,8 +165,12 @@ public class CarLayoutManager {
 
         // 3. Widget ve Harita Alanlari - Harita herzaman ekranda kalacak sekilde swap mantigi
         float panelPercent = carSettings.getWidgetPanelWidthPercent();
-        int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
-        int screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
+        int screenWidth = rootLayout.getWidth() > 0
+                ? rootLayout.getWidth() - rootLayout.getPaddingLeft() - rootLayout.getPaddingRight()
+                : activity.getResources().getDisplayMetrics().widthPixels;
+        int screenHeight = rootLayout.getHeight() > 0
+                ? rootLayout.getHeight() - rootLayout.getPaddingTop() - rootLayout.getPaddingBottom()
+                : activity.getResources().getDisplayMetrics().heightPixels;
 
         if (activity.isDesktopMode()) {
             cs.setVisibility(R.id.map_container, View.GONE);
@@ -199,7 +235,8 @@ public class CarLayoutManager {
                 int smallViewId = isContentFullScreen ? R.id.map_container : R.id.widget_panel;
 
                 float portraitPanelHeight = isPortrait ? carSettings.getWidgetPanelHeightPortrait() : 0.30f;
-                int smallHeight = (int) (screenHeight * portraitPanelHeight);
+                int availableHeight = screenHeight - ("bottom".equals(dockPos) ? dockSize : 0);
+                int smallHeight = (int) (availableHeight * portraitPanelHeight);
                 float density = activity.getResources().getDisplayMetrics().density;
                 int gapSize = (int) (8 * density); // Premium 8dp bosluk
 
@@ -266,7 +303,9 @@ public class CarLayoutManager {
                 int smallViewId = isContentFullScreen ? R.id.map_container : R.id.widget_panel;
 
                 float density = activity.getResources().getDisplayMetrics().density;
-                int smallWidth = (int) (screenWidth * panelPercent);
+                int availableWidth = screenWidth
+                        - (("left".equals(dockPos) || "right".equals(dockPos)) ? sidebarWidth : 0);
+                int smallWidth = (int) (availableWidth * panelPercent);
                 int gapSize = (int) (8 * density); // Premium 8dp bosluk
 
                 // Her iki gorunum de dikeyde yayilir
