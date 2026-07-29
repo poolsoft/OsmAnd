@@ -201,6 +201,9 @@ public class AppDockFragment extends Fragment
         this.currentLayoutId = layoutId;
         View root = inflater.inflate(layoutId, container, false);
         root.post(() -> {
+            if (getView() != root) {
+                return;
+            }
             ViewGroup.LayoutParams lp = root.getLayoutParams();
             if (lp != null) {
                 if (isVerticalMode) {
@@ -518,13 +521,24 @@ public class AppDockFragment extends Fragment
                                    net.osmand.plus.carlauncher.telemetry.TelemetryManager.NavigationState nav, 
                                    net.osmand.plus.carlauncher.telemetry.TelemetryManager.ObdState obd) {
         this.currentNavState = nav;
-        if (getActivity() != null && !getActivity().isFinishing()) {
-            getActivity().runOnUiThread(this::updateDynamicWidgetUI);
-        }
+        updateDynamicWidgetUI();
     }
 
     private void updateDynamicWidgetUI() {
-        if (getActivity() == null) return;
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            runOnDockUiThread(this::updateDynamicWidgetUI);
+            return;
+        }
+        if (getActivity() == null || getView() == null) return;
+
+        LinearLayout musicContainer = miniMusicContainer;
+        TextView musicTitle = miniMusicTitle;
+        ImageView musicIcon = miniMusicIcon;
+        ImageButton playButton = miniBtnPlay;
+        ImageButton nextButton = miniBtnNext;
+        if (musicContainer == null || musicTitle == null || musicIcon == null) {
+            return;
+        }
         
         boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
         boolean shouldShow = false;
@@ -541,26 +555,24 @@ public class AppDockFragment extends Fragment
             }
         }
 
-        if (!shouldShow && miniMusicContainer != null) {
-            miniMusicContainer.post(() -> miniMusicContainer.setVisibility(View.GONE));
+        if (!shouldShow) {
+            musicContainer.setVisibility(View.GONE);
             return;
         }
 
         // 1. Navigasyon oncelikli
-        if (currentNavState != null && currentNavState.isActive) {
-            if (miniMusicContainer != null) {
-                miniMusicContainer.post(() -> {
-                    miniMusicContainer.setVisibility(View.VISIBLE);
-                    miniMusicTitle.setText(currentNavState.distanceStr);
-                    if (currentNavState.turnIconRes != 0) {
-                        miniMusicIcon.setImageResource(currentNavState.turnIconRes);
-                    } else {
-                        miniMusicIcon.setImageResource(net.osmand.plus.R.drawable.ic_action_gdirections_dark);
-                    }
-                    if (miniBtnPlay != null) miniBtnPlay.setVisibility(View.GONE);
-                    if (miniBtnNext != null) miniBtnNext.setVisibility(View.GONE);
-                });
+        net.osmand.plus.carlauncher.telemetry.TelemetryManager.NavigationState navState =
+                currentNavState;
+        if (navState != null && navState.isActive) {
+            musicContainer.setVisibility(View.VISIBLE);
+            musicTitle.setText(navState.distanceStr);
+            if (navState.turnIconRes != 0) {
+                musicIcon.setImageResource(navState.turnIconRes);
+            } else {
+                musicIcon.setImageResource(net.osmand.plus.R.drawable.ic_action_gdirections_dark);
             }
+            if (playButton != null) playButton.setVisibility(View.GONE);
+            if (nextButton != null) nextButton.setVisibility(View.GONE);
             return; // Navigasyon varsa muzigi isleme
         }
 
@@ -583,18 +595,30 @@ public class AppDockFragment extends Fragment
             isPlaying = musicManager.getInternalPlayer().isPlaying();
         }
 
-        if (miniMusicContainer != null) {
-            miniMusicContainer.post(() -> {
-                miniMusicContainer.setVisibility(View.VISIBLE);
-                miniMusicTitle.setText(titleText);
-                miniMusicIcon.setImageResource(android.R.drawable.ic_media_play);
-                if (miniBtnPlay != null) {
-                    miniBtnPlay.setVisibility(View.VISIBLE);
-                    miniBtnPlay.setImageResource(isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
-                }
-                if (miniBtnNext != null) miniBtnNext.setVisibility(View.VISIBLE);
-            });
+        musicContainer.setVisibility(View.VISIBLE);
+        musicTitle.setText(titleText);
+        musicIcon.setImageResource(android.R.drawable.ic_media_play);
+        if (playButton != null) {
+            playButton.setVisibility(View.VISIBLE);
+            playButton.setImageResource(isPlaying
+                    ? android.R.drawable.ic_media_pause
+                    : android.R.drawable.ic_media_play);
         }
+        if (nextButton != null) nextButton.setVisibility(View.VISIBLE);
+    }
+
+    private void runOnDockUiThread(@NonNull Runnable action) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            if (getView() != null) {
+                action.run();
+            }
+            return;
+        }
+        clockHandler.post(() -> {
+            if (getView() != null) {
+                action.run();
+            }
+        });
     }
 
     private void updateMiniMusicUI() {
@@ -615,9 +639,11 @@ public class AppDockFragment extends Fragment
         }
 
         final int finalColor = color;
-        if (miniMusicIcon != null) miniMusicIcon.post(() -> miniMusicIcon.setColorFilter(finalColor));
-        if (miniBtnPlay != null) miniBtnPlay.post(() -> miniBtnPlay.setColorFilter(finalColor));
-        if (miniBtnNext != null) miniBtnNext.post(() -> miniBtnNext.setColorFilter(finalColor));
+        runOnDockUiThread(() -> {
+            if (miniMusicIcon != null) miniMusicIcon.setColorFilter(finalColor);
+            if (miniBtnPlay != null) miniBtnPlay.setColorFilter(finalColor);
+            if (miniBtnNext != null) miniBtnNext.setColorFilter(finalColor);
+        });
     }
 
     private int getDominantColor(Bitmap bitmap) {
@@ -649,13 +675,13 @@ public class AppDockFragment extends Fragment
     @Override
     public void onSourceChanged(boolean isInternal) {
         // Kaynak degistiginde yapilacaklar (Ornegin ikon degisimi)
-        if (miniMusicIcon != null) {
-            miniMusicIcon.post(() -> {
+        runOnDockUiThread(() -> {
+            if (miniMusicIcon != null) {
                 miniMusicIcon.setImageResource(isInternal ? net.osmand.plus.R.drawable.ic_music_play : // Internal icon
                         android.R.drawable.stat_sys_headset); // External icon placeholder
                 miniMusicIcon.setColorFilter(android.graphics.Color.WHITE);
-            });
-        }
+            }
+        });
     }
 
     @Override
@@ -792,7 +818,9 @@ public class AppDockFragment extends Fragment
                 .setPositiveButton("Kaldir", (dialog, which) -> {
                     if (dockManager != null) {
                         dockManager.removeShortcut(shortcut);
-                        adapter.setShortcuts(dockManager.getShortcuts());
+                        if (adapter != null) {
+                            adapter.setShortcuts(dockManager.getShortcuts());
+                        }
                     }
                 })
                 .setNegativeButton("Iptal", null)
@@ -808,7 +836,9 @@ public class AppDockFragment extends Fragment
             if (dockManager.addShortcut(newShortcut)) {
                 if (adapter != null && getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        adapter.setShortcuts(dockManager.getShortcuts());
+                        if (adapter != null && dockManager != null) {
+                            adapter.setShortcuts(dockManager.getShortcuts());
+                        }
                     });
                 }
             }
@@ -931,67 +961,42 @@ public class AppDockFragment extends Fragment
     }
 
     public void updateLayoutIcon(int mode) {
-        if (layoutButton == null) return;
-        
-        layoutButton.post(() -> {
+        runOnDockUiThread(() -> {
+            ImageButton button = layoutButton;
+            if (button == null) return;
             switch (mode) {
                 case 0: // Normal (Widgets Visible)
-                    layoutButton.setImageResource(net.osmand.plus.R.drawable.ic_layout_full);
+                    button.setImageResource(net.osmand.plus.R.drawable.ic_layout_full);
                     break;
                 case 2: // Full Screen (Map Only)
-                    layoutButton.setImageResource(net.osmand.plus.R.drawable.ic_layout_split);
+                    button.setImageResource(net.osmand.plus.R.drawable.ic_layout_split);
                     break;
                 default: 
-                    layoutButton.setImageResource(net.osmand.plus.R.drawable.ic_layout_split);
+                    button.setImageResource(net.osmand.plus.R.drawable.ic_layout_split);
                     break;
             }
         });
     }
 
     public void updateDesktopModeState(boolean active) {
-        if (btnDesktopMode == null) return;
-        
-        btnDesktopMode.post(() -> {
-            if (!isAdded() || getContext() == null) return;
+        runOnDockUiThread(() -> {
+            ImageButton button = btnDesktopMode;
+            Context context = getContext();
+            if (button == null || !isAdded() || context == null) return;
             if (active) {
-
-                // Aktifken premium primary brand rengiyle vurgula
-                if (getContext() != null) {
-                    btnDesktopMode.setColorFilter(androidx.core.content.ContextCompat.getColor(getContext(), net.osmand.plus.R.color.cl_primary));
-                } else {
-                    btnDesktopMode.setColorFilter(0xFF0084FF); // Fallback premium blue
-                }
+                button.setColorFilter(androidx.core.content.ContextCompat.getColor(
+                        context, net.osmand.plus.R.color.cl_primary));
             } else {
                 // Pasifken beyaz / yari transparan hint rengi
                 if (isVerticalMode) {
-                    btnDesktopMode.setColorFilter(0x88FFFFFF); // Dikey mod pasif rengi
+                    button.setColorFilter(0x88FFFFFF); // Dikey mod pasif rengi
                 } else {
-                    if (getContext() != null) {
-                        btnDesktopMode.setColorFilter(androidx.core.content.ContextCompat.getColor(getContext(), net.osmand.plus.R.color.cl_text_hint));
-                    } else {
-                        btnDesktopMode.setColorFilter(0xFF888888);
-                    }
+                    button.setColorFilter(androidx.core.content.ContextCompat.getColor(
+                            context, net.osmand.plus.R.color.cl_text_hint));
                 }
             }
 
-            // Mini muzik calarin gorunurlugunu desktop/harita moduna gore guncelle
-            if (miniMusicContainer != null) {
-                boolean isScreenPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
-                int layoutMode = 0;
-                if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
-                    layoutMode = ((net.osmand.plus.activities.MapActivity) getActivity()).getLayoutMode();
-                }
-                boolean shouldShow = false;
-                if (!isScreenPortrait && !isVerticalMode) {
-                    if (active || layoutMode == 2) {
-                        shouldShow = true;
-                    }
-                }
-                miniMusicContainer.setVisibility(shouldShow ? View.VISIBLE : View.GONE);
-                if (shouldShow) {
-                    adjustMiniPlayerLayout();
-                }
-            }
+            updateDynamicWidgetUI();
         });
     }
 
@@ -1060,7 +1065,7 @@ public class AppDockFragment extends Fragment
 
     private void applyOrientationState(View root, boolean isVertical) {
         root.post(() -> {
-            if (getContext() == null) return;
+            if (getContext() == null || getView() != root) return;
             boolean isScreenPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
 
             ViewGroup.LayoutParams rootLp = root.getLayoutParams();
