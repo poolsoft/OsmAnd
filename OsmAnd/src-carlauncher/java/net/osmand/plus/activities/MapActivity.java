@@ -763,29 +763,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 	}
 
-	public void applyStatusBarVisibility() {
-		net.osmand.plus.carlauncher.CarLauncherSettings clSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);
-		boolean showStatusBar = clSettings.isShowStatusBar();
-		
-		View decorView = getWindow().getDecorView();
-		int uiOptions = decorView.getSystemUiVisibility();
-		
-		if (showStatusBar) {
-			// Status bar'i goster
-			uiOptions &= ~View.SYSTEM_UI_FLAG_FULLSCREEN;
-			// Transparan status bar arka plani
-			getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
-			getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-			getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
-		} else {
-			// Status bar'i gizle (Tam ekran)
-			uiOptions |= View.SYSTEM_UI_FLAG_FULLSCREEN;
-			getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		}
-		
-		decorView.setSystemUiVisibility(uiOptions);
-	}
-
 	private void embedWidgetPanel() {
 		if (widgetPanel != null && panelContentManager != null) {
 			net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent contentToRestore = 

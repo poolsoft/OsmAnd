@@ -598,13 +598,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             tabPlaylists.setOnClickListener(v -> switchViewMode(ViewMode.PLAYLIST));
 
 
-        if (tabBtnScan != null) {
-            tabBtnScan.setOnClickListener(v -> {
-                Toast.makeText(getContext(), "Müzik kütüphanesi taranıyor...", Toast.LENGTH_SHORT).show();
-                rescanMusic();
-            });
-        }
-
         if (tabBtnSearch != null) {
             tabBtnSearch.setOnClickListener(v -> {
                 if (searchBarContainer != null) {
@@ -632,15 +625,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                     }
                 }
             });
-        }
-    }
-
-    private void selectTab(int index) {
-        // 0: All, 1: Recent, 2: Playlist (Listeler)
-        switch (index) {
-            case 0: switchViewMode(ViewMode.ALL_TRACKS); break;
-            case 1: switchViewMode(ViewMode.RECENT); break;
-            case 2: switchViewMode(ViewMode.PLAYLIST); break;
         }
     }
 
@@ -1471,9 +1455,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             btnScanMusic.setEnabled(false);
             btnScanMusic.setAlpha(0.45f);
         }
-        if (tabBtnScan != null) {
-            tabBtnScan.setEnabled(false);
-            tabBtnScan.setAlpha(0.45f);
+        if (btnTabScan != null) {
+            btnTabScan.setEnabled(false);
+            btnTabScan.setAlpha(0.45f);
         }
         Toast.makeText(getContext(), net.osmand.plus.R.string.car_music_scan_started, Toast.LENGTH_SHORT).show();
 
@@ -1493,9 +1477,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 btnScanMusic.setEnabled(true);
                 btnScanMusic.setAlpha(1.0f);
             }
-            if (tabBtnScan != null) {
-                tabBtnScan.setEnabled(true);
-                tabBtnScan.setAlpha(1.0f);
+            if (btnTabScan != null) {
+                btnTabScan.setEnabled(true);
+                btnTabScan.setAlpha(1.0f);
             }
             Toast.makeText(requireContext(),
                     getString(net.osmand.plus.R.string.car_music_scan_completed, tracks.size()),
@@ -2045,20 +2029,14 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         try {
             PackageManager pm = getContext().getPackageManager();
             Drawable icon = (pkg != null) ? pm.getApplicationIcon(pkg) : null;
-            CharSequence label = (pkg != null) ? pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)) : "Dahili Muzik";
 
             if (icon != null)
                 appIcon.setImageDrawable(icon);
             else
                 appIcon.setImageResource(net.osmand.plus.R.drawable.ic_music_play);
 
-            if (appName != null) {
-                appName.setText(label);
-            }
         } catch (Exception e) {
             appIcon.setImageResource(net.osmand.plus.R.drawable.ic_music_play);
-            if (appName != null)
-                appName.setText("Muzik");
         }
     }
 
