@@ -559,6 +559,20 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         return true;
     }
 
+    /**
+     * Handles controls originating from the internal player's own notification.
+     * These controls must keep targeting the track displayed by that notification,
+     * independently from the configured idle default.
+     */
+    public boolean handleInternalMediaKey(int keyCode) {
+        preferredPackage = "usage.internal.player";
+        lastActiveSource = MusicSource.INTERNAL;
+        requestSmartFocus(preferredPackage);
+        recordHardwareDecision(keyCode, "internal_notification");
+        executeInternalCommand(keyCode);
+        return true;
+    }
+
     private void refreshExternalControllers() {
         if (mediaSessionManager == null) {
             return;
@@ -865,7 +879,6 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         lastCountedMediaId = null;
         if (!useExternal()) {
             notifyTrackChanged();
-            updateNotificationService();
         }
     }
 
@@ -893,28 +906,14 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         
         if (!useExternal()) {
             notifyStateChanged();
-            updateNotificationService();
         }
         updateVisualizerState();
     }
 
     @Override
     public void onCompletion() {
-        updateNotificationService();
-    }
-    
-    private void updateNotificationService() {
-        Intent intent = new Intent(context, MusicPlaybackService.class);
-        if (internalPlayer.getCurrentTrack() == null) {
-            context.stopService(intent);
-            return;
-        }
-        intent.setAction(MusicPlaybackService.ACTION_UPDATE);
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            context.startForegroundService(intent);
-        } else {
-            context.startService(intent);
-        }
+        notifyTrackChanged();
+        notifyStateChanged();
     }
 
     public void addListener(MusicUIListener listener) {

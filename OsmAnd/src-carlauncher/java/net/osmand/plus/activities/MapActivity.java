@@ -2277,8 +2277,10 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 		if (isHardwareMediaKey(event.getKeyCode())) {
 			if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
-				net.osmand.plus.carlauncher.music.MusicManager.getInstance(this)
-						.handleHardwareMediaKey(event.getKeyCode());
+				net.osmand.plus.carlauncher.headunit.HardwareMediaKeyRouter
+						.getInstance(this)
+						.route(net.osmand.plus.carlauncher.headunit.HardwareMediaKeyRouter
+								.Source.ACTIVITY, event.getKeyCode());
 			}
 			return true;
 		}

@@ -10,4 +10,11 @@ public interface HeadUnitListener {
     void onPlaybackStateChanged(boolean isPlaying);
     void onTrackInfoChanged(String title, String artist, String albumArtPath);
     void onRadioFrequencyChanged(String band, float freqMHz);
+
+    /**
+     * Vendor adapters use this only after a captured hardware input has been
+     * distinguished from the application's own outgoing control broadcast.
+     */
+    default void onMediaKeyEvent(int keyCode) {
+    }
 }

@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="car_media_channel_name">Müzik Oynatma</string>
+    <string name="car_media_channel_description">Car Launcher müzik kontrolleri</string>
+    <string name="car_media_action_previous">Önceki</string>
+    <string name="car_media_action_next">Sonraki</string>
+    <string name="car_media_action_play">Oynat</string>
+    <string name="car_media_action_pause">Duraklat</string>
+    <string name="car_media_action_close">Kapat</string>
     <!-- Car Launcher Ayarları -->
     <string name="car_pref_category_language">Dil / Language</string>
     <string name="car_pref_language_title">Uygulama Dili</string>

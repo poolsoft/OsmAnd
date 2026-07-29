@@ -60,6 +60,15 @@ public class HeadUnitManager {
                 public void onRadioFrequencyChanged(String band, float freqMHz) {
                     for (HeadUnitListener listener : listeners) listener.onRadioFrequencyChanged(band, freqMHz);
                 }
+
+                @Override
+                public void onMediaKeyEvent(int keyCode) {
+                    HardwareMediaKeyRouter.getInstance(context).route(
+                            HardwareMediaKeyRouter.Source.HEAD_UNIT_ADAPTER, keyCode);
+                    for (HeadUnitListener listener : listeners) {
+                        listener.onMediaKeyEvent(keyCode);
+                    }
+                }
             });
         } else {
             HardwareEventRecorder.getInstance(context).record("HEAD_UNIT",
