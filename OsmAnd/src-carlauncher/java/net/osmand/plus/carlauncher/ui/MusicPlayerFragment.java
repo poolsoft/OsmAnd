@@ -2539,7 +2539,7 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             if (packageName != null) {
                 // Sadece arkaplanda (servis/media controller uzerinden) calismasini tetikliyoruz
                 // Teyplerde (XyAuto vs) Broadcast/MediaSession uzerinden arkada calmaya baslar
-                musicManager.play();
+                musicManager.playFocusedSource();
             }
             
             updateAppIcon();

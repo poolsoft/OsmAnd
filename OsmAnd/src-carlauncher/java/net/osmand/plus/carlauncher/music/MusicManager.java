@@ -13,7 +13,9 @@ import android.media.session.PlaybackState;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.KeyEvent;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -40,7 +42,13 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
     private boolean isInternalPlaying = false;
     private String lastCountedMediaId;
+    // Runtime focus used by Smart Focus and the music UI. This is deliberately
+    // separate from the user-configured default stored in CarLauncherSettings.
     private String preferredPackage;
+    private String pendingTargetPackage;
+    private int pendingTargetKeyCode = KeyEvent.KEYCODE_UNKNOWN;
+    private long pendingTargetCommandTime;
+    private static final long PENDING_DEFAULT_COMMAND_TIMEOUT_MS = 15000L;
 
     private final List<BaseMediaAdapter> adapters = new ArrayList<>();
     private final List<MusicUIListener> listeners = new CopyOnWriteArrayList<>();
@@ -71,6 +79,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         this.playlistManager = new PlaylistManager(this.context);
         this.internalPlayer = new InternalMusicPlayer(this.context);
         this.internalPlayer.setListener(this);
+        this.preferredPackage = getConfiguredDefaultPackage();
 
         setupMediaSessionManager();
 
@@ -119,6 +128,13 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
 
     public MediaController getActiveExternalController() {
         return activeExternalController;
+    }
+
+    public String getConfiguredDefaultPackage() {
+        String configured = net.osmand.plus.carlauncher.CarLauncherSettings
+                .getInstance(context).getMusicApp();
+        return configured == null || "internal".equals(configured)
+                ? "usage.internal.player" : configured;
     }
 
     public List<BaseMediaAdapter> getAdapters() {
@@ -336,6 +352,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         MediaController candidate = null;
         if (controllers != null) {
             for (MediaController controller : controllers) {
+                if (isOwnController(controller)) continue;
                 PlaybackState state = controller.getPlaybackState();
                 if (state != null && state.getState() == PlaybackState.STATE_PLAYING) {
                     candidate = controller;
@@ -344,14 +361,20 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
             }
             if (candidate == null && preferredPackage != null) {
                 for (MediaController controller : controllers) {
+                    if (isOwnController(controller)) continue;
                     if (controller.getPackageName().equals(preferredPackage)) {
                         candidate = controller;
                         break;
                     }
                 }
             }
-            if (candidate == null && !controllers.isEmpty()) {
-                candidate = controllers.get(0);
+            if (candidate == null) {
+                for (MediaController controller : controllers) {
+                    if (!isOwnController(controller)) {
+                        candidate = controller;
+                        break;
+                    }
+                }
             }
         }
 
@@ -366,8 +389,13 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 activeExternalController.registerCallback(externalCallback);
                 externalCallback.onMetadataChanged(activeExternalController.getMetadata());
                 externalCallback.onPlaybackStateChanged(activeExternalController.getPlaybackState());
+                executePendingTargetCommand(activeExternalController);
             }
         }
+    }
+
+    private boolean isOwnController(@Nullable MediaController controller) {
+        return controller != null && context.getPackageName().equals(controller.getPackageName());
     }
 
     private long lastSmartFocusTime = 0;
@@ -418,243 +446,359 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         public void onSessionDestroyed() {
             activeExternalController = null;
             notifyTrackChanged();
+            notifyStateChanged();
         }
     };
 
-    private void sendMediaKey(int keycode) {
+    public boolean hasActiveExternalPlayback() {
+        if (activeExternalController != null && !isOwnController(activeExternalController)) {
+            PlaybackState state = activeExternalController.getPlaybackState();
+            if (state != null && state.getState() == PlaybackState.STATE_PLAYING) {
+                return true;
+            }
+        }
+        for (BaseMediaAdapter adapter : adapters) {
+            if (adapter instanceof InternalPlayerAdapter
+                    || adapter instanceof AndroidMediaSessionAdapter) {
+                continue;
+            }
+            if (adapter.isActive() && adapter.isPlaying()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean shouldOwnHardwareMediaSession() {
+        return !hasActiveExternalPlayback()
+                && pendingTargetKeyCode == KeyEvent.KEYCODE_UNKNOWN;
+    }
+
+    /**
+     * Routes a hardware command without redispatching it through AudioManager.
+     * Redispatching from our own MediaSession would send the command back to the
+     * same session and can create a loop.
+     */
+    public boolean handleHardwareMediaKey(int keyCode) {
+        refreshExternalControllers();
+
+        MediaController playingController = getPlayingExternalController();
+        if (playingController != null) {
+            recordHardwareDecision(keyCode, "active_external:" + playingController.getPackageName());
+            executeControllerCommand(playingController, keyCode);
+            return true;
+        }
+
+        BaseMediaAdapter playingAdapter = getPlayingDedicatedAdapter();
+        if (playingAdapter != null) {
+            recordHardwareDecision(keyCode, "active_adapter:" + playingAdapter.getPackageName());
+            executeAdapterCommand(playingAdapter, keyCode);
+            return true;
+        }
+
+        if (internalPlayer.isPlaying()) {
+            recordHardwareDecision(keyCode, "active_internal");
+            executeInternalCommand(keyCode);
+            return true;
+        }
+
+        String defaultPackage = getConfiguredDefaultPackage();
+        if ("usage.internal.player".equals(defaultPackage)) {
+            preferredPackage = defaultPackage;
+            lastActiveSource = MusicSource.INTERNAL;
+            recordHardwareDecision(keyCode, "default_internal");
+            executeInternalCommand(keyCode);
+            return true;
+        }
+
+        BaseMediaAdapter defaultAdapter = findDedicatedAdapter(defaultPackage);
+        if (defaultAdapter != null && defaultAdapter.isActive()) {
+            preferredPackage = defaultPackage;
+            lastActiveSource = MusicSource.EXTERNAL;
+            recordHardwareDecision(keyCode, "default_adapter:" + defaultPackage);
+            executeAdapterCommand(defaultAdapter, keyCode);
+            return true;
+        }
+
+        MediaController defaultController = findExternalController(defaultPackage);
+        if (defaultController != null) {
+            preferredPackage = defaultPackage;
+            lastActiveSource = MusicSource.EXTERNAL;
+            recordHardwareDecision(keyCode, "default_session:" + defaultPackage);
+            executeControllerCommand(defaultController, keyCode);
+            return true;
+        }
+
+        if (keyCode == KeyEvent.KEYCODE_MEDIA_PAUSE
+                || keyCode == KeyEvent.KEYCODE_MEDIA_STOP) {
+            recordHardwareDecision(keyCode, "idle_ignore");
+            return false;
+        }
+
+        Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(defaultPackage);
+        if (launchIntent != null) {
+            queuePendingTargetCommand(defaultPackage, keyCode);
+            preferredPackage = defaultPackage;
+            lastActiveSource = MusicSource.EXTERNAL;
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                context.startActivity(launchIntent);
+                recordHardwareDecision(keyCode, "launch_default:" + defaultPackage);
+                return true;
+            } catch (Exception e) {
+                clearPendingTargetCommand();
+                Log.e(TAG, "Default media app could not be launched: " + defaultPackage, e);
+            }
+        }
+
+        // A removed or unavailable default app must not leave steering controls dead.
+        preferredPackage = "usage.internal.player";
+        lastActiveSource = MusicSource.INTERNAL;
+        recordHardwareDecision(keyCode, "default_unavailable_internal_fallback");
+        executeInternalCommand(keyCode);
+        return true;
+    }
+
+    private void refreshExternalControllers() {
+        if (mediaSessionManager == null) {
+            return;
+        }
         try {
-            android.media.AudioManager am = (android.media.AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-            if (am != null) {
-                long eventtime = android.os.SystemClock.uptimeMillis();
-                android.view.KeyEvent downEvent = new android.view.KeyEvent(eventtime, eventtime, android.view.KeyEvent.ACTION_DOWN, keycode, 0);
-                android.view.KeyEvent upEvent = new android.view.KeyEvent(eventtime, eventtime, android.view.KeyEvent.ACTION_UP, keycode, 0);
-                am.dispatchMediaKeyEvent(downEvent);
-                am.dispatchMediaKeyEvent(upEvent);
+            ComponentName listener = new ComponentName(context,
+                    "net.osmand.plus.carlauncher.MediaNotificationListener");
+            updateActiveController(mediaSessionManager.getActiveSessions(listener));
+        } catch (Exception e) {
+            Log.w(TAG, "External sessions could not be refreshed", e);
+        }
+    }
+
+    @Nullable
+    private MediaController getPlayingExternalController() {
+        if (activeExternalController == null || isOwnController(activeExternalController)) {
+            return null;
+        }
+        PlaybackState state = activeExternalController.getPlaybackState();
+        return state != null && state.getState() == PlaybackState.STATE_PLAYING
+                ? activeExternalController : null;
+    }
+
+    @Nullable
+    private BaseMediaAdapter getPlayingDedicatedAdapter() {
+        for (BaseMediaAdapter adapter : adapters) {
+            if (adapter instanceof InternalPlayerAdapter
+                    || adapter instanceof AndroidMediaSessionAdapter) {
+                continue;
+            }
+            if (adapter.isActive() && adapter.isPlaying()) {
+                return adapter;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private MediaController findExternalController(String packageName) {
+        if (mediaSessionManager == null || packageName == null) {
+            return null;
+        }
+        try {
+            ComponentName listener = new ComponentName(context,
+                    "net.osmand.plus.carlauncher.MediaNotificationListener");
+            for (MediaController controller : mediaSessionManager.getActiveSessions(listener)) {
+                if (!isOwnController(controller)
+                        && packageName.equals(controller.getPackageName())) {
+                    return controller;
+                }
             }
         } catch (Exception e) {
-            Log.e(TAG, "Failed to send media key: " + keycode, e);
+            Log.w(TAG, "Default media session could not be found", e);
         }
-    }
-    public void play() {
-        if (!checkNotificationAccess()) {
-            android.widget.Toast.makeText(context, "Harici kontrol icin 'Bildirim Erisimi' izni gerekli!", android.widget.Toast.LENGTH_LONG).show();
-        }
-
-        if (mediaSessionManager != null) {
-            try {
-                android.content.ComponentName listenerComp = new android.content.ComponentName(context, "net.osmand.plus.carlauncher.MediaNotificationListener");
-                java.util.List<android.media.session.MediaController> controllers = mediaSessionManager.getActiveSessions(listenerComp);
-                updateActiveController(controllers);
-            } catch (Exception e) {}
-        }
-
-        BaseMediaAdapter localAdapter = null;
-        if (preferredPackage != null && !"usage.internal.player".equals(preferredPackage)) {
-            for (BaseMediaAdapter adapter : adapters) {
-                if (preferredPackage.equals(adapter.getPackageName()) 
-                    && !(adapter instanceof AndroidMediaSessionAdapter)
-                    && !(adapter instanceof InternalPlayerAdapter)) {
-                    localAdapter = adapter;
-                    break;
-                }
-            }
-        }
-
-        if (localAdapter != null) {
-            localAdapter.play();
-            notifyStateChanged();
-            return;
-        }
-
-        if (preferredPackage != null && !"usage.internal.player".equals(preferredPackage)) {
-            boolean hasPreferredController = false;
-            if (activeExternalController != null && preferredPackage.equals(activeExternalController.getPackageName())) {
-                hasPreferredController = true;
-            }
-
-            if (hasPreferredController) {
-                BaseMediaAdapter activeAdapter = getActiveAdapter();
-                if (activeAdapter != null && !(activeAdapter instanceof InternalPlayerAdapter)) {
-                    activeAdapter.play();
-                    notifyStateChanged();
-                    return;
-                }
-            }
-            
-            sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY);
-            return;
-        }
-
-        if (internalPlayer != null) {
-            internalPlayer.play();
-            notifyStateChanged();
-        }
+        return null;
     }
 
-
-    public void togglePlayPause() {
-        if (!checkNotificationAccess()) {
-            android.widget.Toast.makeText(context, "Harici kontrol icin 'Bildirim Erisimi' izni gerekli!", android.widget.Toast.LENGTH_LONG).show();
-        }
-
-        if (mediaSessionManager != null) {
-            try {
-                ComponentName listenerComp = new ComponentName(context, "net.osmand.plus.carlauncher.MediaNotificationListener");
-                List<MediaController> controllers = mediaSessionManager.getActiveSessions(listenerComp);
-                updateActiveController(controllers);
-            } catch (Exception e) {
-                 // Ignore
-            }
-        }
-
-        // Yerel teyp adaptoru kontrolu
-        BaseMediaAdapter localAdapter = null;
-        if (preferredPackage != null && !"usage.internal.player".equals(preferredPackage)) {
-            for (BaseMediaAdapter adapter : adapters) {
-                if (preferredPackage.equals(adapter.getPackageName()) 
-                    && !(adapter instanceof AndroidMediaSessionAdapter)
-                    && !(adapter instanceof InternalPlayerAdapter)) {
-                    localAdapter = adapter;
-                    break;
-                }
-            }
-        }
-
-        // Eger yerel teyp adaptoru ise dogrudan play/pause cagir
-        if (localAdapter != null) {
-            if (localAdapter.isPlaying()) {
-                localAdapter.pause();
-            } else {
-                localAdapter.play();
-            }
-            notifyStateChanged();
+    private void executePendingTargetCommand(@NonNull MediaController controller) {
+        if (pendingTargetKeyCode == KeyEvent.KEYCODE_UNKNOWN
+                || pendingTargetPackage == null) {
             return;
         }
-
-        // Harici bir uygulama secilmisse ve aktif session'i olmasa bile dahili oynaticiyi oynatma
-        if (preferredPackage != null && !"usage.internal.player".equals(preferredPackage)) {
-            boolean hasPreferredController = false;
-            if (activeExternalController != null && preferredPackage.equals(activeExternalController.getPackageName())) {
-                hasPreferredController = true;
-            }
-
-            if (hasPreferredController) {
-                BaseMediaAdapter activeAdapter = getActiveAdapter();
-                if (activeAdapter != null && !(activeAdapter instanceof InternalPlayerAdapter)) {
-                    if (activeAdapter.isPlaying()) {
-                        activeAdapter.pause();
-                    } else {
-                        activeAdapter.play();
-                    }
-                    notifyStateChanged();
-                    return;
-                }
-            }
-            
-            // Session yoksa veya eslesmiyorsa, genel medya tusu gondererek hariciyi tetikle
-            sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
-            lastActiveSource = MusicSource.EXTERNAL;
-            notifyStateChanged();
+        long age = System.currentTimeMillis() - pendingTargetCommandTime;
+        if (age < 0 || age > PENDING_DEFAULT_COMMAND_TIMEOUT_MS) {
+            clearPendingTargetCommand();
             return;
         }
+        if (!pendingTargetPackage.equals(controller.getPackageName())) {
+            return;
+        }
+        String targetPackage = pendingTargetPackage;
+        int keyCode = pendingTargetKeyCode;
+        clearPendingTargetCommand();
+        recordHardwareDecision(keyCode, "pending_session_ready:" + targetPackage);
+        executeControllerCommand(controller, keyCode);
+    }
 
-        BaseMediaAdapter activeAdapter = getActiveAdapter();
-        if (activeAdapter != null) {
-            if (activeAdapter.isPlaying()) {
-                activeAdapter.pause();
-            } else {
-                activeAdapter.play();
-                if (!(activeAdapter instanceof InternalPlayerAdapter)) {
-                    lastActiveSource = MusicSource.EXTERNAL;
-                } else {
-                    lastActiveSource = MusicSource.INTERNAL;
-                }
+    private void clearPendingTargetCommand() {
+        pendingTargetPackage = null;
+        pendingTargetKeyCode = KeyEvent.KEYCODE_UNKNOWN;
+        pendingTargetCommandTime = 0;
+    }
+
+    private void queuePendingTargetCommand(@NonNull String targetPackage, int keyCode) {
+        // A cold PLAY_PAUSE request means "wake and play". If the launched app
+        // auto-starts playback, replaying a toggle would immediately pause it.
+        pendingTargetPackage = targetPackage;
+        pendingTargetKeyCode = keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
+                ? KeyEvent.KEYCODE_MEDIA_PLAY : keyCode;
+        pendingTargetCommandTime = System.currentTimeMillis();
+        long commandTime = pendingTargetCommandTime;
+        // Yield our fallback MediaSession while the selected app is starting.
+        notifyStateChanged();
+        duckHandler.postDelayed(() -> {
+            if (pendingTargetKeyCode != KeyEvent.KEYCODE_UNKNOWN
+                    && pendingTargetCommandTime == commandTime) {
+                recordHardwareDecision(pendingTargetKeyCode,
+                        "pending_session_timeout:" + pendingTargetPackage);
+                clearPendingTargetCommand();
+                notifyStateChanged();
             }
-        } else {
-            sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
-            lastActiveSource = MusicSource.EXTERNAL;
+        }, PENDING_DEFAULT_COMMAND_TIMEOUT_MS);
+    }
+
+    private void executeControllerCommand(@NonNull MediaController controller, int keyCode) {
+        MediaController.TransportControls controls = controller.getTransportControls();
+        PlaybackState state = controller.getPlaybackState();
+        boolean playing = state != null && state.getState() == PlaybackState.STATE_PLAYING;
+        if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY) {
+            controls.play();
+        } else if (keyCode == KeyEvent.KEYCODE_MEDIA_PAUSE
+                || keyCode == KeyEvent.KEYCODE_MEDIA_STOP) {
+            controls.pause();
+        } else if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
+            if (playing) controls.pause(); else controls.play();
+        } else if (keyCode == KeyEvent.KEYCODE_MEDIA_NEXT) {
+            controls.skipToNext();
+            if (!playing) controls.play();
+        } else if (keyCode == KeyEvent.KEYCODE_MEDIA_PREVIOUS) {
+            controls.skipToPrevious();
+            if (!playing) controls.play();
+        }
+    }
+
+    private void executeAdapterCommand(@NonNull BaseMediaAdapter adapter, int keyCode) {
+        boolean playing = adapter.isPlaying();
+        if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY) {
+            adapter.play();
+        } else if (keyCode == KeyEvent.KEYCODE_MEDIA_PAUSE
+                || keyCode == KeyEvent.KEYCODE_MEDIA_STOP) {
+            adapter.pause();
+        } else if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
+            if (playing) adapter.pause(); else adapter.play();
+        } else if (keyCode == KeyEvent.KEYCODE_MEDIA_NEXT) {
+            adapter.next();
+        } else if (keyCode == KeyEvent.KEYCODE_MEDIA_PREVIOUS) {
+            adapter.prev();
         }
         notifyStateChanged();
     }
 
-    public void skipToNext() {
-        if (preferredPackage != null && !"usage.internal.player".equals(preferredPackage)) {
-            // Yerel teyp adaptoru kontrolu
-            BaseMediaAdapter localAdapter = null;
-            for (BaseMediaAdapter adapter : adapters) {
-                if (preferredPackage.equals(adapter.getPackageName()) 
-                    && !(adapter instanceof AndroidMediaSessionAdapter)
-                    && !(adapter instanceof InternalPlayerAdapter)) {
-                    localAdapter = adapter;
-                    break;
-                }
-            }
-            if (localAdapter != null) {
-                localAdapter.next();
-                return;
-            }
+    private void executeInternalCommand(int keyCode) {
+        boolean playing = internalPlayer.isPlaying();
+        if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY) {
+            internalPlayer.play();
+        } else if (keyCode == KeyEvent.KEYCODE_MEDIA_PAUSE
+                || keyCode == KeyEvent.KEYCODE_MEDIA_STOP) {
+            internalPlayer.pause();
+        } else if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
+            if (playing) internalPlayer.pause(); else internalPlayer.play();
+        } else if (keyCode == KeyEvent.KEYCODE_MEDIA_NEXT) {
+            internalPlayer.playNext();
+        } else if (keyCode == KeyEvent.KEYCODE_MEDIA_PREVIOUS) {
+            internalPlayer.playPrevious();
+        }
+        notifyStateChanged();
+    }
 
-            boolean hasPreferredController = false;
-            if (activeExternalController != null && preferredPackage.equals(activeExternalController.getPackageName())) {
-                hasPreferredController = true;
-            }
-            if (hasPreferredController) {
-                BaseMediaAdapter activeAdapter = getActiveAdapter();
-                if (activeAdapter != null && !(activeAdapter instanceof InternalPlayerAdapter)) {
-                    activeAdapter.next();
-                    return;
-                }
-            }
-            sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_NEXT);
+    private void recordHardwareDecision(int keyCode, String destination) {
+        net.osmand.plus.carlauncher.headunit.diagnostics.HardwareEventRecorder
+                .getInstance(context)
+                .record("SMART_FOCUS", "key=" + KeyEvent.keyCodeToString(keyCode)
+                        + " destination=" + destination
+                        + " configuredDefault=" + getConfiguredDefaultPackage()
+                        + " focused=" + preferredPackage);
+    }
+
+    public void play() {
+        handleHardwareMediaKey(KeyEvent.KEYCODE_MEDIA_PLAY);
+    }
+
+    /**
+     * Plays the source explicitly selected in the music UI. This intentionally
+     * does not use the configured idle default or the previously playing app.
+     */
+    public void playFocusedSource() {
+        String targetPackage = preferredPackage;
+        if (targetPackage == null) {
+            play();
+            return;
+        }
+        if ("usage.internal.player".equals(targetPackage)) {
+            requestSmartFocus(targetPackage);
+            lastActiveSource = MusicSource.INTERNAL;
+            executeInternalCommand(KeyEvent.KEYCODE_MEDIA_PLAY);
             return;
         }
 
-        BaseMediaAdapter activeAdapter = getActiveAdapter();
-        if (activeAdapter != null) {
-            activeAdapter.next();
-        } else {
-            sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_NEXT);
+        requestSmartFocus(targetPackage);
+        lastActiveSource = MusicSource.EXTERNAL;
+
+        BaseMediaAdapter adapter = findDedicatedAdapter(targetPackage);
+        if (adapter != null) {
+            recordHardwareDecision(KeyEvent.KEYCODE_MEDIA_PLAY,
+                    "focused_adapter:" + targetPackage);
+            executeAdapterCommand(adapter, KeyEvent.KEYCODE_MEDIA_PLAY);
+            return;
         }
+
+        MediaController controller = findExternalController(targetPackage);
+        if (controller != null) {
+            recordHardwareDecision(KeyEvent.KEYCODE_MEDIA_PLAY,
+                    "focused_session:" + targetPackage);
+            executeControllerCommand(controller, KeyEvent.KEYCODE_MEDIA_PLAY);
+            return;
+        }
+
+        Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(targetPackage);
+        if (launchIntent != null) {
+            queuePendingTargetCommand(targetPackage, KeyEvent.KEYCODE_MEDIA_PLAY);
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                context.startActivity(launchIntent);
+                recordHardwareDecision(KeyEvent.KEYCODE_MEDIA_PLAY,
+                        "launch_focused:" + targetPackage);
+                return;
+            } catch (Exception e) {
+                clearPendingTargetCommand();
+                Log.e(TAG, "Focused media app could not be launched: " + targetPackage, e);
+            }
+        }
+
+        recordHardwareDecision(KeyEvent.KEYCODE_MEDIA_PLAY,
+                "focused_unavailable_internal_fallback");
+        setPreferredPackage("usage.internal.player");
+        lastActiveSource = MusicSource.INTERNAL;
+        executeInternalCommand(KeyEvent.KEYCODE_MEDIA_PLAY);
+    }
+
+
+    public void togglePlayPause() {
+        handleHardwareMediaKey(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
+    }
+
+    public void skipToNext() {
+        handleHardwareMediaKey(KeyEvent.KEYCODE_MEDIA_NEXT);
     }
 
     public void skipToPrevious() {
-        if (preferredPackage != null && !"usage.internal.player".equals(preferredPackage)) {
-            // Yerel teyp adaptoru kontrolu
-            BaseMediaAdapter localAdapter = null;
-            for (BaseMediaAdapter adapter : adapters) {
-                if (preferredPackage.equals(adapter.getPackageName()) 
-                    && !(adapter instanceof AndroidMediaSessionAdapter)
-                    && !(adapter instanceof InternalPlayerAdapter)) {
-                    localAdapter = adapter;
-                    break;
-                }
-            }
-            if (localAdapter != null) {
-                localAdapter.prev();
-                return;
-            }
-
-            boolean hasPreferredController = false;
-            if (activeExternalController != null && preferredPackage.equals(activeExternalController.getPackageName())) {
-                hasPreferredController = true;
-            }
-            if (hasPreferredController) {
-                BaseMediaAdapter activeAdapter = getActiveAdapter();
-                if (activeAdapter != null && !(activeAdapter instanceof InternalPlayerAdapter)) {
-                    activeAdapter.prev();
-                    return;
-                }
-            }
-            sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS);
-            return;
-        }
-
-        BaseMediaAdapter activeAdapter = getActiveAdapter();
-        if (activeAdapter != null) {
-            activeAdapter.prev();
-        } else {
-            sendMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS);
-        }
+        handleHardwareMediaKey(KeyEvent.KEYCODE_MEDIA_PREVIOUS);
     }
 
     public boolean isShuffleOn() {
@@ -933,6 +1077,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 List<MediaController> controllers = mediaSessionManager.getActiveSessions(listener);
                 
                 for (MediaController controller : controllers) {
+                    if (isOwnController(controller)) continue;
                     String packageName = controller.getPackageName();
                     String appName = getAppName(packageName);
                     PlaybackState state = controller.getPlaybackState();
@@ -977,6 +1122,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 List<MediaController> controllers = mediaSessionManager.getActiveSessions(listener);
                 
                 for (MediaController controller : controllers) {
+                    if (isOwnController(controller)) continue;
                     if (controller.getPackageName().equals(packageName)) {
                         if (activeExternalController != null) {
                             activeExternalController.unregisterCallback(externalCallback);

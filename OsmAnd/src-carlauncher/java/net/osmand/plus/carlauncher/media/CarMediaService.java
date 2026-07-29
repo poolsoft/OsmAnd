@@ -13,7 +13,6 @@ import java.util.Collections;
 import java.util.List;
 
 import net.osmand.plus.carlauncher.music.MusicManager;
-import net.osmand.plus.carlauncher.music.InternalMusicPlayer;
 import net.osmand.plus.carlauncher.headunit.diagnostics.HardwareEventRecorder;
 
 /**
@@ -77,12 +76,6 @@ public class CarMediaService extends MediaBrowserService implements MusicManager
         result.sendResult(Collections.emptyList());
     }
 
-    private boolean isInternalPlayerActive() {
-        if (musicManager == null) return false;
-        net.osmand.plus.carlauncher.music.BaseMediaAdapter activeAdapter = musicManager.getActiveAdapter();
-        return activeAdapter instanceof net.osmand.plus.carlauncher.music.InternalPlayerAdapter;
-    }
-
     private PlaybackState buildPlaybackState(int state) {
         return new PlaybackState.Builder()
                 .setActions(PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE
@@ -95,8 +88,8 @@ public class CarMediaService extends MediaBrowserService implements MusicManager
 
     private void updateSessionActive() {
         if (mediaSession != null) {
-            mediaSession.setActive(isInternalPlayerActive()
-                    || (eventRecorder != null && eventRecorder.isRecording()));
+            mediaSession.setActive(musicManager != null
+                    && musicManager.shouldOwnHardwareMediaSession());
         }
     }
 
@@ -123,48 +116,22 @@ public class CarMediaService extends MediaBrowserService implements MusicManager
     private class MediaSessionCallback extends MediaSession.Callback {
         @Override
         public void onPlay() {
-            if (!isInternalPlayerActive()) return;
-
-            InternalMusicPlayer player = musicManager.getInternalPlayer();
-            if (player != null) {
-                player.play();
-            }
-            if (mediaSession != null) {
-                mediaSession.setPlaybackState(buildPlaybackState(PlaybackState.STATE_PLAYING));
-            }
+            musicManager.handleHardwareMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PLAY);
         }
 
         @Override
         public void onPause() {
-            if (!isInternalPlayerActive()) return;
-
-            InternalMusicPlayer player = musicManager.getInternalPlayer();
-            if (player != null) {
-                player.pause();
-            }
-            if (mediaSession != null) {
-                mediaSession.setPlaybackState(buildPlaybackState(PlaybackState.STATE_PAUSED));
-            }
+            musicManager.handleHardwareMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PAUSE);
         }
 
         @Override
         public void onSkipToNext() {
-            if (!isInternalPlayerActive()) return;
-
-            InternalMusicPlayer player = musicManager.getInternalPlayer();
-            if (player != null) {
-                player.playNext();
-            }
+            musicManager.handleHardwareMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_NEXT);
         }
 
         @Override
         public void onSkipToPrevious() {
-            if (!isInternalPlayerActive()) return;
-
-            InternalMusicPlayer player = musicManager.getInternalPlayer();
-            if (player != null) {
-                player.playPrevious();
-            }
+            musicManager.handleHardwareMediaKey(android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS);
         }
 
 
@@ -174,8 +141,13 @@ public class CarMediaService extends MediaBrowserService implements MusicManager
             android.view.KeyEvent keyEvent = (android.view.KeyEvent)
                     mediaButtonIntent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
             eventRecorder.recordKeyEvent("MEDIA_SESSION_KEY", keyEvent);
-            if (!isInternalPlayerActive()) return false;
-            return super.onMediaButtonEvent(mediaButtonIntent);
+            if (keyEvent == null) {
+                return false;
+            }
+            if (keyEvent.getAction() == android.view.KeyEvent.ACTION_UP) {
+                return true;
+            }
+            return musicManager.handleHardwareMediaKey(keyEvent.getKeyCode());
         }
     }
 }

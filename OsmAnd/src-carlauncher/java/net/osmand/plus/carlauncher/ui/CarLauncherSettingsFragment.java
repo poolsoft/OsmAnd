@@ -710,8 +710,6 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         if (getContext() == null) return;
         new AppPickerDialog(getContext(), true, (packageName, name, icon) -> {
             settings.setMusicApp(packageName);
-            MusicManager musicManager = MusicManager.getInstance(getContext());
-            musicManager.setPreferredPackage("internal".equals(packageName) ? null : packageName);
             
             Preference pref = findPreference(CarLauncherSettings.KEY_MUSIC_APP);
             if (pref != null) updateMusicAppSummary(pref);

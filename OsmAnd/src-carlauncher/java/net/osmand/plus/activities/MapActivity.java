@@ -2275,7 +2275,23 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		if (hardwareEventRecorder != null) {
 			hardwareEventRecorder.recordKeyEvent("MAP_ACTIVITY", event);
 		}
+		if (isHardwareMediaKey(event.getKeyCode())) {
+			if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+				net.osmand.plus.carlauncher.music.MusicManager.getInstance(this)
+						.handleHardwareMediaKey(event.getKeyCode());
+			}
+			return true;
+		}
 		return super.dispatchKeyEvent(event);
+	}
+
+	private boolean isHardwareMediaKey(int keyCode) {
+		return keyCode == KeyEvent.KEYCODE_MEDIA_PLAY
+				|| keyCode == KeyEvent.KEYCODE_MEDIA_PAUSE
+				|| keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
+				|| keyCode == KeyEvent.KEYCODE_MEDIA_NEXT
+				|| keyCode == KeyEvent.KEYCODE_MEDIA_PREVIOUS
+				|| keyCode == KeyEvent.KEYCODE_MEDIA_STOP;
 	}
 
 	@Override
