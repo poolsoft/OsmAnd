@@ -28,6 +28,7 @@ import net.osmand.plus.carlauncher.CarLauncherSettings;
 import net.osmand.plus.carlauncher.LauncherBackupManager;
 import net.osmand.plus.carlauncher.dock.AppDockManager;
 import net.osmand.plus.carlauncher.dock.AppPickerDialog;
+import net.osmand.plus.carlauncher.headunit.diagnostics.HardwareEventRecorder;
 import net.osmand.plus.carlauncher.music.MusicManager;
 
 import java.io.File;
@@ -79,7 +80,14 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         setupDockLandscapePrefs();
         setupDockPortraitPrefs();
         setupAssistantPrefs();
+        setupHardwareDiagnosticPrefs();
         setupAboutPrefs();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        refreshHardwareDiagnosticPrefs();
     }
 
     private android.widget.LinearLayout splitContainer;
@@ -866,6 +874,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
 
     private static final int RC_BACKUP_EXPORT = 101;
     private static final int RC_BACKUP_IMPORT = 102;
+    private static final int RC_HARDWARE_LOG_EXPORT = 104;
 
     private void setupBackupPrefs() {
         Preference exportPref = findPreference("action_backup_export");
@@ -916,8 +925,127 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 Toast.makeText(getContext(), "Ayarlar yenilendi", Toast.LENGTH_SHORT).show();
             } else if (requestCode == RC_IMPORT_VOICE_MODEL) {
                 importVoiceModelFromUri(uri);
+            } else if (requestCode == RC_HARDWARE_LOG_EXPORT) {
+                HardwareEventRecorder recorder = HardwareEventRecorder.getInstance(requireContext());
+                recorder.exportToUri(uri, (success, errorMessage) -> {
+                    if (!isAdded()) return;
+                    int message = success
+                            ? R.string.car_toast_hardware_exported
+                            : R.string.car_toast_hardware_export_failed;
+                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+                });
             }
         }
+    }
+
+    private void setupHardwareDiagnosticPrefs() {
+        if (getContext() == null) {
+            return;
+        }
+        HardwareEventRecorder recorder = HardwareEventRecorder.getInstance(getContext());
+
+        SwitchPreferenceCompat recordingPref = findPreference("car_launcher_hardware_recording");
+        if (recordingPref != null) {
+            recordingPref.setPersistent(false);
+            recordingPref.setChecked(recorder.isRecording());
+            recordingPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                recorder.setRecording(Boolean.TRUE.equals(newValue));
+                try {
+                    Intent serviceIntent = new Intent(requireContext(),
+                            net.osmand.plus.carlauncher.media.CarMediaService.class);
+                    serviceIntent.setAction(net.osmand.plus.carlauncher.media.CarMediaService
+                            .ACTION_DIAGNOSTIC_STATE_CHANGED);
+                    requireContext().startService(serviceIntent);
+                } catch (Exception e) {
+                    recorder.record("MEDIA_SESSION",
+                            "diagnostic_state_update_failed=" + e.getClass().getSimpleName());
+                }
+                preference.setSummary(getHardwareRecordingSummary(recorder));
+                return true;
+            });
+        }
+
+        Preference exportPref = findPreference("car_launcher_hardware_export");
+        if (exportPref != null) {
+            exportPref.setOnPreferenceClickListener(preference -> {
+                if (!recorder.hasLogs()) {
+                    Toast.makeText(requireContext(), R.string.car_toast_hardware_empty,
+                            Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("text/plain");
+                String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss",
+                        java.util.Locale.US).format(new java.util.Date());
+                intent.putExtra(Intent.EXTRA_TITLE,
+                        "CarLauncher_HardwareEvents_" + timestamp + ".log");
+                try {
+                    startActivityForResult(intent, RC_HARDWARE_LOG_EXPORT);
+                } catch (Exception e) {
+                    Toast.makeText(requireContext(), R.string.car_toast_hardware_export_failed,
+                            Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            });
+        }
+
+        Preference clearPref = findPreference("car_launcher_hardware_clear");
+        if (clearPref != null) {
+            clearPref.setOnPreferenceClickListener(preference -> {
+                new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                        .setTitle(R.string.car_dialog_hardware_clear_title)
+                        .setMessage(R.string.car_dialog_hardware_clear_message)
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .setPositiveButton(android.R.string.ok, (dialog, which) ->
+                                recorder.clear((success, errorMessage) -> {
+                                    if (!isAdded()) return;
+                                    if (success) {
+                                        Toast.makeText(requireContext(),
+                                                R.string.car_toast_hardware_cleared,
+                                                Toast.LENGTH_SHORT).show();
+                                        refreshHardwareDiagnosticPrefs();
+                                    }
+                                }))
+                        .show();
+                return true;
+            });
+        }
+        refreshHardwareDiagnosticPrefs();
+    }
+
+    private void refreshHardwareDiagnosticPrefs() {
+        if (getContext() == null) {
+            return;
+        }
+        HardwareEventRecorder recorder = HardwareEventRecorder.getInstance(getContext());
+        SwitchPreferenceCompat recordingPref = findPreference("car_launcher_hardware_recording");
+        if (recordingPref != null) {
+            recordingPref.setChecked(recorder.isRecording());
+            recordingPref.setSummary(getHardwareRecordingSummary(recorder));
+        }
+        Preference exportPref = findPreference("car_launcher_hardware_export");
+        if (exportPref != null) {
+            exportPref.setEnabled(recorder.hasLogs());
+        }
+        Preference clearPref = findPreference("car_launcher_hardware_clear");
+        if (clearPref != null) {
+            clearPref.setEnabled(recorder.hasLogs());
+        }
+    }
+
+    private CharSequence getHardwareRecordingSummary(HardwareEventRecorder recorder) {
+        if (!recorder.isRecording()) {
+            return getString(R.string.car_pref_summary_hardware_recording_off);
+        }
+        long bytes = recorder.getLogSizeBytes();
+        String size;
+        if (bytes >= 1024L * 1024L) {
+            size = String.format(java.util.Locale.US, "%.1f MB", bytes / (1024.0 * 1024.0));
+        } else {
+            size = String.format(java.util.Locale.US, "%.1f KB", bytes / 1024.0);
+        }
+        return getString(R.string.car_pref_summary_hardware_recording_on, size);
     }
 
     // ═══════════════════════════════════════════════════════════════

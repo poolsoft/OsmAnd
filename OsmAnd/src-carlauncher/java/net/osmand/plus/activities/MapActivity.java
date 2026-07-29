@@ -291,10 +291,13 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	private RouteCalculationProgressListener routeCalculationProgressCallback;
 	private TransportRouteCalculationProgressCallback transportRouteCalculationProgressCallback;
 	private LoadSimulatedLocationsListener simulatedLocationsListener;
+	private net.osmand.plus.carlauncher.headunit.diagnostics.HardwareEventRecorder hardwareEventRecorder;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		net.osmand.plus.carlauncher.ui.CrashHandler.init(this);
+		hardwareEventRecorder =
+				net.osmand.plus.carlauncher.headunit.diagnostics.HardwareEventRecorder.getInstance(this);
 		net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().startInitTimer();
 		long time = System.currentTimeMillis();
 		app.applyTheme(this);
@@ -2266,6 +2269,14 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	// onBackPressed already defined in super or elsewhere, ensuring we don't
 	// duplicate.
 	// We will merge logic if needed, but currently removing duplicate.
+
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent event) {
+		if (hardwareEventRecorder != null) {
+			hardwareEventRecorder.recordKeyEvent("MAP_ACTIVITY", event);
+		}
+		return super.dispatchKeyEvent(event);
+	}
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {

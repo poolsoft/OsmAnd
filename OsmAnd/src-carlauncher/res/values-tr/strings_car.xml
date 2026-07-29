@@ -93,6 +93,22 @@
     <string name="car_pref_title_import_voice_model">Ses Modelini USB/Dosyadan Yükle</string>
     <string name="car_pref_summary_import_voice_model">İnternet yoksa USB\'den indirdiğiniz zip modelini yükleyin</string>
 
+    <!-- Donanım tanılama -->
+    <string name="car_pref_title_hardware_diagnostics">Teyp ve Direksiyon Kumandası Tanılama</string>
+    <string name="car_pref_title_hardware_recording">Donanım Olaylarını Kaydet</string>
+    <string name="car_pref_summary_hardware_recording_off">Kapalı — açtıktan sonra tanılamak istediğiniz direksiyon tuşlarına basın</string>
+    <string name="car_pref_summary_hardware_recording_on">Kaydediliyor — %1$s toplandı</string>
+    <string name="car_pref_title_hardware_export">Tanılama Kaydını Dışa Aktar</string>
+    <string name="car_pref_summary_hardware_export">Kaydı USB belleğe veya seçtiğiniz başka bir konuma kaydet</string>
+    <string name="car_pref_title_hardware_clear">Tanılama Kaydını Temizle</string>
+    <string name="car_pref_summary_hardware_clear">Uygulamada saklanan donanım olaylarını kalıcı olarak sil</string>
+    <string name="car_dialog_hardware_clear_title">Tanılama kaydı temizlensin mi?</string>
+    <string name="car_dialog_hardware_clear_message">Kaydedilen tuş, medya ve teyp olayları silinecek.</string>
+    <string name="car_toast_hardware_exported">Tanılama kaydı dışa aktarıldı</string>
+    <string name="car_toast_hardware_export_failed">Tanılama kaydı dışa aktarılamadı</string>
+    <string name="car_toast_hardware_empty">Dışa aktarılacak kayıtlı olay yok</string>
+    <string name="car_toast_hardware_cleared">Tanılama kaydı temizlendi</string>
+
     <!-- About / Hakkında -->
     <string name="car_pref_title_about">Hakkında</string>
     <string name="car_pref_title_version">Versiyon</string>

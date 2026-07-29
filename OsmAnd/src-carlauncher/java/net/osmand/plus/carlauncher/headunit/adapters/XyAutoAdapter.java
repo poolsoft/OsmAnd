@@ -5,13 +5,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.Build;
+import java.util.Locale;
 
 import net.osmand.plus.carlauncher.headunit.HeadUnitAdapter;
 import net.osmand.plus.carlauncher.headunit.HeadUnitListener;
+import net.osmand.plus.carlauncher.headunit.diagnostics.HardwareEventRecorder;
 
 public class XyAutoAdapter implements HeadUnitAdapter {
 
-    private static final String TARGET_PACKAGE = "com.xyauto.common";
     private HeadUnitListener listener;
     private BroadcastReceiver receiver;
 
@@ -22,13 +24,21 @@ public class XyAutoAdapter implements HeadUnitAdapter {
 
     @Override
     public boolean isSupported(Context context) {
-        try {
-            // Check if one of XyAuto's core services or packages is installed
-            context.getPackageManager().getPackageInfo("com.android.launcher", 0); // XyAuto's launcher package
-            return true;
-        } catch (PackageManager.NameNotFoundException e) {
-            return false;
+        String[] packages = {
+                "com.xyauto.common",
+                "com.acloud.stub.localmusic",
+                "com.acloud.stub.extradio"
+        };
+        for (String packageName : packages) {
+            try {
+                context.getPackageManager().getPackageInfo(packageName, 0);
+                return true;
+            } catch (PackageManager.NameNotFoundException ignored) {
+            }
         }
+        String fingerprint = (Build.MANUFACTURER + " " + Build.BRAND + " "
+                + Build.DEVICE + " " + Build.PRODUCT).toLowerCase(Locale.US);
+        return fingerprint.contains("xyauto") || fingerprint.contains("acloud");
     }
 
     @Override
@@ -38,6 +48,7 @@ public class XyAutoAdapter implements HeadUnitAdapter {
             receiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
+                    HardwareEventRecorder.getInstance(context).recordIntent("XYAUTO_ADAPTER", intent);
                     handleIntent(intent);
                 }
             };
@@ -59,8 +70,21 @@ public class XyAutoAdapter implements HeadUnitAdapter {
 
             // Bluetooth Music
             filter.addAction("com.acloud.intent.play_status");
+            filter.addAction("xy.android.playpause");
+            filter.addAction("xy.android.nextmedia");
+            filter.addAction("xy.android.previousmedia");
 
-            context.registerReceiver(receiver, filter);
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+                } else {
+                    context.registerReceiver(receiver, filter);
+                }
+            } catch (Exception e) {
+                HardwareEventRecorder.getInstance(context).record("XYAUTO_ADAPTER",
+                        "receiver_registration_failed=" + e.getClass().getSimpleName());
+                receiver = null;
+            }
         }
     }
 

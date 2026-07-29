@@ -390,6 +390,36 @@
     </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- DONANIM OLAY TANILAMA -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory
+        android:key="category_hardware_diagnostics"
+        android:title="@string/car_pref_title_hardware_diagnostics"
+        app:icon="@android:drawable/ic_menu_manage"
+        android:iconSpaceReserved="true">
+
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="car_launcher_hardware_recording"
+            android:title="@string/car_pref_title_hardware_recording"
+            android:summary="@string/car_pref_summary_hardware_recording_off"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
+        <androidx.preference.Preference
+            android:key="car_launcher_hardware_export"
+            android:title="@string/car_pref_title_hardware_export"
+            android:summary="@string/car_pref_summary_hardware_export"
+            app:iconSpaceReserved="false" />
+
+        <androidx.preference.Preference
+            android:key="car_launcher_hardware_clear"
+            android:title="@string/car_pref_title_hardware_clear"
+            android:summary="@string/car_pref_summary_hardware_clear"
+            app:iconSpaceReserved="false" />
+
+    </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- HAKKINDA -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory

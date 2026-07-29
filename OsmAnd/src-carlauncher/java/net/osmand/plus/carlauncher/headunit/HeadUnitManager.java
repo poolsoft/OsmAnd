@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.osmand.plus.carlauncher.headunit.adapters.XyAutoAdapter;
+import net.osmand.plus.carlauncher.headunit.adapters.HcnAdapter;
+import net.osmand.plus.carlauncher.headunit.diagnostics.HardwareEventRecorder;
 
 public class HeadUnitManager {
 
@@ -16,7 +18,7 @@ public class HeadUnitManager {
         // Find supported adapter
         List<HeadUnitAdapter> availableAdapters = new ArrayList<>();
         availableAdapters.add(new XyAutoAdapter());
-        // Add more adapters here in the future (e.g. HcnAdapter)
+        availableAdapters.add(new HcnAdapter());
 
         for (HeadUnitAdapter adapter : availableAdapters) {
             if (adapter.isSupported(context)) {
@@ -26,6 +28,8 @@ public class HeadUnitManager {
         }
 
         if (this.activeAdapter != null) {
+            HardwareEventRecorder.getInstance(context).record("HEAD_UNIT",
+                    "selected_adapter=" + this.activeAdapter.getManufacturerName());
             this.activeAdapter.startListening(context, new HeadUnitListener() {
                 @Override
                 public void onSpeedUpdated(float speedKmh) {
@@ -57,6 +61,9 @@ public class HeadUnitManager {
                     for (HeadUnitListener listener : listeners) listener.onRadioFrequencyChanged(band, freqMHz);
                 }
             });
+        } else {
+            HardwareEventRecorder.getInstance(context).record("HEAD_UNIT",
+                    "selected_adapter=none");
         }
     }
 

@@ -93,6 +93,22 @@
     <string name="car_pref_title_import_voice_model">Load Voice Model from USB/File</string>
     <string name="car_pref_summary_import_voice_model">If no internet, load the zip model you downloaded from USB</string>
 
+    <!-- Hardware diagnostics -->
+    <string name="car_pref_title_hardware_diagnostics">Head Unit &amp; Steering Diagnostics</string>
+    <string name="car_pref_title_hardware_recording">Record Hardware Events</string>
+    <string name="car_pref_summary_hardware_recording_off">Off — enable, then press the steering-wheel buttons you want to diagnose</string>
+    <string name="car_pref_summary_hardware_recording_on">Recording — %1$s collected</string>
+    <string name="car_pref_title_hardware_export">Export Diagnostic Log</string>
+    <string name="car_pref_summary_hardware_export">Save the log to USB storage or another location</string>
+    <string name="car_pref_title_hardware_clear">Clear Diagnostic Log</string>
+    <string name="car_pref_summary_hardware_clear">Permanently delete the locally stored hardware events</string>
+    <string name="car_dialog_hardware_clear_title">Clear diagnostic log?</string>
+    <string name="car_dialog_hardware_clear_message">Recorded key, media and head-unit events will be deleted.</string>
+    <string name="car_toast_hardware_exported">Diagnostic log exported</string>
+    <string name="car_toast_hardware_export_failed">Could not export diagnostic log</string>
+    <string name="car_toast_hardware_empty">There are no recorded events to export</string>
+    <string name="car_toast_hardware_cleared">Diagnostic log cleared</string>
+
     <!-- About / Hakkında -->
     <string name="car_pref_title_about">About</string>
     <string name="car_pref_title_version">Version</string>

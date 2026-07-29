@@ -466,6 +466,14 @@ public class AppDockFragment extends Fragment
             telemetryManager = net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(
                     (net.osmand.plus.OsmandApplication) context.getApplicationContext());
         }
+        try {
+            context.startService(new Intent(context,
+                    net.osmand.plus.carlauncher.media.CarMediaService.class));
+        } catch (Exception e) {
+            net.osmand.plus.carlauncher.headunit.diagnostics.HardwareEventRecorder
+                    .getInstance(context)
+                    .record("MEDIA_SESSION", "service_start_failed=" + e.getClass().getSimpleName());
+        }
         if (isResumed()) {
             musicManager.addListener(this);
             telemetryManager.addListener(this);
