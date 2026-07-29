@@ -45,15 +45,13 @@ public class CarLayoutManager {
     }
 
     public int getAvailablePanelWidth() {
-        int width = rootLayout != null && rootLayout.getWidth() > 0
-                ? rootLayout.getWidth() - rootLayout.getPaddingLeft() - rootLayout.getPaddingRight()
-                : activity.getResources().getDisplayMetrics().widthPixels;
+        int width = getCurrentContentWidth();
         if (appDock == null || appDock.getVisibility() != View.VISIBLE) {
             return width;
         }
         boolean isPortrait = activity.getResources().getConfiguration().orientation
                 == Configuration.ORIENTATION_PORTRAIT;
-        String dockPos = isPortrait ? "bottom" : CarLauncherSettings.getInstance(activity).getDockPosition();
+        String dockPos = CarLauncherSettings.getInstance(activity).getEffectiveDockPosition(isPortrait);
         if ("left".equals(dockPos) || "right".equals(dockPos)) {
             width -= appDock.getWidth();
         }
@@ -61,19 +59,63 @@ public class CarLayoutManager {
     }
 
     public int getAvailablePanelHeight() {
-        int height = rootLayout != null && rootLayout.getHeight() > 0
-                ? rootLayout.getHeight() - rootLayout.getPaddingTop() - rootLayout.getPaddingBottom()
-                : activity.getResources().getDisplayMetrics().heightPixels;
+        int height = getCurrentContentHeight();
         if (appDock == null || appDock.getVisibility() != View.VISIBLE) {
             return height;
         }
         boolean isPortrait = activity.getResources().getConfiguration().orientation
                 == Configuration.ORIENTATION_PORTRAIT;
-        String dockPos = isPortrait ? "bottom" : CarLauncherSettings.getInstance(activity).getDockPosition();
+        String dockPos = CarLauncherSettings.getInstance(activity).getEffectiveDockPosition(isPortrait);
         if ("bottom".equals(dockPos)) {
             height -= appDock.getHeight();
         }
         return Math.max(0, height);
+    }
+
+    /**
+     * During an orientation callback the root view can still report the old
+     * orientation's dimensions. Do not mix those stale dimensions with the new
+     * configuration while calculating panel percentages.
+     */
+    private boolean rootMatchesCurrentOrientation() {
+        if (rootLayout == null || rootLayout.getWidth() <= 0 || rootLayout.getHeight() <= 0) {
+            return false;
+        }
+        boolean isPortrait = activity.getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_PORTRAIT;
+        boolean rootIsPortrait = rootLayout.getHeight() >= rootLayout.getWidth();
+        return isPortrait == rootIsPortrait;
+    }
+
+    private int getCurrentContentWidth() {
+        if (rootMatchesCurrentOrientation()) {
+            return rootLayout.getWidth() - rootLayout.getPaddingLeft() - rootLayout.getPaddingRight();
+        }
+        return activity.getResources().getDisplayMetrics().widthPixels;
+    }
+
+    private int getCurrentContentHeight() {
+        if (rootMatchesCurrentOrientation()) {
+            return rootLayout.getHeight() - rootLayout.getPaddingTop() - rootLayout.getPaddingBottom();
+        }
+        return activity.getResources().getDisplayMetrics().heightPixels;
+    }
+
+    /**
+     * Reads the fraction currently visible on screen. Dragging starts from this
+     * value instead of a possibly stale preference after rotation.
+     */
+    public float getRenderedSmallPanelFraction() {
+        boolean isPortrait = activity.getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_PORTRAIT;
+        View smallView = isContentFullScreen ? mapContainer : widgetPanel;
+        int available = isPortrait ? getAvailablePanelHeight() : getAvailablePanelWidth();
+        int rendered = smallView == null ? 0
+                : (isPortrait ? smallView.getHeight() : smallView.getWidth());
+        if (available <= 0 || rendered <= 0) {
+            return -1f;
+        }
+        return Math.max(0.15f, Math.min(0.65f, rendered / (float) available));
     }
 
     public void applyLayout(boolean isWidgetPanelOpen, int layoutMode) {
@@ -87,7 +129,7 @@ public class CarLayoutManager {
 
         CarLauncherSettings carSettings = CarLauncherSettings.getInstance(activity);
         boolean isPortrait = activity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
-        String dockPos = isPortrait ? carSettings.getDockPositionPortrait() : carSettings.getDockPosition();
+        String dockPos = carSettings.getEffectiveDockPosition(isPortrait);
         String widgetPos = carSettings.getWidgetPanelPosition();
 
         ConstraintSet cs = new ConstraintSet();
@@ -123,7 +165,7 @@ public class CarLayoutManager {
 
         // 2. Dock Region - dockSize (0-100) ayarina gore olceklendir
         // 0=min(0.3x), 50=normal(1.0x), 100=max(1.7x)
-        int dockSizePercent = carSettings.getDockSize();
+        int dockSizePercent = carSettings.getEffectiveDockSize(isPortrait);
         float dockScale = 0.3f + (dockSizePercent / 100.0f) * 1.4f;
         int dockSize = (int) (activity.getResources().getDimension(R.dimen.dock_height) * dockScale);
         int sidebarWidth = (int) (64 * activity.getResources().getDisplayMetrics().density * dockScale);
@@ -137,8 +179,6 @@ public class CarLayoutManager {
             sidebarWidth = minAllowedSize;
         }
         
-        if (isPortrait) dockPos = "bottom";
-
         switch (dockPos) {
             case "left":
                 cs.connect(R.id.app_dock, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
@@ -165,12 +205,8 @@ public class CarLayoutManager {
 
         // 3. Widget ve Harita Alanlari - Harita herzaman ekranda kalacak sekilde swap mantigi
         float panelPercent = carSettings.getWidgetPanelWidthPercent();
-        int screenWidth = rootLayout.getWidth() > 0
-                ? rootLayout.getWidth() - rootLayout.getPaddingLeft() - rootLayout.getPaddingRight()
-                : activity.getResources().getDisplayMetrics().widthPixels;
-        int screenHeight = rootLayout.getHeight() > 0
-                ? rootLayout.getHeight() - rootLayout.getPaddingTop() - rootLayout.getPaddingBottom()
-                : activity.getResources().getDisplayMetrics().heightPixels;
+        int screenWidth = getCurrentContentWidth();
+        int screenHeight = getCurrentContentHeight();
 
         if (activity.isDesktopMode()) {
             cs.setVisibility(R.id.map_container, View.GONE);
@@ -234,7 +270,7 @@ public class CarLayoutManager {
                 int largeViewId = isContentFullScreen ? R.id.widget_panel : R.id.map_container;
                 int smallViewId = isContentFullScreen ? R.id.map_container : R.id.widget_panel;
 
-                float portraitPanelHeight = isPortrait ? carSettings.getWidgetPanelHeightPortrait() : 0.30f;
+                float portraitPanelHeight = carSettings.getWidgetPanelHeightPortrait();
                 int availableHeight = screenHeight - ("bottom".equals(dockPos) ? dockSize : 0);
                 int smallHeight = (int) (availableHeight * portraitPanelHeight);
                 float density = activity.getResources().getDisplayMetrics().density;
@@ -370,10 +406,6 @@ public class CarLayoutManager {
         // 10. TRANSLATIONX - constraint uygulandiktan SONRA (Sifirlayip ikonu 3-nokta yapar)
         applyWidgetHandleTranslation(carSettings, isWidgetPanelOpen);
         
-        // 11. Refresh Dock orientation
-        boolean isVertical = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
-        refreshDockFragment(isVertical);
-
     }
 
     private void updateElevations(boolean isPortrait) {
@@ -421,13 +453,6 @@ public class CarLayoutManager {
             widgetHandle.setRotation(90f);
         } else {
             widgetHandle.setRotation(0f);
-        }
-    }
-
-    private void refreshDockFragment(boolean isVertical) {
-        AppDockFragment dock = activity.getAppDockFragment();
-        if (dock != null) {
-            dock.setOrientation(isVertical);
         }
     }
 

@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -36,34 +35,30 @@ import net.osmand.plus.carlauncher.dock.LaunchMode;
 import net.osmand.plus.carlauncher.overlay.OverlayWindowManager;
 import net.osmand.plus.carlauncher.music.MusicManager;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
  * App Dock fragment.
- * <<<<<<< HEAD
  * Uygulama kisayollarini ve Mini Player'i gosterir.
- * =======
- * >>>>>>> 32c2ee2e47809bba5011d01849fb227eaed926a9
  */
 public class AppDockFragment extends Fragment
         implements AppDockAdapter.OnShortcutListener, MusicManager.MusicUIListener, net.osmand.plus.carlauncher.telemetry.TelemetryManager.TelemetryListener {
 
     public static final String TAG = "AppDockFragment";
     // Sync Fix: Ensure remote matches local
-    private static final String PREFS_NAME = "app_dock_settings";
-    private static final String KEY_ORIENTATION = "orientation";
-    private static final int ORIENTATION_HORIZONTAL = LinearLayoutManager.HORIZONTAL;
-    private static final int ORIENTATION_VERTICAL = LinearLayoutManager.VERTICAL;
-
     private RecyclerView recyclerView;
     private ImageButton addButton;
     private ImageButton orientationButton;
     private AppDockAdapter adapter;
     private AppDockManager dockManager;
     private OverlayWindowManager overlayManager;
-    private SharedPreferences prefs;
     private boolean isEditMode = false;
-    private int currentOrientation = ORIENTATION_HORIZONTAL; // Varsayilan yatay
     private boolean isVerticalMode = false;
     private int currentLayoutId = 0;
+    private final ExecutorService dockLoader = Executors.newSingleThreadExecutor();
+    private RecyclerView.OnScrollListener dockScrollListener;
+    private Context dockReceiverContext;
 
     private OnAppDockListener listener;
     private ImageButton menuButton;
@@ -107,11 +102,9 @@ public class AppDockFragment extends Fragment
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getContext() != null) {
-            dockManager = new AppDockManager(getContext());
-            dockManager.loadShortcuts();
-            overlayManager = new OverlayWindowManager(getContext());
-            prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-            currentOrientation = prefs.getInt(KEY_ORIENTATION, ORIENTATION_HORIZONTAL);
+            Context context = getContext();
+            dockManager = new AppDockManager(context);
+            overlayManager = new OverlayWindowManager(context);
 
             // Music scanning and telemetry setup wait for the startup coordinator.
             // User interaction can still initialize them immediately.
@@ -127,16 +120,14 @@ public class AppDockFragment extends Fragment
             };
             android.content.IntentFilter filter = new android.content.IntentFilter(
                     "net.osmand.carlauncher.DOCK_UPDATED");
+            dockReceiverContext = context;
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                getContext().registerReceiver(dockUpdateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+                context.registerReceiver(dockUpdateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
             } else {
-                getContext().registerReceiver(dockUpdateReceiver, filter);
+                context.registerReceiver(dockUpdateReceiver, filter);
             }
         }
         
-        // Register Local Broadcast Receiver
-        androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(getContext())
-                .registerReceiver(dockUpdateReceiver, new android.content.IntentFilter("net.osmand.carlauncher.DOCK_UPDATED"));
     }
 
     private android.content.BroadcastReceiver dockUpdateReceiver;
@@ -146,16 +137,30 @@ public class AppDockFragment extends Fragment
      */
     public void refreshDock() {
         if (dockManager != null && adapter != null && getActivity() != null) {
-            dockManager.loadShortcuts();
-            getActivity().runOnUiThread(() -> {
-                adapter.setShortcuts(dockManager.getShortcuts());
-                adapter.notifyDataSetChanged();
-                // Kisayollar guncellendikten sonra fade durumunu yeniden kontrol et
-                if (recyclerView != null) {
-                    recyclerView.post(this::updateDockEndFadeVisibility);
-                }
-            });
+            loadDockShortcutsAsync();
         }
+    }
+
+    private void loadDockShortcutsAsync() {
+        AppDockManager manager = dockManager;
+        if (manager == null || dockLoader.isShutdown()) {
+            return;
+        }
+        dockLoader.execute(() -> {
+            manager.loadShortcuts();
+            java.util.List<AppShortcut> shortcuts = manager.getShortcuts();
+            androidx.fragment.app.FragmentActivity activity = getActivity();
+            if (activity == null) {
+                return;
+            }
+            activity.runOnUiThread(() -> {
+                if (adapter == null || recyclerView == null) {
+                    return;
+                }
+                adapter.setShortcuts(shortcuts);
+                recyclerView.post(this::updateDockEndFadeVisibility);
+            });
+        });
     }
 
     @Override
@@ -181,8 +186,8 @@ public class AppDockFragment extends Fragment
             @Nullable Bundle savedInstanceState) {
         
         net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
-        String dockPos = settings.getDockPosition();
         boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        String dockPos = settings.getEffectiveDockPosition(isPortrait);
         this.isVerticalMode = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
 
         int layoutId;
@@ -363,21 +368,24 @@ public class AppDockFragment extends Fragment
 
         // Long Press on Root & Recycler to add apps
         View.OnLongClickListener longClickListener = v -> {
+            if (adapter != null && adapter.isEditMode()) {
+                return false;
+            }
             showAppPickerDialog();
             return true;
         };
         root.setOnLongClickListener(longClickListener);
-        recyclerView.setOnLongClickListener(longClickListener);
 
         // Drag and Drop
         androidx.recyclerview.widget.ItemTouchHelper.Callback callback = new androidx.recyclerview.widget.ItemTouchHelper.Callback() {
             @Override
             public int getMovementFlags(@NonNull RecyclerView recyclerView,
                     @NonNull RecyclerView.ViewHolder viewHolder) {
-                int dragFlags = androidx.recyclerview.widget.ItemTouchHelper.LEFT
-                        | androidx.recyclerview.widget.ItemTouchHelper.RIGHT
-                        | androidx.recyclerview.widget.ItemTouchHelper.UP
-                        | androidx.recyclerview.widget.ItemTouchHelper.DOWN;
+                int dragFlags = isVerticalMode
+                        ? androidx.recyclerview.widget.ItemTouchHelper.UP
+                                | androidx.recyclerview.widget.ItemTouchHelper.DOWN
+                        : androidx.recyclerview.widget.ItemTouchHelper.LEFT
+                                | androidx.recyclerview.widget.ItemTouchHelper.RIGHT;
                 return makeMovementFlags(dragFlags, 0);
             }
 
@@ -386,6 +394,9 @@ public class AppDockFragment extends Fragment
                     @NonNull RecyclerView.ViewHolder target) {
                 int from = viewHolder.getAdapterPosition();
                 int to = target.getAdapterPosition();
+                if (from == RecyclerView.NO_POSITION || to == RecyclerView.NO_POSITION || from == to) {
+                    return false;
+                }
 
                 // Update Adapter
                 if (adapter != null) {
@@ -393,9 +404,18 @@ public class AppDockFragment extends Fragment
                 }
                 // Update Manager
                 if (dockManager != null) {
-                    dockManager.moveShortcut(from, to);
+                    dockManager.moveShortcutInMemory(from, to);
                 }
                 return true;
+            }
+
+            @Override
+            public void clearView(@NonNull RecyclerView recyclerView,
+                    @NonNull RecyclerView.ViewHolder viewHolder) {
+                super.clearView(recyclerView, viewHolder);
+                if (dockManager != null) {
+                    dockManager.saveShortcuts();
+                }
             }
 
             @Override
@@ -405,7 +425,7 @@ public class AppDockFragment extends Fragment
 
             @Override
             public boolean isLongPressDragEnabled() {
-                return true;
+                return adapter != null && adapter.isEditMode();
             }
         };
         new androidx.recyclerview.widget.ItemTouchHelper(callback).attachToRecyclerView(recyclerView);
@@ -419,23 +439,20 @@ public class AppDockFragment extends Fragment
         
         // Ensure orientation is correct based on global settings before creating adapter
         net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
-        String dockPos = settings.getDockPosition();
         boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        String dockPos = settings.getEffectiveDockPosition(isPortrait);
         this.isVerticalMode = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
         
         adapter = new AppDockAdapter(getContext(), this);
         adapter.setVerticalMode(isVerticalMode); // Set it before attaching to recycler
         recyclerView.setAdapter(adapter);
         
-        if (dockManager != null) {
-            adapter.setShortcuts(dockManager.getShortcuts());
-        }
-        
         // Force apply UI constraints
         applyOrientationState(view, isVerticalMode);
         
         // Scroll listener: sadece sona dogru tasinan elemanlari karartan overlay
         setupDockEndFade();
+        loadDockShortcutsAsync();
         
         // Sync Desktop Mode color filter on launch
         if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
@@ -511,7 +528,7 @@ public class AppDockFragment extends Fragment
         
         boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
         boolean shouldShow = false;
-        if (!isPortrait && currentOrientation != ORIENTATION_VERTICAL) {
+        if (!isPortrait && !isVerticalMode) {
             boolean isDesktop = false;
             int layoutMode = 0;
             if (getActivity() instanceof net.osmand.plus.activities.MapActivity) {
@@ -792,7 +809,6 @@ public class AppDockFragment extends Fragment
                 if (adapter != null && getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         adapter.setShortcuts(dockManager.getShortcuts());
-                        adapter.notifyDataSetChanged();
                     });
                 }
             }
@@ -808,6 +824,9 @@ public class AppDockFragment extends Fragment
 
     // --- Clock Logic ---
     private void startClock() {
+        if (clockRunnable != null) {
+            clockHandler.removeCallbacks(clockRunnable);
+        }
         clockRunnable = new Runnable() {
             @Override
             public void run() {
@@ -831,12 +850,16 @@ public class AppDockFragment extends Fragment
     private void setupDockEndFade() {
         if (recyclerView == null || dockEndFade == null) return;
 
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        if (dockScrollListener != null) {
+            recyclerView.removeOnScrollListener(dockScrollListener);
+        }
+        dockScrollListener = new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView rv, int dx, int dy) {
                 updateDockEndFadeVisibility();
             }
-        });
+        };
+        recyclerView.addOnScrollListener(dockScrollListener);
 
         // Adapter verileri geldikten sonra da kontrol et
         recyclerView.post(this::updateDockEndFadeVisibility);
@@ -863,22 +886,48 @@ public class AppDockFragment extends Fragment
 
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        CarLauncherInitManager.getInstance()
-                .removeLauncherBackgroundReadyListener(startupListener);
+    public void onDestroyView() {
         if (clockRunnable != null)
             clockHandler.removeCallbacks(clockRunnable);
+        if (recyclerView != null && dockScrollListener != null) {
+            recyclerView.removeOnScrollListener(dockScrollListener);
+        }
+        dockScrollListener = null;
+        recyclerView = null;
+        adapter = null;
+        clockView = null;
+        miniMusicContainer = null;
+        miniMusicTitle = null;
+        miniBtnPlay = null;
+        miniBtnNext = null;
+        miniMusicIcon = null;
+        dockEndFade = null;
+        leftContainer = null;
+        rightContainer = null;
+        centerContainer = null;
+        btnAssistant = null;
+        appListButton = null;
+        btnDesktopMode = null;
+        layoutButton = null;
+        super.onDestroyView();
+    }
+
+    @Override
+    public void onDestroy() {
+        CarLauncherInitManager.getInstance()
+                .removeLauncherBackgroundReadyListener(startupListener);
+        dockLoader.shutdownNow();
 
         // Unregister dock update receiver
-        if (dockUpdateReceiver != null && getContext() != null) {
+        if (dockUpdateReceiver != null && dockReceiverContext != null) {
             try {
-                getContext().unregisterReceiver(dockUpdateReceiver);
-                androidx.localbroadcastmanager.content.LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(dockUpdateReceiver);
+                dockReceiverContext.unregisterReceiver(dockUpdateReceiver);
             } catch (Exception e) {
                 // Ignore if already unregistered
             }
         }
+        dockReceiverContext = null;
+        super.onDestroy();
     }
 
     public void updateLayoutIcon(int mode) {
@@ -951,14 +1000,16 @@ public class AppDockFragment extends Fragment
         if (getContext() == null) return dpToPx(48);
         int baseSize = (int) getContext().getResources().getDimension(net.osmand.plus.R.dimen.dock_icon_size);
         net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
-        int dockSizePercent = settings.getDockSize();
+        boolean isPortrait = getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        int dockSizePercent = settings.getEffectiveDockSize(isPortrait);
         float scale = 0.3f + (dockSizePercent / 100.0f) * 1.4f;
         return (int) (baseSize * scale);
     }
 
     private void adjustButtonSizes() {
         int iconSize = getScaledIconSize();
-        int itemSize = iconSize + dpToPx(16); // Sabit dokunma alani, AppDockAdapter ile ayni
+        int itemSize = Math.max(dpToPx(48), iconSize + dpToPx(16));
 
         View[] buttons = {btnDesktopMode, appListButton, btnAssistant};
         for (View btn : buttons) {
@@ -979,11 +1030,31 @@ public class AppDockFragment extends Fragment
     }
 
     public void setOrientation(boolean isVertical) {
+        if (this.isVerticalMode == isVertical) {
+            return;
+        }
         this.isVerticalMode = isVertical;
-        this.currentOrientation = isVertical ? ORIENTATION_VERTICAL : ORIENTATION_HORIZONTAL;
-        
         if (getView() != null) {
             applyOrientationState(getView(), isVertical);
+        }
+    }
+
+    public void refreshLayout() {
+        View view = getView();
+        Context context = getContext();
+        if (view == null || context == null) {
+            return;
+        }
+        net.osmand.plus.carlauncher.CarLauncherSettings settings =
+                net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(context);
+        boolean isPortrait = getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        String dockPos = settings.getEffectiveDockPosition(isPortrait);
+        boolean vertical = !isPortrait && ("left".equals(dockPos) || "right".equals(dockPos));
+        if (this.isVerticalMode != vertical) {
+            setOrientation(vertical);
+        } else {
+            applyOrientationState(view, vertical);
         }
     }
 
@@ -1036,7 +1107,7 @@ public class AppDockFragment extends Fragment
             // 3. Dynamic Scaling for Clock & Icons
             if (clockView != null) {
                 net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
-                int dockSizePercent = settings.getDockSize();
+                int dockSizePercent = settings.getEffectiveDockSize(isScreenPortrait);
                 float scale = 0.3f + (dockSizePercent / 100.0f) * 1.4f;
                 float baseTextSize = isVertical ? 18f : 22f;
                 clockView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, baseTextSize * scale);
@@ -1049,7 +1120,7 @@ public class AppDockFragment extends Fragment
             }
 
             net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
-            float scale = 0.3f + (settings.getDockSize() / 100.0f) * 1.4f;
+            float scale = 0.3f + (settings.getEffectiveDockSize(isScreenPortrait) / 100.0f) * 1.4f;
             updateIconSize(btnDesktopMode, scale);
             updateIconSize(appListButton, scale);
             updateIconSize(btnAssistant, scale);
@@ -1085,7 +1156,14 @@ public class AppDockFragment extends Fragment
         if (v == null) return;
         
         int baseSize = dpToPx(48); // Varsayılan buton boyutu
-        int scaledSize = (int) (baseSize * scale);
+        int scaledSize = Math.max(dpToPx(48), (int) (baseSize * scale));
+        View root = getView();
+        if (root != null) {
+            int thickness = isVerticalMode ? root.getWidth() : root.getHeight();
+            if (thickness > dpToPx(8)) {
+                scaledSize = Math.min(scaledSize, Math.max(dpToPx(48), thickness - dpToPx(8)));
+            }
+        }
         
         ViewGroup.LayoutParams lp = v.getLayoutParams();
         if (lp != null) {
@@ -1144,8 +1222,8 @@ public class AppDockFragment extends Fragment
     public boolean needsLayoutUpdate() {
         if (getContext() == null) return false;
         net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
-        String dockPos = settings.getDockPosition();
         boolean isPortrait = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        String dockPos = settings.getEffectiveDockPosition(isPortrait);
         boolean expectedVerticalMode = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
 
         int expectedLayoutId;
@@ -1209,13 +1287,15 @@ public class AppDockFragment extends Fragment
         if (getContext() == null || getView() == null) return;
 
         net.osmand.plus.carlauncher.CarLauncherSettings settings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(getContext());
-        String dockPos = settings.getDockPosition();
         boolean isPortrait = newConfig.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        String dockPos = settings.getEffectiveDockPosition(isPortrait);
         this.isVerticalMode = ("left".equals(dockPos) || "right".equals(dockPos)) && !isPortrait;
 
+        if (needsLayoutUpdate()) {
+            return;
+        }
         if (adapter != null) {
             adapter.setVerticalMode(isVerticalMode);
-            adapter.notifyDataSetChanged();
         }
 
         applyOrientationState(getView(), isVerticalMode);

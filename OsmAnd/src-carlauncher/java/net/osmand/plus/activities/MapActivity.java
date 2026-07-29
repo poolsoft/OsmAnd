@@ -225,6 +225,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	private net.osmand.plus.carlauncher.ui.CarLayoutManager carLayoutManager;
 	private net.osmand.plus.carlauncher.ui.PanelContentManager panelContentManager;
 	private View mainLayoutRoot; // main.xml root reference
+	private View.OnLayoutChangeListener carConfigurationLayoutListener;
+	private final Runnable carConfigurationLayoutFallback = this::finishCarConfigurationLayoutUpdate;
 
     private boolean isWidgetPanelOpen = true;
     private boolean isDesktopMode = false;
@@ -634,6 +636,10 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		                    initialPanelPercent = portraitDrag
 		                            ? settings.getWidgetPanelHeightPortrait()
 		                            : settings.getWidgetPanelWidthPercent();
+		                    float renderedPercent = carLayoutManager.getRenderedSmallPanelFraction();
+		                    if (renderedPercent > 0f) {
+		                        initialPanelPercent = renderedPercent;
+		                    }
 		                    isDragging = false;
 		                    break;
 		                case MotionEvent.ACTION_MOVE:
@@ -951,7 +957,10 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
             getSupportFragmentManager().beginTransaction()
                 .replace(net.osmand.plus.R.id.app_dock, newDock, "app_dock")
                 .commitAllowingStateLoss();
+        } else if (dock != null) {
+            dock.refreshLayout();
         }
+        applyWidgetPanelState(false);
     }
 
 	@Override
@@ -2020,6 +2029,13 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	@Override
 	protected void onDestroy() {
+		if (rootLayout != null) {
+			rootLayout.removeCallbacks(carConfigurationLayoutFallback);
+			if (carConfigurationLayoutListener != null) {
+				rootLayout.removeOnLayoutChangeListener(carConfigurationLayoutListener);
+				carConfigurationLayoutListener = null;
+			}
+		}
 		super.onDestroy();
 		safeUnregisterReceiver(voiceStateReceiver);
 		destroyProgressBarForRouting();
@@ -2840,12 +2856,43 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		app.runInUIThread(fragmentsHelper::updateFragments);
 		app.getNotificationHelper().refreshNotifications();
 
-		// Orientation degistiginde ana ekran yerlesimini (ConstraintLayout) guncelle (Turkce karakter yok)
-		if (carLayoutManager != null) {
-			carLayoutManager.applyLayout(isWidgetPanelOpen, layoutMode);
+		scheduleCarConfigurationLayoutUpdate(newConfig);
+	}
+
+	private void scheduleCarConfigurationLayoutUpdate(@NonNull Configuration newConfig) {
+		if (rootLayout == null) {
+			finishCarConfigurationLayoutUpdate();
+			return;
 		}
-        
-        checkAndRefreshDockFragmentIfNeeded();
+		rootLayout.removeCallbacks(carConfigurationLayoutFallback);
+		if (carConfigurationLayoutListener != null) {
+			rootLayout.removeOnLayoutChangeListener(carConfigurationLayoutListener);
+		}
+		final boolean expectPortrait = newConfig.orientation == Configuration.ORIENTATION_PORTRAIT;
+		carConfigurationLayoutListener = (view, left, top, right, bottom,
+				oldLeft, oldTop, oldRight, oldBottom) -> {
+			int width = right - left;
+			int height = bottom - top;
+			boolean measuredPortrait = height >= width;
+			if (width > 0 && height > 0 && measuredPortrait == expectPortrait) {
+				finishCarConfigurationLayoutUpdate();
+			}
+		};
+		rootLayout.addOnLayoutChangeListener(carConfigurationLayoutListener);
+		rootLayout.requestLayout();
+		// Some vendor launchers suppress a traversal during rapid rotations.
+		rootLayout.postDelayed(carConfigurationLayoutFallback, 250);
+	}
+
+	private void finishCarConfigurationLayoutUpdate() {
+		if (rootLayout != null) {
+			rootLayout.removeCallbacks(carConfigurationLayoutFallback);
+			if (carConfigurationLayoutListener != null) {
+				rootLayout.removeOnLayoutChangeListener(carConfigurationLayoutListener);
+				carConfigurationLayoutListener = null;
+			}
+		}
+		checkAndRefreshDockFragmentIfNeeded();
 	}
 
 	@Override

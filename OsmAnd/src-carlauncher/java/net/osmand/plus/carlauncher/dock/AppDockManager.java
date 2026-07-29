@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 
 import androidx.annotation.NonNull;
+import net.osmand.plus.carlauncher.CarLauncherSettings;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -25,7 +26,6 @@ public class AppDockManager {
 
     private static final String PREFS_NAME = "car_launcher_app_dock";
     private static final String KEY_SHORTCUTS = "shortcuts";
-    private static final int MAX_SHORTCUTS = 8;
 
     private final Context context;
     private final SharedPreferences prefs;
@@ -40,7 +40,7 @@ public class AppDockManager {
     /**
      * Kisayollari yukle.
      */
-    public void loadShortcuts() {
+    public synchronized void loadShortcuts() {
         shortcuts.clear();
 
         String shortcutsJson = prefs.getString(KEY_SHORTCUTS, null);
@@ -154,7 +154,12 @@ public class AppDockManager {
     /**
      * Kisayol sirasini degistir.
      */
-    public void moveShortcut(int fromPosition, int toPosition) {
+    public synchronized void moveShortcut(int fromPosition, int toPosition) {
+        moveShortcutInMemory(fromPosition, toPosition);
+        saveShortcuts();
+    }
+
+    public synchronized void moveShortcutInMemory(int fromPosition, int toPosition) {
         if (fromPosition < 0 || fromPosition >= shortcuts.size() ||
                 toPosition < 0 || toPosition >= shortcuts.size()) {
             return;
@@ -168,13 +173,12 @@ public class AppDockManager {
             shortcuts.get(i).setOrder(i);
         }
 
-        saveShortcuts();
     }
 
     /**
      * Kisayollari kaydet.
      */
-    public void saveShortcuts() {
+    public synchronized void saveShortcuts() {
         try {
             JSONArray array = new JSONArray();
 
@@ -198,8 +202,8 @@ public class AppDockManager {
     /**
      * Kisayol ekle.
      */
-    public boolean addShortcut(@NonNull AppShortcut shortcut) {
-        if (shortcuts.size() >= MAX_SHORTCUTS) {
+    public synchronized boolean addShortcut(@NonNull AppShortcut shortcut) {
+        if (shortcuts.size() >= getMaxShortcuts()) {
             return false;
         }
 
@@ -219,7 +223,7 @@ public class AppDockManager {
     /**
      * Kisayol cikar.
      */
-    public void removeShortcut(@NonNull AppShortcut shortcut) {
+    public synchronized void removeShortcut(@NonNull AppShortcut shortcut) {
         shortcuts.remove(shortcut);
 
         // Order'lari yeniden duzenle
@@ -245,7 +249,7 @@ public class AppDockManager {
     /**
      * Tum kisayollari al.
      */
-    public List<AppShortcut> getShortcuts() {
+    public synchronized List<AppShortcut> getShortcuts() {
         return new ArrayList<>(shortcuts);
     }
 
@@ -253,20 +257,20 @@ public class AppDockManager {
      * Maksimum kisayol sayisi.
      */
     public int getMaxShortcuts() {
-        return MAX_SHORTCUTS;
+        return CarLauncherSettings.getInstance(context).getMaxShortcuts();
     }
 
     /**
      * Daha kisayol eklenebilir mi?
      */
-    public boolean canAddMore() {
-        return shortcuts.size() < MAX_SHORTCUTS;
+    public synchronized boolean canAddMore() {
+        return shortcuts.size() < getMaxShortcuts();
     }
 
     /**
      * Tum kisayollari temizle (sifirla).
      */
-    public void clearAllShortcuts() {
+    public synchronized void clearAllShortcuts() {
         shortcuts.clear();
         prefs.edit().remove(KEY_SHORTCUTS).apply();
     }

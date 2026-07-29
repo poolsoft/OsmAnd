@@ -917,6 +917,9 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
     }
 
     public void addListener(MusicUIListener listener) {
+        if (listeners.contains(listener)) {
+            return;
+        }
         listeners.add(listener);
         new Handler(Looper.getMainLooper()).post(() -> {
             notifyTrackChangedForListener(listener);

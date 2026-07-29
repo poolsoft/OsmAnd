@@ -12,6 +12,7 @@ import android.widget.TextView;
 import net.osmand.plus.carlauncher.CarLauncherSettings;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
@@ -40,12 +41,40 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
         this.context = context;
         this.shortcuts = new ArrayList<>();
         this.listener = listener;
+        setHasStableIds(true);
     }
 
-    public void setShortcuts(List<AppShortcut> shortcuts) {
+    public void setShortcuts(List<AppShortcut> newShortcuts) {
+        List<AppShortcut> oldShortcuts = new ArrayList<>(shortcuts);
+        DiffUtil.DiffResult diff = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override
+            public int getOldListSize() {
+                return oldShortcuts.size();
+            }
+
+            @Override
+            public int getNewListSize() {
+                return newShortcuts.size();
+            }
+
+            @Override
+            public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+                return oldShortcuts.get(oldItemPosition).getPackageName()
+                        .equals(newShortcuts.get(newItemPosition).getPackageName());
+            }
+
+            @Override
+            public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+                AppShortcut oldItem = oldShortcuts.get(oldItemPosition);
+                AppShortcut newItem = newShortcuts.get(newItemPosition);
+                return oldItem.getOrder() == newItem.getOrder()
+                        && oldItem.getLaunchMode() == newItem.getLaunchMode()
+                        && oldItem.getAppName().equals(newItem.getAppName());
+            }
+        });
         this.shortcuts.clear();
-        this.shortcuts.addAll(shortcuts);
-        notifyDataSetChanged();
+        this.shortcuts.addAll(newShortcuts);
+        diff.dispatchUpdatesTo(this);
     }
 
     public void setEditMode(boolean editMode) {
@@ -83,16 +112,23 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
     private int getScaledIconSize() {
         int baseSize = (int) context.getResources().getDimension(net.osmand.plus.R.dimen.dock_icon_size);
         CarLauncherSettings settings = CarLauncherSettings.getInstance(context);
-        int dockSizePercent = settings.getDockSize();
+        boolean isPortrait = context.getResources().getConfiguration().orientation
+                == android.content.res.Configuration.ORIENTATION_PORTRAIT;
+        int dockSizePercent = settings.getEffectiveDockSize(isPortrait);
         float scale = 0.3f + (dockSizePercent / 100.0f) * 1.4f;
         return (int) (baseSize * scale);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return shortcuts.get(position).getPackageName().hashCode();
     }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         int iconSize = getScaledIconSize();
-        int itemSize = iconSize + dpToPx(16); // Sabit dokunma alani
+        int itemSize = Math.max(dpToPx(48), iconSize + dpToPx(16));
         int itemWidth = isVerticalMode ? ViewGroup.LayoutParams.MATCH_PARENT : itemSize;
         int itemHeight = isVerticalMode ? itemSize : ViewGroup.LayoutParams.MATCH_PARENT;
 
@@ -120,7 +156,7 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         int iconSize = getScaledIconSize();
-        int itemSize = iconSize + dpToPx(16); // Sabit dokunma alani
+        int itemSize = Math.max(dpToPx(48), iconSize + dpToPx(16));
         int itemWidth = isVerticalMode ? ViewGroup.LayoutParams.MATCH_PARENT : itemSize;
         int itemHeight = isVerticalMode ? itemSize : ViewGroup.LayoutParams.MATCH_PARENT;
         
@@ -147,6 +183,14 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
     @Override
     public int getItemCount() {
         return shortcuts.size();
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        holder.itemView.animate().cancel();
+        holder.itemView.setScaleX(1f);
+        holder.itemView.setScaleY(1f);
+        super.onViewRecycled(holder);
     }
 
     private int dpToPx(int dp) {
@@ -231,7 +275,10 @@ public class AppDockAdapter extends RecyclerView.Adapter<AppDockAdapter.ViewHold
 
             // Long click listener
             itemView.setOnLongClickListener(v -> {
-                if (!isEditMode && listener != null) {
+                if (isEditMode) {
+                    return false;
+                }
+                if (listener != null) {
                     listener.onShortcutLongClick(shortcut);
                 }
                 return true;

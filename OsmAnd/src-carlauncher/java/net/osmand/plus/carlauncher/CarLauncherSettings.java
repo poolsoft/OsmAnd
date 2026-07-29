@@ -222,7 +222,7 @@ public class CarLauncherSettings {
         cDockSize = prefs.getInt(KEY_DOCK_SIZE, 50);
 
         // Dock - Dikey
-        cDockPositionPortrait = prefs.getString(KEY_DOCK_POSITION_PORTRAIT, "bottom");
+        cDockPositionPortrait = "bottom";
         cDockSizePortrait = prefs.getInt(KEY_DOCK_SIZE_PORTRAIT, 50);
 
         cMaxShortcuts = prefs.getInt(KEY_MAX_SHORTCUTS, 6);
@@ -661,12 +661,34 @@ public class CarLauncherSettings {
     }
 
     public void setDockPositionPortrait(String pos) {
-        this.cDockPositionPortrait = pos;
-        prefs.edit().putString(KEY_DOCK_POSITION_PORTRAIT, pos).apply();
+        this.cDockPositionPortrait = "bottom";
+        prefs.edit().putString(KEY_DOCK_POSITION_PORTRAIT, "bottom").apply();
     }
 
     public int getDockSizePortrait() {
         return cDockSizePortrait;
+    }
+
+    /**
+     * Returns the dock position that is actually supported by the current
+     * orientation. Portrait head units and phones always use a bottom dock.
+     */
+    public String getEffectiveDockPosition(boolean isPortrait) {
+        if (isPortrait) {
+            return "bottom";
+        }
+        if ("left".equals(cDockPosition) || "right".equals(cDockPosition)) {
+            return cDockPosition;
+        }
+        return "bottom";
+    }
+
+    /**
+     * Keeps portrait and landscape sizing independent while sharing one
+     * orientation-aware access point with all dock UI components.
+     */
+    public int getEffectiveDockSize(boolean isPortrait) {
+        return isPortrait ? cDockSizePortrait : cDockSize;
     }
 
     public void setDockSizePortrait(int sizePercent) {

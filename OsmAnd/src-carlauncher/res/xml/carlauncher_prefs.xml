@@ -351,15 +351,6 @@
         app:icon="@android:drawable/ic_menu_sort_by_size"
         android:iconSpaceReserved="true">
 
-        <androidx.preference.ListPreference
-            android:key="car_launcher_dock_position_portrait"
-            android:title="@string/car_pref_title_dock_position_portrait"
-            android:summary="%s"
-            android:entries="@array/dock_position_portrait_entries"
-            android:entryValues="@array/dock_position_portrait_values"
-            android:defaultValue="bottom"
-            app:iconSpaceReserved="false" />
-
         <androidx.preference.SeekBarPreference
             android:key="car_launcher_dock_size_portrait"
             android:title="@string/car_pref_title_dock_size"
