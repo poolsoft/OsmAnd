@@ -217,8 +217,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	// CarLauncher Fields
 	private androidx.constraintlayout.widget.ConstraintLayout rootLayout;
-	private final net.osmand.plus.carlauncher.ui.CarLauncherInitManager.OnInitStateListener
-			widgetStartupListener = this::embedWidgetPanel;
+	private final net.osmand.plus.carlauncher.ui.CarLauncherInitManager
+			.OnLauncherBackgroundReadyListener widgetStartupListener =
+			this::scheduleDeferredWidgetPanel;
 	private net.osmand.plus.carlauncher.ui.ExactFrameLayout mapContainer;
 	private android.widget.FrameLayout widgetPanel;
 	private android.widget.ImageButton widgetHandle; 
@@ -298,7 +299,10 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		net.osmand.plus.carlauncher.ui.CrashHandler.init(this);
 		hardwareEventRecorder =
 				net.osmand.plus.carlauncher.headunit.diagnostics.HardwareEventRecorder.getInstance(this);
-		net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().startInitTimer();
+		net.osmand.plus.carlauncher.ui.CarLauncherInitManager initManager =
+				net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance();
+		initManager.configureStartupProfile(this);
+		initManager.startInitTimer();
 		long time = System.currentTimeMillis();
 		app.applyTheme(this);
 		supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -714,11 +718,24 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 					net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance();
 			initManager.markUiReady();
 			if (initManager.isLowRamDevice(this)) {
-				initManager.addListener(widgetStartupListener);
+				initManager.addLauncherBackgroundReadyListener(widgetStartupListener);
 			} else {
 				embedWidgetPanel();
 			}
 		}));
+	}
+
+	private void scheduleDeferredWidgetPanel() {
+		if (rootLayout == null || isFinishing() || isDestroyed()) {
+			return;
+		}
+		// Dock services are released first. Stagger widget inflation to avoid
+		// another allocation spike on 2 GB head units.
+		rootLayout.postDelayed(() -> {
+			if (!isFinishing() && !isDestroyed()) {
+				embedWidgetPanel();
+			}
+		}, 500L);
 	}
 
 	private void updateCarWidgetPanelSize(float deltaX, float deltaY, float initialPercent) {
@@ -1994,7 +2011,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	protected void onDestroy() {
 		super.onDestroy();
 		net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance()
-				.removeListener(widgetStartupListener);
+				.removeLauncherBackgroundReadyListener(widgetStartupListener);
 		safeUnregisterReceiver(voiceStateReceiver);
 		destroyProgressBarForRouting();
 		boolean ownsSharedMap = getMapView().getMapActivity() == this;

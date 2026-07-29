@@ -131,7 +131,7 @@ Kayıtta aranacak bilgiler:
 - [ ] FYT/UIS7862 adapter
 - [ ] TS10 adapter
 - [ ] Kısa, uzun ve çift basma atamaları
-- [ ] Düşük RAM cihaz profili (`ActivityManager.isLowRamDevice()`)
+- [x] Düşük RAM cihaz profili (`ActivityManager`, toplam ve kullanılabilir RAM)
 - [ ] Widget ve görsel efekt bütçesi
 - [ ] İlk frame / harita hazır / tamamen hazır performans geçmişi
 - [ ] Çökme sonrası son sağlam layout ve ayarları geri yükleme
@@ -139,9 +139,26 @@ Kayıtta aranacak bilgiler:
 
 ## Öncelik sırası
 
-1. K1 — Tek MediaSession ve notification sahibi
+1. Düşük RAM profilini 2 GB gerçek cihazda ölçme
 2. XYAuto gerçek cihaz tanılama kaydı
-3. K2 — Ortak vendor direksiyon olay modeli ve tekrar filtresi
+3. K2 — Vendor action/extras eşleştirmesi
 4. HCN gerçek cihaz doğrulaması
-5. Düşük RAM profili
+5. Widget ve görsel efekt bütçesi
 6. FYT/UIS7862 ve TS10 adapter'ları
+
+## Düşük RAM başlangıç politikası
+
+Durum: Tamamlandı; 2 GB gerçek cihaz ölçümü bekliyor.
+
+- Launcher kabuğu ve dock önce oluşturulur.
+- OsmAnd harita/core başlatması hiçbir zaman zamanlayıcıyla geciktirilmez.
+- 3 GB ve altı, Android low-RAM işaretli veya açılışta kullanılabilir RAM'i %25'in
+  altında olan cihazlar düşük RAM profiline girer.
+- Müzik taraması, telemetri ve ağır widget oluşturma harita başlangıcıyla yarışmaz.
+- OsmAnd arka plan başlatması tamamlanırsa launcher işleri hemen serbest bırakılır.
+- Tam başlatma sürüyorsa core hazır olduktan en fazla 1,5 saniye sonra launcher
+  arka plan işleri serbest bırakılır.
+- Widget paneli, servislerden 500 ms sonra oluşturularak tek seferlik RAM/CPU
+  sıçraması azaltılır.
+- Harita core 20 saniyede hazır olmazsa performans günlüğüne yavaş başlangıç
+  uyarısı yazılır; core zaten çalıştığı için ikinci bir initialization başlatılmaz.

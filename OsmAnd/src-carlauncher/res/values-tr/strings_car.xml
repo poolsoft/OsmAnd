@@ -7,6 +7,8 @@
     <string name="car_media_action_play">Oynat</string>
     <string name="car_media_action_pause">Duraklat</string>
     <string name="car_media_action_close">Kapat</string>
+    <string name="car_startup_profile_low_ram">Düşük RAM</string>
+    <string name="car_startup_profile_standard">Standart</string>
     <!-- Car Launcher Ayarları -->
     <string name="car_pref_category_language">Dil / Language</string>
     <string name="car_pref_language_title">Uygulama Dili</string>

@@ -84,7 +84,8 @@ public class AppDockFragment extends Fragment
     private ImageView miniMusicIcon;
     private MusicManager musicManager;
     private net.osmand.plus.carlauncher.telemetry.TelemetryManager telemetryManager;
-    private final CarLauncherInitManager.OnInitStateListener startupListener = this::initializeDeferredManagers;
+    private final CarLauncherInitManager.OnLauncherBackgroundReadyListener startupListener =
+            this::initializeDeferredManagers;
     private net.osmand.plus.carlauncher.telemetry.TelemetryManager.NavigationState currentNavState;
 
     // New Containers & Assistant Button
@@ -112,8 +113,10 @@ public class AppDockFragment extends Fragment
             prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
             currentOrientation = prefs.getInt(KEY_ORIENTATION, ORIENTATION_HORIZONTAL);
 
-            // Music scanning and telemetry setup wait until the map renderer is ready.
-            CarLauncherInitManager.getInstance().addListener(startupListener);
+            // Music scanning and telemetry setup wait for the startup coordinator.
+            // User interaction can still initialize them immediately.
+            CarLauncherInitManager.getInstance()
+                    .addLauncherBackgroundReadyListener(startupListener);
 
             // Register Dock Update Receiver
             dockUpdateReceiver = new android.content.BroadcastReceiver() {
@@ -862,7 +865,8 @@ public class AppDockFragment extends Fragment
     @Override
     public void onDestroy() {
         super.onDestroy();
-        CarLauncherInitManager.getInstance().removeListener(startupListener);
+        CarLauncherInitManager.getInstance()
+                .removeLauncherBackgroundReadyListener(startupListener);
         if (clockRunnable != null)
             clockHandler.removeCallbacks(clockRunnable);
 

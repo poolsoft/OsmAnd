@@ -7,6 +7,8 @@
     <string name="car_media_action_play">Play</string>
     <string name="car_media_action_pause">Pause</string>
     <string name="car_media_action_close">Close</string>
+    <string name="car_startup_profile_low_ram">Low RAM</string>
+    <string name="car_startup_profile_standard">Standard</string>
     <!-- Car Launcher Ayarları -->
     <string name="car_pref_category_language">Language / Dil</string>
     <string name="car_pref_language_title">App Language</string>
