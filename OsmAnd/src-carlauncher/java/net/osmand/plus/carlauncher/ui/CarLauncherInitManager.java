@@ -4,34 +4,33 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
-
-import net.osmand.plus.OsmandApplication;
+import android.os.SystemClock;
 
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
- * CarLauncher Izole Baslatici Yonetici (Core Izolasyon Kurali).
- * OsmAnd cekirdek servislerinin arka planda asenkron yuklenmesini ve
- * acilis/RAM istatistiklerinin takibini yonetir.
+ * Car Launcher startup coordinator.
+ *
+ * This class never starts or changes OsmAnd core initialization. It only observes
+ * lifecycle milestones exposed by OsmAnd and keeps launcher-only work from
+ * competing with map startup.
  */
 public class CarLauncherInitManager {
 
     private static CarLauncherInitManager instance;
-    private boolean isCoreReady = false;
-    private boolean isInitializing = false;
+    private volatile boolean isCoreReady;
+    private volatile boolean isBackgroundReady;
     
     // Performance & Benchmark Metrics
     private long initStartTimeMs = 0;
     private long uiReadyTimeMs = 0;
     private long coreReadyTimeMs = 0;
+    private long backgroundReadyTimeMs = 0;
     private long initialMemoryBytes = 0;
 
     private final CopyOnWriteArrayList<OnInitStateListener> listeners = new CopyOnWriteArrayList<>();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private final ExecutorService initExecutor = Executors.newSingleThreadExecutor();
 
     public interface OnInitStateListener {
         void onCoreReady();
@@ -46,7 +45,7 @@ public class CarLauncherInitManager {
 
     public void startInitTimer() {
         if (initStartTimeMs == 0) {
-            initStartTimeMs = System.currentTimeMillis();
+            initStartTimeMs = SystemClock.elapsedRealtime();
             Runtime rt = Runtime.getRuntime();
             initialMemoryBytes = rt.totalMemory() - rt.freeMemory();
         }
@@ -54,7 +53,7 @@ public class CarLauncherInitManager {
 
     public void markUiReady() {
         if (uiReadyTimeMs == 0) {
-            uiReadyTimeMs = System.currentTimeMillis();
+            uiReadyTimeMs = SystemClock.elapsedRealtime();
         }
     }
 
@@ -64,10 +63,15 @@ public class CarLauncherInitManager {
 
     public void addListener(OnInitStateListener listener) {
         if (listener == null) return;
+        if (isCoreReady) {
+            mainHandler.post(listener::onCoreReady);
+            return;
+        }
         if (!listeners.contains(listener)) {
             listeners.add(listener);
         }
-        if (isCoreReady) {
+        // Handle readiness racing with the listener registration.
+        if (isCoreReady && listeners.remove(listener)) {
             mainHandler.post(listener::onCoreReady);
         }
     }
@@ -78,25 +82,6 @@ public class CarLauncherInitManager {
         }
     }
 
-    public void startAsyncCoreInit(Context context) {
-        if (isCoreReady || isInitializing) return;
-        isInitializing = true;
-        startInitTimer();
-
-        initExecutor.execute(() -> {
-            try {
-                OsmandApplication app = (OsmandApplication) context.getApplicationContext();
-                if (app != null && app.getAppInitializer() != null) {
-                    app.checkApplicationIsBeingInitialized(null);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                mainHandler.post(() -> markCoreReady(context));
-            }
-        });
-    }
-
     public void markCoreReady() {
         markCoreReady((Context) null);
     }
@@ -104,8 +89,7 @@ public class CarLauncherInitManager {
     public void markCoreReady(Context context) {
         if (!isCoreReady) {
             isCoreReady = true;
-            isInitializing = false;
-            coreReadyTimeMs = System.currentTimeMillis();
+            coreReadyTimeMs = SystemClock.elapsedRealtime();
             
             long elapsedTimeMs = initStartTimeMs > 0 ? (coreReadyTimeMs - initStartTimeMs) : 0;
             double elapsedTimeSec = elapsedTimeMs / 1000.0;
@@ -128,6 +112,35 @@ public class CarLauncherInitManager {
                 e.printStackTrace();
             }
         }
+        listeners.clear();
+    }
+
+    public void markBackgroundReady() {
+        if (!isBackgroundReady) {
+            isBackgroundReady = true;
+            backgroundReadyTimeMs = SystemClock.elapsedRealtime();
+        }
+    }
+
+    public long getBackgroundReadyDurationMs() {
+        if (initStartTimeMs > 0 && backgroundReadyTimeMs > 0) {
+            return backgroundReadyTimeMs - initStartTimeMs;
+        }
+        return 0;
+    }
+
+    public boolean isLowRamDevice(Context context) {
+        if (context == null) {
+            return false;
+        }
+        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        if (am == null) {
+            return false;
+        }
+        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
+        am.getMemoryInfo(memoryInfo);
+        long threeGb = 3L * 1024L * 1024L * 1024L;
+        return am.isLowRamDevice() || memoryInfo.totalMem <= threeGb;
     }
 
     // --- Statistics Helper Methods ---
@@ -179,6 +192,7 @@ public class CarLauncherInitManager {
     public String getFormattedStatsSummary(Context context) {
         long uiMs = getUiReadyDurationMs();
         long coreMs = getCoreReadyDurationMs();
+        long backgroundMs = getBackgroundReadyDurationMs();
         long initRam = getInitialMemoryMB();
         long currRam = getCurrentUsedMemoryMB();
 
@@ -189,13 +203,14 @@ public class CarLauncherInitManager {
 
         String modeStr = fastBoot ? "Hızlı Başlatma" : "Klasik Yükleme";
         return String.format(Locale.US, 
-                "⚡ Arayüz: %d ms | 🗺️ Harita: %d ms (%s)\n💾 Başlangıç RAM: %d MB | 📊 Şu Anki RAM: %d MB",
-                uiMs, coreMs, modeStr, initRam, currRam);
+                "⚡ Arayüz: %d ms | 🗺️ Harita: %d ms | ✅ Tamamı: %d ms (%s)\n💾 Başlangıç RAM: %d MB | 📊 Şu Anki RAM: %d MB",
+                uiMs, coreMs, backgroundMs, modeStr, initRam, currRam);
     }
 
     public String getFormattedStatsDetails(Context context) {
         long uiMs = getUiReadyDurationMs();
         long coreMs = getCoreReadyDurationMs();
+        long backgroundMs = getBackgroundReadyDurationMs();
         long initRam = getInitialMemoryMB();
         long currRam = getCurrentUsedMemoryMB();
         long maxRam = getMaxHeapMemoryMB();
@@ -211,6 +226,7 @@ public class CarLauncherInitManager {
         sb.append("────────────────────────────────────────────\n");
         sb.append("⚡ Arayüz Açılma Süresi: ").append(uiMs > 0 ? uiMs + " ms (" + String.format(Locale.US, "%.2f", uiMs / 1000.0) + " sn)" : "Ölçülemedi").append("\n");
         sb.append("🗺️ Harita Motoru Yükleme Süresi: ").append(coreMs > 0 ? coreMs + " ms (" + String.format(Locale.US, "%.2f", coreMs / 1000.0) + " sn)" : "Yükleniyor...").append("\n");
+        sb.append("✅ Arka Plan Başlatma Süresi: ").append(backgroundMs > 0 ? backgroundMs + " ms (" + String.format(Locale.US, "%.2f", backgroundMs / 1000.0) + " sn)" : "Devam ediyor...").append("\n");
         sb.append("🚀 Başlatma Modu: ").append(fastBoot ? "Hızlı Başlatma (Arka Planda)" : "Klasik Yükleme (Senkron)").append("\n\n");
         sb.append("💾 Başlangıçtaki RAM (Heap): ").append(initRam).append(" MB\n");
         sb.append("📊 O Anki Aktif RAM (Heap): ").append(currRam).append(" MB / ").append(maxRam).append(" MB\n");

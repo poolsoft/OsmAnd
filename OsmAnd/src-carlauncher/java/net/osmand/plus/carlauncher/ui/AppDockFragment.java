@@ -84,6 +84,7 @@ public class AppDockFragment extends Fragment
     private ImageView miniMusicIcon;
     private MusicManager musicManager;
     private net.osmand.plus.carlauncher.telemetry.TelemetryManager telemetryManager;
+    private final CarLauncherInitManager.OnInitStateListener startupListener = this::initializeDeferredManagers;
     private net.osmand.plus.carlauncher.telemetry.TelemetryManager.NavigationState currentNavState;
 
     // New Containers & Assistant Button
@@ -111,11 +112,8 @@ public class AppDockFragment extends Fragment
             prefs = getContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
             currentOrientation = prefs.getInt(KEY_ORIENTATION, ORIENTATION_HORIZONTAL);
 
-            // Music Manager
-            musicManager = MusicManager.getInstance(getContext());
-            
-            // Telemetry Manager
-            telemetryManager = net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance((net.osmand.plus.OsmandApplication) getContext().getApplicationContext());
+            // Music scanning and telemetry setup wait until the map renderer is ready.
+            CarLauncherInitManager.getInstance().addListener(startupListener);
 
             // Register Dock Update Receiver
             dockUpdateReceiver = new android.content.BroadcastReceiver() {
@@ -250,11 +248,21 @@ public class AppDockFragment extends Fragment
         adjustMiniPlayerLayout();
 
         if (miniBtnPlay != null) {
-            miniBtnPlay.setOnClickListener(v -> musicManager.togglePlayPause());
+            miniBtnPlay.setOnClickListener(v -> {
+                initializeDeferredManagers();
+                if (musicManager != null) {
+                    musicManager.togglePlayPause();
+                }
+            });
         }
 
         if (miniBtnNext != null) {
-            miniBtnNext.setOnClickListener(v -> musicManager.skipToNext());
+            miniBtnNext.setOnClickListener(v -> {
+                initializeDeferredManagers();
+                if (musicManager != null) {
+                    musicManager.skipToNext();
+                }
+            });
         }
 
         View.OnClickListener musicDrawerOpener = v -> {
@@ -444,6 +452,26 @@ public class AppDockFragment extends Fragment
         }
         updateDynamicWidgetUI(); // Ilk yuklemede durum guncelle (Turkce karakter yok)
         updateAssistantButtonUI(); // Asistan buton durumunu guncelle
+    }
+
+    private void initializeDeferredManagers() {
+        Context context = getContext();
+        if (context == null) {
+            return;
+        }
+        if (musicManager == null) {
+            musicManager = MusicManager.getInstance(context.getApplicationContext());
+        }
+        if (telemetryManager == null) {
+            telemetryManager = net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(
+                    (net.osmand.plus.OsmandApplication) context.getApplicationContext());
+        }
+        if (isResumed()) {
+            musicManager.addListener(this);
+            telemetryManager.addListener(this);
+            currentNavState = telemetryManager.getNavigationState();
+            updateDynamicWidgetUI();
+        }
     }
 
     @Override
@@ -826,6 +854,7 @@ public class AppDockFragment extends Fragment
     @Override
     public void onDestroy() {
         super.onDestroy();
+        CarLauncherInitManager.getInstance().removeListener(startupListener);
         if (clockRunnable != null)
             clockHandler.removeCallbacks(clockRunnable);
 

@@ -217,6 +217,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	// CarLauncher Fields
 	private androidx.constraintlayout.widget.ConstraintLayout rootLayout;
+	private final net.osmand.plus.carlauncher.ui.CarLauncherInitManager.OnInitStateListener
+			widgetStartupListener = this::embedWidgetPanel;
 	private net.osmand.plus.carlauncher.ui.ExactFrameLayout mapContainer;
 	private android.widget.FrameLayout widgetPanel;
 	private android.widget.ImageButton widgetHandle; 
@@ -293,6 +295,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		net.osmand.plus.carlauncher.ui.CrashHandler.init(this);
+		net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().startInitTimer();
 		long time = System.currentTimeMillis();
 		app.applyTheme(this);
 		supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -671,9 +674,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		}
 
 
-		// 5. CarLauncher bileşenlerini başlat
-		embedWidgetPanel();
+		// 5. Keep launcher-only work out of OsmAnd's critical startup path.
 		embedAppDock();
+		scheduleWidgetPanelStartup();
 
 		// 6. Check for permissions
 		checkOverlayPermission();
@@ -683,6 +686,25 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 		// Status Bar gorunurluk ayarini uygula (Turkce karakter yok)
 		applyStatusBarVisibility();
+	}
+
+	private void scheduleWidgetPanelStartup() {
+		if (rootLayout == null) {
+			return;
+		}
+		rootLayout.post(() -> android.view.Choreographer.getInstance().postFrameCallback(frameTimeNanos -> {
+			if (isFinishing() || isDestroyed()) {
+				return;
+			}
+			net.osmand.plus.carlauncher.ui.CarLauncherInitManager initManager =
+					net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance();
+			initManager.markUiReady();
+			if (initManager.isLowRamDevice(this)) {
+				initManager.addListener(widgetStartupListener);
+			} else {
+				embedWidgetPanel();
+			}
+		}));
 	}
 
 	private void updateCarWidgetPanelSize(float rawX, float rawY) {
@@ -1219,14 +1241,28 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 			initListener = new MapAppInitializeListener(this) {
 				@Override
+				public void onProgress(@NonNull AppInitializer init,
+						@NonNull net.osmand.plus.AppInitEvents event) {
+					super.onProgress(init, event);
+					boolean openGlReady = event == net.osmand.plus.AppInitEvents.NATIVE_OPEN_GL_INITIALIZED
+							&& net.osmand.plus.views.corenative.NativeCoreContext.isInit();
+					if (event == net.osmand.plus.AppInitEvents.NATIVE_INITIALIZED || openGlReady) {
+						net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance()
+								.markCoreReady(MapActivity.this);
+					}
+				}
+
+				@Override
 				public void onFinish(@NonNull AppInitializer init) {
 					super.onFinish(init);
 					net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().markCoreReady(MapActivity.this);
+					net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().markBackgroundReady();
 				}
 			};
 			app.checkApplicationIsBeingInitialized(initListener);
 		} else {
 			net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().markCoreReady(MapActivity.this);
+			net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance().markBackgroundReady();
 			app.getOsmandMap().setupRenderingView();
 			restoreNavigationHelper.checkRestoreRoutingMode();
 		}
@@ -1927,6 +1963,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+		net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance()
+				.removeListener(widgetStartupListener);
 		safeUnregisterReceiver(voiceStateReceiver);
 		destroyProgressBarForRouting();
 		boolean ownsSharedMap = getMapView().getMapActivity() == this;
