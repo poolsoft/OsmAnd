@@ -99,9 +99,10 @@ public class WidgetManager {
         // Burada sadece widget'lara yeni Activity Context'i geciriyoruz.
 
         for (BaseWidget widget : allWidgets) {
-            widget.setContext(activityContext);
             // Yeni context ile yeniden olusturulmasi icin eski view'i temizle
-            widget.onDestroy(); 
+            widget.onDestroy();
+            // onDestroy context'i sifirladigi icin yeni context her zaman en son atanmalidir.
+            widget.setContext(activityContext);
         }
     }
 
@@ -448,7 +449,9 @@ public class WidgetManager {
         }
         for (BaseWidget widget : visibleWidgets) {
             if (widget instanceof SystemAppWidget) {
-                widget.onDestroy(); // Taze context ile yeniden yaratilmasi icin view referansini sifirla
+                // onDestroy() context'i de temizler. Burada sadece eski HostView
+                // atilmali; aksi halde createView() null context ile cagrilir.
+                ((SystemAppWidget) widget).resetHostView();
             }
             widget.onStart();
         }

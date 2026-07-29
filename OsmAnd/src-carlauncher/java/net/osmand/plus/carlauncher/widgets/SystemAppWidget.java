@@ -35,11 +35,14 @@ import net.osmand.plus.carlauncher.widgets.view.WorkspaceCellLayout;
 public class SystemAppWidget extends BaseWidget {
 
     private final int appWidgetId;
+    private final Context fallbackContext;
     private AppWidgetHostView hostView;
 
     public SystemAppWidget(@NonNull Context context, int appWidgetId) {
         super(context, "appwidget_" + appWidgetId, "Sistem Widget");
         this.appWidgetId = appWidgetId;
+        Context applicationContext = context.getApplicationContext();
+        this.fallbackContext = applicationContext != null ? applicationContext : context;
         this.size = WidgetSize.MEDIUM;
     }
 
@@ -52,7 +55,7 @@ public class SystemAppWidget extends BaseWidget {
     public View createView() {
         Context currentContext = getContext();
         if (currentContext == null) {
-            currentContext = context;
+            currentContext = fallbackContext;
         }
 
         // 3. parti widget'larin (BatteryGuru, Wellbeing vb.) Material 3 / Dinamik renk
@@ -194,7 +197,9 @@ public class SystemAppWidget extends BaseWidget {
      */
     public void notifySizeChanged() {
         Context ctx = getContext();
-        if (ctx == null) ctx = context;
+        if (ctx == null) {
+            ctx = fallbackContext;
+        }
         try {
             AppWidgetManager awm = AppWidgetManager.getInstance(ctx);
             AppWidgetProviderInfo info = awm.getAppWidgetInfo(appWidgetId);
@@ -207,10 +212,8 @@ public class SystemAppWidget extends BaseWidget {
     }
 
     private View createErrorView(Context ctx, String errorMessage) {
-        Context safeCtx = ctx != null ? ctx : (getContext() != null ? getContext() : this.context);
-        if (safeCtx == null) {
-            return new View(ctx);
-        }
+        Context safeCtx = ctx != null ? ctx
+                : (getContext() != null ? getContext() : fallbackContext);
 
         TextView errView = new TextView(safeCtx);
         errView.setText(errorMessage);
@@ -224,6 +227,15 @@ public class SystemAppWidget extends BaseWidget {
 
         rootView = container;
         return container;
+    }
+
+    /**
+     * Drops only the View created for the previous configuration.
+     * Unlike onDestroy(), this intentionally preserves the current Context.
+     */
+    public void resetHostView() {
+        rootView = null;
+        hostView = null;
     }
 
 
@@ -245,8 +257,6 @@ public class SystemAppWidget extends BaseWidget {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (hostView != null) {
-            hostView = null;
-        }
+        hostView = null;
     }
 }
