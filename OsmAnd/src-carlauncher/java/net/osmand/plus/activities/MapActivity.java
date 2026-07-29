@@ -625,7 +625,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		                    break;
 		                case MotionEvent.ACTION_UP:
 		                case MotionEvent.ACTION_CANCEL:
-		                    // Surukleme modu yalnizca surukleyince calisacak, performClick veya swap olmayacak
+		                    if (isDragging) {
+		                        applyWidgetPanelState(true);
+		                    }
 		                    break;
 		            }
 		            return true;
@@ -695,32 +697,32 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			int screenHeight = getResources().getDisplayMetrics().heightPixels;
 			if (screenHeight <= 0) return;
 			
-			float rawPercent = (screenHeight - rawY) / (float) screenHeight;
-			// %25 ile %50 arasinda sinirla, pürüzsüz kaydir (Turkce karakter yok)
-			float percent = Math.max(0.25f, Math.min(0.50f, rawPercent));
+			boolean expandUp = "expand_up".equals(carSettings.getPortraitExpansion());
+			float rawPercent = expandUp ? ((screenHeight - rawY) / (float) screenHeight) : (rawY / (float) screenHeight);
+			// %15 ile %65 arasinda sinirla, pürüzsüz kaydir (Turkce karakter yok)
+			float percent = Math.max(0.15f, Math.min(0.65f, rawPercent));
 			
 			carSettings.setWidgetPanelHeightPortrait(percent);
 		} else {
 			int screenWidth = getResources().getDisplayMetrics().widthPixels;
 			if (screenWidth <= 0) return;
 			
-			String widgetPos = carSettings.getWidgetPanelPosition();
-			boolean isLeft = "left".equals(widgetPos);
+			boolean expandRight = "expand_right".equals(carSettings.getLandscapeExpansion());
 			
 			float rawPercent;
-			if (isLeft) {
+			if (expandRight) {
 				rawPercent = rawX / (float) screenWidth;
 			} else {
 				rawPercent = (screenWidth - rawX) / (float) screenWidth;
 			}
 			
-			// %25 ile %50 arasinda sinirla, pürüzsüz kaydir (Turkce karakter yok)
-			float percent = Math.max(0.25f, Math.min(0.50f, rawPercent));
+			// %15 ile %65 arasinda sinirla, pürüzsüz kaydir (Turkce karakter yok)
+			float percent = Math.max(0.15f, Math.min(0.65f, rawPercent));
 			
 			carSettings.setWidgetPanelWidthPercent(percent);
 		}
 		
-		applyWidgetPanelState();
+		applyWidgetPanelState(false);
 	}
 
 	public void applyNightDimMode() {
@@ -749,23 +751,39 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				if (isNight) {
 					if (nightDimOverlay.getVisibility() != View.VISIBLE) {
 						nightDimOverlay.setVisibility(View.VISIBLE);
-						nightDimOverlay.setAlpha(0f);
-						nightDimOverlay.animate().alpha(1f).setDuration(400).start();
 					}
 				} else {
-					if (nightDimOverlay.getVisibility() == View.VISIBLE) {
-						nightDimOverlay.animate().alpha(0f).setDuration(400).withEndAction(new Runnable() {
-							@Override
-							public void run() {
-								nightDimOverlay.setVisibility(View.GONE);
-							}
-						}).start();
+					if (nightDimOverlay.getVisibility() != View.GONE) {
+						nightDimOverlay.setVisibility(View.GONE);
 					}
 				}
 			}
 		} catch (Exception e) {
 			// ignore
 		}
+	}
+
+	public void applyStatusBarVisibility() {
+		net.osmand.plus.carlauncher.CarLauncherSettings clSettings = net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);
+		boolean showStatusBar = clSettings.isShowStatusBar();
+		
+		View decorView = getWindow().getDecorView();
+		int uiOptions = decorView.getSystemUiVisibility();
+		
+		if (showStatusBar) {
+			// Status bar'i goster
+			uiOptions &= ~View.SYSTEM_UI_FLAG_FULLSCREEN;
+			// Transparan status bar arka plani
+			getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
+			getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+			getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+		} else {
+			// Status bar'i gizle (Tam ekran)
+			uiOptions |= View.SYSTEM_UI_FLAG_FULLSCREEN;
+			getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		}
+		
+		decorView.setSystemUiVisibility(uiOptions);
 	}
 
 	private void embedWidgetPanel() {
@@ -808,8 +826,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	}
 
     private void applyWidgetPanelState() {
+        applyWidgetPanelState(true);
+    }
+
+    private void applyWidgetPanelState(boolean animate) {
         if (carLayoutManager != null) {
-            if (rootLayout != null) {
+            if (animate && rootLayout != null) {
                 if (rootLayout.isAttachedToWindow()) {
                     isTransitioning = true;
                     
