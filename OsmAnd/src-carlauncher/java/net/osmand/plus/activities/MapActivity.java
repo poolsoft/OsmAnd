@@ -217,9 +217,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	// CarLauncher Fields
 	private androidx.constraintlayout.widget.ConstraintLayout rootLayout;
-	private final net.osmand.plus.carlauncher.ui.CarLauncherInitManager
-			.OnLauncherBackgroundReadyListener widgetStartupListener =
-			this::scheduleDeferredWidgetPanel;
 	private net.osmand.plus.carlauncher.ui.ExactFrameLayout mapContainer;
 	private android.widget.FrameLayout widgetPanel;
 	private android.widget.ImageButton widgetHandle; 
@@ -236,6 +233,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
     
     // Sag panel iceriginin recreate sonrasinda korunmasi icin statik degisken (Turkce karakter yok)
     private static net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent lastPanelContent = null;
+    private static boolean panelContentLoadedInProcess;
     
     // Global package receiver for App Drawer cache dynamic sync (Turkce karakter yok)
     private BroadcastReceiver globalPackageReceiver;
@@ -303,6 +301,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance();
 		initManager.configureStartupProfile(this);
 		initManager.startInitTimer();
+		if (initManager.isLowRamDevice(this) && !panelContentLoadedInProcess) {
+			// Low-memory head units start with the usable launcher dock and the
+			// full map. The widget panel is created only on first explicit open.
+			layoutMode = 2;
+			isWidgetPanelOpen = false;
+		}
 		long time = System.currentTimeMillis();
 		app.applyTheme(this);
 		supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -717,25 +721,17 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			net.osmand.plus.carlauncher.ui.CarLauncherInitManager initManager =
 					net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance();
 			initManager.markUiReady();
-			if (initManager.isLowRamDevice(this)) {
-				initManager.addLauncherBackgroundReadyListener(widgetStartupListener);
-			} else {
+			if (!initManager.isLowRamDevice(this) || panelContentLoadedInProcess) {
 				embedWidgetPanel();
 			}
 		}));
 	}
 
-	private void scheduleDeferredWidgetPanel() {
-		if (rootLayout == null || isFinishing() || isDestroyed()) {
-			return;
+	private void ensureWidgetPanelLoaded() {
+		if (panelContentManager != null
+				&& panelContentManager.getCurrentContent() == null) {
+			embedWidgetPanel();
 		}
-		// Dock services are released first. Stagger widget inflation to avoid
-		// another allocation spike on 2 GB head units.
-		rootLayout.postDelayed(() -> {
-			if (!isFinishing() && !isDestroyed()) {
-				embedWidgetPanel();
-			}
-		}, 500L);
 	}
 
 	private void updateCarWidgetPanelSize(float deltaX, float deltaY, float initialPercent) {
@@ -836,8 +832,18 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		if (widgetPanel != null && panelContentManager != null) {
 			net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent contentToRestore = 
 				(lastPanelContent != null) ? lastPanelContent : net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS;
-			panelContentManager.setContent(contentToRestore);
+			loadPanelContent(contentToRestore);
 		}
+	}
+
+	private void loadPanelContent(
+			net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent content) {
+		if (panelContentManager == null || content == null) {
+			return;
+		}
+		panelContentManager.setContent(content);
+		panelContentLoadedInProcess = true;
+		lastPanelContent = content;
 	}
 
 	private void embedAppDock() {
@@ -856,6 +862,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	    // Map layoutMode to isWidgetPanelOpen
 	    // Mode 0 = panel açık, Mode 1/2 = panel kapalı
 	    isWidgetPanelOpen = (layoutMode == 0);
+	    if (isWidgetPanelOpen) {
+	        ensureWidgetPanelLoaded();
+	    }
 	    applyWidgetPanelState();
 	}
 	
@@ -954,6 +963,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		// Toggle Logic: Normal (0) -> Full Screen (2) (for API compatibility)
 		layoutMode = (layoutMode == 0) ? 2 : 0;
 		isWidgetPanelOpen = (layoutMode == 0);
+		if (isWidgetPanelOpen) {
+			ensureWidgetPanelLoaded();
+		}
 		
 		updateLayoutMode();
 	}
@@ -1003,10 +1015,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		// YENI: Eger panelde Muzik, Uygulamalar vb. aciksa bu butonu "Geri Don" olarak kullan
 		if (panelContentManager != null) {
 			net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent current = panelContentManager.getCurrentContent();
-			if (current != net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS && 
+			if (current != null
+				&& current != net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS &&
 				current != net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.DESKTOP) {
 				
-				panelContentManager.setContent(isDesktopMode ? 
+				loadPanelContent(isDesktopMode ?
 					net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.DESKTOP : 
 					net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS);
 				return;
@@ -1040,12 +1053,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		if (active) {
 			// Masaustu modunu acarken WidgetPanelFragment (DESKTOP) icerigini yukle
 			if (panelContentManager != null) {
-				panelContentManager.setContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.DESKTOP);
+				loadPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.DESKTOP);
 			}
 		} else {
 			// Pasif yaparken varsayilan premium birlesik paneli (WIDGETS) geri yukle
 			if (panelContentManager != null) {
-				panelContentManager.setContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS);
+				loadPanelContent(net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS);
 			}
 		}
 
@@ -1171,9 +1184,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				}
 			}
 
-			panelContentManager.setContent(content);
-			// Son basarili panel icerigini statik olarak sakla (Turkce karakter yok)
-			lastPanelContent = content;
+			loadPanelContent(content);
 		}
 	}
 
@@ -2010,8 +2021,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance()
-				.removeLauncherBackgroundReadyListener(widgetStartupListener);
 		safeUnregisterReceiver(voiceStateReceiver);
 		destroyProgressBarForRouting();
 		boolean ownsSharedMap = getMapView().getMapActivity() == this;

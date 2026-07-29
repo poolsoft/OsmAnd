@@ -154,11 +154,14 @@ Durum: Tamamlandı; 2 GB gerçek cihaz ölçümü bekliyor.
 - OsmAnd harita/core başlatması hiçbir zaman zamanlayıcıyla geciktirilmez.
 - 3 GB ve altı, Android low-RAM işaretli veya açılışta kullanılabilir RAM'i %25'in
   altında olan cihazlar düşük RAM profiline girer.
-- Müzik taraması, telemetri ve ağır widget oluşturma harita başlangıcıyla yarışmaz.
+- Müzik taraması ve telemetri harita başlangıcıyla yarışmaz.
 - OsmAnd arka plan başlatması tamamlanırsa launcher işleri hemen serbest bırakılır.
 - Tam başlatma sürüyorsa core hazır olduktan en fazla 1,5 saniye sonra launcher
   arka plan işleri serbest bırakılır.
-- Widget paneli, servislerden 500 ms sonra oluşturularak tek seferlik RAM/CPU
-  sıçraması azaltılır.
+- Düşük RAM profilinde başlangıç düzeni dock + tam haritadır.
+- Widget paneli başlangıçta oluşturulmaz; kullanıcı paneli ilk kez açtığında bir
+  defa oluşturulur ve sonrasında bellekte tutulur.
+- Müzik, hava, ayarlar veya masaüstü gibi doğrudan panel istekleri kullanıcı
+  etkileşimi sayılır ve bekletilmeden yüklenir.
 - Harita core 20 saniyede hazır olmazsa performans günlüğüne yavaş başlangıç
   uyarısı yazılır; core zaten çalıştığı için ikinci bir initialization başlatılmaz.
