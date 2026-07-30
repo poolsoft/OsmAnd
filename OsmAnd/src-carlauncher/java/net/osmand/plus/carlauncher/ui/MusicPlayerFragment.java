@@ -14,14 +14,11 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -74,7 +71,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private TextView timeCurrent, timeTotal;
     private View playerProgressContainer;
     private ImageButton btnShuffle, btnPrev, btnPlay, btnNext, btnRepeat;
-    private Spinner playlistSpinner;
     private EditText searchInput;
     private View searchBarContainer;
     private View searchClearBtn;
@@ -170,7 +166,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         btnPlay = root.findViewById(net.osmand.plus.R.id.btn_play);
         btnNext = root.findViewById(net.osmand.plus.R.id.btn_next);
         btnRepeat = root.findViewById(net.osmand.plus.R.id.btn_repeat);
-        playlistSpinner = root.findViewById(net.osmand.plus.R.id.playlist_spinner);
         searchInput = root.findViewById(net.osmand.plus.R.id.search_input);
         searchBarContainer = root.findViewById(net.osmand.plus.R.id.search_bar_container);
         searchClearBtn = root.findViewById(net.osmand.plus.R.id.search_clear_btn);
@@ -1197,88 +1192,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         void onArtistClick(MusicRepository.AudioArtist artist);
     }
 
-    private void setupPlaylistSpinner() {
-        if (playlistSpinner == null || getContext() == null)
-            return;
-
-        List<String> options = new ArrayList<>();
-        options.add("Seciniz..."); // 0
-        options.add("Favoriler"); // 1
-
-        List<PlaylistManager.Playlist> playlists = playlistManager.getAllPlaylists();
-        for (PlaylistManager.Playlist p : playlists) {
-            options.add(p.name);
-        }
-
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getContext(),
-                net.osmand.plus.R.layout.item_spinner, options);
-        spinnerAdapter.setDropDownViewResource(net.osmand.plus.R.layout.item_spinner_dropdown);
-        playlistSpinner.setAdapter(spinnerAdapter);
-
-        playlistSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position == 0)
-                    return;
-
-                switchViewMode(ViewMode.PLAYLIST);
-                if (folderHeaderContainer != null) folderHeaderContainer.setVisibility(View.VISIBLE);
-
-                View fragmentView = getView();
-                View btnFolderPlayAll = fragmentView != null ? fragmentView.findViewById(net.osmand.plus.R.id.btn_folder_play_all) : null;
-                View btnFolderShuffleAll = fragmentView != null ? fragmentView.findViewById(net.osmand.plus.R.id.btn_folder_shuffle_all) : null;
-                if (btnFolderPlayAll != null) btnFolderPlayAll.setVisibility(View.VISIBLE);
-                if (btnFolderShuffleAll != null) btnFolderShuffleAll.setVisibility(View.VISIBLE);
-
-                if (position == 1) {
-                    // Favorites
-                    currentPlaylist = null;
-                    if (folderHeaderTitle != null) folderHeaderTitle.setText("⭐ Favoriler");
-                    List<String> favPaths = playlistManager.getFavorites();
-                    List<MusicRepository.AudioTrack> favTracks = new ArrayList<>();
-                    for (String path : favPaths) {
-                        MusicRepository.AudioTrack t = musicManager != null && musicManager.getRepository() != null
-                                ? musicManager.getRepository().findTrackPortAgnostic(path) : null;
-                        if (t != null) {
-                            favTracks.add(t);
-                        } else {
-                            // Ghost track (Port degismis veya USB sökülmüs)
-                            favTracks.add(new MusicRepository.AudioTrack(-1, new java.io.File(path).getName(), "Bilinmeyen", "USB", 0, path, android.net.Uri.EMPTY, android.net.Uri.EMPTY, MusicRepository.StorageType.USB, false));
-                        }
-                    }
-                    if (favTracks.isEmpty()) {
-                        Toast.makeText(getContext(), "Favori listeniz boş", Toast.LENGTH_SHORT).show();
-                    }
-                    showTracks(favTracks);
-                } else {
-                    // User Playlists
-                    int playlistIndex = position - 2;
-                    if (playlistIndex >= 0 && playlistIndex < playlists.size()) {
-                        PlaylistManager.Playlist pl = playlists.get(playlistIndex);
-                        currentPlaylist = pl;
-                        if (folderHeaderTitle != null) folderHeaderTitle.setText("📜 Playlist: " + pl.name);
-                        List<MusicRepository.AudioTrack> playlistTracks = new ArrayList<>();
-                        for (String path : pl.tracks) {
-                            MusicRepository.AudioTrack t = musicManager != null && musicManager.getRepository() != null
-                                    ? musicManager.getRepository().findTrackPortAgnostic(path) : null;
-                            if (t != null) {
-                                playlistTracks.add(t);
-                            } else {
-                                // Ghost track (Port degismis veya USB sökülmüs)
-                                playlistTracks.add(new MusicRepository.AudioTrack(-1, new java.io.File(path).getName(), "Bilinmeyen", "USB", 0, path, android.net.Uri.EMPTY, android.net.Uri.EMPTY, MusicRepository.StorageType.USB, false));
-                            }
-                        }
-                        showTracks(playlistTracks);
-                    }
-                }
-
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
-    }
     private void updateResponsiveLayout(int widthPx) {
         if (getContext() == null || getView() == null) return;
         float widthDp = widthPx / getResources().getDisplayMetrics().density;
@@ -1845,7 +1758,9 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                         playlistManager.savePlaylist(p);
                         Toast.makeText(getContext(), "Playlist olusturuldu ve sarki eklendi", Toast.LENGTH_SHORT)
                                 .show();
-                        setupPlaylistSpinner();
+                        if (currentViewMode == ViewMode.PLAYLIST) {
+                            showPlaylistsList();
+                        }
                     }
                 })
                 .setNegativeButton("Iptal", null).show();

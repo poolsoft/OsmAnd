@@ -132,7 +132,7 @@
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
                     android:src="@drawable/ic_default_album_art"/>
-                    
+
                 <!-- GLASS MORPHISM PANEL (Kapağın üstüne biniyor) -->
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -232,21 +232,37 @@
 
                     <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
 
+                    <!-- 1. SIRA (QUEUE) -->
+                    <TextView
+                        android:id="@+id/tab_queue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="Sıra"
+                        android:textColor="#888888"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:paddingHorizontal="16dp"
+                        android:background="?android:attr/selectableItemBackground"/>
+
+                    <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
+
+                    <!-- 2. PARÇALAR (TRACKS) -->
                     <TextView
                         android:id="@+id/tab_all_tracks"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:gravity="center"
-                        android:text="Tüm Parçalar"
+                        android:text="Parçalar"
                         android:textColor="#FFFFFF"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:paddingHorizontal="16dp"
                         android:background="?android:attr/selectableItemBackground"/>
-                    
+
                     <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
 
-                    <!-- YENİ: KLASÖRLER (FOLDERS) -->
+                    <!-- 3. KLASÖRLER (FOLDERS) -->
                     <TextView
                         android:id="@+id/tab_folders"
                         android:layout_width="wrap_content"
@@ -261,40 +277,14 @@
                     
                     <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
 
-                    <!-- YENİ: SANATÇILAR (ARTISTS) -->
+                    <!-- 4. LİSTELER (PLAYLISTS) -->
                     <TextView
-                        android:id="@+id/tab_artists"
+                        android:id="@+id/tab_playlists"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:gravity="center"
-                        android:text="Sanatçılar"
+                        android:text="Listeler"
                         android:textColor="#888888"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:paddingHorizontal="16dp"
-                        android:background="?android:attr/selectableItemBackground"/>
-                    
-                    <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
-
-                    <TextView
-                        android:id="@+id/tab_recent"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="Son Çalınanlar"
-                        android:textColor="#888888"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:paddingHorizontal="16dp"
-                        android:background="?android:attr/selectableItemBackground"/>
-
-                    <TextView
-                        android:id="@+id/tab_quick_mix"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:text="⚡ Akıllı Karıştır"
-                        android:textColor="#00FFFF"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         android:paddingHorizontal="16dp"
@@ -302,30 +292,17 @@
 
                     <View android:layout_width="1dp" android:layout_height="24dp" android:background="#333333"/>
 
-
-                    <LinearLayout
-                        android:id="@+id/tab_playlists_container"
-                        android:layout_width="wrap_content"
+                    <!-- 5. ÜÇ NOKTA TAŞMA MENÜSÜ -->
+                    <ImageButton
+                        android:id="@+id/tab_btn_menu"
+                        android:layout_width="40dp"
                         android:layout_height="match_parent"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
                         android:background="?android:attr/selectableItemBackground"
-                        android:paddingHorizontal="16dp">
-                        <TextView
-                            android:id="@+id/tab_playlist_label"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Listeler: "
-                            android:textColor="#888888"
-                            android:textSize="14sp"
-                            android:textStyle="bold"/>
-                        <Spinner
-                            android:id="@+id/playlist_spinner"
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent"
-                            android:background="@null"
-                            android:spinnerMode="dropdown"/>
-                    </LinearLayout>
+                        android:src="@android:drawable/ic_menu_more"
+                        android:tint="#888888"
+                        android:padding="10dp"
+                        android:scaleType="centerInside"
+                        android:contentDescription="Menü" />
                 </LinearLayout>
 
             </HorizontalScrollView>
@@ -429,7 +406,8 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/music_recycler"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:scrollbars="vertical"
                 android:clipToPadding="false"/>
         </LinearLayout>
