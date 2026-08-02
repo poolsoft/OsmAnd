@@ -8,8 +8,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.util.AtomicFile;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -19,6 +22,9 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Repository for scanning and managing local music files.
@@ -31,13 +37,16 @@ public class MusicRepository {
     private final ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final AtomicInteger scanGeneration = new AtomicInteger();
+    private final List<OnScanCompletedListener> pendingScanListeners = new ArrayList<>();
+    private boolean scanInProgress;
     private List<AudioTrack> cachedTracks = new ArrayList<>();
     private List<AudioFolder> cachedFolders = new ArrayList<>();
     private List<AudioArtist> cachedArtists = new ArrayList<>();
 
     // Singleton support if needed, or instantiated by MusicManager
     public MusicRepository(Context context) {
-        this.context = context;
+        this.context = context.getApplicationContext();
+        loadCachedIndex();
     }
 
     public interface OnCopyCompletedListener {
@@ -87,9 +96,19 @@ public class MusicRepository {
     /**
      * Scan device for music files asynchronously.
      */
-    public void scanMusic(final OnScanCompletedListener listener) {
+    public synchronized void scanMusic(final OnScanCompletedListener listener) {
+        if (listener != null) pendingScanListeners.add(listener);
+        if (scanInProgress) return;
+        scanInProgress = true;
         final int generation = scanGeneration.incrementAndGet();
         ioExecutor.execute(() -> {
+            if (!hasMusicReadPermission()) {
+                List<AudioTrack> tracks = getCachedTracks();
+                List<AudioFolder> folders = getCachedFolders();
+                List<AudioArtist> artists = getCachedArtists();
+                mainHandler.post(() -> finishScan(generation, tracks, folders, artists));
+                return;
+            }
             List<AudioTrack> tracks = scanDeviceForAudio();
             List<AudioFolder> folders = organizeIntoFolders(tracks);
             List<AudioArtist> artists = organizeIntoArtists(tracks);
@@ -102,12 +121,112 @@ public class MusicRepository {
                 cachedFolders = folders;
                 cachedArtists = artists;
             }
-
-            if (listener != null) {
-                mainHandler.post(() -> listener.onScanCompleted(
-                        new ArrayList<>(tracks), new ArrayList<>(folders), new ArrayList<>(artists)));
-            }
+            saveCachedIndex(tracks);
+            mainHandler.post(() -> finishScan(generation, tracks, folders, artists));
         });
+    }
+
+    private void finishScan(int generation, List<AudioTrack> tracks,
+            List<AudioFolder> folders, List<AudioArtist> artists) {
+        List<OnScanCompletedListener> listeners;
+        synchronized (this) {
+            if (generation != scanGeneration.get()) return;
+            scanInProgress = false;
+            listeners = new ArrayList<>(pendingScanListeners);
+            pendingScanListeners.clear();
+        }
+        for (OnScanCompletedListener listener : listeners) {
+            listener.onScanCompleted(new ArrayList<>(tracks),
+                    new ArrayList<>(folders), new ArrayList<>(artists));
+        }
+    }
+
+    public synchronized boolean isScanInProgress() {
+        return scanInProgress;
+    }
+
+    public boolean hasMusicReadPermission() {
+        String permission = android.os.Build.VERSION.SDK_INT
+                >= android.os.Build.VERSION_CODES.TIRAMISU
+                ? android.Manifest.permission.READ_MEDIA_AUDIO
+                : android.Manifest.permission.READ_EXTERNAL_STORAGE;
+        return androidx.core.content.ContextCompat.checkSelfPermission(context, permission)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED;
+    }
+
+    private File getIndexFile() {
+        return new File(context.getFilesDir(), "car_music_index_v1.json");
+    }
+
+    private void loadCachedIndex() {
+        File indexFile = getIndexFile();
+        if (!indexFile.isFile()) return;
+        try (FileInputStream input = new FileInputStream(indexFile)) {
+            byte[] data = new byte[(int) indexFile.length()];
+            int offset = 0;
+            while (offset < data.length) {
+                int read = input.read(data, offset, data.length - offset);
+                if (read < 0) break;
+                offset += read;
+            }
+            JSONArray array = new JSONArray(new String(data, 0, offset,
+                    java.nio.charset.StandardCharsets.UTF_8));
+            List<AudioTrack> tracks = new ArrayList<>();
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject item = array.getJSONObject(i);
+                String path = item.optString("path", null);
+                String content = item.optString("content", null);
+                String art = item.optString("art", null);
+                StorageType storage;
+                try {
+                    storage = StorageType.valueOf(item.optString("storage", StorageType.INTERNAL.name()));
+                } catch (Exception ignored) {
+                    storage = StorageType.INTERNAL;
+                }
+                tracks.add(new AudioTrack(item.optLong("id"), item.optString("title"),
+                        item.optString("artist"), item.optString("album"), item.optLong("duration"),
+                        path, content == null ? null : Uri.parse(content),
+                        art == null ? null : Uri.parse(art), storage, true, item.optLong("dateAdded")));
+            }
+            List<AudioTrack> physical = getPhysicalTracks(tracks);
+            synchronized (this) {
+                cachedTracks = physical;
+                cachedFolders = organizeIntoFolders(physical);
+                cachedArtists = organizeIntoArtists(physical);
+            }
+            Log.i(TAG, "Loaded cached music index: " + physical.size() + " tracks");
+        } catch (Exception e) {
+            Log.w(TAG, "Cached music index could not be loaded", e);
+        }
+    }
+
+    private void saveCachedIndex(List<AudioTrack> tracks) {
+        File target = getIndexFile();
+        AtomicFile atomicFile = new AtomicFile(target);
+        FileOutputStream output = null;
+        try {
+            JSONArray array = new JSONArray();
+            for (AudioTrack track : tracks) {
+                JSONObject item = new JSONObject();
+                item.put("id", track.getId());
+                item.put("title", track.getTitle());
+                item.put("artist", track.getArtist());
+                item.put("album", track.getAlbum());
+                item.put("duration", track.getDuration());
+                item.put("path", track.getPath());
+                item.put("content", track.getContentUri() != null ? track.getContentUri().toString() : null);
+                item.put("art", track.getAlbumArtUri() != null ? track.getAlbumArtUri().toString() : null);
+                item.put("storage", track.getStorageType().name());
+                item.put("dateAdded", track.getDateAdded());
+                array.put(item);
+            }
+            output = atomicFile.startWrite();
+            output.write(array.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            atomicFile.finishWrite(output);
+        } catch (Exception e) {
+            Log.w(TAG, "Music index could not be saved", e);
+            if (output != null) atomicFile.failWrite(output);
+        }
     }
 
     private void notifyCopyCompleted(OnCopyCompletedListener listener, boolean success, String messageOrPath) {

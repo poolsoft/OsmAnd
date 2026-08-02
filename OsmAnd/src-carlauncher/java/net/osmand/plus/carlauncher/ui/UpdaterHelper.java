@@ -22,6 +22,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.Executors;
+import java.lang.ref.WeakReference;
 
 /**
  * Car Launcher guncelleme ve APK indirme/yukleme yardimci sinifi.
@@ -36,10 +37,13 @@ public class UpdaterHelper {
 
     // Indirme durumunu takip eden ve mukerrer tiklamalari onleyen bayrak (Turkce karakter yok)
     private static boolean isDownloading = false;
+    private static int downloadProgress = 0;
+    private static String downloadingVersion = "";
+    private static WeakReference<ProgressDialog> progressDialogRef = new WeakReference<>(null);
 
     public static void checkUpdates(Context context, boolean showToastIfLatest) {
         if (isDownloading) {
-            Toast.makeText(context, "Guncelleme indirme islemi zaten devam ediyor...", Toast.LENGTH_LONG).show();
+            showOrAttachProgressDialog(context);
             return;
         }
         Executors.newSingleThreadExecutor().execute(() -> {
@@ -122,10 +126,12 @@ public class UpdaterHelper {
 
     private static void downloadAndInstallApk(Context context, String url, String versionName) {
         if (isDownloading) {
-            Toast.makeText(context, "Guncelleme indirme islemi zaten devam ediyor...", Toast.LENGTH_LONG).show();
+            showOrAttachProgressDialog(context);
             return;
         }
         isDownloading = true;
+        downloadProgress = 0;
+        downloadingVersion = versionName;
 
         String fileName = "CarLauncher_v" + versionName + ".apk";
 
@@ -141,14 +147,7 @@ public class UpdaterHelper {
         }
 
         // Ana thread'de ProgressDialog baslatiyoruz (Turkce karakter yok)
-        ProgressDialog progressDialog = new ProgressDialog(context);
-        progressDialog.setTitle("Car Launcher Guncelleniyor");
-        progressDialog.setMessage("Yeni surum indiriliyor, lutfen bekleyin...");
-        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        progressDialog.setCancelable(false);
-        progressDialog.setMax(100);
-        progressDialog.setProgress(0);
-        progressDialog.show();
+        showOrAttachProgressDialog(context);
 
         Executors.newSingleThreadExecutor().execute(() -> {
             File tempApk = null;
@@ -209,12 +208,11 @@ public class UpdaterHelper {
                     
                     if (fileLength > 0) {
                         final int progress = (int) (total * 100 / fileLength);
+                        downloadProgress = progress;
                         long now = System.currentTimeMillis();
                         if (now - lastUpdateTime > 500) { // Arayuzu yormamak icin 500ms'de bir guncelleme
                             new Handler(Looper.getMainLooper()).post(() -> {
-                                if (progressDialog.isShowing()) {
-                                    progressDialog.setProgress(progress);
-                                }
+                                updateVisibleProgress(progress);
                             });
                             lastUpdateTime = now;
                         }
@@ -228,9 +226,8 @@ public class UpdaterHelper {
                 final File finalApk = tempApk;
                 new Handler(Looper.getMainLooper()).post(() -> {
                     isDownloading = false;
-                    if (progressDialog.isShowing()) {
-                        progressDialog.dismiss();
-                    }
+                    downloadProgress = 100;
+                    dismissVisibleProgress();
                     Toast.makeText(context, "Indirme tamamlandi. Kuruluma geciliyor...", Toast.LENGTH_SHORT).show();
                     installApkDirectly(context, finalApk);
                 });
@@ -241,14 +238,41 @@ public class UpdaterHelper {
                 }
                 new Handler(Looper.getMainLooper()).post(() -> {
                     isDownloading = false;
-                    if (progressDialog.isShowing()) {
-                        progressDialog.dismiss();
-                    }
+                    dismissVisibleProgress();
                     Toast.makeText(context, "Indirme basarisiz oldu: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
                 android.util.Log.e("Updater", "Download error", e);
             }
         });
+    }
+
+    private static ProgressDialog showOrAttachProgressDialog(Context context) {
+        ProgressDialog previous = progressDialogRef.get();
+        if (previous != null && previous.isShowing()) return previous;
+
+        ProgressDialog dialog = new ProgressDialog(context);
+        dialog.setTitle("Car Launcher Guncelleniyor");
+        String versionSuffix = downloadingVersion.isEmpty() ? "" : " v" + downloadingVersion;
+        dialog.setMessage("Yeni surum" + versionSuffix + " indiriliyor. Bu pencereyi kapatsaniz da indirme devam eder.");
+        dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        dialog.setCancelable(true);
+        dialog.setCanceledOnTouchOutside(false);
+        dialog.setMax(100);
+        dialog.setProgress(downloadProgress);
+        dialog.show();
+        progressDialogRef = new WeakReference<>(dialog);
+        return dialog;
+    }
+
+    private static void updateVisibleProgress(int progress) {
+        ProgressDialog dialog = progressDialogRef.get();
+        if (dialog != null && dialog.isShowing()) dialog.setProgress(progress);
+    }
+
+    private static void dismissVisibleProgress() {
+        ProgressDialog dialog = progressDialogRef.get();
+        if (dialog != null && dialog.isShowing()) dialog.dismiss();
+        progressDialogRef.clear();
     }
 
     private static void installApkDirectly(Context context, File apkFile) {
