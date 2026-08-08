@@ -303,11 +303,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance();
 		initManager.configureStartupProfile(this);
 		initManager.startInitTimer();
-		if (initManager.isLowRamDevice(this) && !panelContentLoadedInProcess) {
-			// Low-memory head units start with the usable launcher dock and the
-			// full map. The widget panel is created only on first explicit open.
-			layoutMode = 2;
-			isWidgetPanelOpen = false;
+		// A fresh launcher task starts in split mode with the lightweight music
+		// panel. Configuration recreation keeps the current user-selected mode.
+		if (savedInstanceState == null) {
+			layoutMode = 0;
+			isWidgetPanelOpen = true;
+			lastPanelContent = net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.MUSIC;
 		}
 		long time = System.currentTimeMillis();
 		app.applyTheme(this);
@@ -837,7 +838,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	private void embedWidgetPanel() {
 		if (widgetPanel != null && panelContentManager != null) {
 			net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent contentToRestore = 
-				(lastPanelContent != null) ? lastPanelContent : net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS;
+				(lastPanelContent != null) ? lastPanelContent : net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.MUSIC;
 			loadPanelContent(contentToRestore);
 		}
 	}
