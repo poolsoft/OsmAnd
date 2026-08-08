@@ -1124,7 +1124,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(android.R.layout.simple_list_item_2, parent, false);
+            View v = LayoutInflater.from(parent.getContext()).inflate(
+                    net.osmand.plus.R.layout.item_car_music_playlist, parent, false);
             return new ViewHolder(v);
         }
 
@@ -1135,15 +1136,15 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             holder.text1.setTextColor(item.isAction ? 0xFF00FFFF : 0xFFFFFFFF);
             holder.text1.setTextSize(18);
             holder.text1.setTypeface(null, item.isAction ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
-            holder.text2.setText(item.subtitle + (item.isAction ? "" : "   ⋮"));
+            holder.text2.setText(item.subtitle);
             holder.text2.setTextColor(0xFF888888);
-            holder.itemView.setPadding(32, 24, 32, 24);
             holder.itemView.setOnClickListener(v -> listener.onClick(item));
             holder.itemView.setOnLongClickListener(v -> {
                 listener.onLongClick(item);
                 return true;
             });
-            holder.text2.setOnClickListener(item.isAction ? null : v -> listener.onLongClick(item));
+            holder.menu.setVisibility(item.isAction ? View.INVISIBLE : View.VISIBLE);
+            holder.menu.setOnClickListener(item.isAction ? null : v -> listener.onLongClick(item));
         }
 
         @Override
@@ -1153,10 +1154,12 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
 
         class ViewHolder extends RecyclerView.ViewHolder {
             TextView text1, text2;
+            ImageButton menu;
             ViewHolder(@NonNull View itemView) {
                 super(itemView);
-                text1 = itemView.findViewById(android.R.id.text1);
-                text2 = itemView.findViewById(android.R.id.text2);
+                text1 = itemView.findViewById(net.osmand.plus.R.id.playlist_item_title);
+                text2 = itemView.findViewById(net.osmand.plus.R.id.playlist_item_subtitle);
+                menu = itemView.findViewById(net.osmand.plus.R.id.playlist_item_menu);
             }
         }
     }
