@@ -303,12 +303,17 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance();
 		initManager.configureStartupProfile(this);
 		initManager.startInitTimer();
-		// A fresh launcher task starts in split mode with the lightweight music
-		// panel. Configuration recreation keeps the current user-selected mode.
-		if (savedInstanceState == null) {
+        // A fresh task uses the configured home surface. Configuration
+        // recreation keeps the current user-selected mode.
+        if (savedInstanceState == null) {
 			layoutMode = 0;
 			isWidgetPanelOpen = true;
-			lastPanelContent = net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.MUSIC;
+			net.osmand.plus.carlauncher.CarLauncherSettings startupSettings =
+					net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this);
+			isDesktopMode = "desktop".equals(startupSettings.getStartupScreen());
+			lastPanelContent = isDesktopMode
+					? net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.DESKTOP
+					: net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.MUSIC;
 		}
 		long time = System.currentTimeMillis();
 		app.applyTheme(this);
@@ -728,7 +733,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			net.osmand.plus.carlauncher.ui.CarLauncherInitManager initManager =
 					net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance();
 			initManager.markUiReady();
-			if (!initManager.isLowRamDevice(this) || panelContentLoadedInProcess) {
+			// Lazy loading is valid only while the panel is actually hidden. A
+			// visible empty container is a broken state, especially on slow units.
+			if (isWidgetPanelOpen || isDesktopMode || panelContentLoadedInProcess) {
 				embedWidgetPanel();
 			}
 		}));
@@ -1036,19 +1043,22 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			}
 		}
 
+		boolean includeDesktop = net.osmand.plus.carlauncher.CarLauncherSettings
+				.getInstance(this).isDesktopInModeCycleEnabled();
 		if (!isDesktopMode && layoutMode == 0) {
 			// Normal -> Full Harita
 			layoutMode = 2;
 			isWidgetPanelOpen = false;
 			updateLayoutMode();
-		} else if (!isDesktopMode && layoutMode == 2) {
-			// Full Harita -> Desktop Mode
+		} else if (!isDesktopMode && layoutMode == 2 && includeDesktop) {
+			// Full Harita -> Desktop Mode (optional cycle step)
 			layoutMode = 0;
 			isWidgetPanelOpen = true;
 			updateLayoutMode();
 			setDesktopMode(true);
 		} else {
-			// Desktop Mode -> Normal
+			// Desktop Mode -> Normal, or Full Harita -> Normal when the
+			// optional desktop cycle step is disabled.
 			setDesktopMode(false);
 			layoutMode = 0;
 			isWidgetPanelOpen = true;

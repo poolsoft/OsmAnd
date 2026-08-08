@@ -397,6 +397,26 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             });
         }
 
+        androidx.preference.ListPreference startupScreenPref =
+                findPreference(CarLauncherSettings.KEY_STARTUP_SCREEN);
+        if (startupScreenPref != null) {
+            startupScreenPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                CarLauncherSettings.getInstance(requireContext())
+                        .setStartupScreen(String.valueOf(newValue));
+                return true;
+            });
+        }
+
+        SwitchPreferenceCompat desktopCyclePref =
+                findPreference(CarLauncherSettings.KEY_DESKTOP_IN_MODE_CYCLE);
+        if (desktopCyclePref != null) {
+            desktopCyclePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                CarLauncherSettings.getInstance(requireContext())
+                        .setDesktopInModeCycleEnabled((Boolean) newValue);
+                return true;
+            });
+        }
+
 
         // Dark Theme
         SwitchPreferenceCompat themePref = findPreference(CarLauncherSettings.KEY_DARK_THEME);
@@ -934,6 +954,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 });
             }
         }
+
     }
 
     private void setupHardwareDiagnosticPrefs() {

@@ -27,6 +27,9 @@
     <string name="car_pref_summary_status_bar">Toggles the system status bar</string>
     <string name="car_pref_title_fast_boot">Fast Boot (Background Core Loading)</string>
     <string name="car_pref_summary_fast_boot">Loads OsmAnd map engine in the background on startup, opening the UI instantly</string>
+    <string name="car_pref_title_startup_screen">Startup Screen</string>
+    <string name="car_pref_title_desktop_in_cycle">Include Widget Desktop in Mode Cycle</string>
+    <string name="car_pref_summary_desktop_in_cycle">Adds Widget Desktop after full map when using the mode button</string>
     <string name="car_pref_title_dark_theme">Dark Theme</string>
     <string name="car_pref_summary_dark_theme">Use dark background</string>
     <string name="car_pref_title_portrait_map_only">Show Map Only in Portrait Screen</string>

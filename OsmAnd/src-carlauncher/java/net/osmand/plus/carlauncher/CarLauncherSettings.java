@@ -38,6 +38,8 @@ public class CarLauncherSettings {
     // Appearance Keys - Genel
     public static final String KEY_STATUS_BAR = "car_launcher_status_bar";
     public static final String KEY_FAST_BOOT = "car_launcher_fast_boot";
+    public static final String KEY_STARTUP_SCREEN = "car_launcher_startup_screen";
+    public static final String KEY_DESKTOP_IN_MODE_CYCLE = "car_launcher_desktop_in_mode_cycle";
 
     public static final String KEY_DARK_THEME = "car_launcher_dark_theme";
     public static final String KEY_FLOATING_BUTTON = "car_launcher_floating_button";
@@ -382,6 +384,22 @@ public class CarLauncherSettings {
     public void setFastBootEnabled(boolean enabled) {
         this.cFastBoot = enabled;
         prefs.edit().putBoolean(KEY_FAST_BOOT, enabled).apply();
+    }
+
+    public String getStartupScreen() {
+        return prefs.getString(KEY_STARTUP_SCREEN, "normal");
+    }
+
+    public void setStartupScreen(String screen) {
+        prefs.edit().putString(KEY_STARTUP_SCREEN, screen).apply();
+    }
+
+    public boolean isDesktopInModeCycleEnabled() {
+        return prefs.getBoolean(KEY_DESKTOP_IN_MODE_CYCLE, false);
+    }
+
+    public void setDesktopInModeCycleEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_DESKTOP_IN_MODE_CYCLE, enabled).apply();
     }
 
     public boolean isDarkTheme() {

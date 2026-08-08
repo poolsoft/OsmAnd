@@ -26,6 +26,22 @@
             android:defaultValue="true"
             app:iconSpaceReserved="false" />
 
+        <androidx.preference.ListPreference
+            android:key="car_launcher_startup_screen"
+            android:title="@string/car_pref_title_startup_screen"
+            android:summary="%s"
+            android:entries="@array/startup_screen_entries"
+            android:entryValues="@array/startup_screen_values"
+            android:defaultValue="normal"
+            app:iconSpaceReserved="false" />
+
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="car_launcher_desktop_in_mode_cycle"
+            android:title="@string/car_pref_title_desktop_in_cycle"
+            android:summary="@string/car_pref_summary_desktop_in_cycle"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_dark_theme"
             android:title="@string/car_pref_title_dark_theme"
