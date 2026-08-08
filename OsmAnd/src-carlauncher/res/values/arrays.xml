@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="startup_screen_entries">
-        <item>Map + Music Player</item>
+        <item>Normal Launcher Screen</item>
         <item>Widget Desktop</item>
     </string-array>
     <string-array name="startup_screen_values">

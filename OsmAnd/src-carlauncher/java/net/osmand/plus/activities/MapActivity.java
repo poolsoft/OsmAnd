@@ -313,7 +313,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			isDesktopMode = "desktop".equals(startupSettings.getStartupScreen());
 			lastPanelContent = isDesktopMode
 					? net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.DESKTOP
-					: net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.MUSIC;
+					: net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS;
 		}
 		long time = System.currentTimeMillis();
 		app.applyTheme(this);
@@ -845,7 +845,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	private void embedWidgetPanel() {
 		if (widgetPanel != null && panelContentManager != null) {
 			net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent contentToRestore = 
-				(lastPanelContent != null) ? lastPanelContent : net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.MUSIC;
+				(lastPanelContent != null) ? lastPanelContent : net.osmand.plus.carlauncher.ui.PanelContentManager.PanelContent.WIDGETS;
 			loadPanelContent(contentToRestore);
 		}
 	}
