@@ -61,6 +61,11 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     private View playerPanel;
     private View musicSideDock;
     private ImageButton btnDockPlaylist, btnScanMusic, btnTabScan;
+    private View musicScanStatusContainer;
+    private android.widget.ProgressBar musicScanProgress;
+    private TextView musicScanStatusText;
+    private android.widget.Button musicScanPermissionButton;
+    private final MusicRepository.ScanStateListener scanStateListener = this::updateMusicScanStatus;
     private ImageView appIcon;
     private View appSelectorLaunch;
     private ImageButton btnPlaylist, btnClose, btnEqualizer;
@@ -142,6 +147,13 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
         btnDockPlaylist = root.findViewById(net.osmand.plus.R.id.btn_dock_playlist);
         btnScanMusic = root.findViewById(net.osmand.plus.R.id.btn_scan_music);
         btnTabScan = root.findViewById(net.osmand.plus.R.id.tab_btn_scan);
+        musicScanStatusContainer = root.findViewById(net.osmand.plus.R.id.music_scan_status_container);
+        musicScanProgress = root.findViewById(net.osmand.plus.R.id.music_scan_progress);
+        musicScanStatusText = root.findViewById(net.osmand.plus.R.id.music_scan_status_text);
+        musicScanPermissionButton = root.findViewById(net.osmand.plus.R.id.music_scan_permission_button);
+        if (musicScanPermissionButton != null) {
+            musicScanPermissionButton.setOnClickListener(v -> checkPermissionsAndLoadTracks());
+        }
         appIcon = root.findViewById(net.osmand.plus.R.id.app_icon);
         appSelectorLaunch = root.findViewById(net.osmand.plus.R.id.app_selector_launch);
         // btnPlaylist = root.findViewById(net.osmand.plus.R.id.btn_playlist);
@@ -1398,7 +1410,8 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 loadAllTracks();
             } else {
-                Toast.makeText(getContext(), "Muzik taramak icin izin gerekli!", Toast.LENGTH_SHORT).show();
+                musicManager.getRepository().scanMusic(null,
+                        MusicRepository.ScanReason.USER_REQUEST);
             }
         }
     }
@@ -1441,8 +1454,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             btnTabScan.setEnabled(false);
             btnTabScan.setAlpha(0.45f);
         }
-        Toast.makeText(getContext(), net.osmand.plus.R.string.car_music_scan_started, Toast.LENGTH_SHORT).show();
-
         musicManager.getRepository().scanMusic((tracks, folders, artists) -> {
             if (!isAdded() || getView() == null) return;
 
@@ -1463,9 +1474,6 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
                 btnTabScan.setEnabled(true);
                 btnTabScan.setAlpha(1.0f);
             }
-            Toast.makeText(requireContext(),
-                    getString(net.osmand.plus.R.string.car_music_scan_completed, tracks.size()),
-                    Toast.LENGTH_LONG).show();
         });
     }
 
@@ -2072,12 +2080,50 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
     public void onStart() {
         super.onStart();
         startSeekbarUpdater();
+        if (musicManager != null && musicManager.getRepository() != null) {
+            musicManager.getRepository().addScanStateListener(scanStateListener);
+        }
     }
 
     @Override
     public void onStop() {
+        if (musicManager != null && musicManager.getRepository() != null) {
+            musicManager.getRepository().removeScanStateListener(scanStateListener);
+        }
         super.onStop();
         stopSeekbarUpdater();
+    }
+
+    private void updateMusicScanStatus(MusicRepository.ScanState state) {
+        if (!isAdded() || state == null || musicScanStatusContainer == null) return;
+        if (!state.scanning && (state.reason == MusicRepository.ScanReason.USB_MOUNTED
+                || state.reason == MusicRepository.ScanReason.USB_REMOVED)) {
+            allTracks.clear();
+            allTracks.addAll(musicManager.getRepository().getCachedTracks());
+            switchViewMode(currentViewMode);
+        }
+        musicScanStatusContainer.setVisibility(View.VISIBLE);
+        if (musicScanProgress != null) musicScanProgress.setVisibility(
+                state.scanning ? View.VISIBLE : View.GONE);
+        if (musicScanPermissionButton != null) musicScanPermissionButton.setVisibility(
+                !state.permissionGranted && !state.scanning ? View.VISIBLE : View.GONE);
+        if (musicScanStatusText == null) return;
+        if (!state.permissionGranted) {
+            musicScanStatusText.setText(net.osmand.plus.R.string.car_music_permission_card);
+        } else if (state.scanning) {
+            musicScanStatusText.setText(getString(
+                    net.osmand.plus.R.string.car_music_scan_status_running, state.totalTracks));
+        } else if (state.lastSuccessfulScanTime <= 0L) {
+            musicScanStatusText.setText(getString(
+                    net.osmand.plus.R.string.car_music_scan_status_never, state.totalTracks));
+        } else {
+            CharSequence relative = android.text.format.DateUtils.getRelativeTimeSpanString(
+                    state.lastSuccessfulScanTime, System.currentTimeMillis(),
+                    android.text.format.DateUtils.MINUTE_IN_MILLIS);
+            musicScanStatusText.setText(getString(
+                    net.osmand.plus.R.string.car_music_scan_status_ready, state.totalTracks,
+                    state.internalTracks, state.usbTracks, relative));
+        }
     }
 
     @Override

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.media.audiofx.AudioEffect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -661,8 +660,9 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         // Equalizer
         Preference eqPref = findPreference("car_launcher_equalizer");
         if (eqPref != null) {
+            updateEqualizerSummary(eqPref);
             eqPref.setOnPreferenceClickListener(preference -> {
-                openEqualizer();
+                showEqualizerOptions(eqPref);
                 return true;
             });
         }
@@ -736,14 +736,69 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         }).show();
     }
 
-    private void openEqualizer() {
+    private void showEqualizerOptions(@NonNull Preference pref) {
+        if (getContext() == null || settings == null) return;
+        String[] options = {
+                getString(R.string.car_settings_equalizer_auto),
+                getString(R.string.car_settings_equalizer_choose_app),
+                getString(R.string.car_settings_equalizer_custom_intent)
+        };
+        new AlertDialog.Builder(getContext())
+                .setTitle(R.string.car_pref_title_equalizer)
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        settings.setEqualizerApp(null);
+                        settings.setEqualizerIntent(null);
+                        updateEqualizerSummary(pref);
+                    } else if (which == 1) {
+                        AppPickerDialog picker = new AppPickerDialog(getContext(), false,
+                                (packageName, name, icon) -> {
+                                    settings.setEqualizerApp(packageName);
+                                    settings.setEqualizerIntent(null);
+                                    updateEqualizerSummary(pref);
+                                });
+                        picker.setActivePackage(settings.getEqualizerApp());
+                        picker.show();
+                    } else {
+                        showEqualizerIntentDialog(pref);
+                    }
+                }).show();
+    }
+
+    private void showEqualizerIntentDialog(@NonNull Preference pref) {
+        if (getContext() == null || settings == null) return;
+        android.widget.EditText input = new android.widget.EditText(getContext());
+        input.setHint(R.string.car_settings_equalizer_intent_hint);
+        input.setText(settings.getEqualizerIntent());
+        new AlertDialog.Builder(getContext())
+                .setTitle(R.string.car_settings_equalizer_custom_intent)
+                .setView(input)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    String value = input.getText().toString().trim();
+                    settings.setEqualizerIntent(value.isEmpty() ? null : value);
+                    if (!value.isEmpty()) settings.setEqualizerApp(null);
+                    updateEqualizerSummary(pref);
+                })
+                .setNegativeButton(android.R.string.cancel, null).show();
+    }
+
+    private void updateEqualizerSummary(@NonNull Preference pref) {
+        if (getContext() == null || settings == null) return;
+        String intentValue = settings.getEqualizerIntent();
+        if (!android.text.TextUtils.isEmpty(intentValue)) {
+            pref.setSummary(getString(R.string.car_settings_equalizer_intent_summary, intentValue));
+            return;
+        }
+        String packageName = settings.getEqualizerApp();
+        if (android.text.TextUtils.isEmpty(packageName)) {
+            pref.setSummary(R.string.car_settings_equalizer_auto_summary);
+            return;
+        }
         try {
-            Intent intent = new Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL);
-            intent.putExtra(AudioEffect.EXTRA_AUDIO_SESSION, 0);
-            intent.putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC);
-            startActivity(intent);
+            PackageManager pm = getContext().getPackageManager();
+            pref.setSummary(pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)));
         } catch (Exception e) {
-            Toast.makeText(getContext(), "Equalizer bulunamadı", Toast.LENGTH_SHORT).show();
+            pref.setSummary(packageName);
         }
     }
 

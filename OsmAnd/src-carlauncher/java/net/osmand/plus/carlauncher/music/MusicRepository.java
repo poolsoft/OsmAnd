@@ -45,11 +45,79 @@ public class MusicRepository {
     private List<AudioTrack> cachedTracks = new ArrayList<>();
     private List<AudioFolder> cachedFolders = new ArrayList<>();
     private List<AudioArtist> cachedArtists = new ArrayList<>();
+    private final List<ScanStateListener> scanStateListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
+    private volatile ScanState scanState;
+    private final android.content.BroadcastReceiver storageReceiver;
+    private static final String SCAN_PREFS = "car_music_scan_state";
 
     // Singleton support if needed, or instantiated by MusicManager
     public MusicRepository(Context context) {
         this.context = context.getApplicationContext();
         loadCachedIndex();
+        android.content.SharedPreferences prefs = this.context.getSharedPreferences(
+                SCAN_PREFS, Context.MODE_PRIVATE);
+        scanState = new ScanState(false, ScanReason.CACHE_LOAD,
+                prefs.getLong("last_scan_time", 0L), getPhysicalTracks(cachedTracks).size(),
+                countAvailableStorage(cachedTracks, StorageType.INTERNAL),
+                countAvailableStorage(cachedTracks, StorageType.USB), null,
+                hasMusicReadPermission());
+        storageReceiver = new android.content.BroadcastReceiver() {
+            @Override public void onReceive(Context receiverContext, android.content.Intent intent) {
+                String action = intent != null ? intent.getAction() : null;
+                if (android.content.Intent.ACTION_MEDIA_MOUNTED.equals(action)) {
+                    scanMusic(null, ScanReason.USB_MOUNTED);
+                } else if (android.content.Intent.ACTION_MEDIA_EJECT.equals(action)
+                        || android.content.Intent.ACTION_MEDIA_REMOVED.equals(action)
+                        || android.content.Intent.ACTION_MEDIA_UNMOUNTED.equals(action)) {
+                    refreshCachedAvailability(ScanReason.USB_REMOVED);
+                }
+            }
+        };
+        android.content.IntentFilter filter = new android.content.IntentFilter();
+        filter.addAction(android.content.Intent.ACTION_MEDIA_MOUNTED);
+        filter.addAction(android.content.Intent.ACTION_MEDIA_EJECT);
+        filter.addAction(android.content.Intent.ACTION_MEDIA_REMOVED);
+        filter.addAction(android.content.Intent.ACTION_MEDIA_UNMOUNTED);
+        filter.addDataScheme("file");
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            this.context.registerReceiver(storageReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            this.context.registerReceiver(storageReceiver, filter);
+        }
+    }
+
+    public enum ScanReason { CACHE_LOAD, STARTUP_REFRESH, USER_REQUEST, USB_MOUNTED, USB_REMOVED }
+    public interface ScanStateListener { void onScanStateChanged(ScanState state); }
+    public static final class ScanState {
+        public final boolean scanning;
+        public final ScanReason reason;
+        public final long lastSuccessfulScanTime;
+        public final int totalTracks;
+        public final int internalTracks;
+        public final int usbTracks;
+        public final String error;
+        public final boolean permissionGranted;
+        ScanState(boolean scanning, ScanReason reason, long time, int total,
+                int internal, int usb, String error, boolean permissionGranted) {
+            this.scanning = scanning; this.reason = reason;
+            this.lastSuccessfulScanTime = time; this.totalTracks = total;
+            this.internalTracks = internal; this.usbTracks = usb;
+            this.error = error; this.permissionGranted = permissionGranted;
+        }
+    }
+    public ScanState getScanState() { return scanState; }
+    public void addScanStateListener(ScanStateListener listener) {
+        if (listener != null) {
+            scanStateListeners.add(listener);
+            mainHandler.post(() -> listener.onScanStateChanged(scanState));
+        }
+    }
+    public void removeScanStateListener(ScanStateListener listener) { scanStateListeners.remove(listener); }
+    private void publishScanState(ScanState state) {
+        scanState = state;
+        for (ScanStateListener listener : scanStateListeners) {
+            mainHandler.post(() -> listener.onScanStateChanged(state));
+        }
     }
 
     public interface OnCopyCompletedListener {
@@ -100,19 +168,34 @@ public class MusicRepository {
      * Scan device for music files asynchronously.
      */
     public synchronized void scanMusic(final OnScanCompletedListener listener) {
+        scanMusic(listener, ScanReason.USER_REQUEST);
+    }
+
+    public synchronized void scanMusic(final OnScanCompletedListener listener, ScanReason reason) {
         if (listener != null) pendingScanListeners.add(listener);
         if (scanInProgress) return;
         scanInProgress = true;
+        ScanState previous = scanState;
+        publishScanState(new ScanState(true, reason,
+                previous != null ? previous.lastSuccessfulScanTime : 0L,
+                previous != null ? previous.totalTracks : getPhysicalTracks(cachedTracks).size(),
+                previous != null ? previous.internalTracks : 0,
+                previous != null ? previous.usbTracks : 0, null, hasMusicReadPermission()));
         final int generation = scanGeneration.incrementAndGet();
         ioExecutor.execute(() -> {
             if (!hasMusicReadPermission()) {
                 List<AudioTrack> tracks = getCachedTracks();
                 List<AudioFolder> folders = getCachedFolders();
                 List<AudioArtist> artists = getCachedArtists();
+                publishScanState(new ScanState(false, reason,
+                        previous != null ? previous.lastSuccessfulScanTime : 0L,
+                        tracks.size(), countAvailableStorage(cachedTracks, StorageType.INTERNAL),
+                        countAvailableStorage(cachedTracks, StorageType.USB), null, false));
                 mainHandler.post(() -> finishScan(generation, tracks, folders, artists));
                 return;
             }
-            List<AudioTrack> tracks = scanDeviceForAudio();
+            List<AudioTrack> indexedTracks = mergeWithUnavailableCachedTracks(scanDeviceForAudio());
+            List<AudioTrack> tracks = getPhysicalTracks(indexedTracks);
             List<AudioFolder> folders = organizeIntoFolders(tracks);
             List<AudioArtist> artists = organizeIntoArtists(tracks);
 
@@ -120,11 +203,17 @@ public class MusicRepository {
                 return;
             }
             synchronized (this) {
-                cachedTracks = tracks;
-                cachedFolders = folders;
+                cachedTracks = indexedTracks;
+                cachedFolders = organizeIntoFolders(indexedTracks);
                 cachedArtists = artists;
             }
-            saveCachedIndex(tracks);
+            saveCachedIndex(indexedTracks);
+            long completedAt = System.currentTimeMillis();
+            context.getSharedPreferences(SCAN_PREFS, Context.MODE_PRIVATE).edit()
+                    .putLong("last_scan_time", completedAt).apply();
+            publishScanState(new ScanState(false, reason, completedAt, tracks.size(),
+                    countAvailableStorage(indexedTracks, StorageType.INTERNAL),
+                    countAvailableStorage(indexedTracks, StorageType.USB), null, true));
             mainHandler.post(() -> finishScan(generation, tracks, folders, artists));
         });
     }
@@ -191,7 +280,7 @@ public class MusicRepository {
                         path, content == null ? null : Uri.parse(content),
                         art == null ? null : Uri.parse(art), storage, true, item.optLong("dateAdded")));
             }
-            List<AudioTrack> physical = getPhysicalTracks(tracks);
+            List<AudioTrack> physical = refreshAvailability(tracks);
             synchronized (this) {
                 cachedTracks = physical;
                 cachedFolders = organizeIntoFolders(physical);
@@ -221,6 +310,7 @@ public class MusicRepository {
                 item.put("art", track.getAlbumArtUri() != null ? track.getAlbumArtUri().toString() : null);
                 item.put("storage", track.getStorageType().name());
                 item.put("dateAdded", track.getDateAdded());
+                item.put("available", track.isAvailable());
                 array.put(item);
             }
             output = atomicFile.startWrite();
@@ -242,21 +332,84 @@ public class MusicRepository {
         return getPhysicalTracks(new ArrayList<>(cachedTracks));
     }
 
+    public synchronized List<AudioTrack> getIndexedTracks() { return new ArrayList<>(cachedTracks); }
+
     public List<AudioTrack> getPhysicalTracks(List<AudioTrack> tracks) {
         List<AudioTrack> physical = new ArrayList<>();
         if (tracks == null) return physical;
         for (AudioTrack track : tracks) {
-            if (track.getContentUri() != null
-                    && "content".equalsIgnoreCase(track.getContentUri().getScheme())) {
-                physical.add(track);
-            } else if (track.getPath() != null) {
-                File f = new File(track.getPath());
-                if (f.exists() && f.length() > 0) {
-                    physical.add(track);
-                }
-            }
+            if (isTrackCurrentlyAvailable(track)) physical.add(track);
         }
         return physical;
+    }
+
+    private boolean isTrackCurrentlyAvailable(AudioTrack track) {
+        if (track == null) return false;
+        if (track.getPath() != null && !track.getPath().isEmpty()) {
+            File file = new File(track.getPath());
+            return file.exists() && file.length() > 0;
+        }
+        return track.getContentUri() != null
+                && "content".equalsIgnoreCase(track.getContentUri().getScheme());
+    }
+
+    private AudioTrack withAvailability(AudioTrack track, boolean available) {
+        return new AudioTrack(track.getId(), track.getTitle(), track.getArtist(),
+                track.getAlbum(), track.getDuration(), track.getPath(), track.getContentUri(),
+                track.getAlbumArtUri(), track.getStorageType(), available, track.getDateAdded());
+    }
+
+    private List<AudioTrack> refreshAvailability(List<AudioTrack> tracks) {
+        List<AudioTrack> result = new ArrayList<>();
+        if (tracks != null) for (AudioTrack track : tracks) {
+            result.add(withAvailability(track, isTrackCurrentlyAvailable(track)));
+        }
+        return result;
+    }
+
+    private List<AudioTrack> mergeWithUnavailableCachedTracks(List<AudioTrack> scanned) {
+        List<AudioTrack> merged = new ArrayList<>(scanned);
+        List<AudioTrack> previous;
+        synchronized (this) { previous = new ArrayList<>(cachedTracks); }
+        for (AudioTrack oldTrack : previous) {
+            boolean found = false;
+            for (AudioTrack current : scanned) {
+                if (MusicTrackIdentity.matches(oldTrack, current)
+                        || MusicTrackIdentity.matchesReference(oldTrack.getMediaId(), current)) {
+                    found = true; break;
+                }
+            }
+            if (!found) merged.add(withAvailability(oldTrack, false));
+        }
+        return merged;
+    }
+
+    private void refreshCachedAvailability(ScanReason reason) {
+        ioExecutor.execute(() -> {
+            List<AudioTrack> refreshed;
+            synchronized (this) {
+                refreshed = refreshAvailability(cachedTracks);
+                cachedTracks = refreshed;
+                cachedFolders = organizeIntoFolders(refreshed);
+                cachedArtists = organizeIntoArtists(getPhysicalTracks(refreshed));
+            }
+            saveCachedIndex(refreshed);
+            ScanState previous = scanState;
+            publishScanState(new ScanState(false, reason,
+                    previous != null ? previous.lastSuccessfulScanTime : 0L,
+                    getPhysicalTracks(refreshed).size(),
+                    countAvailableStorage(refreshed, StorageType.INTERNAL),
+                    countAvailableStorage(refreshed, StorageType.USB), null,
+                    hasMusicReadPermission()));
+        });
+    }
+
+    private int countAvailableStorage(List<AudioTrack> tracks, StorageType type) {
+        int count = 0;
+        if (tracks != null) for (AudioTrack track : tracks) {
+            if (track.getStorageType() == type && isTrackCurrentlyAvailable(track)) count++;
+        }
+        return count;
     }
 
     public List<AudioFolder> getFoldersByStorage(StorageType storageType) {
@@ -701,9 +854,13 @@ public class MusicRepository {
         if (reference == null) return null;
 
         for (AudioTrack track : cachedTracks) {
-            if (MusicTrackIdentity.matchesReference(reference, track)) {
+            if (isTrackCurrentlyAvailable(track)
+                    && MusicTrackIdentity.matchesReference(reference, track)) {
                 return track;
             }
+        }
+        for (AudioTrack track : cachedTracks) {
+            if (MusicTrackIdentity.matchesReference(reference, track)) return track;
         }
 
         // A legacy removable-storage path may be mounted under another port.
