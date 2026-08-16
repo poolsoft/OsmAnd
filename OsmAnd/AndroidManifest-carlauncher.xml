@@ -22,7 +22,27 @@
         android:usesCleartextTraffic="true"
         tools:replace="android:icon,android:usesCleartextTraffic">
         
-        <!-- Car Launcher Activity - Ana launcher ekrani -->
+        <!-- Hafif HOME kabugu: OsmAnd core hazirlanirken dock ve muzik hemen kullanilabilir. -->
+        <activity
+            android:name="net.osmand.plus.carlauncher.CarLauncherBootstrapActivity"
+            android:label="@string/app_name"
+            android:theme="@style/FirstSplashScreenNightlyFree"
+            android:launchMode="singleTask"
+            android:screenOrientation="sensor"
+            android:configChanges="keyboardHidden|uiMode|screenSize|smallestScreenSize|screenLayout|orientation"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Car Launcher Activity - Ana harita ekrani -->
         <!-- tools:node="replace" ile ana manifest'teki MapActivity'yi tamamen override ediyoruz -->
         <activity
             android:name="net.osmand.plus.activities.MapActivity"
@@ -35,19 +55,6 @@
             android:supportsPictureInPicture="true"
             android:exported="true"
             tools:node="replace">
-            
-            <!-- Launcher olarak calisabilmesi icin -->
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.HOME" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-
-            <!-- Uygulama simgesi; HOME secimi ile multiwindow davranisini karistirma. -->
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
             
             <!-- Ana manifest'teki onemli intent-filter'lari da eklemeliyiz -->
             <!-- Dosya acma intent'leri (gpx, kml, etc.) -->

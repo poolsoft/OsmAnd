@@ -8,6 +8,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import net.osmand.plus.R;
 import net.osmand.plus.activities.MapActivity;
+import android.app.Activity;
 import net.osmand.plus.carlauncher.CarLauncherSettings;
 
 /**
@@ -16,7 +17,7 @@ import net.osmand.plus.carlauncher.CarLauncherSettings;
  */
 public class CarLayoutManager {
 
-    private final MapActivity activity;
+    private final Activity activity;
     private final ConstraintLayout rootLayout;
     private final View mapContainer;
     private final View widgetPanel;
@@ -24,7 +25,7 @@ public class CarLayoutManager {
     private final View appDrawerContainer;
     private final ImageButton widgetHandle;
 
-    public CarLayoutManager(MapActivity activity) {
+    public CarLayoutManager(Activity activity) {
         this.activity = activity;
         this.rootLayout = activity.findViewById(R.id.root_layout);
         this.mapContainer = activity.findViewById(R.id.map_container);
@@ -35,6 +36,10 @@ public class CarLayoutManager {
     }
 
     private boolean isContentFullScreen = false;
+
+    private boolean isDesktopMode() {
+        return activity instanceof MapActivity && ((MapActivity) activity).isDesktopMode();
+    }
 
     public void setContentFullScreen(boolean fullScreen) {
         this.isContentFullScreen = fullScreen;
@@ -208,7 +213,7 @@ public class CarLayoutManager {
         int screenWidth = getCurrentContentWidth();
         int screenHeight = getCurrentContentHeight();
 
-        if (activity.isDesktopMode()) {
+        if (isDesktopMode()) {
             cs.setVisibility(R.id.map_container, View.GONE);
             cs.setVisibility(R.id.widget_handle, View.GONE);
             cs.setVisibility(R.id.widget_panel, View.VISIBLE);
@@ -422,7 +427,7 @@ public class CarLayoutManager {
 
     private void updateWidgetHandleConstraints(ConstraintSet cs, CarLauncherSettings settings, boolean isOpen) {
         if (widgetHandle != null) {
-            if (!isOpen || activity.isDesktopMode()) {
+            if (!isOpen || isDesktopMode()) {
                 cs.setVisibility(R.id.widget_handle, View.GONE);
             } else {
                 cs.setVisibility(R.id.widget_handle, View.VISIBLE);
