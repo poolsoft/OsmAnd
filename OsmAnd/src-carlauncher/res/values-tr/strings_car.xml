@@ -82,6 +82,8 @@
     <string name="car_pref_summary_equalizer">Sistem ses ayarlarını aç</string>
     <string name="car_pref_title_scan_music">Müzikleri Yeniden Tara</string>
     <string name="car_pref_summary_scan_music">Dahili depolama ve USB bellekleri tara</string>
+    <string name="car_pref_title_auto_scan_music">Başlangıçta müzik kütüphanesini yenile</string>
+    <string name="car_pref_summary_auto_scan_music">Kapalıyken hızlı açılış için kayıtlı indeks kullanılır; manuel ve USB taraması çalışmaya devam eder</string>
     <string name="car_music_scan">Müzikleri tara</string>
     <string name="car_music_scan_started">Dahili depolama ve USB bellekler taranıyor…</string>
     <string name="car_music_scan_completed">Tarama tamamlandı: %1$d parça bulundu</string>

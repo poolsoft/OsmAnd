@@ -231,6 +231,13 @@
             android:summary="@string/car_pref_summary_scan_music"
             app:iconSpaceReserved="false" />
 
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="car_launcher_auto_scan_music"
+            android:title="@string/car_pref_title_auto_scan_music"
+            android:summary="@string/car_pref_summary_auto_scan_music"
+            android:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
     </net.osmand.plus.carlauncher.ui.CarLauncherPreferenceCategory>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->

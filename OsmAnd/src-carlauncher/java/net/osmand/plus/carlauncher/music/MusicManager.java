@@ -108,12 +108,15 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 internalPlayer.resumeLastSession();
             }
         });
+        net.osmand.plus.carlauncher.CarLauncherSettings startupSettings =
+                net.osmand.plus.carlauncher.CarLauncherSettings.getInstance(this.context);
         MusicRepository.ScanState initialScanState = repository.getScanState();
         long scanAge = initialScanState != null && initialScanState.lastSuccessfulScanTime > 0L
                 ? System.currentTimeMillis() - initialScanState.lastSuccessfulScanTime : Long.MAX_VALUE;
         long refreshInterval = 15L * 60L * 1000L;
         long refreshDelay = scanAge < refreshInterval
                 ? Math.max(2000L, refreshInterval - scanAge) : 2000L;
+        if (startupSettings.isAutoScanMusicEnabled()) {
         new Handler(Looper.getMainLooper()).postDelayed(() -> repository.scanMusic((tracks, folders, artists) -> {
             Log.d(TAG, "Scan complete: " + tracks.size() + " tracks");
             if (!tracks.isEmpty() && !restoredFromCache.get()) {
@@ -127,6 +130,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
                 }
             }
         }, MusicRepository.ScanReason.STARTUP_REFRESH), refreshDelay);
+        }
 
         // Core kodlara dokunmadan, sistemdeki ses calim durumlarini (TTS/Navigasyon) dinleme
         setupAudioPlaybackCallback();

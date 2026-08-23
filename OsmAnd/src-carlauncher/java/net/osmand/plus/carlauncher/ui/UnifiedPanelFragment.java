@@ -58,13 +58,26 @@ public class UnifiedPanelFragment extends Fragment
 
 
     private View musicArea;
+    private float musicTouchDownY;
+    private View musicControls;
     private ImageView musicMiniArt;
+    private TextView musicPanelClock;
     private TextView musicTrackTitle;
     private TextView musicTrackArtist;
     private MusicVisualizerView musicVisualizer;
     private ImageButton musicBtnPrev;
     private ImageButton musicBtnPlay;
     private ImageButton musicBtnNext;
+    private final Handler clockHandler = new Handler(Looper.getMainLooper());
+    private final Runnable clockRunnable = new Runnable() {
+        @Override public void run() {
+            if (musicPanelClock != null) {
+                musicPanelClock.setText(new SimpleDateFormat("HH:mm", Locale.getDefault())
+                        .format(new Date()));
+            }
+            clockHandler.postDelayed(this, 30_000L);
+        }
+    };
 
     // Bildirim Alicisi (BroadcastReceiver)
     private final BroadcastReceiver notificationReceiver = new BroadcastReceiver() {
@@ -111,7 +124,9 @@ public class UnifiedPanelFragment extends Fragment
 
         // Muzik alani yapilari
         musicArea = root.findViewById(R.id.music_area);
+        musicControls = root.findViewById(R.id.music_controls);
         musicMiniArt = root.findViewById(R.id.music_mini_art);
+        musicPanelClock = root.findViewById(R.id.music_panel_clock);
         musicTrackTitle = root.findViewById(R.id.music_track_title);
         musicTrackArtist = root.findViewById(R.id.music_track_artist);
         musicVisualizer = root.findViewById(R.id.music_visualizer);
@@ -127,12 +142,22 @@ public class UnifiedPanelFragment extends Fragment
     private void setupListeners() {
         // Muzik alanı tiklandiginda buyuk oynaticiyi ac
         if (musicArea != null) {
-            musicArea.setOnClickListener(v -> {
+            musicArea.setOnClickListener(null);
+            musicArea.setOnTouchListener((v, event) -> {
+                if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+                    musicTouchDownY = event.getY();
+                    return true;
+                }
+                if (event.getAction() != android.view.MotionEvent.ACTION_UP) return true;
+                int touchSlop = android.view.ViewConfiguration.get(v.getContext()).getScaledTouchSlop();
+                if (Math.abs(event.getY() - musicTouchDownY) > touchSlop) return true;
+                if (musicControls != null && event.getY() >= musicControls.getTop()) return true;
                 if (getActivity() instanceof CarLauncherInterface) {
                     CarLauncherInterface ci = (CarLauncherInterface) getActivity();
                     ci.setPanelContent(PanelContentManager.PanelContent.MUSIC);
                     ci.openMusicPlayer();
                 }
+                return true;
             });
         }
 
@@ -235,6 +260,8 @@ public class UnifiedPanelFragment extends Fragment
     @Override
     public void onResume() {
         super.onResume();
+        clockHandler.removeCallbacks(clockRunnable);
+        clockHandler.post(clockRunnable);
         if (musicManager != null) {
             musicManager.addListener(this);
             musicManager.addVisualizerListener(this);
@@ -255,6 +282,7 @@ public class UnifiedPanelFragment extends Fragment
 
     @Override
     public void onPause() {
+        clockHandler.removeCallbacks(clockRunnable);
         super.onPause();
         if (musicManager != null) {
             musicManager.removeListener(this);
