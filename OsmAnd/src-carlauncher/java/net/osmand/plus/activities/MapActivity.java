@@ -303,6 +303,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance();
 		initManager.configureStartupProfile(this);
 		initManager.startInitTimer();
+		initManager.recordStartupEvent(this, "MAP_ACTIVITY_ONCREATE_START");
         // A fresh task uses the configured home surface. Configuration
         // recreation keeps the current user-selected mode.
         if (savedInstanceState == null) {
@@ -521,6 +522,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 				applyWidgetPanelState();
 			}
 		});
+		initManager.recordStartupEvent(this, "MAP_ACTIVITY_ONCREATE_FINISHED");
 	}
 
 	protected int getRootViewId() {

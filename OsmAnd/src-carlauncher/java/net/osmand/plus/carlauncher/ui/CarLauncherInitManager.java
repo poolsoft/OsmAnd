@@ -11,6 +11,8 @@ import net.osmand.plus.AppInitEvents;
 
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Car Launcher startup coordinator.
@@ -33,6 +35,7 @@ public class CarLauncherInitManager {
     private Context reportingContext;
     private volatile boolean indexesReady;
     private volatile boolean nativeCoreReady;
+    private final CountDownLatch mapFirstFrameLatch = new CountDownLatch(1);
     
     // Performance & Benchmark Metrics
     private long initStartTimeMs = 0;
@@ -100,6 +103,23 @@ public class CarLauncherInitManager {
 
     public void markMapActivityUiReady(Context context) {
         recordStartupEvent(context, "MAP_ACTIVITY_FIRST_FRAME");
+        mapFirstFrameLatch.countDown();
+    }
+
+    public void awaitMapFirstFrameBeforeOptionalInit(Context context, long maxWaitMs) {
+        if (!isLowRamDevice(context) || mapFirstFrameLatch.getCount() == 0L) {
+            return;
+        }
+        recordStartupEvent(context, "OPTIONAL_OSMAND_INIT_PAUSED_FOR_MAP_FRAME");
+        boolean released = false;
+        try {
+            released = mapFirstFrameLatch.await(Math.max(0L, maxWaitMs), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        recordStartupEvent(context, released
+                ? "OPTIONAL_OSMAND_INIT_RESUMED_AFTER_MAP_FRAME"
+                : "OPTIONAL_OSMAND_INIT_RESUMED_AFTER_TIMEOUT");
     }
 
     public void recordStartupEvent(Context context, String event) {

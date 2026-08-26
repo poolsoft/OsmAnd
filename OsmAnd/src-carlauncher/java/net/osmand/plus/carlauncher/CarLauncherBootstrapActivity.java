@@ -161,7 +161,10 @@ public class CarLauncherBootstrapActivity extends AppCompatActivity
         target.putExtra("car_launcher_bootstrap_reason", reason);
         startActivity(target);
         overridePendingTransition(0, 0);
-        finish();
+        // Bootstrap has its own affinity, so remove the empty transition task as well as
+        // finishing the Activity. Otherwise some head-unit ROMs retain one empty recent task
+        // for every HOME transition until their task manager becomes congested.
+        finishAndRemoveTask();
     }
 
     @Override
