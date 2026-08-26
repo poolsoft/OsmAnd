@@ -34,7 +34,8 @@ public class CarLauncherBootstrapActivity extends AppCompatActivity
     private static final long MAP_START_DEADLINE_MS = 20_000L;
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private final Runnable deadlineRunnable = () -> openMapActivity("deadline");
+    private final Runnable deadlineRunnable = () -> CarLauncherInitManager.getInstance()
+            .recordStartupTimeout(this, MAP_START_DEADLINE_MS);
     private long firstFrameTime;
     private boolean mapLaunchRequested;
     private OsmandApplication app;
@@ -102,11 +103,27 @@ public class CarLauncherBootstrapActivity extends AppCompatActivity
         }
         initListener = new AppInitializeListener() {
             @Override
+            public void onProgress(@NonNull AppInitializer init,
+                                   @NonNull net.osmand.plus.AppInitEvents event) {
+                CarLauncherInitManager manager = CarLauncherInitManager.getInstance();
+                if (manager.isCoreReady()) {
+                    openMapActivity("minimum_map_ready");
+                }
+            }
+
+            @Override
             public void onFinish(@NonNull AppInitializer init) {
-                openMapActivity("core_ready");
+                CarLauncherInitManager manager = CarLauncherInitManager.getInstance();
+                manager.markCoreReady(CarLauncherBootstrapActivity.this);
+                manager.markBackgroundReady();
+                openMapActivity("background_finished");
             }
         };
         app.checkApplicationIsBeingInitialized(initListener);
+        if (CarLauncherInitManager.getInstance().isCoreReady()) {
+            openMapActivity("minimum_map_ready_race");
+            return;
+        }
         if (!app.isApplicationInitializing()) {
             openMapActivity("ready_race");
         }
@@ -115,7 +132,8 @@ public class CarLauncherBootstrapActivity extends AppCompatActivity
     private void openMapActivity(String reason) {
         if (mapLaunchRequested || isFinishing() || isDestroyed()) return;
         long now = android.os.SystemClock.elapsedRealtime();
-        boolean coldTransition = "core_ready".equals(reason) || "deadline".equals(reason);
+        boolean coldTransition = "minimum_map_ready".equals(reason)
+                || "background_finished".equals(reason);
         long remaining = !coldTransition || firstFrameTime == 0L ? 0L
                 : MIN_SHELL_VISIBLE_MS - (now - firstFrameTime);
         if (remaining > 0L) {

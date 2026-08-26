@@ -247,6 +247,11 @@ public class OsmandApplication extends MultiDexApplication {
 		long timeToStart = System.currentTimeMillis();
 		enableStrictMode();
 		super.onCreate();
+		net.osmand.plus.carlauncher.ui.CarLauncherInitManager startupManager =
+				net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance();
+		startupManager.configureStartupProfile(this);
+		startupManager.startInitTimer();
+		startupManager.recordStartupEvent(this, "APPLICATION_ONCREATE_START");
 
 		LifecycleObserver appLifecycleObserver = new DefaultLifecycleObserver() {
 			@Override
@@ -304,6 +309,7 @@ public class OsmandApplication extends MultiDexApplication {
 
 		SearchUICore.setDebugMode(PluginsHelper.isDevelopment());
 		BackupHelper.DEBUG = true;//PluginsHelper.isDevelopment();
+		startupManager.recordStartupEvent(this, "APPLICATION_ONCREATE_FINISHED");
 	}
 
 	public boolean isPlusVersionInApp() {

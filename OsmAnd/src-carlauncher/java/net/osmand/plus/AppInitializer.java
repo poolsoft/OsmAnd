@@ -569,6 +569,8 @@ public class AppInitializer implements IProgress {
 			warnings.add(e.getMessage());
 		} finally {
 			appInitializing = false;
+			net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance()
+					.markBackgroundReady();
 			notifyFinish();
 			if (!Algorithms.isEmpty(warnings)) {
 				String warning = AndroidUtils.formatWarnings(warnings).toString();
@@ -797,6 +799,8 @@ public class AppInitializer implements IProgress {
 	}
 
 	public void notifyEvent(@NonNull AppInitEvents event) {
+		net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance()
+				.onOsmAndInitEvent(app, event);
 		if (event != TASK_CHANGED) {
 			long time = System.currentTimeMillis();
 			System.out.println("Initialized " + event + " in " + (time - startBgTime) + " ms");
@@ -856,11 +860,14 @@ public class AppInitializer implements IProgress {
 		if (applicationBgInitializing) {
 			return;
 		}
-		applicationBgInitializing = true;
-		new Thread(() -> {
-			try {
-				startApplicationBackground();
-			} finally {
+        applicationBgInitializing = true;
+        new Thread(() -> {
+            try {
+                // Keep renderer/index/native initialization from starving launcher input and
+                // first-frame work on low-core head units.
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+                startApplicationBackground();
+            } finally {
 				applicationBgInitializing = false;
 			}
 		}, "Initializing app").start();

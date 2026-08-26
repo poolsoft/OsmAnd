@@ -732,6 +732,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			}
 			net.osmand.plus.carlauncher.ui.CarLauncherInitManager initManager =
 					net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance();
+			initManager.markMapActivityUiReady(MapActivity.this);
 			initManager.markUiReady();
 			// Lazy loading is valid only while the panel is actually hidden. A
 			// visible empty container is a broken state, especially on slow units.

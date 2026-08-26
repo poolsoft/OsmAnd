@@ -7,6 +7,8 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 
+import net.osmand.plus.AppInitEvents;
+
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -28,6 +30,9 @@ public class CarLauncherInitManager {
     private volatile boolean isLauncherBackgroundWorkReleased;
     private boolean startupProfileConfigured;
     private boolean lowRamProfile;
+    private Context reportingContext;
+    private volatile boolean indexesReady;
+    private volatile boolean nativeCoreReady;
     
     // Performance & Benchmark Metrics
     private long initStartTimeMs = 0;
@@ -77,14 +82,58 @@ public class CarLauncherInitManager {
             return;
         }
         lowRamProfile = detectLowRamDevice(context.getApplicationContext());
+        reportingContext = context.getApplicationContext();
         startupProfileConfigured = true;
         Log.i(TAG, "Startup profile=" + (lowRamProfile ? "LOW_RAM" : "STANDARD"));
+        StartupPerformanceRecorder.getInstance().startSession(reportingContext, lowRamProfile);
+        StartupPerformanceRecorder.getInstance().record(reportingContext,
+                "STARTUP_PROFILE_READY " + (lowRamProfile ? "LOW_RAM" : "STANDARD"));
     }
 
     public void markUiReady() {
         if (uiReadyTimeMs == 0) {
             uiReadyTimeMs = SystemClock.elapsedRealtime();
             Log.i(TAG, "Launcher UI ready in " + getUiReadyDurationMs() + " ms");
+            recordMilestone("LAUNCHER_FIRST_FRAME");
+        }
+    }
+
+    public void markMapActivityUiReady(Context context) {
+        recordStartupEvent(context, "MAP_ACTIVITY_FIRST_FRAME");
+    }
+
+    public void recordStartupEvent(Context context, String event) {
+        if (context != null && !startupProfileConfigured) {
+            configureStartupProfile(context);
+        }
+        Context target = context != null ? context.getApplicationContext() : reportingContext;
+        if (target != null && event != null) {
+            StartupPerformanceRecorder.getInstance().record(target, event);
+        }
+    }
+
+    public void recordStartupTimeout(Context context, long timeoutMs) {
+        Context target = context != null ? context.getApplicationContext() : reportingContext;
+        if (target != null) {
+            StartupPerformanceRecorder.getInstance().recordAndFlush(target,
+                    "MINIMUM_MAP_READY_TIMEOUT after=" + timeoutMs + "ms (map launch deferred)");
+        }
+    }
+
+    public void onOsmAndInitEvent(Context context, AppInitEvents event) {
+        if (event == null) {
+            return;
+        }
+        if (event != AppInitEvents.TASK_CHANGED) {
+            recordStartupEvent(context, "OSMAND_INIT_EVENT " + event.name());
+        }
+        if (event == AppInitEvents.INDEXES_RELOADED) {
+            indexesReady = true;
+        } else if (event == AppInitEvents.NATIVE_INITIALIZED) {
+            nativeCoreReady = true;
+        }
+        if (indexesReady && nativeCoreReady) {
+            markCoreReady(context);
         }
     }
 
@@ -148,6 +197,7 @@ public class CarLauncherInitManager {
             
             long elapsedTimeMs = initStartTimeMs > 0 ? (coreReadyTimeMs - initStartTimeMs) : 0;
             double elapsedTimeSec = elapsedTimeMs / 1000.0;
+            recordMilestone("MINIMUM_MAP_CORE_READY");
 
             mainHandler.post(() -> {
                 if (elapsedTimeMs > 0) {
@@ -183,6 +233,10 @@ public class CarLauncherInitManager {
         if (!isBackgroundReady) {
             isBackgroundReady = true;
             backgroundReadyTimeMs = SystemClock.elapsedRealtime();
+            if (reportingContext != null) {
+                StartupPerformanceRecorder.getInstance().recordAndFlush(reportingContext,
+                        "OSMAND_BACKGROUND_INIT_FINISHED");
+            }
         }
         mainHandler.removeCallbacks(lowRamCoreGraceRunnable);
         releaseLauncherBackgroundWork("osmand_background_ready");
@@ -243,6 +297,12 @@ public class CarLauncherInitManager {
             }
             backgroundWorkListeners.clear();
         });
+    }
+
+    private void recordMilestone(String event) {
+        if (reportingContext != null) {
+            StartupPerformanceRecorder.getInstance().record(reportingContext, event);
+        }
     }
 
     // --- Statistics Helper Methods ---
