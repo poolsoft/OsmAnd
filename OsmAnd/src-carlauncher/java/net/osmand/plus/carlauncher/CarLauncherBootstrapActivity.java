@@ -47,6 +47,13 @@ public class CarLauncherBootstrapActivity extends AppCompatActivity
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         CarLauncherInitManager initManager = CarLauncherInitManager.getInstance();
+        // When music keeps the process alive, the OsmAnd core and usually the map task are
+        // already warm. Skip rebuilding the temporary launcher shell and route HOME directly
+        // to the one canonical MapActivity task.
+        if (initManager.isCoreReady()) {
+            openMapActivity("warm_home");
+            return;
+        }
         initManager.configureStartupProfile(this);
         initManager.startInitTimer();
         setContentView(R.layout.activity_car_launcher);
@@ -124,9 +131,15 @@ public class CarLauncherBootstrapActivity extends AppCompatActivity
         if (app == null || !app.isApplicationInitializing()) {
             CarLauncherInitManager.getInstance().markCoreReady(this);
         }
-        Intent target = new Intent(getIntent());
-        target.setClass(this, MapActivity.class);
-        target.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        // Do not forward the HOME/LAUNCHER intent categories or vendor flags to MapActivity.
+        // Several head-unit ROMs treat that copied intent as a new launcher task even though
+        // MapActivity is singleTask, leaving an empty bootstrap card in recents each time HOME
+        // is pressed. Always address the canonical map task with a clean explicit intent.
+        Intent target = new Intent(this, MapActivity.class);
+        target.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                | Intent.FLAG_ACTIVITY_NO_ANIMATION);
         target.putExtra("car_launcher_bootstrap_reason", reason);
         startActivity(target);
         overridePendingTransition(0, 0);
