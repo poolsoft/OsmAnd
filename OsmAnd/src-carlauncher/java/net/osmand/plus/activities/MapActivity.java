@@ -714,8 +714,14 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		embedAppDock();
 		scheduleWidgetPanelStartup();
 
-		// 6. Check for permissions
-		checkOverlayPermission();
+		// Permission dialogs are not startup-critical and can block the first map frame on
+		// slow head units. Ask only after OsmAnd has released launcher background work.
+		net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance()
+				.addLauncherBackgroundReadyListener(() -> {
+					if (!isFinishing() && !isDestroyed()) {
+						checkOverlayPermission();
+					}
+				});
 
 		// Gece karartma overlay kontrolu (Turkce karakter yok)
 		applyNightDimMode();

@@ -544,11 +544,17 @@ public class AppInitializer implements IProgress {
 			app.travelRendererHelper.updateVisibilityPrefs();
 			notifyEvent(TRAVEL_INITIALIZED);
 			// native depends on renderers
-			initNativeCore();
+			net.osmand.plus.carlauncher.ui.CarLauncherInitManager initManager =
+					net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance();
+			initManager.beginNativeCorePriorityWindow(app, 1_500L);
+			try {
+				initNativeCore();
+			} finally {
+				initManager.endNativeCorePriorityWindow(app);
+			}
 			// On constrained head units, give MapActivity a bounded exclusive window for
 			// its first frame before favorites/GPX/POI/search resume disk and CPU work.
-			net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance()
-					.awaitMapFirstFrameBeforeOptionalInit(app, 8_000L);
+			initManager.awaitMapFirstFrameBeforeOptionalInit(app, 8_000L);
 			app.favoritesHelper.loadFavorites();
 			notifyEvent(FAVORITES_INITIALIZED);
 			app.getGpxDbHelper().loadItemsBlocking();
