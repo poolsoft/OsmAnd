@@ -11,8 +11,6 @@ import net.osmand.plus.AppInitEvents;
 
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Car Launcher startup coordinator.
@@ -35,8 +33,6 @@ public class CarLauncherInitManager {
     private Context reportingContext;
     private volatile boolean indexesReady;
     private volatile boolean nativeCoreReady;
-    private final CountDownLatch launcherFirstFrameLatch = new CountDownLatch(1);
-    private final CountDownLatch mapFirstFrameLatch = new CountDownLatch(1);
     
     // Performance & Benchmark Metrics
     private long initStartTimeMs = 0;
@@ -100,71 +96,10 @@ public class CarLauncherInitManager {
             Log.i(TAG, "Launcher UI ready in " + getUiReadyDurationMs() + " ms");
             recordMilestone("LAUNCHER_FIRST_FRAME");
         }
-        launcherFirstFrameLatch.countDown();
     }
 
     public void markMapActivityUiReady(Context context) {
         recordStartupEvent(context, "MAP_ACTIVITY_FIRST_FRAME");
-        mapFirstFrameLatch.countDown();
-    }
-
-    public void awaitMapFirstFrameBeforeOptionalInit(Context context, long maxWaitMs) {
-        if (!isLowRamDevice(context) || mapFirstFrameLatch.getCount() == 0L) {
-            return;
-        }
-        recordStartupEvent(context, "OPTIONAL_OSMAND_INIT_PAUSED_FOR_MAP_FRAME");
-        boolean released = false;
-        try {
-            released = mapFirstFrameLatch.await(Math.max(0L, maxWaitMs), TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        recordStartupEvent(context, released
-                ? "OPTIONAL_OSMAND_INIT_RESUMED_AFTER_MAP_FRAME"
-                : "OPTIONAL_OSMAND_INIT_RESUMED_AFTER_TIMEOUT");
-    }
-
-    /**
-     * Keeps the initialization worker out of the foreground until the launcher shell has
-     * produced a frame, then gives only native-core creation normal CPU priority. This avoids
-     * both extremes seen on low-end units: a frozen launcher at boot or a needlessly throttled
-     * native core that keeps the map unavailable for many seconds.
-     */
-    public void beginNativeCorePriorityWindow(Context context, long maxWaitMs) {
-        if (!isLowRamDevice(context)) {
-            return;
-        }
-        if (launcherFirstFrameLatch.getCount() != 0L) {
-            recordStartupEvent(context, "NATIVE_CORE_WAITING_FOR_LAUNCHER_FRAME");
-            boolean released = false;
-            try {
-                released = launcherFirstFrameLatch.await(Math.max(0L, maxWaitMs),
-                        TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            recordStartupEvent(context, released
-                    ? "NATIVE_CORE_LAUNCHER_FRAME_READY"
-                    : "NATIVE_CORE_LAUNCHER_FRAME_TIMEOUT");
-        }
-        try {
-            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DEFAULT);
-            recordStartupEvent(context, "NATIVE_CORE_PRIORITY_FOREGROUND");
-        } catch (RuntimeException e) {
-            Log.w(TAG, "Unable to raise native-core worker priority", e);
-        }
-    }
-
-    public void endNativeCorePriorityWindow(Context context) {
-        if (!isLowRamDevice(context)) {
-            return;
-        }
-        try {
-            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-            recordStartupEvent(context, "NATIVE_CORE_PRIORITY_BACKGROUND");
-        } catch (RuntimeException e) {
-            Log.w(TAG, "Unable to restore startup worker priority", e);
-        }
     }
 
     public void recordStartupEvent(Context context, String event) {

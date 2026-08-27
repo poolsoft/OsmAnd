@@ -322,6 +322,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		setRequestedOrientation(AndroidUiHelper.getScreenOrientation(this));
 		net.osmand.plus.plugins.PluginsHelper.registerPlugin(new net.osmand.plus.carlauncher.antenna.AntennaPlugin(app));
 		super.onCreate(savedInstanceState);
+		initManager.recordStartupEvent(this, "MAP_ACTIVITY_BASE_ONCREATE_FINISHED");
 
 		// Orijinal dosyalara dokunmadan Plus ozelliklerini kalici olarak aktif et (Turkce karakter yok)
 		app.getSettings().FULL_VERSION_PURCHASED.set(true);
@@ -339,6 +340,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
         
         // V8: Initialize Car Launcher UI AFTER window setup
 	    setupCarLauncherUI();
+		initManager.recordStartupEvent(this, "MAP_ACTIVITY_LAUNCHER_SHELL_CREATED");
 
 
 		// Car Launcher Specific Header
@@ -458,12 +460,14 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			}
 		}
 		PluginsHelper.onMapActivityCreate(this);
+		initManager.recordStartupEvent(this, "MAP_ACTIVITY_LAYERS_AND_PLUGINS_READY");
 		importHelper = app.getImportHelper();
 		importHelper.setUiActivity(this);
 		if (System.currentTimeMillis() - time > 50) {
 			LOG.error("OnCreate for MapActivity took " + (System.currentTimeMillis() - time) + " ms");
 		}
 		mapView.refreshMap(true);
+		initManager.recordStartupEvent(this, "MAP_ACTIVITY_INITIAL_REFRESH_REQUESTED");
 
 		drawerLayout = findViewById(R.id.drawer_layout);
 		mapViewWithLayers = findViewById(R.id.map_view_with_layers);
@@ -514,6 +518,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			mapViewWithLayers.onCreate(savedInstanceState);
 		}
 		extendedMapActivity.onCreate(this, savedInstanceState);
+		initManager.recordStartupEvent(this, "MAP_ACTIVITY_COMPONENTS_READY");
 
 		// CarLauncher: Listen for settings changes via backstack
 		getSupportFragmentManager().addOnBackStackChangedListener(() -> {
