@@ -95,7 +95,7 @@ public class CollatorStringMatcher implements StringMatcher {
 			}
 		}
 		if (alignPart) {
-			part = alignChars(part);
+			part = SearchAlgorithms.alignChars(part);
 		}
 		if (alignFull) {
 			// FUTURE: This is not effective code, it runs on each comparison
@@ -239,14 +239,7 @@ public class CollatorStringMatcher implements StringMatcher {
 		fullText = fullText.replace('ı', 'i').replace('İ', 'i').replace('ş', 's').replace('Ş', 's')
 				.replace('ğ', 'g').replace('Ğ', 'g').replace('ü', 'u').replace('Ü', 'u')
 				.replace('ö', 'o').replace('Ö', 'o').replace('ç', 'c').replace('Ç', 'c').replace('I', 'i');
-				
-		if (ArabicNormalizer.isSpecialArabic(fullText)) {
-			String normalized = ArabicNormalizer.normalize(fullText);
-			fullText = normalized == null ? fullText : normalized;
-		}
-		fullText = SearchAlgorithms.removeApostrophes(fullText);
-		fullText = SearchAlgorithms.replaceGermanSS(fullText);
-		fullText = UnicodeDiacritics.getInstance().stripDiacritics(fullText);
+		fullText = SearchAlgorithms.alignChars(fullText);
 		return fullText;
 	}
 

@@ -45,7 +45,7 @@ public class SearchAlgorithms {
         return new CodePointPrefixMatch(leftOffset, rightOffset, commonPrefixCodePointLength);
     }
 
-    private static List<String> split(String name) {
+    public static List<String> split(String name) {
         int prev = -1;
         List<String> namesToAdd = new ArrayList<String>();
         for (int i = 0; i <= name.length(); ) {
@@ -170,6 +170,18 @@ public class SearchAlgorithms {
         }
         return s.replace("«", "").replace("»", "");
     }
+    
+    public static String alignChars(String fullText) {
+		if (ArabicNormalizer.isSpecialArabic(fullText)) {
+			String normalized = ArabicNormalizer.normalize(fullText);
+			fullText = normalized == null ? fullText : normalized;
+		}
+		fullText = removeApostrophes(fullText);
+		fullText = replaceGermanSS(fullText);
+		fullText = removeQuotes(fullText);
+		fullText = UnicodeDiacritics.getInstance().stripDiacritics(fullText);
+		return fullText;
+	}
     
     public static String removeApostrophes(String s) {
         if (!Algorithms.containsChar(s, APOSTROPHES)) {
@@ -296,7 +308,7 @@ public class SearchAlgorithms {
         return fullText;
     }
 
-	public static void removeCommonWords(List<String> names) {
+	public static void removeCommonWords(CommonWords cw, List<String> names) {
 		// remove all common words (most common delete first) but leave at least 1
 		int pos = 0;
 		while (names.size() > 1 && pos != -1) {
@@ -304,7 +316,7 @@ public class SearchAlgorithms {
 			pos = -1;
 			for (int k = 0; k < names.size(); k++) {
 				String word = names.get(k);
-				int prio = CommonWords.getCommon(word);
+				int prio = cw.getCommon(word);
 				if (Abbreviations.isConjunction(word)) {
 					prio = 0;
 				}
@@ -383,6 +395,10 @@ public class SearchAlgorithms {
 		if(name == null || name.length() == 0) {
 			return false;
 		}
+		return startsWithDigit(name) && letters(name) < 2;
+	}
+
+	public static boolean startsWithDigit(String name) {
 		// it used to be inconcinstent check for Character.isDigit(name.charAt(0)) - '#3'
 		boolean startsWithDigit = false;
 		for (int i = 0; i < name.length(); i++) {
@@ -393,7 +409,7 @@ public class SearchAlgorithms {
 				break;
 			}
 		}
-		return startsWithDigit && letters(name) < 2;
+		return startsWithDigit;
 	}	
 	
 	// Split '18B', '18/B', '18-B', '18 B' -> ['18', 'B'] - for duplicates list filled in (check list.size() > set)
@@ -442,6 +458,6 @@ public class SearchAlgorithms {
 		}
 		return resultSet;
 	}
-	
+
 }
 
