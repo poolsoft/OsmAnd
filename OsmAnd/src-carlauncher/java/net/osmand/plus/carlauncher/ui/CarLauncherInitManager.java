@@ -11,6 +11,11 @@ import net.osmand.plus.AppInitEvents;
 
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 
 /**
  * Car Launcher startup coordinator.
@@ -33,6 +38,8 @@ public class CarLauncherInitManager {
     private Context reportingContext;
     private volatile boolean indexesReady;
     private volatile boolean nativeCoreReady;
+    private final CountDownLatch launcherFirstFrameLatch = new CountDownLatch(1);
+    private final CountDownLatch mapFirstFrameLatch = new CountDownLatch(1);
     
     // Performance & Benchmark Metrics
     private long initStartTimeMs = 0;
@@ -96,10 +103,80 @@ public class CarLauncherInitManager {
             Log.i(TAG, "Launcher UI ready in " + getUiReadyDurationMs() + " ms");
             recordMilestone("LAUNCHER_FIRST_FRAME");
         }
+        launcherFirstFrameLatch.countDown();
     }
 
     public void markMapActivityUiReady(Context context) {
         recordStartupEvent(context, "MAP_ACTIVITY_FIRST_FRAME");
+        mapFirstFrameLatch.countDown();
+    }
+
+    public void awaitMapFirstFrameBeforeRegionIndex(Context context, long maxWaitMs) {
+        if (!isLowRamDevice(context) || mapFirstFrameLatch.getCount() == 0L) {
+            return;
+        }
+        recordStartupEvent(context, "REGION_INDEX_WAITING_FOR_MAP_FRAME");
+        boolean released = awaitLatch(mapFirstFrameLatch, maxWaitMs);
+        recordStartupEvent(context, released
+                ? "REGION_INDEX_RESUMED_AFTER_MAP_FRAME"
+                : "REGION_INDEX_RESUMED_AFTER_TIMEOUT");
+    }
+
+    public void awaitLowRamBootSettling(Context context, long maxWaitMs) {
+        if (!isLowRamDevice(context)
+                || SystemClock.elapsedRealtime() > TimeUnit.MINUTES.toMillis(3)) {
+            return;
+        }
+        long deadline = SystemClock.elapsedRealtime() + Math.max(0L, maxWaitMs);
+        recordStartupEvent(context, "BOOT_SETTLE_GUARD_STARTED");
+        awaitLatch(launcherFirstFrameLatch, Math.min(maxWaitMs, 6_000L));
+
+        int stableSamples = 0;
+        while (SystemClock.elapsedRealtime() < deadline && stableSamples < 2) {
+            boolean memoryReady = hasBootMemoryHeadroom(context);
+            boolean loadReady = getNormalizedSystemLoad() <= 1.5d;
+            stableSamples = memoryReady && loadReady ? stableSamples + 1 : 0;
+            if (stableSamples < 2) {
+                SystemClock.sleep(500L);
+            }
+        }
+        recordStartupEvent(context, stableSamples >= 2
+                ? "BOOT_SETTLE_GUARD_RELEASED_STABLE"
+                : "BOOT_SETTLE_GUARD_RELEASED_TIMEOUT");
+    }
+
+    private boolean awaitLatch(CountDownLatch latch, long maxWaitMs) {
+        try {
+            return latch.await(Math.max(0L, maxWaitMs), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+
+    private boolean hasBootMemoryHeadroom(Context context) {
+        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        if (am == null) {
+            return true;
+        }
+        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
+        am.getMemoryInfo(memoryInfo);
+        return !memoryInfo.lowMemory && (memoryInfo.totalMem <= 0L
+                || memoryInfo.availMem * 10L >= memoryInfo.totalMem * 3L);
+    }
+
+    private double getNormalizedSystemLoad() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("/proc/loadavg"))) {
+            String line = reader.readLine();
+            if (line == null) {
+                return 0d;
+            }
+            String[] values = line.trim().split("\\s+");
+            double oneMinuteLoad = Double.parseDouble(values[0]);
+            return oneMinuteLoad / Math.max(1, Runtime.getRuntime().availableProcessors());
+        } catch (IOException | NumberFormatException e) {
+            return 0d;
+        }
     }
 
     public void recordStartupEvent(Context context, String event) {
