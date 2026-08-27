@@ -36,7 +36,7 @@ import net.osmand.plus.download.IndexItem;
 import net.osmand.plus.helpers.AndroidUiHelper;
 import net.osmand.plus.plugins.accessibility.AccessibilityAssistant;
 import net.osmand.plus.poi.PoiUIFilter;
-import net.osmand.plus.search.CityStructureItemViewHolder;
+import net.osmand.plus.search.MapObjectViewHolder;
 import net.osmand.plus.search.SearchResultViewHolder;
 import net.osmand.plus.search.WikiItemViewHolder;
 import net.osmand.plus.search.listitems.*;
@@ -105,6 +105,13 @@ public class QuickSearchListAdapter extends ArrayAdapter<QuickSearchListItem> {
 		bigDividerMargin = AndroidUtils.dpToPx(app, 72);
 		dp1 = AndroidUtils.dpToPx(app, 1f);
 		updateLocationViewCache = UpdateLocationUtils.getUpdateLocationViewCache(activity);
+	}
+
+	/**
+	 * Kept in sync with the upstream adapter lifecycle. This launcher override does
+	 * not own a track metadata resolver, so there is currently nothing to release.
+	 */
+	public void release() {
 	}
 
 	public void setAccessibilityAssistant(AccessibilityAssistant accessibilityAssistant) {
@@ -462,9 +469,9 @@ public class QuickSearchListAdapter extends ArrayAdapter<QuickSearchListItem> {
 
 	private LinearLayout bindAdministrativeItem(@Nullable View convertView, @NonNull QuickSearchListItem item) {
 		LinearLayout view = getLinearLayout(convertView, R.layout.search_list_item_administrative);
-		CityStructureItemViewHolder viewHolder = (CityStructureItemViewHolder) view.getTag(R.id.view_holder_as_tag);
+		MapObjectViewHolder viewHolder = (MapObjectViewHolder) view.getTag(R.id.view_holder_as_tag);
 		if (viewHolder == null) {
-			viewHolder = new CityStructureItemViewHolder(view, updateLocationViewCache);
+			viewHolder = new MapObjectViewHolder(view, updateLocationViewCache);
 			view.setTag(R.id.view_holder_as_tag, viewHolder);
 		}
 		viewHolder.setNightMode(nightMode);
@@ -604,18 +611,18 @@ public class QuickSearchListAdapter extends ArrayAdapter<QuickSearchListItem> {
 			if (listItem.getType() == QuickSearchListItemType.DISABLED_HISTORY) {
 				view.setBackgroundColor(ColorUtilities.getActivityBgColor(app, nightMode));
 			} else if (position == getCount() - 1) {
-				view.setBackgroundResource(R.drawable.bg_quick_search_explore_card_bottom);
+				view.setBackgroundResource(R.drawable.bg_list_card_bottom_round);
 			} else {
 				view.setBackgroundColor(ColorUtilities.getListBgColor(app, nightMode));
 			}
 			return;
 		}
 		if (position == 0 && getCount() == 1) {
-			view.setBackgroundResource(R.drawable.bg_quick_search_explore_card);
+			view.setBackgroundResource(R.drawable.bg_list_card_round);
 		} else if (position == 0) {
-			view.setBackgroundResource(R.drawable.bg_quick_search_explore_card_top);
+			view.setBackgroundResource(R.drawable.bg_list_card_top_round);
 		} else if (position == getCount() - 1) {
-			view.setBackgroundResource(R.drawable.bg_quick_search_explore_card_bottom);
+			view.setBackgroundResource(R.drawable.bg_list_card_bottom_round);
 		} else {
 			view.setBackgroundColor(ColorUtilities.getListBgColor(app, nightMode));
 		}
@@ -692,15 +699,31 @@ public class QuickSearchListAdapter extends ArrayAdapter<QuickSearchListItem> {
 
 	public static void updateCompass(@NonNull View view, @NonNull QuickSearchListItem item,
 	                                 @NonNull UpdateLocationViewCache updateLocationViewCache, boolean useMapCenter) {
-		boolean showCompass = item.getSearchResult().location != null;
+		SearchResult searchResult = item.getSearchResult();
+		updateCompass(view, item, updateLocationViewCache, useMapCenter,
+				searchResult != null ? searchResult.location : null);
+	}
+
+	public static void updateCompass(@NonNull View view, @NonNull QuickSearchListItem item,
+	                                 @NonNull UpdateLocationViewCache updateLocationViewCache,
+	                                 boolean useMapCenter, @Nullable LatLon location) {
+		boolean showCompass = location != null && !item.isSpatialCategorySearchResult();
 		if (showCompass) {
-			updateLocationView(view, item, updateLocationViewCache, useMapCenter);
+			updateLocationView(view, item, updateLocationViewCache, useMapCenter, location);
 		}
 		AndroidUiHelper.updateVisibility(view.findViewById(R.id.compass_layout), showCompass);
 	}
 
 	public static void updateLocationView(@NonNull View view, @NonNull QuickSearchListItem item,
 	                                      @NonNull UpdateLocationViewCache updateLocationViewCache, boolean useMapCenter) {
+		SearchResult searchResult = item.getSearchResult();
+		updateLocationView(view, item, updateLocationViewCache, useMapCenter,
+				searchResult != null ? searchResult.location : null);
+	}
+
+	public static void updateLocationView(@NonNull View view, @NonNull QuickSearchListItem item,
+	                                      @NonNull UpdateLocationViewCache updateLocationViewCache,
+	                                      boolean useMapCenter, @Nullable LatLon location) {
 		OsmandApplication app = AndroidUtils.getApp(view.getContext());
 		TextView distanceText = view.findViewById(R.id.distance);
 		ImageView direction = view.findViewById(R.id.direction);
@@ -709,11 +732,7 @@ public class QuickSearchListAdapter extends ArrayAdapter<QuickSearchListItem> {
 		if (phrase != null && useMapCenter) {
 			updateLocationViewCache.specialFrom = phrase.getSettings().getOriginalLocation();
 		}
-		LatLon toloc = null;
-		if (item.getSearchResult() != null) {
-			toloc = item.getSearchResult().location;
-		}
-		UpdateLocationUtils.updateLocationView(app, updateLocationViewCache, direction, distanceText, toloc);
+		UpdateLocationUtils.updateLocationView(app, updateLocationViewCache, direction, distanceText, location);
 	}
 
 	public void setPoiUIFilter(@Nullable PoiUIFilter poiUIFilter) {

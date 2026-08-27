@@ -17,6 +17,7 @@ import net.osmand.Location;
 import net.osmand.PlatformUtil;
 import net.osmand.ResultMatcher;
 import net.osmand.binary.RouteDataObject;
+import net.osmand.data.Amenity;
 import net.osmand.data.BackgroundType;
 import net.osmand.data.FavouritePoint;
 import net.osmand.data.LatLon;
@@ -24,6 +25,7 @@ import net.osmand.data.SpecialPointType;
 import net.osmand.plus.GeocodingLookupService.AddressLookupRequest;
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
+import net.osmand.plus.helpers.AmenityExtensionsHelper;
 import net.osmand.plus.mapmarkers.MapMarkersGroup;
 import net.osmand.plus.mapmarkers.MapMarkersHelper;
 import net.osmand.plus.myplaces.favorites.FavoriteDeletionsJournal.ReadResult;
@@ -32,6 +34,7 @@ import net.osmand.plus.myplaces.favorites.add.AddFavoriteResult;
 import net.osmand.plus.myplaces.favorites.dialogs.FavoriteSortModesHelper;
 import net.osmand.plus.plugins.PluginsHelper;
 import net.osmand.plus.plugins.parking.ParkingPositionPlugin;
+import net.osmand.plus.render.RenderingIcons;
 import net.osmand.plus.track.helpers.GpxDisplayGroup;
 import net.osmand.plus.track.helpers.GpxDisplayItem;
 import net.osmand.plus.utils.ColorUtilities;
@@ -49,6 +52,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -341,7 +345,7 @@ public class FavouritesHelper {
 			if (fp.getBackgroundType() == FavouritePoint.DEFAULT_BACKGROUND_TYPE) {
 				fp.setBackgroundType(null);
 			}
-			if (fp.getIconIdOrDefault() == FavouritePoint.DEFAULT_UI_ICON_ID) {
+			if (fp.getIconIdOrDefault(app) == FavouritePoint.DEFAULT_UI_ICON_ID) {
 				fp.setIconId(0);
 			}
 			FavoriteGroup group = getOrCreateGroup(fp);
@@ -893,7 +897,7 @@ public class FavouritesHelper {
 		Map<String, FavoriteGroup> tmpFlatGroups = new LinkedHashMap<>(flatGroups);
 		tmpFlatGroups.put(group.getName(), group);
 		flatGroups = tmpFlatGroups;
-		if (FavoriteGroup.isBaseFavoriteOrPersonalGroup(group.getName())){
+		if (FavoriteGroup.isBaseFavoriteOrPersonalGroup(group.getName())) {
 			group.setPinned(true);
 		}
 		invalidateFavoriteFolderCache();
@@ -1055,11 +1059,15 @@ public class FavouritesHelper {
 		updateGroupColor(group, color, saveOption, saveImmediately);
 	}
 
-	public void updateGroupIconName(@NonNull FavoriteGroup group, @NonNull String iconName,
+	public void updateGroupIconName(@NonNull FavoriteGroup group, @Nullable String iconName,
 	                                @NonNull SaveOption saveOption, boolean saveImmediately) {
 		if (saveOption.shouldUpdatePoints()) {
 			for (FavouritePoint point : group.getPoints()) {
-				point.setIconIdFromName(iconName);
+				if (Algorithms.isEmpty(iconName)) {
+					point.setIconId(getOriginalIconId(point));
+				} else {
+					point.setIconIdFromName(iconName);
+				}
 			}
 		}
 		if (saveOption.shouldUpdateGroup()) {
@@ -1069,6 +1077,19 @@ public class FavouritesHelper {
 		if (saveImmediately) {
 			saveCurrentPointsIntoFile(true);
 		}
+	}
+
+	@DrawableRes
+	public int getOriginalIconId(@NonNull FavouritePoint point) {
+		String originName = point.getAmenityOriginName();
+		if (!Algorithms.isEmpty(originName)) {
+			AmenityExtensionsHelper helper = new AmenityExtensionsHelper(app);
+			Amenity amenity = helper.findAmenity(originName, point.getLatitude(), point.getLongitude());
+			if (amenity != null) {
+				return RenderingIcons.getPreselectedIconId(app, amenity);
+			}
+		}
+		return 0;
 	}
 
 	public void updateGroupIconName(@NonNull FavoriteGroup group, @NonNull String iconName,
@@ -1238,6 +1259,182 @@ public class FavouritesHelper {
 			saveCurrentPointsIntoFile(true);
 		}
 		return true;
+	}
+
+	public boolean moveFavoriteFolderSubtrees(@NonNull List<String> sourcePaths,
+	                                          @NonNull String destinationPath,
+	                                          boolean saveImmediately) {
+		FavoriteFolderPath.requireValidFullPath(destinationPath);
+		List<String> rootPaths = getTopLevelFavoriteFolderPaths(sourcePaths);
+		if (Algorithms.isEmpty(rootPaths)
+				|| (!Algorithms.isEmpty(destinationPath) && getFavoriteFolder(destinationPath) == null)) {
+			return false;
+		}
+
+		Map<String, String> folderPathChanges = new LinkedHashMap<>();
+		Map<FavoriteGroup, String> groupNameChanges = new LinkedHashMap<>();
+		Set<String> sourceFolderPaths = new HashSet<>();
+		return collectFavoriteFolderMoveChanges(rootPaths, destinationPath, folderPathChanges,
+				sourceFolderPaths, groupNameChanges)
+				&& !hasFavoriteFolderMoveConflict(folderPathChanges, sourceFolderPaths)
+				&& applyFavoriteFolderMove(groupNameChanges, saveImmediately);
+	}
+
+	private boolean collectFavoriteFolderMoveChanges(@NonNull List<String> sourcePaths,
+	                                                 @NonNull String destinationPath,
+	                                                 @NonNull Map<String, String> folderPathChanges,
+	                                                 @NonNull Set<String> sourceFolderPaths,
+	                                                 @NonNull Map<FavoriteGroup, String> groupNameChanges) {
+		for (String sourcePath : sourcePaths) {
+			if (!collectFavoriteFolderMoveChanges(sourcePath, destinationPath, folderPathChanges,
+					sourceFolderPaths, groupNameChanges)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private boolean collectFavoriteFolderMoveChanges(@NonNull String sourcePath,
+	                                                 @NonNull String destinationPath,
+	                                                 @NonNull Map<String, String> folderPathChanges,
+	                                                 @NonNull Set<String> sourceFolderPaths,
+	                                                 @NonNull Map<FavoriteGroup, String> groupNameChanges) {
+		if (Algorithms.isEmpty(sourcePath)
+				|| FavoriteFolderPath.isDescendantOrSelf(destinationPath, sourcePath)) {
+			return false;
+		}
+		List<FavoriteFolder> sourceFolders = getFavoriteFoldersInSubtree(sourcePath);
+		if (Algorithms.isEmpty(sourceFolders)) {
+			return false;
+		}
+		String sourceName = FavoriteFolderPath.lastSegment(sourcePath);
+		String targetRootPath = Algorithms.isEmpty(destinationPath)
+				? sourceName
+				: destinationPath + FavoriteFolderPath.DELIMITER + sourceName;
+		for (FavoriteFolder sourceFolder : sourceFolders) {
+			String oldFolderPath = sourceFolder.getFullPath();
+			String newFolderPath = FavoriteFolderPath.replacePathPrefix(
+					oldFolderPath, sourcePath, targetRootPath);
+			sourceFolderPaths.add(oldFolderPath);
+			folderPathChanges.put(oldFolderPath, newFolderPath);
+			FavoriteGroup sourceGroup = sourceFolder.getGroup();
+			if (sourceGroup != null) {
+				groupNameChanges.put(sourceGroup, newFolderPath);
+			}
+		}
+		return true;
+	}
+
+	private boolean hasFavoriteFolderMoveConflict(@NonNull Map<String, String> folderPathChanges,
+	                                              @NonNull Set<String> sourceFolderPaths) {
+		Set<String> targetFolderPaths = new HashSet<>();
+		for (Map.Entry<String, String> change : folderPathChanges.entrySet()) {
+			String oldFolderPath = change.getKey();
+			String newFolderPath = change.getValue();
+			if (!targetFolderPaths.add(newFolderPath)) {
+				return true;
+			}
+			FavoriteFolder existingFolder = getFavoriteFolder(newFolderPath);
+			if (existingFolder != null
+					&& !Algorithms.stringsEqual(oldFolderPath, newFolderPath)
+					&& !sourceFolderPaths.contains(newFolderPath)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean applyFavoriteFolderMove(@NonNull Map<FavoriteGroup, String> groupNameChanges,
+	                                        boolean saveImmediately) {
+		List<FavoriteGroup> changedGroups = getChangedFavoriteGroups(groupNameChanges);
+		if (changedGroups.isEmpty()) {
+			return true;
+		}
+		Map<String, FavoriteGroup> updatedFlatGroups = new LinkedHashMap<>(flatGroups);
+		List<FavoriteGroup> groupsInMarkers = new ArrayList<>();
+		boolean updateLauncherShortcuts = prepareFavoriteGroupsForMove(
+				changedGroups, updatedFlatGroups, groupsInMarkers);
+		applyFavoriteGroupNameChanges(groupNameChanges, updatedFlatGroups);
+		flatGroups = updatedFlatGroups;
+		restoreFavoriteGroupsInMarkers(groupsInMarkers);
+		if (updateLauncherShortcuts) {
+			app.getLauncherShortcutsHelper().updateLauncherShortcuts();
+		}
+		sortAll();
+		invalidateFavoriteFolderCache();
+		if (saveImmediately) {
+			saveCurrentPointsIntoFile(true);
+		}
+		return true;
+	}
+
+	@NonNull
+	private List<FavoriteGroup> getChangedFavoriteGroups(@NonNull Map<FavoriteGroup, String> groupNameChanges) {
+		List<FavoriteGroup> changedGroups = new ArrayList<>();
+		for (Map.Entry<FavoriteGroup, String> change : groupNameChanges.entrySet()) {
+			if (!Algorithms.stringsEqual(change.getKey().getName(), change.getValue())) {
+				changedGroups.add(change.getKey());
+			}
+		}
+		return changedGroups;
+	}
+
+	private boolean prepareFavoriteGroupsForMove(@NonNull List<FavoriteGroup> changedGroups,
+	                                             @NonNull Map<String, FavoriteGroup> updatedFlatGroups,
+	                                             @NonNull List<FavoriteGroup> groupsInMarkers) {
+		boolean updateLauncherShortcuts = false;
+		for (FavoriteGroup group : changedGroups) {
+			updatedFlatGroups.remove(group.getName());
+			if (removeFromMarkers(group)) {
+				groupsInMarkers.add(group);
+			}
+			updateLauncherShortcuts |= group.isPersonal();
+		}
+		return updateLauncherShortcuts;
+	}
+
+	private void applyFavoriteGroupNameChanges(@NonNull Map<FavoriteGroup, String> groupNameChanges,
+	                                           @NonNull Map<String, FavoriteGroup> updatedFlatGroups) {
+		for (Map.Entry<FavoriteGroup, String> change : groupNameChanges.entrySet()) {
+			FavoriteGroup group = change.getKey();
+			String newName = change.getValue();
+			if (!Algorithms.stringsEqual(group.getName(), newName)) {
+				group.setName(newName);
+				for (FavouritePoint point : group.getPoints()) {
+					point.setCategory(newName);
+				}
+			}
+			updatedFlatGroups.put(newName, group);
+		}
+	}
+
+	private void restoreFavoriteGroupsInMarkers(@NonNull List<FavoriteGroup> groupsInMarkers) {
+		for (FavoriteGroup group : groupsInMarkers) {
+			addToMarkers(group);
+		}
+	}
+
+	@NonNull
+	private List<String> getTopLevelFavoriteFolderPaths(@NonNull List<String> sourcePaths) {
+		Set<String> uniquePaths = new LinkedHashSet<>(sourcePaths);
+		List<String> rootPaths = new ArrayList<>();
+		for (String sourcePath : uniquePaths) {
+			if (!FavoriteFolderPath.isValidFullPath(sourcePath)) {
+				return Collections.emptyList();
+			}
+			boolean nestedUnderSelection = false;
+			for (String otherPath : uniquePaths) {
+				if (!Algorithms.stringsEqual(sourcePath, otherPath)
+						&& FavoriteFolderPath.isDescendantOrSelf(sourcePath, otherPath)) {
+					nestedUnderSelection = true;
+					break;
+				}
+			}
+			if (!nestedUnderSelection) {
+				rootPaths.add(sourcePath);
+			}
+		}
+		return rootPaths;
 	}
 
 	@NonNull

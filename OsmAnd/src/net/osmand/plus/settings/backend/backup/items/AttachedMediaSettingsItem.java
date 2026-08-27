@@ -7,14 +7,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import net.osmand.IProgress;
-import net.osmand.IndexConstants;
 import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
 import net.osmand.plus.plugins.PluginsHelper;
+import net.osmand.plus.plugins.audionotes.Recording;
 import net.osmand.plus.settings.backend.backup.SettingsHelper;
 import net.osmand.plus.settings.backend.backup.SettingsItemWriter;
 import net.osmand.plus.settings.mediastorage.MediaSource;
 import net.osmand.shared.media.LinkMediaFactory;
+import net.osmand.shared.media.MediaFileNameFormat;
 import net.osmand.util.Algorithms;
 
 import java.io.File;
@@ -32,14 +33,10 @@ public class AttachedMediaSettingsItem extends FileSettingsItem {
 	private final String rewrittenHref;
 
 	public AttachedMediaSettingsItem(@NonNull OsmandApplication app, @NonNull MediaSource source, @NonNull String targetFileName) throws IllegalArgumentException {
-		super(app, new File(app.getAppPath(IndexConstants.AV_INDEX_DIR), targetFileName));
+		super(app, new File(app.getAppPath(FileSubtype.ATTACHED_MEDIA.getSubtypeFolder()), targetFileName));
 		this.source = source;
 		this.subtype = FileSubtype.ATTACHED_MEDIA;
 		this.rewrittenHref = LinkMediaFactory.createInternalMediaUri(targetFileName);
-
-		for (String key : source.getHrefKeys()) {
-			addHrefKey(key);
-		}
 	}
 
 	@NonNull
@@ -76,23 +73,39 @@ public class AttachedMediaSettingsItem extends FileSettingsItem {
 		return true;
 	}
 
+	@Override
+	public void delete() {
+		if (source.isAppManaged()) {
+			try {
+				source.delete();
+			} catch (IOException e) {
+				SettingsHelper.LOG.error("Failed to delete attached media source: " + source.getId(), e);
+			}
+		} else {
+			super.delete();
+		}
+	}
+
 	@DrawableRes
 	public int getIconId() {
-		switch (source.getDirType()) {
-			case AUDIO:
-				return R.drawable.ic_action_micro_dark;
-			case VIDEO:
-				return R.drawable.ic_action_video_dark;
-			case PHOTO:
-			default:
-				return R.drawable.ic_action_photo_dark;
-		}
+		return switch (source.getDirType()) {
+			case AUDIO -> R.drawable.ic_action_micro_dark;
+			case VIDEO -> R.drawable.ic_action_video_dark;
+			default -> R.drawable.ic_action_photo_dark;
+		};
 	}
 
 	@NonNull
 	@Override
 	public String getPublicName(@NonNull Context ctx) {
-		return source.getFileName();
+		String fileName = source.getFileName();
+		if (MediaFileNameFormat.isManagedMediaFileName(fileName)) {
+			String formattedName = Recording.getNameForMultimediaFile(app, fileName, getLocalModifiedTime());
+			if (!Algorithms.isEmpty(formattedName)) {
+				return formattedName;
+			}
+		}
+		return fileName;
 	}
 
 	@Nullable
