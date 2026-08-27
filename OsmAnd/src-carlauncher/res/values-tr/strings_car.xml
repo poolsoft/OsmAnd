@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="car_pref_title_online_album_art">Çevrimiçi albüm kapağı</string>
+    <string-array name="online_album_art_entries">
+        <item>Kapalı</item>
+        <item>Yalnız ölçülmeyen ağ</item>
+        <item>Tüm ağlar</item>
+    </string-array>
     <string name="car_music_grant_permission">İzin ver</string>
     <string name="car_music_permission_card">Müzik listesini yenilemek için erişim izni gerekli. Kayıtlı indeks kullanılmaya devam eder.</string>
     <string name="car_music_scan_status_running">Müzikler taranıyor… Şu anda %1$d parça indeksli</string>

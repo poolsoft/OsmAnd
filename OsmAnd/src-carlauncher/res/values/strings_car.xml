@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="car_pref_title_online_album_art">Online album artwork</string>
+    <string-array name="online_album_art_entries">
+        <item>Off</item>
+        <item>Unmetered networks only</item>
+        <item>All networks</item>
+    </string-array>
+    <string-array name="online_album_art_values" translatable="false">
+        <item>off</item>
+        <item>wifi</item>
+        <item>any</item>
+    </string-array>
     <string name="car_music_grant_permission">Grant access</string>
     <string name="car_music_permission_card">Music access is required to refresh the library. The saved index remains available.</string>
     <string name="car_music_scan_status_running">Scanning music… %1$d tracks currently indexed</string>
