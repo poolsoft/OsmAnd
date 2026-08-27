@@ -553,7 +553,7 @@ public class AppInitializer implements IProgress {
 			app.poiFilters.loadSelectedPoiFilters();
 			notifyEvent(POI_FILTERS_INITIALIZED);
 			net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance()
-					.awaitMapFirstFrameBeforeRegionIndex(app, 7_000L);
+					.awaitMapFirstFrameBeforeRegionIndex(app, 15_000L);
 			indexRegionsBoundaries(warnings);
 			app.selectedGpxHelper.loadGPXTracks(this);
 			notifyEvent(LOAD_GPX_TRACKS);
