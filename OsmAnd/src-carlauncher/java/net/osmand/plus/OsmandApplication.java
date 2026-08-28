@@ -275,6 +275,8 @@ public class OsmandApplication extends MultiDexApplication {
 		appCustomization = new OsmAndAppCustomization();
 		appCustomization.setup(this);
 		settings = appCustomization.getOsmandSettings();
+		net.osmand.plus.carlauncher.CarLauncherPluginPolicy.apply(
+				this, settings, startupManager.isLowRamDevice(this));
 		appInitializer.initVariables();
 		if (appInitializer.isAppVersionChanged() && appInitializer.getPrevAppVersion() < AppVersionUpgradeOnInit.VERSION_2_3) {
 			settings.freezeExternalStorageDirectory();
@@ -298,8 +300,12 @@ public class OsmandApplication extends MultiDexApplication {
 		System.out.println("Time to start application " + (System.currentTimeMillis() - timeToStart) + " ms. Should be less < 800 ms");
 
 		timeToStart = System.currentTimeMillis();
+		long pluginsStartTime = System.currentTimeMillis();
 		PluginsHelper.initPlugins(this);
 		PluginsHelper.createLayers(this, null);
+		startupManager.recordStartupEvent(this, "PLUGIN_INIT_FINISHED duration_ms="
+				+ (System.currentTimeMillis() - pluginsStartTime)
+				+ " enabled=" + PluginsHelper.getEnabledPlugins().size());
 		System.out.println("Time to init plugins " + (System.currentTimeMillis() - timeToStart) + " ms. Should be less < 800 ms");
 
 		osmandMap.getMapLayers().updateLayers(null);

@@ -15,6 +15,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
     <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" tools:ignore="ProtectedPermissions" />
     
@@ -137,6 +138,10 @@
         <service android:name="net.osmand.plus.carlauncher.voice.VoiceCommandService"
                  android:foregroundServiceType="microphone"
                  android:exported="false" />
+        <service
+            android:name="net.osmand.plus.carlauncher.CarLocationKeepAliveService"
+            android:foregroundServiceType="location"
+            android:exported="false" />
         <!-- MediaBrowserService for Android Auto media integration -->
         <service
             android:name="net.osmand.plus.carlauncher.media.CarMediaService"
