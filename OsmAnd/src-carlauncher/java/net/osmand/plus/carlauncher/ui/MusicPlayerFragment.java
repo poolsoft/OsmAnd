@@ -31,6 +31,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import net.osmand.plus.carlauncher.music.MusicManager;
 import net.osmand.plus.carlauncher.music.MusicRepository;
 import net.osmand.plus.carlauncher.music.MusicTrackIdentity;
+import net.osmand.plus.carlauncher.music.LocalAlbumArtLoader;
 import net.osmand.plus.carlauncher.music.OnlineAlbumArtLoader;
 import net.osmand.plus.carlauncher.music.PlaylistManager;
 import net.osmand.plus.carlauncher.dock.AppPickerDialog;
@@ -2433,9 +2434,20 @@ public class MusicPlayerFragment extends Fragment implements MusicManager.MusicU
             }
 
             if (albumArt == null && getContext() != null) {
-                OnlineAlbumArtLoader.getInstance(getContext()).load(title, artist, downloaded -> {
-                    if (downloaded != null && lookupKey.equals(artworkLookupKey) && isAdded()) {
-                        onTrackChanged(title, artist, downloaded, packageName);
+                MusicRepository.AudioTrack current = "usage.internal.player".equals(packageName) && musicManager != null
+                        && musicManager.getInternalPlayer() != null
+                        ? musicManager.getInternalPlayer().getCurrentTrack() : null;
+                android.net.Uri localArtUri = current != null ? current.getAlbumArtUri() : null;
+                LocalAlbumArtLoader.getInstance(getContext()).load(localArtUri, localArt -> {
+                    if (!lookupKey.equals(artworkLookupKey) || !isAdded()) return;
+                    if (localArt != null) {
+                        onTrackChanged(title, artist, localArt, packageName);
+                    } else {
+                        OnlineAlbumArtLoader.getInstance(requireContext()).load(title, artist, downloaded -> {
+                            if (downloaded != null && lookupKey.equals(artworkLookupKey) && isAdded()) {
+                                onTrackChanged(title, artist, downloaded, packageName);
+                            }
+                        });
                     }
                 });
             }
