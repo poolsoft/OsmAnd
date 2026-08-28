@@ -84,6 +84,11 @@
     <string name="car_pref_title_auto_play_music">Açılışta Otomatik Oynat</string>
     <string name="car_pref_summary_auto_play_music">Uygulama başladığında müziği başlat</string>
     <string name="car_pref_title_ambiance_visualizer">Ambians Görselleştirici</string>
+    <string name="car_pref_title_visualizer_quality">Görselleştirici kalitesi</string>
+    <string name="car_visualizer_quality_auto">Otomatik</string>
+    <string name="car_visualizer_quality_low">Düşük</string>
+    <string name="car_visualizer_quality_balanced">Dengeli</string>
+    <string name="car_visualizer_quality_high">Yüksek</string>
     <string name="car_pref_summary_ambiance_visualizer">Müzik görselleştirici renklerini albüm kapağına göre dinamik olarak belirler</string>
     <string name="car_pref_title_equalizer">Equalizer</string>
     <string name="car_pref_summary_equalizer">Sistem ses ayarlarını aç</string>
