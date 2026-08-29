@@ -38,11 +38,11 @@ public final class CarLauncherFeedbackHelper extends FeedbackHelper {
         Intent sendIntent = new Intent(Intent.ACTION_SEND)
                 .setType("text/plain")
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                .setClipData(ClipData.newRawUri("OsmAnd Auto crash log", uri))
                 .putExtra(Intent.EXTRA_STREAM, uri)
                 .putExtra(Intent.EXTRA_EMAIL, new String[] {"crash@osmand.net"})
                 .putExtra(Intent.EXTRA_SUBJECT, "OsmAnd Auto bug")
                 .putExtra(Intent.EXTRA_TEXT, getDeviceInfo());
+        sendIntent.setClipData(ClipData.newRawUri("OsmAnd Auto crash log", uri));
         Intent chooser = Intent.createChooser(sendIntent, app.getString(R.string.send_report))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
         AndroidUtils.startActivityIfSafe(app, sendIntent, chooser);

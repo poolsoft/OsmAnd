@@ -60,8 +60,10 @@ public class CarFloatingButtonManager {
     private boolean isLongClickTriggered = false;
     private final int touchSlop;
     private final Runnable configurationUpdateRunnable = this::applyConfigurationChange;
-    private final Runnable forcedGpsReadinessRunnable = this::scheduleForcedGpsAfterStartup;
-    private final Runnable forcedGpsStartRunnable = () -> {
+    private final Runnable forcedGpsReadinessRunnable;
+    private final Runnable forcedGpsStartRunnable;
+
+    private void startForcedGpsAfterStartup() {
         if (!isAdded) {
             return;
         }
@@ -71,7 +73,7 @@ public class CarFloatingButtonManager {
                     "FLOATING_GPS_SERVICE_STARTED_AFTER_MAP_FRAME");
             net.osmand.plus.carlauncher.CarLocationKeepAliveService.start(context);
         }
-    };
+    }
 
     // Custom Menu Overlay
     private FrameLayout menuOverlayView;
@@ -102,6 +104,8 @@ public class CarFloatingButtonManager {
         this.context = context.getApplicationContext();
         this.windowManager = (WindowManager) this.context.getSystemService(Context.WINDOW_SERVICE);
         this.touchSlop = ViewConfiguration.get(this.context).getScaledTouchSlop();
+        this.forcedGpsReadinessRunnable = this::scheduleForcedGpsAfterStartup;
+        this.forcedGpsStartRunnable = this::startForcedGpsAfterStartup;
 
         // Alıcı kaydı (Türkçe karakter yok)
         android.content.IntentFilter filter = new android.content.IntentFilter();
