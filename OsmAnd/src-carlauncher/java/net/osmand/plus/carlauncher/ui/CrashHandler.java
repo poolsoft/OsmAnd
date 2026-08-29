@@ -1,14 +1,16 @@
 package net.osmand.plus.carlauncher.ui;
 
+import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
@@ -69,16 +71,44 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     }
 
     private void saveToFile(String log) {
+        byte[] bytes = (log + "\n\n").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        // Always retain a private copy. This path remains writable even when an OEM ROM has
+        // broken ownership on Android/data after an update or restore.
         try {
-            File dir = context.getExternalFilesDir(null);
-            if (dir != null) {
-                File file = new File(dir, "launcher_crash.log");
-                FileOutputStream fos = new FileOutputStream(file, true); // Append mode
-                fos.write((log + "\n\n").getBytes());
-                fos.close();
+            File file = new File(context.getNoBackupFilesDir(), "launcher_crash.log");
+            try (FileOutputStream fos = new FileOutputStream(file, true)) {
+                fos.write(bytes);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e("CarLauncherCrash", "Private crash log could not be saved", e);
+        }
+
+        // Also create a user-accessible copy for head units where ADB is unavailable.
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Downloads.DISPLAY_NAME,
+                        "launcher_crash_" + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date()) + ".txt");
+                values.put(MediaStore.Downloads.MIME_TYPE, "text/plain");
+                values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/OsmAndAuto");
+                Uri uri = context.getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                if (uri != null) {
+                    try (OutputStream output = context.getContentResolver().openOutputStream(uri)) {
+                        if (output != null) output.write(bytes);
+                    }
+                }
+            } else {
+                File dir = new File(Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_DOWNLOADS), "OsmAndAuto");
+                if ((dir.exists() || dir.mkdirs())) {
+                    File file = new File(dir, "launcher_crash.txt");
+                    try (FileOutputStream fos = new FileOutputStream(file, true)) {
+                        fos.write(bytes);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e("CarLauncherCrash", "Public crash log could not be saved", e);
         }
     }
 }

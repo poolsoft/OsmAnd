@@ -218,6 +218,11 @@ public class CarLauncherInitManager {
         return isCoreReady;
     }
 
+    /** True only after the real MapActivity hierarchy has produced its first frame. */
+    public boolean isMapFirstFrameReady() {
+        return mapFirstFrameLatch.getCount() == 0L;
+    }
+
     public void addListener(OnInitStateListener listener) {
         if (listener == null) return;
         if (isCoreReady) {

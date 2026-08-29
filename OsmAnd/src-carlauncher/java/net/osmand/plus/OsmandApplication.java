@@ -481,7 +481,7 @@ public class OsmandApplication extends MultiDexApplication {
 
 	public FeedbackHelper getFeedbackHelper() {
 		if (feedbackHelper == null) {
-			feedbackHelper = new FeedbackHelper(this);
+			feedbackHelper = new net.osmand.plus.carlauncher.ui.CarLauncherFeedbackHelper(this);
 		}
 		return feedbackHelper;
 	}

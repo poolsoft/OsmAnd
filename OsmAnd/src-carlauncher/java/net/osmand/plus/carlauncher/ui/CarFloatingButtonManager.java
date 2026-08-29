@@ -28,6 +28,9 @@ import net.osmand.plus.carlauncher.CarLauncherSettings;
  */
 public class CarFloatingButtonManager {
 
+    private static final long FORCE_GPS_READY_POLL_MS = 1000L;
+    private static final long FORCE_GPS_POST_FRAME_GRACE_MS = 3000L;
+
     private static CarFloatingButtonManager instance;
     private final Context context;
     private final WindowManager windowManager;
@@ -57,6 +60,18 @@ public class CarFloatingButtonManager {
     private boolean isLongClickTriggered = false;
     private final int touchSlop;
     private final Runnable configurationUpdateRunnable = this::applyConfigurationChange;
+    private final Runnable forcedGpsReadinessRunnable = this::scheduleForcedGpsAfterStartup;
+    private final Runnable forcedGpsStartRunnable = () -> {
+        if (!isAdded) {
+            return;
+        }
+        CarLauncherSettings settings = CarLauncherSettings.getInstance(context);
+        if (settings.isFloatingButtonForceGpsEnabled()) {
+            CarLauncherInitManager.getInstance().recordStartupEvent(context,
+                    "FLOATING_GPS_SERVICE_STARTED_AFTER_MAP_FRAME");
+            net.osmand.plus.carlauncher.CarLocationKeepAliveService.start(context);
+        }
+    };
 
     // Custom Menu Overlay
     private FrameLayout menuOverlayView;
@@ -239,7 +254,7 @@ public class CarFloatingButtonManager {
             
             net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
             if (settings.isFloatingButtonForceGpsEnabled()) {
-                net.osmand.plus.carlauncher.CarLocationKeepAliveService.start(context);
+                scheduleForcedGpsAfterStartup();
             }
             
             net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app).addListener(telemetryListener);
@@ -277,6 +292,8 @@ public class CarFloatingButtonManager {
             gestureHandler.removeCallbacks(longClickRunnable);
         }
         gestureHandler.removeCallbacks(configurationUpdateRunnable);
+        gestureHandler.removeCallbacks(forcedGpsReadinessRunnable);
+        gestureHandler.removeCallbacks(forcedGpsStartRunnable);
         if (isAdded && floatingView != null) {
             try {
                 windowManager.removeView(floatingView);
@@ -302,6 +319,21 @@ public class CarFloatingButtonManager {
                 // ignore
             }
         }
+    }
+
+    private void scheduleForcedGpsAfterStartup() {
+        gestureHandler.removeCallbacks(forcedGpsReadinessRunnable);
+        gestureHandler.removeCallbacks(forcedGpsStartRunnable);
+        if (!isAdded || !CarLauncherSettings.getInstance(context).isFloatingButtonForceGpsEnabled()) {
+            return;
+        }
+        CarLauncherInitManager initManager = CarLauncherInitManager.getInstance();
+        if (!initManager.isMapFirstFrameReady()) {
+            gestureHandler.postDelayed(forcedGpsReadinessRunnable, FORCE_GPS_READY_POLL_MS);
+            return;
+        }
+        initManager.recordStartupEvent(context, "FLOATING_GPS_SERVICE_DEFERRED_AFTER_MAP_FRAME");
+        gestureHandler.postDelayed(forcedGpsStartRunnable, FORCE_GPS_POST_FRAME_GRACE_MS);
     }
 
     private void createFloatingView() {

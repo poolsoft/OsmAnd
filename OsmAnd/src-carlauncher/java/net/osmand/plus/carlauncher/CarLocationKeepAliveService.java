@@ -15,23 +15,40 @@ import android.os.Bundle;
 import android.os.IBinder;
 
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
-
 import net.osmand.plus.R;
 import net.osmand.plus.activities.MapActivity;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Keeps GPS delivery alive for the floating speed button without claiming AIS usage. */
 public final class CarLocationKeepAliveService extends Service implements LocationListener {
     private static final String CHANNEL_ID = "car_launcher_location";
     private static final int NOTIFICATION_ID = 20761;
+    private static final AtomicBoolean START_REQUESTED = new AtomicBoolean();
     private LocationManager locationManager;
 
     public static void start(Context context) {
-        Intent intent = new Intent(context, CarLocationKeepAliveService.class);
-        ContextCompat.startForegroundService(context, intent);
+        if (!START_REQUESTED.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            // This request is made while the launcher activity is visible. A foreground-service
+            // start would impose a five-second deadline, but on low-end units the map can block
+            // the main thread longer than that before Service.onCreate() can run. Start normally
+            // and promote immediately from onCreate(); if Android considers the app background,
+            // skip forced GPS instead of crashing the launcher.
+            context.startService(new Intent(context, CarLocationKeepAliveService.class));
+        } catch (IllegalStateException | SecurityException e) {
+            START_REQUESTED.set(false);
+        }
     }
 
     public static void stop(Context context) {
+        if (!START_REQUESTED.compareAndSet(true, false)) {
+            return;
+        }
+        // A pending normal service start may safely be cancelled without triggering Android's
+        // foreground-service deadline exception.
         context.stopService(new Intent(context, CarLocationKeepAliveService.class));
     }
 
@@ -40,11 +57,6 @@ public final class CarLocationKeepAliveService extends Service implements Locati
         super.onCreate();
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         startForeground(NOTIFICATION_ID, buildNotification());
-        try {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 0f, this);
-        } catch (SecurityException | IllegalArgumentException ignored) {
-            stopSelf();
-        }
     }
 
     private Notification buildNotification() {
@@ -73,6 +85,13 @@ public final class CarLocationKeepAliveService extends Service implements Locati
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        try {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 0f, this);
+        } catch (SecurityException | IllegalArgumentException ignored) {
+            START_REQUESTED.set(false);
+            stopForeground(true);
+            stopSelfResult(startId);
+        }
         return START_NOT_STICKY;
     }
 
@@ -83,12 +102,17 @@ public final class CarLocationKeepAliveService extends Service implements Locati
 
     @Override
     public void onDestroy() {
+        START_REQUESTED.set(false);
+        removeLocationUpdates();
+        super.onDestroy();
+    }
+
+    private void removeLocationUpdates() {
         if (locationManager != null) {
             try {
                 locationManager.removeUpdates(this);
             } catch (SecurityException ignored) { }
         }
-        super.onDestroy();
     }
 
     @Nullable
