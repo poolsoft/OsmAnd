@@ -30,6 +30,7 @@ public class CarFloatingButtonManager {
 
     private static final long FORCE_GPS_READY_POLL_MS = 1000L;
     private static final long FORCE_GPS_POST_FRAME_GRACE_MS = 3000L;
+    private static final long FORCE_GPS_MAX_DEFER_MS = 30_000L;
 
     private static CarFloatingButtonManager instance;
     private final Context context;
@@ -62,6 +63,7 @@ public class CarFloatingButtonManager {
     private final Runnable configurationUpdateRunnable = this::applyConfigurationChange;
     private final Runnable forcedGpsReadinessRunnable;
     private final Runnable forcedGpsStartRunnable;
+    private long forcedGpsDeferStartedAtMs;
 
     private void startForcedGpsAfterStartup() {
         if (!isAdded) {
@@ -70,8 +72,10 @@ public class CarFloatingButtonManager {
         CarLauncherSettings settings = CarLauncherSettings.getInstance(context);
         if (settings.isFloatingButtonForceGpsEnabled()) {
             CarLauncherInitManager.getInstance().recordStartupEvent(context,
-                    "FLOATING_GPS_SERVICE_STARTED_AFTER_MAP_FRAME");
-            net.osmand.plus.carlauncher.CarLocationKeepAliveService.start(context);
+                    "FLOATING_GPS_NAVIGATION_SERVICE_STARTED");
+            net.osmand.plus.OsmandApplication app =
+                    (net.osmand.plus.OsmandApplication) context.getApplicationContext();
+            app.startNavigationService(net.osmand.plus.NavigationService.USED_BY_AIS);
         }
     }
 
@@ -258,6 +262,7 @@ public class CarFloatingButtonManager {
             
             net.osmand.plus.OsmandApplication app = (net.osmand.plus.OsmandApplication) context.getApplicationContext();
             if (settings.isFloatingButtonForceGpsEnabled()) {
+                forcedGpsDeferStartedAtMs = android.os.SystemClock.elapsedRealtime();
                 scheduleForcedGpsAfterStartup();
             }
             
@@ -312,7 +317,11 @@ public class CarFloatingButtonManager {
 
         net.osmand.plus.OsmandApplication app =
                 (net.osmand.plus.OsmandApplication) context.getApplicationContext();
-        net.osmand.plus.carlauncher.CarLocationKeepAliveService.stop(context);
+        forcedGpsDeferStartedAtMs = 0L;
+        if (app.getNavigationService() != null) {
+            app.getNavigationService().stopIfNeeded(
+                    app, net.osmand.plus.NavigationService.USED_BY_AIS);
+        }
         net.osmand.plus.carlauncher.telemetry.TelemetryManager.getInstance(app)
                 .removeListener(telemetryListener);
 
@@ -332,12 +341,18 @@ public class CarFloatingButtonManager {
             return;
         }
         CarLauncherInitManager initManager = CarLauncherInitManager.getInstance();
-        if (!initManager.isMapFirstFrameReady()) {
+        long deferredForMs = forcedGpsDeferStartedAtMs > 0L
+                ? android.os.SystemClock.elapsedRealtime() - forcedGpsDeferStartedAtMs : 0L;
+        if (!initManager.isMapFirstFrameReady() && deferredForMs < FORCE_GPS_MAX_DEFER_MS) {
             gestureHandler.postDelayed(forcedGpsReadinessRunnable, FORCE_GPS_READY_POLL_MS);
             return;
         }
-        initManager.recordStartupEvent(context, "FLOATING_GPS_SERVICE_DEFERRED_AFTER_MAP_FRAME");
-        gestureHandler.postDelayed(forcedGpsStartRunnable, FORCE_GPS_POST_FRAME_GRACE_MS);
+        boolean mapFrameReady = initManager.isMapFirstFrameReady();
+        initManager.recordStartupEvent(context, mapFrameReady
+                ? "FLOATING_GPS_NAVIGATION_SERVICE_DEFERRED_AFTER_MAP_FRAME"
+                : "FLOATING_GPS_NAVIGATION_SERVICE_RELEASED_BY_TIMEOUT");
+        gestureHandler.postDelayed(forcedGpsStartRunnable,
+                mapFrameReady ? FORCE_GPS_POST_FRAME_GRACE_MS : 0L);
     }
 
     private void createFloatingView() {

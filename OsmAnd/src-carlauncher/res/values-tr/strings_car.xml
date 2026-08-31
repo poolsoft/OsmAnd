@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="car_location_service_channel">Car Launcher konum</string>
-    <string name="car_location_service_title">Car Launcher GPS etkin</string>
-    <string name="car_location_service_text">Hız ve konum bilgisi kullanılabilir tutuluyor</string>
     <string name="car_music_now_playing">♫ ŞU AN ÇALAN</string>
     <string name="car_pref_title_online_album_art">Çevrimiçi albüm kapağı</string>
     <string-array name="online_album_art_entries">

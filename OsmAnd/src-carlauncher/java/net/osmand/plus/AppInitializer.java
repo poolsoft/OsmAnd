@@ -555,8 +555,6 @@ public class AppInitializer implements IProgress {
 			app.poiFilters.reloadAllPoiFilters();
 			app.poiFilters.loadSelectedPoiFilters();
 			notifyEvent(POI_FILTERS_INITIALIZED);
-			net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance()
-					.awaitMapFirstFrameBeforeRegionIndex(app, 15_000L);
 			indexRegionsBoundaries(warnings);
 			app.selectedGpxHelper.loadGPXTracks(this);
 			notifyEvent(LOAD_GPX_TRACKS);
@@ -871,8 +869,6 @@ public class AppInitializer implements IProgress {
                 // Keep renderer/index/native initialization from starving launcher input and
                 // first-frame work on low-core head units.
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-                net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance()
-                        .awaitLowRamBootSettling(app, 12_000L);
                 startApplicationBackground();
             } finally {
 				applicationBgInitializing = false;
