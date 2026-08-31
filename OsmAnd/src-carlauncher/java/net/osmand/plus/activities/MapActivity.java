@@ -219,6 +219,9 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	// expensive on 32-bit/low-RAM head units and can block input dispatch long enough to
 	// trigger an ANR. Later resumes and real application-mode changes still rebuild it.
 	private boolean initialWidgetControlsRefreshPending = true;
+	private boolean initialPoiFiltersRefreshPending = true;
+	private boolean forceDeferredPoiFiltersRefresh;
+	private final Runnable deferredPoiFiltersRefresh = this::refreshDeferredPoiFilters;
 
 	// CarLauncher Fields
 	private androidx.constraintlayout.widget.ConstraintLayout rootLayout;
@@ -752,6 +755,12 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 					net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance();
 			initManager.markMapActivityUiReady(MapActivity.this);
 			initManager.markUiReady();
+			if (initialPoiFiltersRefreshPending) {
+				// QuickSearch initializes the same POI database during cold start. Let that
+				// work and the first map/GPS frames settle before touching it on the UI thread.
+				rootLayout.removeCallbacks(deferredPoiFiltersRefresh);
+				rootLayout.postDelayed(deferredPoiFiltersRefresh, 6_000L);
+			}
 			// Lazy loading is valid only while the panel is actually hidden. A
 			// visible empty container is a broken state, especially on slow units.
 			if (isWidgetPanelOpen || isDesktopMode || panelContentLoadedInProcess) {
@@ -2061,6 +2070,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	protected void onDestroy() {
 		if (rootLayout != null) {
 			rootLayout.removeCallbacks(carConfigurationLayoutFallback);
+			rootLayout.removeCallbacks(deferredPoiFiltersRefresh);
 			if (carConfigurationLayoutListener != null) {
 				rootLayout.removeOnLayoutChangeListener(carConfigurationLayoutListener);
 				carConfigurationLayoutListener = null;
@@ -2282,10 +2292,17 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	public void updateApplicationModeSettings(boolean forceUpdatePoiFilters) {
 		changeKeyguardFlags();
 		updateMapSettings(false);
-		if (forceUpdatePoiFilters) {
-			app.getPoiFilters().loadSelectedPoiFilters();
+		boolean coldStartRefresh = initialWidgetControlsRefreshPending;
+		if (coldStartRefresh) {
+			forceDeferredPoiFiltersRefresh |= forceUpdatePoiFilters;
+			net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance()
+					.recordStartupEvent(this, "INITIAL_POI_FILTERS_REFRESH_DEFERRED");
+		} else {
+			if (forceUpdatePoiFilters) {
+				app.getPoiFilters().loadSelectedPoiFilters();
+			}
+			app.getSearchUICore().refreshCustomPoiFilters();
 		}
-		app.getSearchUICore().refreshCustomPoiFilters();
 		app.getMapButtonsHelper().updateActiveActions();
 		getMapViewTrackingUtilities().appModeChanged();
 		keyEventHelper.updateGlobalCommands();
@@ -2296,7 +2313,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 		MapLayers mapLayers = getMapLayers();
 		if (mapLayers.getMapInfoLayer() != null) {
-			if (initialWidgetControlsRefreshPending) {
+			if (coldStartRefresh) {
 				initialWidgetControlsRefreshPending = false;
 				net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance()
 						.recordStartupEvent(this, "INITIAL_WIDGET_CONTROLS_REBUILD_SKIPPED");
@@ -2326,6 +2343,20 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		applyScreenOrientation();
 		app.getAppCustomization().updateMapMargins(this);
 		dashboardOnMap.onAppModeChanged();
+	}
+
+	private void refreshDeferredPoiFilters() {
+		if (!initialPoiFiltersRefreshPending || isFinishing() || isDestroyed()) {
+			return;
+		}
+		initialPoiFiltersRefreshPending = false;
+		if (forceDeferredPoiFiltersRefresh) {
+			app.getPoiFilters().loadSelectedPoiFilters();
+			forceDeferredPoiFiltersRefresh = false;
+		}
+		app.getSearchUICore().refreshCustomPoiFilters();
+		net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance()
+				.recordStartupEvent(this, "DEFERRED_POI_FILTERS_REFRESH_FINISHED");
 	}
 
 	public void updateMapSettings(boolean updateMapRenderer) {
