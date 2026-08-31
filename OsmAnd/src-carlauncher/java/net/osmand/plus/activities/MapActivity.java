@@ -214,6 +214,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	private Timer splashScreenTimer;
 	private boolean activityRestartNeeded;
 	private boolean stopped = true;
+	// MapInfoLayer creates the complete widget tree while the map layers are attached in
+	// onCreate. Rebuilding the same tree again during the first onResume is particularly
+	// expensive on 32-bit/low-RAM head units and can block input dispatch long enough to
+	// trigger an ANR. Later resumes and real application-mode changes still rebuild it.
+	private boolean initialWidgetControlsRefreshPending = true;
 
 	// CarLauncher Fields
 	private androidx.constraintlayout.widget.ConstraintLayout rootLayout;
@@ -2291,7 +2296,13 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 		MapLayers mapLayers = getMapLayers();
 		if (mapLayers.getMapInfoLayer() != null) {
-			mapLayers.getMapInfoLayer().recreateAllControls(this);
+			if (initialWidgetControlsRefreshPending) {
+				initialWidgetControlsRefreshPending = false;
+				net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance()
+						.recordStartupEvent(this, "INITIAL_WIDGET_CONTROLS_REBUILD_SKIPPED");
+			} else {
+				mapLayers.getMapInfoLayer().recreateAllControls(this);
+			}
 		}
 		if (mapLayers.getMapQuickActionLayer() != null) {
 			mapLayers.getMapQuickActionLayer().refreshLayer();
