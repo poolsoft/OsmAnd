@@ -32,7 +32,6 @@
             android:launchMode="singleTask"
             android:taskAffinity="${applicationId}.bootstrap"
             android:excludeFromRecents="true"
-            android:noHistory="true"
             android:screenOrientation="sensor"
             android:configChanges="keyboardHidden|uiMode|screenSize|smallestScreenSize|screenLayout|orientation"
             android:exported="true">

@@ -759,6 +759,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 					net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance();
 			initManager.markMapActivityUiReady(MapActivity.this);
 			initManager.markUiReady();
+			net.osmand.plus.carlauncher.CarLauncherBootstrapActivity.finishAfterMapFirstFrame();
 			if (initialPoiFiltersRefreshPending) {
 				// QuickSearch initializes the same POI database during cold start. Let that
 				// work and the first map/GPS frames settle before touching it on the UI thread.

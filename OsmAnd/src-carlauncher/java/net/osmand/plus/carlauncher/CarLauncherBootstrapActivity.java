@@ -22,6 +22,8 @@ import net.osmand.plus.carlauncher.ui.CarLayoutManager;
 import net.osmand.plus.carlauncher.ui.PanelContentManager;
 import net.osmand.plus.views.OsmandMapTileView;
 
+import java.lang.ref.WeakReference;
+
 /**
  * Lightweight HOME surface displayed while OsmAnd finishes application startup.
  * It intentionally reuses the real launcher layout and fragments, and never
@@ -32,12 +34,17 @@ public class CarLauncherBootstrapActivity extends AppCompatActivity
 
     private static final long MIN_SHELL_VISIBLE_MS = 250L;
     private static final long MAP_START_DEADLINE_MS = 20_000L;
+    private static final long MAP_TRANSITION_CLEANUP_MS = 30_000L;
+    private static WeakReference<CarLauncherBootstrapActivity> activeInstance =
+            new WeakReference<>(null);
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Runnable deadlineRunnable = () -> CarLauncherInitManager.getInstance()
             .recordStartupTimeout(this, MAP_START_DEADLINE_MS);
+    private final Runnable transitionCleanupRunnable = this::finishBootstrapTask;
     private long firstFrameTime;
     private boolean mapLaunchRequested;
+    private boolean shellVisible;
     private OsmandApplication app;
     private AppInitializeListener initListener;
     private CarLayoutManager layoutManager;
@@ -47,6 +54,7 @@ public class CarLauncherBootstrapActivity extends AppCompatActivity
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        activeInstance = new WeakReference<>(this);
         CarLauncherInitManager initManager = CarLauncherInitManager.getInstance();
         // When music keeps the process alive, the OsmAnd core and usually the map task are
         // already warm. Skip rebuilding the temporary launcher shell and route HOME directly
@@ -58,6 +66,7 @@ public class CarLauncherBootstrapActivity extends AppCompatActivity
         initManager.configureStartupProfile(this);
         initManager.startInitTimer();
         setContentView(R.layout.activity_car_launcher);
+        shellVisible = true;
 
         FrameLayout mapContainer = findViewById(R.id.map_container);
         if (mapContainer != null) {
@@ -161,17 +170,40 @@ public class CarLauncherBootstrapActivity extends AppCompatActivity
         target.putExtra("car_launcher_bootstrap_reason", reason);
         startActivity(target);
         overridePendingTransition(0, 0);
-        // Bootstrap has its own affinity, so remove the empty transition task as well as
-        // finishing the Activity. Otherwise some head-unit ROMs retain one empty recent task
-        // for every HOME transition until their task manager becomes congested.
-        finishAndRemoveTask();
+        if (shellVisible) {
+            // Keep the already-drawn launcher shell below MapActivity until its first frame.
+            // Removing this task here exposes a black compositor frame when MapActivity has
+            // windowDisablePreview enabled.
+            mainHandler.postDelayed(transitionCleanupRunnable, MAP_TRANSITION_CLEANUP_MS);
+        } else {
+            // Warm HOME launches do not build the temporary shell and can be removed now.
+            finishBootstrapTask();
+        }
+    }
+
+    public static void finishAfterMapFirstFrame() {
+        CarLauncherBootstrapActivity activity = activeInstance.get();
+        if (activity != null && activity.mapLaunchRequested) {
+            activity.mainHandler.post(activity::finishBootstrapTask);
+        }
+    }
+
+    private void finishBootstrapTask() {
+        mainHandler.removeCallbacks(transitionCleanupRunnable);
+        if (!isFinishing() && !isDestroyed()) {
+            finishAndRemoveTask();
+        }
     }
 
     @Override
     protected void onDestroy() {
         mainHandler.removeCallbacks(deadlineRunnable);
+        mainHandler.removeCallbacks(transitionCleanupRunnable);
         if (app != null && initListener != null) {
             app.unsubscribeInitListener(initListener);
+        }
+        if (activeInstance.get() == this) {
+            activeInstance.clear();
         }
         super.onDestroy();
     }
