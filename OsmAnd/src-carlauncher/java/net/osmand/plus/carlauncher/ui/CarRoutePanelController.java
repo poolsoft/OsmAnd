@@ -2,6 +2,7 @@ package net.osmand.plus.carlauncher.ui;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.view.Gravity;
 import android.view.View;
@@ -64,7 +65,13 @@ public final class CarRoutePanelController implements SharedPreferences.OnShared
         panel.setAlpha(1f);
         panel.setTranslationY(0f);
         panel.setElevation(cardMode ? dp(6) : 0);
-        panel.setBackgroundResource(cardMode ? R.drawable.bg_car_route_info_card : 0);
+        try {
+            panel.setBackgroundResource(cardMode ? R.drawable.bg_car_route_info_card : 0);
+        } catch (Resources.NotFoundException e) {
+            // A theme attribute resolving to a drawable instead of a color must never
+            // prevent the launcher from opening on vendor Android builds.
+            panel.setBackgroundColor(Color.TRANSPARENT);
+        }
         panel.setPadding(cardMode ? dp(4) : 0, 0, cardMode ? dp(4) : 0, 0);
         if (!cardMode) panel.setBackgroundColor(Color.TRANSPARENT);
     }
