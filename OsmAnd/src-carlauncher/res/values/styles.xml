@@ -47,4 +47,17 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
+
+    <!--
+        MapActivity is opened only after the lightweight launcher shell is visible.
+        Suppress Android's second OsmAnd-logo preview so the shell stays on screen
+        until the real map window has produced its first frame.
+    -->
+    <style name="CarLauncherMapTransitionTheme" parent="SplashScreenBaseTheme">
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:windowBackground">@color/cl_background_deep</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+    </style>
 </resources>

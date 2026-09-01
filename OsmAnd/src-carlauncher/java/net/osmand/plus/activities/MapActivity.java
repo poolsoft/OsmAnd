@@ -305,6 +305,10 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		net.osmand.plus.carlauncher.ui.CrashHandler.init(this);
+		// The launcher bootstrap already owns the complete loading experience. OsmAnd's
+		// in-map splash would otherwise display its logo again between that shell and the
+		// first map frame, making a normal activity hand-off look like an app restart.
+		SecondSplashScreenFragment.SHOW = false;
 		hardwareEventRecorder =
 				net.osmand.plus.carlauncher.headunit.diagnostics.HardwareEventRecorder.getInstance(this);
 		net.osmand.plus.carlauncher.ui.CarLauncherInitManager initManager =
