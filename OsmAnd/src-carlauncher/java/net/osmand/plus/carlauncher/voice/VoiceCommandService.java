@@ -52,6 +52,7 @@ import java.util.zip.ZipInputStream;
  * Kod icerisinde kesinlikle Turkce karakter kullanilmamistir.
  */
 public class VoiceCommandService extends Service implements RecognitionListener {
+    public static final String ACTION_RELOAD_MODEL = "net.osmand.plus.carlauncher.action.RELOAD_VOSK_MODEL";
 
     private static final String CHANNEL_ID = "VoiceCommandServiceChannel";
     private static final int NOTIFICATION_ID = 5005;
@@ -70,6 +71,7 @@ public class VoiceCommandService extends Service implements RecognitionListener 
     
     // Servisin aktiflik durumunu tutan statik bayrak (Turkce karakter yok)
     public static boolean isServiceRunning = false;
+    private volatile boolean modelPreparing = false;
 
     @Override
     public void onCreate() {
@@ -89,6 +91,14 @@ public class VoiceCommandService extends Service implements RecognitionListener 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         startForeground(NOTIFICATION_ID, buildNotification("Sesli kontrol sistemi yukleniyor..."));
+        if (intent != null && ACTION_RELOAD_MODEL.equals(intent.getAction())) {
+            closeRecognitionResources();
+            getSharedPreferences("vosk_prefs", Context.MODE_PRIVATE)
+                    .edit().putBoolean("vosk_model_installed", false).apply();
+        } else if (model != null || modelPreparing) {
+            return START_STICKY;
+        }
+        modelPreparing = true;
         checkAndPrepareModel();
         return START_STICKY;
     }
@@ -300,6 +310,7 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                 prefs.edit().putBoolean("vosk_model_installed", true).apply();
                 
                 handler.post(() -> {
+                    modelPreparing = false;
                     updateNotification("\"Hey Car\" tetikleme kelimesi bekleniyor...");
                     startSpeechService(wakeWordRecognizer);
                 });
@@ -310,6 +321,7 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                 prefs.edit().putBoolean("vosk_model_installed", false).apply();
                 
                 handler.post(() -> {
+                    modelPreparing = false;
                     Toast.makeText(VoiceCommandService.this, "Ses modeli yuklenemedi", Toast.LENGTH_LONG).show();
                     stopSelf();
                 });
@@ -405,6 +417,7 @@ public class VoiceCommandService extends Service implements RecognitionListener 
                     deleteRecursive(tempExtractDir);
                 }
                 handler.post(() -> {
+                    modelPreparing = false;
                     Toast.makeText(VoiceCommandService.this, "Model indirilemedi, internet baglantisini kontrol edin", Toast.LENGTH_LONG).show();
                     stopSelf();
                 });
@@ -950,20 +963,33 @@ public class VoiceCommandService extends Service implements RecognitionListener 
     public void onDestroy() {
         super.onDestroy();
         isServiceRunning = false;
+        modelPreparing = false;
         handler.removeCallbacksAndMessages(null);
+        closeRecognitionResources();
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+            tts = null;
+        }
+    }
+
+    private void closeRecognitionResources() {
         if (speechService != null) {
             speechService.stop();
             speechService.shutdown();
             speechService = null;
         }
+        if (wakeWordRecognizer != null) {
+            wakeWordRecognizer.close();
+            wakeWordRecognizer = null;
+        }
+        if (commandRecognizer != null) {
+            commandRecognizer.close();
+            commandRecognizer = null;
+        }
         if (model != null) {
             model.close();
             model = null;
-        }
-        if (tts != null) {
-            tts.stop();
-            tts.shutdown();
-            tts = null;
         }
     }
 

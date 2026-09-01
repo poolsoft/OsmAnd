@@ -1209,6 +1209,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
     private void setupAssistantPrefs() {
         Preference importModelPref = findPreference("car_launcher_import_voice_model");
         if (importModelPref != null) {
+            updateVoiceModelPreferenceSummary(importModelPref);
             importModelPref.setOnPreferenceClickListener(preference -> {
                 try {
                     Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -1307,6 +1308,8 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
                 
                 new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
                     Toast.makeText(appContext, "Ses modeli başarıyla kuruldu! Servis yeniden başlatılıyor...", Toast.LENGTH_LONG).show();
+                    Preference preference = findPreference("car_launcher_import_voice_model");
+                    if (preference != null) updateVoiceModelPreferenceSummary(preference);
                     restartVoiceService(appContext);
                 });
                 
@@ -1348,6 +1351,17 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         return null;
     }
 
+    private void updateVoiceModelPreferenceSummary(Preference preference) {
+        if (getContext() == null || preference == null) return;
+        Context context = getContext().getApplicationContext();
+        File storageDir = context.getExternalFilesDir(null);
+        if (storageDir == null) storageDir = context.getFilesDir();
+        File modelDir = new File(storageDir, "vosk-model-tr");
+        preference.setSummary(isModelDirectoryValid(modelDir)
+                ? R.string.car_voice_model_ready
+                : R.string.car_pref_summary_import_voice_model);
+    }
+
     private boolean isModelDirectoryValid(File dir) {
         return dir != null
                 && new File(dir, "am/final.mdl").isFile()
@@ -1386,9 +1400,7 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
 
     private void restartVoiceService(Context context) {
         Intent intent = new Intent(context, net.osmand.plus.carlauncher.voice.VoiceCommandService.class);
-        if (net.osmand.plus.carlauncher.voice.VoiceCommandService.isServiceRunning) {
-            context.stopService(intent);
-        }
+        intent.setAction(net.osmand.plus.carlauncher.voice.VoiceCommandService.ACTION_RELOAD_MODEL);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             context.startForegroundService(intent);
         } else {

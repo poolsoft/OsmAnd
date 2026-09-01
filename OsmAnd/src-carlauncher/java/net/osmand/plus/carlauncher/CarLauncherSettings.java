@@ -46,6 +46,7 @@ public class CarLauncherSettings {
     public static final String KEY_NIGHT_DIM_MODE = "car_launcher_night_dim_mode";
     public static final String KEY_PARALLAX_INTENSITY = "car_launcher_parallax_intensity";
     public static final String KEY_BACKGROUND_STYLE = "car_launcher_background_style";
+    public static final String KEY_ROUTE_INFO_LAYOUT = "car_launcher_route_info_layout";
 
     // Appearance Keys - Dikey Ekran
     public static final String KEY_PORTRAIT_MAP_ONLY = "car_launcher_portrait_map_only";
@@ -116,6 +117,7 @@ public class CarLauncherSettings {
     private String cNightDimMode;
     private int cParallaxIntensity;
     private String cBackgroundStyle;
+    private String cRouteInfoLayout;
     private boolean cPipMode;
     private String cLandscapeExpansion;
     private String cPortraitExpansion;
@@ -213,6 +215,7 @@ public class CarLauncherSettings {
         cNightDimMode = prefs.getString(KEY_NIGHT_DIM_MODE, "osmand");
         cParallaxIntensity = prefs.getInt(KEY_PARALLAX_INTENSITY, 20);
         cBackgroundStyle = prefs.getString(KEY_BACKGROUND_STYLE, "modern");
+        cRouteInfoLayout = prefs.getString(KEY_ROUTE_INFO_LAYOUT, "native_compact");
         cPipMode = prefs.getBoolean(KEY_PIP_MODE, true);
 
         // Dikey/Yatay genisletme
@@ -290,6 +293,16 @@ public class CarLauncherSettings {
 
     public void setWidgetDisplayMode(int mode) {
         prefs.edit().putString(KEY_WIDGET_DISPLAY_MODE, String.valueOf(mode)).apply();
+    }
+
+    public String getRouteInfoLayout() {
+        cRouteInfoLayout = prefs.getString(KEY_ROUTE_INFO_LAYOUT, cRouteInfoLayout);
+        return cRouteInfoLayout;
+    }
+
+    public void setRouteInfoLayout(String layout) {
+        cRouteInfoLayout = TextUtils.isEmpty(layout) ? "native_compact" : layout;
+        prefs.edit().putString(KEY_ROUTE_INFO_LAYOUT, cRouteInfoLayout).apply();
     }
 
     // =====================================================================

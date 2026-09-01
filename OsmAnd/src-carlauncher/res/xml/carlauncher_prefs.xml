@@ -107,6 +107,15 @@
             android:defaultValue="modern"
             app:iconSpaceReserved="false" />
 
+        <androidx.preference.ListPreference
+            android:key="car_launcher_route_info_layout"
+            android:title="@string/car_pref_title_route_info_layout"
+            android:summary="%s"
+            android:entries="@array/route_info_layout_entries"
+            android:entryValues="@array/route_info_layout_values"
+            android:defaultValue="native_compact"
+            app:iconSpaceReserved="false" />
+
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_pip_mode"
             android:title="@string/car_pref_title_pip_mode"

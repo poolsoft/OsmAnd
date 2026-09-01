@@ -52,6 +52,15 @@
         <item>right</item>
     </string-array>
 
+    <string-array name="route_info_layout_entries">
+        <item>Compact OsmAnd bottom panel</item>
+        <item>Car Launcher route card</item>
+    </string-array>
+    <string-array name="route_info_layout_values">
+        <item>native_compact</item>
+        <item>car_card</item>
+    </string-array>
+
     <!-- Widget Kart Stili -->
     <string-array name="widget_card_style_entries">
         <item>Modern (Cam Efekti)</item>

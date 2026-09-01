@@ -4,4 +4,8 @@
         <item>Normal Launcher Ekranı</item>
         <item>Widget Masaüstü</item>
     </string-array>
+    <string-array name="route_info_layout_entries">
+        <item>Kompakt OsmAnd alt paneli</item>
+        <item>Car Launcher rota kartı</item>
+    </string-array>
 </resources>
