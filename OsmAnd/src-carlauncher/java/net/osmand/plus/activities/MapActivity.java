@@ -348,6 +348,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 		setRequestedOrientation(AndroidUiHelper.getScreenOrientation(this));
 		net.osmand.plus.plugins.PluginsHelper.registerPlugin(new net.osmand.plus.carlauncher.antenna.AntennaPlugin(app));
 		super.onCreate(savedInstanceState);
+		CarFontScaleContext.applyToResources(this);
 		initManager.recordStartupEvent(this, "MAP_ACTIVITY_BASE_ONCREATE_FINISHED");
 
 		// Orijinal dosyalara dokunmadan Plus ozelliklerini kalici olarak aktif et (Turkce karakter yok)
@@ -2942,6 +2943,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	public void onConfigurationChanged(@NonNull Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
+		CarFontScaleContext.applyToResources(this);
 		applyNightDimMode(); // Gece modu karartma overlay guncellemesi (Turkce karakter yok)
 		net.osmand.plus.carlauncher.ui.CarFloatingButtonManager.getInstance(this)
 				.onConfigurationChanged();

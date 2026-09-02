@@ -54,6 +54,8 @@
 
     <string-array name="car_app_font_scale_entries">
         <item>@string/car_font_scale_system</item>
+        <item>75%</item>
+        <item>80%</item>
         <item>85%</item>
         <item>90%</item>
         <item>100%</item>
@@ -61,6 +63,8 @@
     </string-array>
     <string-array name="car_app_font_scale_values">
         <item>system</item>
+        <item>0.75</item>
+        <item>0.80</item>
         <item>0.85</item>
         <item>0.90</item>
         <item>1.00</item>

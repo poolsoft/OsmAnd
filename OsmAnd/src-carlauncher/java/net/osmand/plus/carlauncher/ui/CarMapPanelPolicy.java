@@ -2,7 +2,6 @@ package net.osmand.plus.carlauncher.ui;
 
 import android.content.res.Configuration;
 import android.view.View;
-import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 
@@ -69,33 +68,21 @@ public final class CarMapPanelPolicy implements View.OnLayoutChangeListener {
                 * (portrait ? TOP_WIDTH_PORTRAIT : TOP_WIDTH_LANDSCAPE));
         int compactMargin = Math.max(0, (contentWidth - compactWidth) / 2);
 
-        updateMargins(topPanel, compactMargin, 0, compactMargin, null);
-        updateMargins(bottomPanel, 0, null, 0, 0);
-        clearOuterEdgePadding(topPanel, true);
-        clearOuterEdgePadding(bottomPanel, false);
+        layoutPanel(topPanel, hudLayout.getPaddingLeft() + compactMargin,
+                hudLayout.getPaddingTop(), compactWidth, true);
+        layoutPanel(bottomPanel, hudLayout.getPaddingLeft(),
+                hudLayout.getHeight() - hudLayout.getPaddingBottom(), contentWidth, false);
     }
 
-    private static void updateMargins(View view, int start, Integer top, int end, Integer bottom) {
-        if (view == null || !(view.getLayoutParams() instanceof ViewGroup.MarginLayoutParams params)) return;
-        int resolvedTop = top != null ? top : params.topMargin;
-        int resolvedBottom = bottom != null ? bottom : params.bottomMargin;
-        if (params.getMarginStart() == start && params.getMarginEnd() == end
-                && params.topMargin == resolvedTop && params.bottomMargin == resolvedBottom) {
-            return;
-        }
-        params.setMarginStart(start);
-        params.setMarginEnd(end);
-        params.topMargin = resolvedTop;
-        params.bottomMargin = resolvedBottom;
-        view.setLayoutParams(params);
-    }
-
-    private static void clearOuterEdgePadding(View view, boolean topEdge) {
+    private static void layoutPanel(View view, int horizontalStart, int verticalEdge,
+                                    int width, boolean topEdge) {
         if (view == null) return;
-        int top = topEdge ? 0 : view.getPaddingTop();
-        int bottom = topEdge ? view.getPaddingBottom() : 0;
-        if (top != view.getPaddingTop() || bottom != view.getPaddingBottom()) {
-            view.setPaddingRelative(view.getPaddingStart(), top, view.getPaddingEnd(), bottom);
-        }
+        int widthSpec = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY);
+        int heightSpec = View.MeasureSpec.makeMeasureSpec(
+                Math.max(0, view.getRootView().getHeight()), View.MeasureSpec.AT_MOST);
+        view.measure(widthSpec, heightSpec);
+        int height = view.getMeasuredHeight();
+        int top = topEdge ? verticalEdge : verticalEdge - height;
+        view.layout(horizontalStart, top, horizontalStart + width, top + height);
     }
 }
