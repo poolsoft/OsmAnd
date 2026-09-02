@@ -5,11 +5,8 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
-import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
 import net.osmand.plus.activities.MapActivity;
-import net.osmand.plus.settings.enums.PanelsLayoutMode;
-import net.osmand.plus.settings.enums.ScreenLayoutMode;
 
 /**
  * Launcher-only map HUD policy. OsmAnd exposes one layout mode for all panels;
@@ -30,13 +27,6 @@ public final class CarMapPanelPolicy implements View.OnLayoutChangeListener {
     public void attach() {
         hudLayout = activity.findViewById(R.id.map_hud_layout);
         if (hudLayout == null) return;
-
-        // Wide is the safer collision model for the bottom route panel. The top
-        // panel is narrowed below without replacing any OsmAnd widget.
-        OsmandApplication app = (OsmandApplication) activity.getApplication();
-        app.getSettings()
-                .getPanelsLayoutMode(activity, ScreenLayoutMode.getDefault(activity))
-                .set(PanelsLayoutMode.WIDE);
 
         hudLayout.addOnLayoutChangeListener(this);
         hudLayout.post(this::apply);

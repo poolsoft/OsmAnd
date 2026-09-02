@@ -249,6 +249,7 @@ public class OsmandApplication extends MultiDexApplication {
 		long timeToStart = System.currentTimeMillis();
 		enableStrictMode();
 		super.onCreate();
+		net.osmand.plus.carlauncher.CarFontScaleContext.applyToResources(this);
 		net.osmand.plus.carlauncher.ui.CarLauncherInitManager startupManager =
 				net.osmand.plus.carlauncher.ui.CarLauncherInitManager.getInstance();
 		startupManager.configureStartupProfile(this);
@@ -347,7 +348,7 @@ public class OsmandApplication extends MultiDexApplication {
 
 	@Override
 	protected void attachBaseContext(Context base) {
-		super.attachBaseContext(base);
+		super.attachBaseContext(net.osmand.plus.carlauncher.CarFontScaleContext.wrap(base));
 		MultiDex.install(this);
 	}
 
@@ -599,6 +600,7 @@ public class OsmandApplication extends MultiDexApplication {
 		} else {
 			super.onConfigurationChanged(newConfig);
 		}
+		net.osmand.plus.carlauncher.CarFontScaleContext.applyToResources(this);
 	}
 
 	public void checkApplicationIsBeingInitialized(@Nullable AppInitializeListener listener) {

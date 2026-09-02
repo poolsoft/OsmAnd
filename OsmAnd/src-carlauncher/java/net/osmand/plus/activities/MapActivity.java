@@ -715,6 +715,13 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 		// 4. main.xml'i map_container'a ekle
 		mapContainer.addView(mainLayoutRoot);
+		View carMapHudContainer = mainLayoutRoot.findViewById(R.id.map_hud_container);
+		if (carMapHudContainer != null) {
+			// The launcher already handles the status bar on root_layout. Keeping
+			// fitsSystemWindows here reserves the hidden navigation-bar height and
+			// leaves a visible gap below the bottom widgets panel.
+			carMapHudContainer.setFitsSystemWindows(false);
+		}
 		carMapPanelPolicy = new net.osmand.plus.carlauncher.ui.CarMapPanelPolicy(this);
 		carMapPanelPolicy.attach();
 
