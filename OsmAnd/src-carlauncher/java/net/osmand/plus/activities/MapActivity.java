@@ -233,7 +233,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	private View appDrawerContainer;
 	private net.osmand.plus.carlauncher.ui.CarLayoutManager carLayoutManager;
 	private net.osmand.plus.carlauncher.ui.PanelContentManager panelContentManager;
-	private net.osmand.plus.carlauncher.ui.CarRoutePanelController carRoutePanelController;
 	private View mainLayoutRoot; // main.xml root reference
 	private View.OnLayoutChangeListener carConfigurationLayoutListener;
 	private final Runnable carConfigurationLayoutFallback = this::finishCarConfigurationLayoutUpdate;
@@ -767,9 +766,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 			initManager.markMapActivityUiReady(MapActivity.this);
 			initManager.markUiReady();
 			net.osmand.plus.carlauncher.CarLauncherBootstrapActivity.finishAfterMapFirstFrame();
-			if (carRoutePanelController == null && mapContainer != null) {
-				carRoutePanelController = new net.osmand.plus.carlauncher.ui.CarRoutePanelController(this, mapContainer);
-			}
 			if (initialPoiFiltersRefreshPending) {
 				// QuickSearch initializes the same POI database during cold start. Let that
 				// work and the first map/GPS frames settle before touching it on the UI thread.
@@ -2083,10 +2079,6 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	@Override
 	protected void onDestroy() {
-		if (carRoutePanelController != null) {
-			carRoutePanelController.destroy();
-			carRoutePanelController = null;
-		}
 		if (rootLayout != null) {
 			rootLayout.removeCallbacks(carConfigurationLayoutFallback);
 			rootLayout.removeCallbacks(deferredPoiFiltersRefresh);

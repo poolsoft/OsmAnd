@@ -9,7 +9,6 @@ import net.osmand.plus.OsmAndLocationProvider;
 import net.osmand.plus.routing.NextDirectionInfo;
 import net.osmand.plus.routing.RoutingHelper;
 import net.osmand.plus.utils.OsmAndFormatter;
-import net.osmand.plus.views.mapwidgets.widgets.routeinfo.RouteInfoWidget;
 import net.osmand.router.TurnType;
 import net.osmand.plus.plugins.PluginsHelper;
 import net.osmand.plus.plugins.odb.VehicleMetricsPlugin;
@@ -43,9 +42,6 @@ public class TelemetryManager implements OsmAndLocationProvider.OsmAndLocationLi
         public String distanceStr = "";
         public String instructionStr = "";
         public String etaStr = "";
-        public String routeArrivalTimeStr = "";
-        public String routeRemainingTimeStr = "";
-        public String routeDistanceStr = "";
     }
 
     public static class ObdState {
@@ -242,28 +238,15 @@ public class TelemetryManager implements OsmAndLocationProvider.OsmAndLocationLi
                 int remainingTime = routingHelper.getLeftTime();
                 if (remainingDistance > 0 && remainingTime > 0) {
                     navigationState.etaStr = OsmAndFormatter.getFormattedDuration(remainingTime, app) + " (" + OsmAndFormatter.getFormattedDistance(remainingDistance, app) + ")";
-                    navigationState.routeRemainingTimeStr = OsmAndFormatter.getFormattedDuration(remainingTime, app);
-                    navigationState.routeDistanceStr = OsmAndFormatter.getFormattedDistance(remainingDistance, app);
-                    navigationState.routeArrivalTimeStr = RouteInfoWidget.formatArrivalTime(
-                            app, System.currentTimeMillis() + remainingTime * 1000L);
                 } else {
                     navigationState.etaStr = "";
-                    clearRouteSummary();
                 }
             } catch (Exception e) {
                 navigationState.isActive = false;
-                clearRouteSummary();
             }
         } else {
             navigationState.isActive = false;
-            clearRouteSummary();
         }
-    }
-
-    private void clearRouteSummary() {
-        navigationState.routeArrivalTimeStr = "";
-        navigationState.routeRemainingTimeStr = "";
-        navigationState.routeDistanceStr = "";
     }
 
     private void pollObd() {

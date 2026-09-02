@@ -108,15 +108,6 @@
             app:iconSpaceReserved="false" />
 
         <androidx.preference.ListPreference
-            android:key="car_launcher_route_info_layout"
-            android:title="@string/car_pref_title_route_info_layout"
-            android:summary="%s"
-            android:entries="@array/route_info_layout_entries"
-            android:entryValues="@array/route_info_layout_values"
-            android:defaultValue="native_compact"
-            app:iconSpaceReserved="false" />
-
-        <androidx.preference.ListPreference
             android:key="car_launcher_app_font_scale"
             android:title="@string/car_pref_title_app_font_scale"
             android:summary="%s"

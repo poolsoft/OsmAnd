@@ -52,15 +52,6 @@
         <item>right</item>
     </string-array>
 
-    <string-array name="route_info_layout_entries">
-        <item>Compact OsmAnd bottom panel</item>
-        <item>Car Launcher route card</item>
-    </string-array>
-    <string-array name="route_info_layout_values">
-        <item>native_compact</item>
-        <item>car_card</item>
-    </string-array>
-
     <string-array name="car_app_font_scale_entries">
         <item>@string/car_font_scale_system</item>
         <item>85%</item>
