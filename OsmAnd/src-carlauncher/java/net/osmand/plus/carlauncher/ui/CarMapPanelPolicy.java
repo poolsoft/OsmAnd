@@ -22,6 +22,9 @@ public final class CarMapPanelPolicy implements View.OnLayoutChangeListener {
     private View hudContainer;
     private View hudLayout;
     private ViewGroup bottomFragmentContainer;
+    private View topPanel;
+    private View bottomPanel;
+    private boolean applying;
 
     public CarMapPanelPolicy(@NonNull MapActivity activity) {
         this.activity = activity;
@@ -32,18 +35,26 @@ public final class CarMapPanelPolicy implements View.OnLayoutChangeListener {
         hudLayout = activity.findViewById(R.id.map_hud_layout);
         bottomFragmentContainer = activity.findViewById(R.id.bottomFragmentContainer);
         if (hudLayout == null) return;
+        topPanel = hudLayout.findViewById(R.id.top_widgets_panel);
+        bottomPanel = hudLayout.findViewById(R.id.map_bottom_widgets_panel);
 
         clearOuterInsets();
         hudLayout.addOnLayoutChangeListener(this);
+        if (topPanel != null) topPanel.addOnLayoutChangeListener(this);
+        if (bottomPanel != null) bottomPanel.addOnLayoutChangeListener(this);
         hudLayout.post(this::apply);
     }
 
     public void detach() {
         if (hudLayout != null) {
             hudLayout.removeOnLayoutChangeListener(this);
+            if (topPanel != null) topPanel.removeOnLayoutChangeListener(this);
+            if (bottomPanel != null) bottomPanel.removeOnLayoutChangeListener(this);
             hudContainer = null;
             hudLayout = null;
             bottomFragmentContainer = null;
+            topPanel = null;
+            bottomPanel = null;
         }
     }
 
@@ -54,10 +65,17 @@ public final class CarMapPanelPolicy implements View.OnLayoutChangeListener {
     }
 
     private void apply() {
-        if (hudLayout == null || hudLayout.getWidth() <= 0) return;
+        if (applying || hudLayout == null || hudLayout.getWidth() <= 0) return;
+        applying = true;
+        try {
+            applyPanelBounds();
+        } finally {
+            applying = false;
+        }
+    }
+
+    private void applyPanelBounds() {
         clearOuterInsets();
-        View topPanel = hudLayout.findViewById(R.id.top_widgets_panel);
-        View bottomPanel = hudLayout.findViewById(R.id.map_bottom_widgets_panel);
 
         boolean portrait = activity.getResources().getConfiguration().orientation
                 == Configuration.ORIENTATION_PORTRAIT;
