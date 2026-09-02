@@ -2,6 +2,7 @@ package net.osmand.plus.carlauncher.ui;
 
 import android.content.res.Configuration;
 import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 
@@ -18,16 +19,21 @@ public final class CarMapPanelPolicy implements View.OnLayoutChangeListener {
     private static final float TOP_WIDTH_PORTRAIT = 0.50f;
 
     private final MapActivity activity;
+    private View hudContainer;
     private View hudLayout;
+    private ViewGroup bottomFragmentContainer;
 
     public CarMapPanelPolicy(@NonNull MapActivity activity) {
         this.activity = activity;
     }
 
     public void attach() {
+        hudContainer = activity.findViewById(R.id.map_hud_container);
         hudLayout = activity.findViewById(R.id.map_hud_layout);
+        bottomFragmentContainer = activity.findViewById(R.id.bottomFragmentContainer);
         if (hudLayout == null) return;
 
+        clearOuterInsets();
         hudLayout.addOnLayoutChangeListener(this);
         hudLayout.post(this::apply);
     }
@@ -35,7 +41,9 @@ public final class CarMapPanelPolicy implements View.OnLayoutChangeListener {
     public void detach() {
         if (hudLayout != null) {
             hudLayout.removeOnLayoutChangeListener(this);
+            hudContainer = null;
             hudLayout = null;
+            bottomFragmentContainer = null;
         }
     }
 
@@ -47,6 +55,7 @@ public final class CarMapPanelPolicy implements View.OnLayoutChangeListener {
 
     private void apply() {
         if (hudLayout == null || hudLayout.getWidth() <= 0) return;
+        clearOuterInsets();
         View topPanel = hudLayout.findViewById(R.id.top_widgets_panel);
         View bottomPanel = hudLayout.findViewById(R.id.map_bottom_widgets_panel);
 
@@ -56,12 +65,27 @@ public final class CarMapPanelPolicy implements View.OnLayoutChangeListener {
                 hudLayout.getWidth() - hudLayout.getPaddingLeft() - hudLayout.getPaddingRight());
         int compactWidth = Math.round(contentWidth
                 * (portrait ? TOP_WIDTH_PORTRAIT : TOP_WIDTH_LANDSCAPE));
-        int compactMargin = Math.max(0, (contentWidth - compactWidth) / 2);
 
-        layoutPanel(topPanel, hudLayout.getPaddingLeft() + compactMargin,
-                hudLayout.getPaddingTop(), compactWidth, true);
-        layoutPanel(bottomPanel, hudLayout.getPaddingLeft(),
-                hudLayout.getHeight() - hudLayout.getPaddingBottom(), contentWidth, false);
+        // Keep both panels attached to the physical HUD edges. Centering the
+        // compact top panel puts turn information over the route arrow.
+        layoutPanel(topPanel, 0, 0, compactWidth, true);
+        layoutPanel(bottomPanel, 0, hudLayout.getHeight(), contentWidth, false);
+    }
+
+    private void clearOuterInsets() {
+        if (hudContainer != null) {
+            hudContainer.setFitsSystemWindows(false);
+            hudContainer.setPadding(0, 0, 0, 0);
+        }
+        if (hudLayout != null) {
+            hudLayout.setPadding(0, 0, 0, 0);
+        }
+        if (bottomFragmentContainer != null && bottomFragmentContainer.getChildCount() == 0) {
+            // InsetsUtils gives this empty host the navigation-bar padding,
+            // shrinking the weighted HUD and leaving a large bottom gap.
+            bottomFragmentContainer.setPadding(0, 0, 0, 0);
+            bottomFragmentContainer.setMinimumHeight(0);
+        }
     }
 
     private static void layoutPanel(View view, int horizontalStart, int verticalEdge,
