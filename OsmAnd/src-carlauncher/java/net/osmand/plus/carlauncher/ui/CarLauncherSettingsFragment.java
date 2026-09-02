@@ -527,6 +527,20 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
             });
         }
 
+        androidx.preference.ListPreference fontScalePref =
+                findPreference(CarLauncherSettings.KEY_APP_FONT_SCALE);
+        if (fontScalePref != null) {
+            fontScalePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                if (settings != null) {
+                    settings.setAppFontScale(String.valueOf(newValue));
+                }
+                if (getActivity() != null) {
+                    getActivity().recreate();
+                }
+                return false;
+            });
+        }
+
         // Yuzen harita (PiP) ayari (Turkce karakter yok)
         SwitchPreferenceCompat pipPref = findPreference(CarLauncherSettings.KEY_PIP_MODE);
         if (pipPref != null) {

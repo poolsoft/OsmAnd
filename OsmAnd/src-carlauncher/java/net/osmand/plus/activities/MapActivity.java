@@ -102,6 +102,7 @@ import net.osmand.plus.measurementtool.MeasurementEditingContext;
 import net.osmand.plus.measurementtool.MeasurementToolFragment;
 import net.osmand.plus.measurementtool.GpxData;
 import net.osmand.plus.carlauncher.CarLauncherSettings;
+import net.osmand.plus.carlauncher.CarFontScaleContext;
 import net.osmand.plus.onlinerouting.engine.OnlineRoutingEngine;
 import net.osmand.plus.plugins.OsmandPlugin;
 import net.osmand.plus.plugins.PluginsHelper;
@@ -302,6 +303,11 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	private TransportRouteCalculationProgressCallback transportRouteCalculationProgressCallback;
 	private LoadSimulatedLocationsListener simulatedLocationsListener;
 	private net.osmand.plus.carlauncher.headunit.diagnostics.HardwareEventRecorder hardwareEventRecorder;
+
+	@Override
+	protected void attachBaseContext(Context newBase) {
+		super.attachBaseContext(CarFontScaleContext.wrap(newBase));
+	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {

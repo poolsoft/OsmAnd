@@ -1,5 +1,6 @@
 package net.osmand.plus.carlauncher;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -50,6 +51,11 @@ public class CarLauncherBootstrapActivity extends AppCompatActivity
     private CarLayoutManager layoutManager;
     private PanelContentManager panelContentManager;
     private int layoutMode;
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(CarFontScaleContext.wrap(newBase));
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

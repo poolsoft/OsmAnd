@@ -116,6 +116,15 @@
             android:defaultValue="native_compact"
             app:iconSpaceReserved="false" />
 
+        <androidx.preference.ListPreference
+            android:key="car_launcher_app_font_scale"
+            android:title="@string/car_pref_title_app_font_scale"
+            android:summary="%s"
+            android:entries="@array/car_app_font_scale_entries"
+            android:entryValues="@array/car_app_font_scale_values"
+            android:defaultValue="system"
+            app:iconSpaceReserved="false" />
+
         <androidx.preference.SwitchPreferenceCompat
             android:key="car_launcher_pip_mode"
             android:title="@string/car_pref_title_pip_mode"

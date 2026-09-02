@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="car_pref_title_app_font_scale">Application font scale</string>
+    <string name="car_font_scale_system">System setting</string>
     <string name="car_pref_title_route_info_layout">Route information layout</string>
     <string name="car_route_arrival">arrival</string>
     <string name="car_route_remaining">remaining</string>

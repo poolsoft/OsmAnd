@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="car_pref_title_app_font_scale">Uygulama yazı ölçeği</string>
+    <string name="car_font_scale_system">Sistem ayarı</string>
     <string name="car_pref_title_route_info_layout">Rota bilgisi yerleşimi</string>
     <string name="car_route_arrival">varış</string>
     <string name="car_route_remaining">kalan</string>

@@ -36,7 +36,12 @@ public final class CarRoutePanelController implements SharedPreferences.OnShared
     private final SharedPreferences preferences;
 
     private VerticalWidgetPanel nativeBottomPanel;
+    private View nativeTopPanel;
+    private View nativeBottomEdgePanel;
     private int lastMapWidth;
+    private final View.OnLayoutChangeListener panelEdgeListener = (v, left, top, right, bottom,
+            oldLeft, oldTop, oldRight, oldBottom) -> v.post(() -> alignPanelToEdge(v,
+            v.getId() == R.id.top_widgets_panel ? Gravity.TOP : Gravity.BOTTOM));
     private final View.OnLayoutChangeListener mapLayoutListener = (v, left, top, right, bottom,
             oldLeft, oldTop, oldRight, oldBottom) -> {
         int width = right - left;
@@ -58,6 +63,7 @@ public final class CarRoutePanelController implements SharedPreferences.OnShared
     }
 
     private void applyLayoutMode() {
+        alignVerticalPanelsToEdges();
         View panel = activity.findViewById(R.id.map_bottom_widgets_panel);
         nativeBottomPanel = panel instanceof VerticalWidgetPanel ? (VerticalWidgetPanel) panel : null;
         boolean carCardMode = MODE_CAR_CARD.equals(settings.getRouteInfoLayout());
@@ -68,6 +74,43 @@ public final class CarRoutePanelController implements SharedPreferences.OnShared
             compactNativeBottomPanel(nativeBottomPanel, carCardMode);
             nativeBottomPanel.update(null);
             styleRouteWidget(routeWidget, carCardMode);
+        }
+    }
+
+    private void alignVerticalPanelsToEdges() {
+        View topPanel = activity.findViewById(R.id.top_widgets_panel);
+        View bottomPanel = activity.findViewById(R.id.map_bottom_widgets_panel);
+        if (nativeTopPanel != topPanel) {
+            if (nativeTopPanel != null) nativeTopPanel.removeOnLayoutChangeListener(panelEdgeListener);
+            nativeTopPanel = topPanel;
+            if (nativeTopPanel != null) nativeTopPanel.addOnLayoutChangeListener(panelEdgeListener);
+        }
+        if (nativeBottomEdgePanel != bottomPanel) {
+            if (nativeBottomEdgePanel != null) {
+                nativeBottomEdgePanel.removeOnLayoutChangeListener(panelEdgeListener);
+            }
+            nativeBottomEdgePanel = bottomPanel;
+            if (nativeBottomEdgePanel != null) {
+                nativeBottomEdgePanel.addOnLayoutChangeListener(panelEdgeListener);
+            }
+        }
+        alignPanelToEdge(topPanel, Gravity.TOP);
+        alignPanelToEdge(bottomPanel, Gravity.BOTTOM);
+    }
+
+    private void alignPanelToEdge(View panel, int verticalGravity) {
+        if (panel == null) return;
+        panel.setPadding(0, 0, 0, 0);
+        ViewGroup.LayoutParams rawParams = panel.getLayoutParams();
+        if (rawParams instanceof FrameLayout.LayoutParams) {
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) rawParams;
+            if (params.gravity != verticalGravity || params.leftMargin != 0
+                    || params.topMargin != 0 || params.rightMargin != 0
+                    || params.bottomMargin != 0) {
+                params.gravity = verticalGravity;
+                params.setMargins(0, 0, 0, 0);
+                panel.setLayoutParams(params);
+            }
         }
     }
 
@@ -157,6 +200,10 @@ public final class CarRoutePanelController implements SharedPreferences.OnShared
     public void destroy() {
         preferences.unregisterOnSharedPreferenceChangeListener(this);
         mapContainer.removeOnLayoutChangeListener(mapLayoutListener);
+        if (nativeTopPanel != null) nativeTopPanel.removeOnLayoutChangeListener(panelEdgeListener);
+        if (nativeBottomEdgePanel != null) {
+            nativeBottomEdgePanel.removeOnLayoutChangeListener(panelEdgeListener);
+        }
     }
 
     private int dp(int value) {
