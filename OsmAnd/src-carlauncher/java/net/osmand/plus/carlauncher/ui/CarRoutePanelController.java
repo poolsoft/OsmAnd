@@ -11,10 +11,19 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 
+import net.osmand.plus.OsmandApplication;
 import net.osmand.plus.R;
 import net.osmand.plus.activities.MapActivity;
 import net.osmand.plus.carlauncher.CarLauncherSettings;
+import net.osmand.plus.settings.backend.ApplicationMode;
+import net.osmand.plus.settings.enums.ScreenLayoutMode;
 import net.osmand.plus.views.controls.VerticalWidgetPanel;
+import net.osmand.plus.views.mapwidgets.MapWidgetInfo;
+import net.osmand.plus.views.mapwidgets.MapWidgetRegistry;
+import net.osmand.plus.views.mapwidgets.WidgetType;
+import net.osmand.plus.views.mapwidgets.WidgetsPanel;
+
+import java.util.Set;
 
 /** Keeps route information usable on short, wide head-unit displays. */
 public final class CarRoutePanelController implements SharedPreferences.OnSharedPreferenceChangeListener {
@@ -55,25 +64,68 @@ public final class CarRoutePanelController implements SharedPreferences.OnShared
 
         if (nativeBottomPanel != null) {
             nativeBottomPanel.setVisibilityAllowed(true);
-            styleNativeBottomPanel(nativeBottomPanel, carCardMode);
+            MapWidgetInfo routeWidget = carCardMode ? ensureRouteWidgetEnabled() : findRouteWidget(false);
             compactNativeBottomPanel(nativeBottomPanel, carCardMode);
             nativeBottomPanel.update(null);
+            styleRouteWidget(routeWidget, carCardMode);
         }
     }
 
-    private void styleNativeBottomPanel(@NonNull View panel, boolean cardMode) {
+    private void styleRouteWidget(MapWidgetInfo routeWidget, boolean cardMode) {
+        View panel = nativeBottomPanel;
         panel.setAlpha(1f);
         panel.setTranslationY(0f);
-        panel.setElevation(cardMode ? dp(6) : 0);
+        panel.setElevation(0f);
+        panel.setBackgroundColor(Color.TRANSPARENT);
+        panel.setPadding(0, 0, 0, 0);
+        if (routeWidget == null || routeWidget.widget == null) return;
+
+        View routeView = routeWidget.widget.getView();
+        routeView.setElevation(cardMode ? dp(4) : 0);
         try {
-            panel.setBackgroundResource(cardMode ? R.drawable.bg_car_route_info_card : 0);
+            routeView.setBackgroundResource(cardMode ? R.drawable.bg_car_route_info_card : 0);
         } catch (Resources.NotFoundException e) {
             // A theme attribute resolving to a drawable instead of a color must never
             // prevent the launcher from opening on vendor Android builds.
-            panel.setBackgroundColor(Color.TRANSPARENT);
+            routeView.setBackgroundColor(Color.TRANSPARENT);
         }
-        panel.setPadding(cardMode ? dp(4) : 0, 0, cardMode ? dp(4) : 0, 0);
-        if (!cardMode) panel.setBackgroundColor(Color.TRANSPARENT);
+        routeView.setPadding(0, 0, 0, 0);
+    }
+
+    private MapWidgetInfo ensureRouteWidgetEnabled() {
+        MapWidgetInfo routeWidget = findRouteWidget(true);
+        if (routeWidget == null) return null;
+
+        ApplicationMode appMode = getApp().getSettings().getApplicationMode();
+        ScreenLayoutMode layoutMode = ScreenLayoutMode.getDefault(activity);
+        if (!routeWidget.isEnabledForAppMode(appMode, layoutMode)) {
+            getWidgetRegistry().enableDisableWidgetForMode(appMode, routeWidget,
+                    true, layoutMode, false);
+        }
+        return routeWidget;
+    }
+
+    private MapWidgetInfo findRouteWidget(boolean preferDefault) {
+        ApplicationMode appMode = getApp().getSettings().getApplicationMode();
+        ScreenLayoutMode layoutMode = ScreenLayoutMode.getDefault(activity);
+        MapWidgetInfo defaultWidget = null;
+        MapWidgetInfo fallback = null;
+        Set<MapWidgetInfo> widgets = getWidgetRegistry().getWidgetsForPanel(WidgetsPanel.BOTTOM);
+        for (MapWidgetInfo info : widgets) {
+            if (info.getWidgetType() != WidgetType.ROUTE_INFO) continue;
+            if (info.isEnabledForAppMode(appMode, layoutMode)) return info;
+            if (!info.isCustomWidget()) defaultWidget = info;
+            if (fallback == null) fallback = info;
+        }
+        return preferDefault && defaultWidget != null ? defaultWidget : fallback;
+    }
+
+    private MapWidgetRegistry getWidgetRegistry() {
+        return activity.getMapLayers().getMapWidgetRegistry();
+    }
+
+    private OsmandApplication getApp() {
+        return (OsmandApplication) activity.getApplication();
     }
 
     private void compactNativeBottomPanel(@NonNull View panel, boolean cardMode) {
@@ -89,8 +141,7 @@ public final class CarRoutePanelController implements SharedPreferences.OnShared
         if (rawParams instanceof FrameLayout.LayoutParams) {
             FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) rawParams;
             params.gravity = Gravity.BOTTOM | Gravity.START;
-            int margin = cardMode ? dp(8) : 0;
-            params.setMargins(margin, 0, margin, margin);
+            params.setMargins(0, 0, 0, 0);
         }
         panel.setLayoutParams(rawParams);
         panel.requestLayout();
