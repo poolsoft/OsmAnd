@@ -233,6 +233,7 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	private View appDrawerContainer;
 	private net.osmand.plus.carlauncher.ui.CarLayoutManager carLayoutManager;
 	private net.osmand.plus.carlauncher.ui.PanelContentManager panelContentManager;
+	private net.osmand.plus.carlauncher.ui.CarMapPanelPolicy carMapPanelPolicy;
 	private View mainLayoutRoot; // main.xml root reference
 	private View.OnLayoutChangeListener carConfigurationLayoutListener;
 	private final Runnable carConfigurationLayoutFallback = this::finishCarConfigurationLayoutUpdate;
@@ -306,6 +307,13 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 	@Override
 	protected void attachBaseContext(Context newBase) {
 		super.attachBaseContext(CarFontScaleContext.wrap(newBase));
+	}
+
+	@Override
+	public void applyOverrideConfiguration(Configuration overrideConfiguration) {
+		super.applyOverrideConfiguration(overrideConfiguration == null
+				? null
+				: CarFontScaleContext.applyTo(getBaseContext(), overrideConfiguration));
 	}
 
 	@Override
@@ -706,6 +714,8 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 		// 4. main.xml'i map_container'a ekle
 		mapContainer.addView(mainLayoutRoot);
+		carMapPanelPolicy = new net.osmand.plus.carlauncher.ui.CarMapPanelPolicy(this);
+		carMapPanelPolicy.attach();
 
 		// Instant Shell: Harita yukleme placeholder'ini ekle
 		final View mapLoadingPlaceholder = getLayoutInflater().inflate(R.layout.layout_map_loading_placeholder, mapContainer, false);
@@ -2079,6 +2089,10 @@ public class MapActivity extends OsmandActionBarActivity implements AppDockFragm
 
 	@Override
 	protected void onDestroy() {
+		if (carMapPanelPolicy != null) {
+			carMapPanelPolicy.detach();
+			carMapPanelPolicy = null;
+		}
 		if (rootLayout != null) {
 			rootLayout.removeCallbacks(carConfigurationLayoutFallback);
 			rootLayout.removeCallbacks(deferredPoiFiltersRefresh);

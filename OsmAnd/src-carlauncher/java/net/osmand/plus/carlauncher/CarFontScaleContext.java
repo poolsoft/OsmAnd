@@ -13,19 +13,35 @@ public final class CarFontScaleContext {
 
     @NonNull
     public static Context wrap(@NonNull Context base) {
-        String value = base.getSharedPreferences("car_launcher_prefs", Context.MODE_PRIVATE)
-                .getString(CarLauncherSettings.KEY_APP_FONT_SCALE, "system");
-        if (value == null || "system".equals(value)) return base;
+        Float fontScale = getConfiguredFontScale(base);
+        if (fontScale == null) {
+            return base;
+        }
+        Configuration configuration = new Configuration(base.getResources().getConfiguration());
+        if (Math.abs(configuration.fontScale - fontScale) < 0.001f) return base;
+        configuration.fontScale = fontScale;
+        return base.createConfigurationContext(configuration);
+    }
 
+    @NonNull
+    public static Configuration applyTo(@NonNull Context context, @NonNull Configuration source) {
+        Configuration configuration = new Configuration(source);
+        Float fontScale = getConfiguredFontScale(context);
+        if (fontScale != null) {
+            configuration.fontScale = fontScale;
+        }
+        return configuration;
+    }
+
+    private static Float getConfiguredFontScale(@NonNull Context context) {
+        String value = context.getSharedPreferences("car_launcher_prefs", Context.MODE_PRIVATE)
+                .getString(CarLauncherSettings.KEY_APP_FONT_SCALE, "system");
+        if (value == null || "system".equals(value)) return null;
         try {
             float fontScale = Float.parseFloat(value);
-            if (fontScale < 0.75f || fontScale > 1.30f) return base;
-            Configuration configuration = new Configuration(base.getResources().getConfiguration());
-            if (Math.abs(configuration.fontScale - fontScale) < 0.001f) return base;
-            configuration.fontScale = fontScale;
-            return base.createConfigurationContext(configuration);
+            return fontScale >= 0.75f && fontScale <= 1.30f ? fontScale : null;
         } catch (NumberFormatException e) {
-            return base;
+            return null;
         }
     }
 }
