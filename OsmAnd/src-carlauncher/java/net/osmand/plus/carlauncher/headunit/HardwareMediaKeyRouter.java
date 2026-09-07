@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 
 import net.osmand.plus.carlauncher.headunit.diagnostics.HardwareEventRecorder;
 import net.osmand.plus.carlauncher.music.MusicManager;
+import net.osmand.plus.carlauncher.ui.CarLauncherInitManager;
 
 /**
  * Single entry point for physical media commands received through Android or a
@@ -66,7 +67,13 @@ public final class HardwareMediaKeyRouter {
         lastEventTime = now;
         recorder.record("MEDIA_KEY_ROUTER",
                 "route source=" + source + " key=" + KeyEvent.keyCodeToString(keyCode));
-        return MusicManager.getInstance(appContext).handleHardwareMediaKey(keyCode);
+        MusicManager musicManager = MusicManager.getInstance(appContext);
+        if (!CarLauncherInitManager.getInstance().isMapFirstFrameReady()) {
+            recorder.record("MEDIA_KEY_ROUTER",
+                    "startup_safe key=" + KeyEvent.keyCodeToString(keyCode));
+            return musicManager.handleStartupMediaKey(keyCode);
+        }
+        return musicManager.handleHardwareMediaKey(keyCode);
     }
 
     private boolean isSupportedMediaKey(int keyCode) {

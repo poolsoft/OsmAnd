@@ -148,7 +148,7 @@ public class CarFloatingButtonManager {
 
     public void updateButtonState() {
         CarLauncherSettings settings = CarLauncherSettings.getInstance(context);
-        boolean enabled = settings.isFloatingButtonEnabled();
+        boolean enabled = settings.shouldShowFloatingButton(isAppInForeground);
 
         if (enabled && !isInPipMode) {
             showButton();

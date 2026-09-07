@@ -69,7 +69,10 @@
     <string name="car_pref_title_portrait_map_only">Show Map Only in Portrait Screen</string>
     <string name="car_pref_summary_portrait_map_only">Hides widget panel and dock in portrait mode</string>
     <string name="car_pref_title_floating_button">Floating Assistant Button</string>
-    <string name="car_pref_summary_floating_button">Shows a movable system menu button on the screen</string>
+    <string name="car_pref_summary_floating_button">Choose when the movable assistant button is visible</string>
+    <string name="car_floating_button_mode_off">Off</string>
+    <string name="car_floating_button_mode_background">Show only in background</string>
+    <string name="car_floating_button_mode_always">Always show</string>
     <string name="car_pref_title_floating_button_size">Floating Button Size</string>
     <string name="car_pref_summary_floating_button_size">Adjust the area it occupies on the screen</string>
     <string name="car_pref_title_night_dim_mode">Night Dim Mode</string>

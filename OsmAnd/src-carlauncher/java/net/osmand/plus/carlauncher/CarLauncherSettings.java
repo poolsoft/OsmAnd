@@ -43,6 +43,10 @@ public class CarLauncherSettings {
 
     public static final String KEY_DARK_THEME = "car_launcher_dark_theme";
     public static final String KEY_FLOATING_BUTTON = "car_launcher_floating_button";
+    public static final String KEY_FLOATING_BUTTON_MODE = "car_launcher_floating_button_mode";
+    public static final String FLOATING_BUTTON_OFF = "off";
+    public static final String FLOATING_BUTTON_BACKGROUND = "background";
+    public static final String FLOATING_BUTTON_ALWAYS = "always";
     public static final String KEY_NIGHT_DIM_MODE = "car_launcher_night_dim_mode";
     public static final String KEY_PARALLAX_INTENSITY = "car_launcher_parallax_intensity";
     public static final String KEY_BACKGROUND_STYLE = "car_launcher_background_style";
@@ -111,7 +115,7 @@ public class CarLauncherSettings {
     private boolean cFastBoot;
     private boolean cDarkTheme;
     private boolean cPortraitMapOnly;
-    private boolean cFloatingButton;
+    private String cFloatingButtonMode;
     private boolean cFloatingButtonForceGps;
     private int cFloatingButtonSize;
     private String cNightDimMode;
@@ -209,7 +213,19 @@ public class CarLauncherSettings {
         cFastBoot = prefs.getBoolean(KEY_FAST_BOOT, true);
         cDarkTheme = prefs.getBoolean(KEY_DARK_THEME, true);
         cPortraitMapOnly = prefs.getBoolean(KEY_PORTRAIT_MAP_ONLY, false);
-        cFloatingButton = prefs.getBoolean(KEY_FLOATING_BUTTON, false);
+        if (prefs.contains(KEY_FLOATING_BUTTON_MODE)) {
+            cFloatingButtonMode = prefs.getString(KEY_FLOATING_BUTTON_MODE, FLOATING_BUTTON_OFF);
+            if (!FLOATING_BUTTON_BACKGROUND.equals(cFloatingButtonMode)
+                    && !FLOATING_BUTTON_ALWAYS.equals(cFloatingButtonMode)) {
+                cFloatingButtonMode = FLOATING_BUTTON_OFF;
+            }
+        } else {
+            // Preserve the behavior of the former switch: enabled meant visible
+            // both inside and outside the launcher.
+            cFloatingButtonMode = prefs.getBoolean(KEY_FLOATING_BUTTON, false)
+                    ? FLOATING_BUTTON_ALWAYS : FLOATING_BUTTON_OFF;
+            prefs.edit().putString(KEY_FLOATING_BUTTON_MODE, cFloatingButtonMode).apply();
+        }
         cFloatingButtonForceGps = prefs.getBoolean(KEY_FLOATING_BUTTON_FORCE_GPS, false);
         cFloatingButtonSize = prefs.getInt(KEY_FLOATING_BUTTON_SIZE, 86);
         cNightDimMode = prefs.getString(KEY_NIGHT_DIM_MODE, "osmand");
@@ -428,12 +444,31 @@ public class CarLauncherSettings {
     }
 
     public boolean isFloatingButtonEnabled() {
-        return cFloatingButton;
+        return !FLOATING_BUTTON_OFF.equals(cFloatingButtonMode);
     }
 
     public void setFloatingButtonEnabled(boolean enabled) {
-        this.cFloatingButton = enabled;
-        prefs.edit().putBoolean(KEY_FLOATING_BUTTON, enabled).apply();
+        setFloatingButtonMode(enabled ? FLOATING_BUTTON_ALWAYS : FLOATING_BUTTON_OFF);
+    }
+
+    public String getFloatingButtonMode() {
+        return cFloatingButtonMode;
+    }
+
+    public void setFloatingButtonMode(String mode) {
+        if (!FLOATING_BUTTON_BACKGROUND.equals(mode) && !FLOATING_BUTTON_ALWAYS.equals(mode)) {
+            mode = FLOATING_BUTTON_OFF;
+        }
+        cFloatingButtonMode = mode;
+        prefs.edit()
+                .putString(KEY_FLOATING_BUTTON_MODE, mode)
+                .putBoolean(KEY_FLOATING_BUTTON, !FLOATING_BUTTON_OFF.equals(mode))
+                .apply();
+    }
+
+    public boolean shouldShowFloatingButton(boolean appInForeground) {
+        return FLOATING_BUTTON_ALWAYS.equals(cFloatingButtonMode)
+                || (FLOATING_BUTTON_BACKGROUND.equals(cFloatingButtonMode) && !appInForeground);
     }
 
     public boolean isFloatingButtonForceGpsEnabled() {

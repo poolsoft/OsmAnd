@@ -18,6 +18,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.ListPreference;
 import androidx.preference.SeekBarPreference;
 import androidx.preference.SwitchPreferenceCompat;
 
@@ -433,12 +434,15 @@ public class CarLauncherSettingsFragment extends PreferenceFragmentCompat {
         // ... removed widget settings that are now unused here
 
         // Yuzen yardimci buton
-        SwitchPreferenceCompat floatingButtonPref = findPreference(CarLauncherSettings.KEY_FLOATING_BUTTON);
+        ListPreference floatingButtonPref = findPreference(CarLauncherSettings.KEY_FLOATING_BUTTON_MODE);
         if (floatingButtonPref != null) {
+            if (settings != null) {
+                floatingButtonPref.setValue(settings.getFloatingButtonMode());
+            }
             floatingButtonPref.setOnPreferenceChangeListener((preference, newValue) -> {
-                boolean val = (Boolean) newValue;
+                String val = String.valueOf(newValue);
                 if (settings != null) {
-                    settings.setFloatingButtonEnabled(val);
+                    settings.setFloatingButtonMode(val);
                 }
                 if (getContext() != null) {
                     CarFloatingButtonManager.getInstance(getContext()).updateButtonState();

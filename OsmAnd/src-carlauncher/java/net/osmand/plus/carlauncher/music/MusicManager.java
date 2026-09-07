@@ -159,6 +159,7 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         String configured = net.osmand.plus.carlauncher.CarLauncherSettings
                 .getInstance(context).getMusicApp();
         return configured == null || "internal".equals(configured)
+                || context.getPackageName().equals(configured)
                 ? "usage.internal.player" : configured;
     }
 
@@ -589,6 +590,33 @@ public class MusicManager implements InternalMusicPlayer.PlaybackListener {
         lastActiveSource = MusicSource.INTERNAL;
         recordHardwareDecision(keyCode, "default_unavailable_internal_fallback");
         executeInternalCommand(keyCode);
+        return true;
+    }
+
+    /**
+     * Handles steering controls while the first map frame is still pending.
+     * This path deliberately avoids MediaSession discovery and launching another
+     * activity, both of which can race the bootstrap-to-map transition on slow units.
+     */
+    public boolean handleStartupMediaKey(int keyCode) {
+        int safeKeyCode = keyCode;
+        if (!internalPlayer.isPlaying()
+                && (keyCode == KeyEvent.KEYCODE_MEDIA_NEXT
+                || keyCode == KeyEvent.KEYCODE_MEDIA_PREVIOUS)) {
+            safeKeyCode = KeyEvent.KEYCODE_MEDIA_PLAY;
+        }
+        if (safeKeyCode == KeyEvent.KEYCODE_MEDIA_PAUSE
+                || safeKeyCode == KeyEvent.KEYCODE_MEDIA_STOP) {
+            if (internalPlayer.isPlaying()) {
+                executeInternalCommand(safeKeyCode);
+            }
+            recordHardwareDecision(safeKeyCode, "startup_internal_only");
+            return true;
+        }
+        preferredPackage = "usage.internal.player";
+        lastActiveSource = MusicSource.INTERNAL;
+        recordHardwareDecision(safeKeyCode, "startup_internal_only");
+        executeInternalCommand(safeKeyCode);
         return true;
     }
 

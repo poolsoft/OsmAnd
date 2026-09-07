@@ -64,7 +64,10 @@
     <string name="car_pref_title_portrait_map_only">Dikey Ekranda Sadece Harita Göster</string>
     <string name="car_pref_summary_portrait_map_only">Dikey modda widget paneli ve rıhtımı gizler</string>
     <string name="car_pref_title_floating_button">Yüzen Yardımcı Buton (Floating Button)</string>
-    <string name="car_pref_summary_floating_button">Ekranda taşınabilir sistem menü butonu gösterir</string>
+    <string name="car_pref_summary_floating_button">Taşınabilir yardımcı butonun ne zaman görüneceğini seçin</string>
+    <string name="car_floating_button_mode_off">Kapalı</string>
+    <string name="car_floating_button_mode_background">Sadece arka plandayken göster</string>
+    <string name="car_floating_button_mode_always">Her zaman göster</string>
     <string name="car_pref_title_floating_button_size">Yüzen Buton Boyutu</string>
     <string name="car_pref_summary_floating_button_size">Ekranda kapladığı alanı ayarla</string>
     <string name="car_pref_title_night_dim_mode">Gece Karartma Modu</string>
