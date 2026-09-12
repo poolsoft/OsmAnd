@@ -109,6 +109,7 @@ class WidgetsAppearanceFragment : BaseFullScreenFragment(), CopyAppModePrefsList
 		viewPager = view.findViewById(R.id.view_pager)
 		toolbarTitle = view.findViewById(R.id.toolbar_title)
 		sheetShadow = view.findViewById(R.id.bottom_sheet_shadow)
+		setupBottomSheetHeight(view)
 
 		setupToolbar(view)
 		setupTabLayout()
@@ -121,6 +122,22 @@ class WidgetsAppearanceFragment : BaseFullScreenFragment(), CopyAppModePrefsList
 			}
 		}
 		return view
+	}
+
+	private fun setupBottomSheetHeight(root: View) {
+		val appBar = root.findViewById<View>(R.id.appbar)
+		val bottomSheet = root.findViewById<View>(R.id.bottom_sheet)
+		val preferredHeight = resources.getDimensionPixelSize(R.dimen.panel_appearance_sheet_height)
+		val minPreviewHeight = resources.getDimensionPixelSize(R.dimen.toolbar_height)
+		root.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+			val availableHeight = (root.height - appBar.height - minPreviewHeight).coerceAtLeast(0)
+			val sheetHeight = preferredHeight.coerceAtMost(availableHeight)
+			if (bottomSheet.layoutParams.height != sheetHeight) {
+				bottomSheet.layoutParams = bottomSheet.layoutParams.apply {
+					height = sheetHeight
+				}
+			}
+		}
 	}
 
 	override fun isUsedOnMap(): Boolean = true
